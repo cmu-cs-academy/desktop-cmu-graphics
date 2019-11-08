@@ -41,4 +41,4 @@ def onMousePress(mouseX, mouseY):
     if (belly.radius > 100):
         hungryLabel.visible = True
 
-loop()
+cmu_graphics.loop()
