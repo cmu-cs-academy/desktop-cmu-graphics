@@ -1,0 +1,32 @@
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode10.3
+      language: generic
+
+deploy:
+  provider: s3
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
+  bucket: cmu-cs-academy.lib.prod
+  skip_cleanup: true
+  local_dir: cpython_cmu_graphics
+
+install:
+  - echo 'running install section'
+  - echo $AWS_ACCESS_KEY
+  - echo $AWS_SECRET_KEY
+  # - brew update
+  # - brew install pkg-config || brew upgrade pkg-config || true
+  # - brew install cairo || brew upgrade cairo || true
+  # - export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
+  # - brew install python || brew upgrade python || true
+  # - python3 -m pip install virtualenv
+  # - virtualenv ../venv -p python3
+  # - source ../venv/bin/activate
+  # - python -m pip install --upgrade setuptools
+  # - python -m pip install --upgrade wheel
+
+script:
+  - mkdir cpython_cmu_graphics
+  - echo 'test' > cpython_cmu_graphics/cpython_cmu_graphics_test.txt
