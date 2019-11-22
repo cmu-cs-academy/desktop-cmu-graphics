@@ -3,7 +3,7 @@ pyenv install $PYVER
 eval "$(pyenv init -)"
 pyenv global $PYVER
 python3 -m pip install virtualenv
-virtualenv ../venv -p python3
+python3 -m virtualenv ../venv -p python3
 source ../venv/bin/activate
 python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade wheel
