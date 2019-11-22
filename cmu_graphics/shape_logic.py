@@ -1,7 +1,7 @@
 import math
 import copy
 from . import utils
-import cairo
+from . import cairo
 from PIL import Image
 from io import BytesIO
 import requests

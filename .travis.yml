@@ -1,8 +1,6 @@
-matrix:
-  include:
-    - os: osx
-      osx_image: xcode10.3
-      language: generic
+os: osx
+osx_image: xcode10.3
+language: generic
 
 deploy:
   provider: s3
@@ -10,23 +8,22 @@ deploy:
   secret_access_key: $AWS_SECRET_KEY
   bucket: cmu-cs-academy.lib.prod
   skip_cleanup: true
-  local_dir: cpython_cmu_graphics
+  local_dir: build
+  upload-dir: cpython-cmu-graphics-binaries
 
 install:
-  - echo 'running install section'
-  - echo $AWS_ACCESS_KEY
-  - echo $AWS_SECRET_KEY
-  # - brew update
-  # - brew install pkg-config || brew upgrade pkg-config || true
-  # - brew install cairo || brew upgrade cairo || true
-  # - export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
-  # - brew install python || brew upgrade python || true
-  # - python3 -m pip install virtualenv
-  # - virtualenv ../venv -p python3
-  # - source ../venv/bin/activate
-  # - python -m pip install --upgrade setuptools
-  # - python -m pip install --upgrade wheel
+  - chmod +x .travis/install_global_dependencies.sh
+  - chmod +x .travis/install_python_dependencies.sh
+  - chmod +x .travis/build_pycairo.sh
+  - ./.travis/install_global_dependencies.sh
 
 script:
-  - mkdir cpython_cmu_graphics
-  - echo 'test' > cpython_cmu_graphics/cpython_cmu_graphics_test.txt
+  - export PYVER='3.5.4'
+  - ./.travis/install_python_dependencies.sh
+  - ./.travis/build_pycairo.sh
+  - export PYVER='3.6.2'
+  - ./.travis/install_python_dependencies.sh
+  - ./.travis/build_pycairo.sh
+  - export PYVER='3.7.5'
+  - ./.travis/install_python_dependencies.sh
+  - ./.travis/build_pycairo.sh

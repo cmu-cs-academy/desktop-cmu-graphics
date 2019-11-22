@@ -1,7 +1,7 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import math
-import cairo
+from . import cairo
 from cmu_graphics import shape_logic
 from random import *
 from cmu_graphics.utils import *
