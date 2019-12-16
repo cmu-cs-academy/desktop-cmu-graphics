@@ -11,12 +11,13 @@ from PIL import Image
 import numpy
 
 import subprocess
+from shutil import copy2
 
 SIZE = 400
 
 REPORT_FILE = None
 
-TEST_FILE_PATH = 'runner.py'
+TEST_FILE_PATH = './runner.py'
 
 REPORT_HEADER = '''
 <html>
@@ -77,14 +78,14 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
                     visual_diff[i][j][3] = 128  # half alpha
 
         imageio.imwrite(diff_image_path, visual_diff)
-        if IS_CI:
-            S3_BUCKET.put_object(
-                Key='test_image_gen/%s' % path_2.replace('/', '_'),
-                Body=open(path_2, 'rb'))
-            S3_BUCKET.put_object(
-                Key='test_image_gen/%s' % diff_image_path.replace('/', '_'),
-                Body=open(diff_image_path, 'rb'))
-        print("Part %d MSE %.0f" % (test_piece_i, mean_squared_error))
+        # if IS_CI:
+        #     S3_BUCKET.put_object(
+        #         Key='test_image_gen/%s' % path_2.replace('/', '_'),
+        #         Body=open(path_2, 'rb'))
+        #     S3_BUCKET.put_object(
+        #         Key='test_image_gen/%s' % diff_image_path.replace('/', '_'),
+        #         Body=open(diff_image_path, 'rb'))
+        # print("Part %d MSE %.0f" % (test_piece_i, mean_squared_error))
         REPORT_FILE.write("<div class='error'><p>Part %d MSE %.0f</p>" %
             (test_piece_i, mean_squared_error))
         for path in [path_1, path_2, diff_image_path]:
@@ -98,7 +99,18 @@ def run_test(driver, test_name, all_source_code):
     i = 0
     all_passed = True
 
+    addEventFnCaller = {
+        'onKeyHolds': '\ndef onKeyHolds(keys, n):\n    for i in range(n):\n        onKeyHold(keys)\n',
+        'onSteps': '\ndef onSteps(n):\n    for i in range(n):\n        onStep()\n',
+        'onKeyPresses': '\ndef onKeyPresses(key, n):\n    for i in range(n):\n        onKeyPress(key)\n',
+        'onMousePresses': '\ndef onMousePresses(mouseX, mouseY, n):\n    for i in range(n):\n        onMousePress(mouseX, mouseY)\n'
+    }
+
     for piece_i in range(len(source_code_pieces)):
+        # skip exercises with random calls
+        if 'randrange' in source_code_pieces[piece_i] or 'onMouseMove' in source_code_pieces[piece_i]:
+            continue
+
         i += 1
 
         if not os.path.exists('image_gen/%s' % test_name):
@@ -107,23 +119,46 @@ def run_test(driver, test_name, all_source_code):
         correct_path = 'image_gen/%s/correct_%d.png' % (test_name, i)
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
-        source_code = ''
+        if not os.path.exists(output_path):
+            print('Generating new %s' % output_path)
+            copy2('cs-academy-canvas.png', output_path)
+
+        source_code = r''
         source_code += 'import sys'
         source_code += '\nsys.path.insert(0, "..")'
         source_code += '\nfrom cmu_graphics import *\n'
-        source_code += '\n######\n'.join(source_code_pieces[:piece_i])
-        source_code += '\ndef onMousePress(x, y):\n'
-        source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
-        source_code += '\n    app.background = "honeydew"'
+        # source_code += '\n######\n'.join(source_code_pieces[:piece_i])
+        # source_code += '\ndef onMousePress(x, y):\n'
+        source_code += '\n'.join([(s) for s in source_code_pieces[piece_i].split('\n')])
+
+        # if any event wrapper is called, insert a definition for it above the first line.
+        for val in addEventFnCaller.keys():
+            ind = 0
+            source_code_lines = source_code.split('\n')
+            for line in source_code_lines:
+                if (line.find(val) != -1):
+                    break
+                ind += 1
+
+            if ind != len(source_code.split('\n')):
+                addedStr = addEventFnCaller[val]
+                source_code_lines.insert(ind-1, addedStr)
+                source_code = '\n\n'.join(list(source_code_lines))
+
+        source_code += '\napp.background = "honeydew"'
+        source_code += '\napp.paused = True'
         source_code += '\nfrom threading import Timer\n'
         source_code += '\nimport time\n'
         source_code += 'def screenshotAndExit():\n'
-        source_code += '    app.callUserFn("onMousePress", (200,200))\n'
+        # source_code += '    app.callUserFn("onMousePress", (200,200))\n'
         source_code += '    time.sleep(1)\n'
-        source_code += '    app.getScreenshot("%s")\n' % os.path.abspath(output_path)
+        source_code += '    app.getScreenshot("%s")\n' % os.path.abspath(output_path).replace('\\', '/')
         source_code += '    app.quit()\n'
         source_code += 'Timer(3, screenshotAndExit).start()\n'
         source_code += 'cmu_graphics.loop()'
+
+        # print(source_code)
+        # print('###################################################################')
 
         with open(TEST_FILE_PATH, 'w') as f:
             f.write(source_code)
@@ -143,7 +178,7 @@ def run_test(driver, test_name, all_source_code):
 
         if not os.path.exists(correct_path):
             print('Generating new %s' % correct_path)
-            os.system('cp %s %s' % (download_path, correct_path))
+            os.system('cp %s %s' % (output_path, correct_path))
             continue
         else:
             if not compare_images(correct_path, output_path, test_name, i,
@@ -180,7 +215,6 @@ def main():
             if not test_py_name.endswith('.py'):
                 continue
             REPORT_FILE.flush()
-            print(test_py_name)
             with open('image_gen/%s' % test_py_name) as f:
                 if not run_test(driver, test_py_name[:-3], f.read()):
                     print('image_gen/%s failed' % test_py_name)
@@ -215,10 +249,10 @@ def main():
             driver.close()
         except:
             pass
-        try:
-            os.remove(TEST_FILE_PATH)
-        except:
-            pass
+        # try:
+        #     os.remove(TEST_FILE_PATH)
+        # except:
+        #     pass
         print('\n\n%d successes and %d failures in %.1fs' % (
             num_successes, num_failures, time.time() - start_time))
         print('See report.html for details')

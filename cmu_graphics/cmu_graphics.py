@@ -10,7 +10,8 @@ import sys
 import json
 import atexit
 
-pygame = None # defer module load until run
+# pygame.init()
+# pygame = None # defer module load until run
 # pygame takes a few seconds to load. when a getTextInput happens before we
 # get a chance to render the screen, we don't want to wait a few seconds
 # for a pygame load here _and_ a few seconds for a pygame load there

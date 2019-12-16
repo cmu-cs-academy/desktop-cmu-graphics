@@ -138,3 +138,11 @@ grad = gradient('red', 'black', start='left-top')
 assert grad.start == 'left-top'
 grad2 = gradient('red', 'black', start='top-left')
 assert grad2.start == 'top-left'
+
+r142 = Rect(50, 50, 200, 200)
+g = Group(r142)
+g.clear()
+assert r142.visible == False
+r142.visible = False
+r142.visible = True
+r142.visible = False
