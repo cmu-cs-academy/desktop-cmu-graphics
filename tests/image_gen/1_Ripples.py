@@ -20,7 +20,7 @@ def onStep():
         if (ripple.borderWidth <= 0):
             ripples.remove(ripple)
 
-onSteps(50)
+onStep()
 app.paused = True
 
 
@@ -47,8 +47,6 @@ def onStep():
         if (ripple.borderWidth <= 0):
             ripples.remove(ripple)
 
-onSteps(2)
-app.paused = True
 
 
 # -
@@ -74,6 +72,6 @@ def onStep():
         if (ripple.borderWidth <= 0):
             ripples.remove(ripple)
 
-onSteps(2)
+onStep()
 app.paused = True
 

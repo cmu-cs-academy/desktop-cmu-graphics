@@ -25,7 +25,7 @@ def onMouseMove(mouseX, mouseY):
     else:
         setVolumeBars(400 - mouseY, 400 - mouseY, mouseY)
 
-onMouseMove(124, 100)
+onMouseMove(274, 100)
 
 
 # -
@@ -56,7 +56,7 @@ def onMouseMove(mouseX, mouseY):
     else:
         setVolumeBars(400 - mouseY, 400 - mouseY, mouseY)
 
-onMouseMove(90, 100)
+onMouseMove(274, 100)
 
 
 # -
@@ -87,7 +87,4 @@ def onMouseMove(mouseX, mouseY):
     else:
         setVolumeBars(400 - mouseY, 400 - mouseY, mouseY)
 
-onMouseMove(50, 150)
-onMouseMove(125, 150)
-onMouseMove(375, 50)
 

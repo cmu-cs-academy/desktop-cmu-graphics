@@ -117,6 +117,5 @@ def onMouseDrag(mouseX, mouseY):
     selected.width = mouseX + 1
     selected.height = mouseY + 1
 
-onMouseDrag(150, 270)
-onMouseDrag(330, 50)
+onMouseDrag(280, 300)
 

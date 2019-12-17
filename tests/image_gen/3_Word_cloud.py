@@ -99,14 +99,9 @@ def drawWordCloud(text):
         seenWords.add(label)
 
 drawWordCloud([
-    'CS', 'Academy', 'computer', 'science', 'CS', 'bugs', 'debug',
-    'for loop', 'CS', 'computer', 'program', 'code', 'Python', 'functions',
-    'Python', 'animation', 'conditional', 'if', 'else', 'functions',
-    'Academy', 'CS', 'Academy', 'Python', 'code', 'Rect', 'Label', 'if',
-    'if', 'else', 'functions', 'bugs', 'CS', 'conditional', 'loops',
-    'strings', 'ints', 'lists', 'locals', 'globals', 'variables', 'shape',
-    'strings', 'strings', 'lists', 'CS', 'Academy', 'bugs', 'code', 'conditional',
-    'loops', 'loops', 'lists', 'Python', 'Rect', 'if', 'if', 'strings'
+    'Half', 'a', 'league', 'half', 'a', 'league', 'half', 'a', 'league',
+    'onward', 'all', 'in', 'the', 'Valley', 'of', 'Death', 'rode', 'the',
+    'six', 'hundred'
     ])
 
 
@@ -155,13 +150,8 @@ def drawWordCloud(text):
         seenWords.add(label)
 
 drawWordCloud([
-    'CS', 'Academy', 'computer', 'science', 'CS', 'bugs', 'debug',
-    'for loop', 'CS', 'computer', 'program', 'code', 'Python', 'functions',
-    'Python', 'animation', 'conditional', 'if', 'else', 'functions',
-    'Academy', 'CS', 'Academy', 'Python', 'code', 'Rect', 'Label', 'if',
-    'if', 'else', 'functions', 'bugs', 'CS', 'conditional', 'loops',
-    'strings', 'ints', 'lists', 'locals', 'globals', 'variables', 'shape',
-    'strings', 'strings', 'lists', 'CS', 'Academy', 'bugs', 'code', 'conditional',
-    'loops', 'loops', 'lists', 'Python', 'Rect', 'if', 'if', 'strings'
+    'Half', 'a', 'league', 'half', 'a', 'league', 'half', 'a', 'league',
+    'onward', 'all', 'in', 'the', 'Valley', 'of', 'Death', 'rode', 'the',
+    'six', 'hundred'
     ])
 

@@ -61,8 +61,6 @@ def onKeyPress(key):
             minionText += randomLetter
         minionLabel.value = minionText
 
-app.setTextInputs("Hello World.")
-onKeyPress('space')
 
 
 # -
@@ -197,6 +195,6 @@ def onKeyPress(key):
             minionText += randomLetter
         minionLabel.value = minionText
 
-app.setTextInputs("I love CS~")
+app.setTextInputs("Happy birthday!")
 onKeyPress('space')
 

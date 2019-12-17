@@ -60,6 +60,14 @@ def onMouseRelease(mouseX, mouseY):
 
 onMousePress(200, 100)
 onMouseRelease(200, 100)
+onMousePress(250, 100)
+onMouseRelease(250, 100)
+onMousePress(200, 100)
+onMouseRelease(200, 100)
+onMousePress(250, 100)
+onMouseRelease(250, 100)
+onMousePress(250, 100)
+onMouseRelease(250, 100)
 
 
 # -
@@ -125,6 +133,7 @@ def onMouseRelease(mouseX, mouseY):
 
 onMousePress(200, 100)
 onMouseRelease(200, 100)
+onMousePress(200, 100)
 
 
 # -
@@ -190,4 +199,12 @@ def onMouseRelease(mouseX, mouseY):
 
 onMousePress(200, 100)
 onMouseRelease(200, 100)
+onMousePress(250, 100)
+onMouseRelease(250, 100)
+onMousePress(200, 100)
+onMouseRelease(200, 100)
+onMousePress(250, 100)
+onMouseRelease(250, 100)
+onMousePress(250, 100)
+onMouseRelease(250, 100)
 

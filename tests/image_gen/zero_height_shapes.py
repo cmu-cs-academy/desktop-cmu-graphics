@@ -6,8 +6,10 @@ l = Line(0, 200, 400, 200, lineWidth=0.000000001)
 # -
 l.rotateAngle += 30
 # -
+l = Line(0, 200, 400, 200, lineWidth=0.000000001)
 l.rotateAngle += 30
 # -
+l = Line(0, 200, 400, 200, lineWidth=0.000000001)
 l.rotateAngle += 30
 
 p = Polygon(10, 10, 10, 200, db='all')

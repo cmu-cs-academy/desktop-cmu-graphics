@@ -65,6 +65,7 @@ def onMouseMove(mouseX, mouseY):
 
 onMouseMove(200, 99)
 onMouseMove(200, 200)
+onMouseMove(10, 10)
 
 
 # -
@@ -133,7 +134,7 @@ def onMouseMove(mouseX, mouseY):
         leaf.left = 0
         leaf.top = 20
 
-onMouseMove(200, 400)
+onMouseMove(200, 99)
 
 
 # -
@@ -202,6 +203,5 @@ def onMouseMove(mouseX, mouseY):
         leaf.left = 0
         leaf.top = 20
 
-onMouseMove(200, 400)
-onMouseMove(400, 400)
+onMouseMove(200, 200)
 

@@ -17,7 +17,7 @@ def drawMinion(minionColor):
     Circle(115, 115, 5, fill='white')
     Circle(255, 115, 5, fill='white')
 
-drawMinion('pink')
+drawMinion('darkOrchid')
 
 
 # -
@@ -40,7 +40,7 @@ def drawMinion(minionColor):
     Circle(115, 115, 5, fill='white')
     Circle(255, 115, 5, fill='white')
 
-drawMinion('darkOrchid')
+drawMinion('pink')
 
 
 # -

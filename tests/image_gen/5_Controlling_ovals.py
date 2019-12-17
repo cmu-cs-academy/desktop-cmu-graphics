@@ -8,8 +8,7 @@ def onMouseMove(mouseX, mouseY):
     o.width = mouseX + 1
     o.height = mouseY + 1
 
-onMouseMove(140, 160)
-onMouseMove(300, 190)
+onMouseMove(100, 250)
 
 
 # -
@@ -23,9 +22,8 @@ def onMouseMove(mouseX, mouseY):
     o.width = mouseX + 1
     o.height = mouseY + 1
 
-onMouseMove(100, 0)
-onMouseMove(250, 0)
-onMouseMove(0, 0)
+onMouseMove(0, 250)
+onMouseMove(0, 300)
 
 
 # -
@@ -39,4 +37,5 @@ def onMouseMove(mouseX, mouseY):
     o.width = mouseX + 1
     o.height = mouseY + 1
 
+onMouseMove(300, 100)
 

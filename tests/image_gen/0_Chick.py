@@ -53,9 +53,9 @@ def HatchedOrNot(hasHatched):
         drawCrack()
         speechText.value = '...'
 
-HatchedOrNot(True)
-onMousePress(200, 200)
-onMouseRelease(200, 200)
+drawEggBottom()
+drawEggTop()
+drawCrack()
 
 
 # -
@@ -174,7 +174,7 @@ def HatchedOrNot(hasHatched):
         drawCrack()
         speechText.value = '...'
 
-HatchedOrNot(False)
-onMousePress(200, 200)
-onMouseRelease(200, 200)
+drawEggBottom()
+drawEggTop()
+drawCrack()
 

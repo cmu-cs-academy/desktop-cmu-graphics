@@ -64,6 +64,8 @@ def onMouseMove(mouseX, mouseY):
     rightEye.centerX = 225 + (mouseX / 20)
     rightEye.centerY = 180 + (mouseY / 20)
 
+onMousePress(250, 250)
+onMousePress(100, 320)
 
 
 # -
@@ -133,6 +135,16 @@ def onMouseMove(mouseX, mouseY):
     rightEye.centerX = 225 + (mouseX / 20)
     rightEye.centerY = 180 + (mouseY / 20)
 
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
 
 
 # -
@@ -202,14 +214,6 @@ def onMouseMove(mouseX, mouseY):
     rightEye.centerX = 225 + (mouseX / 20)
     rightEye.centerY = 180 + (mouseY / 20)
 
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
+onMousePress(250, 250)
+onMousePress(100, 320)
 

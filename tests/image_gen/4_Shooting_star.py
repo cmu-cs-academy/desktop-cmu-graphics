@@ -34,6 +34,9 @@ def onStep():
     diagonalStars.centerX = newX
     diagonalStars.centerY = newY
 
+onKeyPress('space')
+onSteps(10)
+app.paused = True
 
 
 # -
@@ -74,7 +77,7 @@ def onStep():
     diagonalStars.centerY = newY
 
 onKeyPress('space')
-onSteps(30)
+onSteps(10)
 app.paused = True
 
 
@@ -115,4 +118,5 @@ def onStep():
     diagonalStars.centerX = newX
     diagonalStars.centerY = newY
 
+onKeyPress('space')
 

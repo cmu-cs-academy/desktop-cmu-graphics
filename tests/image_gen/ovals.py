@@ -12,10 +12,46 @@ def resize(w, h):
     assert o.centerY == CENTER_Y, o.centerY
 
 # -
+CENTER_X = 200
+CENTER_Y = 200
+
+o = Oval(CENTER_X, CENTER_Y, 200, 300, rotateAngle=10, fill='pink', db='bbox')
+
+def resize(w, h):
+    o.width = w
+    assert o.width == w, o.width
+    assert o.centerX == CENTER_X, o.centerX
+    o.height = h
+    assert o.height == h, o.height
+    assert o.centerY == CENTER_Y, o.centerY
 resize(100, 100)
 # -
+CENTER_X = 200
+CENTER_Y = 200
+
+o = Oval(CENTER_X, CENTER_Y, 200, 300, rotateAngle=10, fill='pink', db='bbox')
+
+def resize(w, h):
+    o.width = w
+    assert o.width == w, o.width
+    assert o.centerX == CENTER_X, o.centerX
+    o.height = h
+    assert o.height == h, o.height
+    assert o.centerY == CENTER_Y, o.centerY
 resize(50, 200)
 # -
+CENTER_X = 200
+CENTER_Y = 200
+
+o = Oval(CENTER_X, CENTER_Y, 200, 300, rotateAngle=10, fill='pink', db='bbox')
+
+def resize(w, h):
+    o.width = w
+    assert o.width == w, o.width
+    assert o.centerX == CENTER_X, o.centerX
+    o.height = h
+    assert o.height == h, o.height
+    assert o.centerY == CENTER_Y, o.centerY
 resize(200, 50)
 
 

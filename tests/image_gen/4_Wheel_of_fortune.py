@@ -70,6 +70,7 @@ def onStep():
         Label('WINNER!', 200, 300, fill='gold', border='black', size=50, bold=True)
     wheel.rotateAngle += 3
 
+onKeyPress('space')
 onSteps(10)
 app.paused = True
 

@@ -80,6 +80,7 @@ def onStep():
     moveBubble(bubble4)
     moveBubble(bubble5)
 
+onKeyPress('a')
 
 
 # -
@@ -253,6 +254,7 @@ def onStep():
     moveBubble(bubble4)
     moveBubble(bubble5)
 
+onKeyPress('space')
 onKeyPress('space')
 onKeyPress('space')
 

@@ -70,6 +70,7 @@ def onMousePress(mouseX, mouseY):
     paper.y2 += 50
 
 onMousePress(200, 200)
+onMousePress(200, 200)
 
 
 # -

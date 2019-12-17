@@ -123,8 +123,7 @@ def run_test(driver, test_name, all_source_code):
             print('Generating new %s' % output_path)
             copy2('cs-academy-canvas.png', output_path)
 
-        source_code = r''
-        source_code += 'import sys'
+        source_code = r'import sys'
         source_code += '\nsys.path.insert(0, "..")'
         source_code += '\nfrom cmu_graphics import *\n'
         # source_code += '\n######\n'.join(source_code_pieces[:piece_i])
@@ -150,15 +149,11 @@ def run_test(driver, test_name, all_source_code):
         source_code += '\nfrom threading import Timer\n'
         source_code += '\nimport time\n'
         source_code += 'def screenshotAndExit():\n'
-        # source_code += '    app.callUserFn("onMousePress", (200,200))\n'
         source_code += '    time.sleep(1)\n'
         source_code += '    app.getScreenshot("%s")\n' % os.path.abspath(output_path).replace('\\', '/')
         source_code += '    app.quit()\n'
         source_code += 'Timer(3, screenshotAndExit).start()\n'
         source_code += 'cmu_graphics.loop()'
-
-        # print(source_code)
-        # print('###################################################################')
 
         with open(TEST_FILE_PATH, 'w') as f:
             f.write(source_code)
@@ -205,7 +200,6 @@ def main():
     num_failures = 0
     num_successes = 0
     start_time = time.time()
-    driver = None
 
     try:
         REPORT_FILE = open('report.html', 'w')
@@ -235,24 +229,9 @@ def main():
         except:
             pass
         try:
-            if driver:
-                print('Saving screenshot in final_screenshot.png')
-                driver.save_screenshot('final_screenshot.png')
-                if IS_CI:
-                    print('Saving screenshot in s3://cmu-cs-academy.backend.files.eddie/test_image_gen/final.png')
-                    S3.Bucket('cmu-cs-academy.backend.files.eddie').put_object(
-                        Key='test_image_gen/final.png', Body=open('final_screenshot.png', 'rb'))
-        except:
-            print('Exception saving screenshot')
-            traceback.print_exc()
-        try:
-            driver.close()
+            os.remove(TEST_FILE_PATH)
         except:
             pass
-        # try:
-        #     os.remove(TEST_FILE_PATH)
-        # except:
-        #     pass
         print('\n\n%d successes and %d failures in %.1fs' % (
             num_successes, num_failures, time.time() - start_time))
         print('See report.html for details')

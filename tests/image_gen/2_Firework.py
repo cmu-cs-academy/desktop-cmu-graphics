@@ -15,6 +15,8 @@ def onMousePress(mouseX, mouseY):
         Line(mouseX, mouseY, mouseX, 400,
              fill=gradient('black', 'red', 'yellow', 'black', start='top'))
 
+onMousePress(150, 145)
+onMousePress(150, 155)
 
 
 # -
@@ -56,10 +58,5 @@ def onMousePress(mouseX, mouseY):
         Line(mouseX, mouseY, mouseX, 400,
              fill=gradient('black', 'red', 'yellow', 'black', start='top'))
 
-onMousePress(100, 250)
-onMousePress(200, 100)
-onMousePress(300, 75)
-onMousePress(300, 300)
 onMousePress(200, 200)
-onMousePress(50, 125)
 

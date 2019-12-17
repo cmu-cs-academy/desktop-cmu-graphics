@@ -58,6 +58,7 @@ def onMouseMove(mouseX, mouseY):
     needle.x2 = newX2
     needle.y2 = newY2
 
+onMouseMove(200, 0)
 
 
 # -

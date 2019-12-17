@@ -22,6 +22,10 @@ def onMousePress(mouseX, mouseY):
     elif (outerMoon.hits(mouseX, mouseY) == False):
         Star(mouseX, mouseY, 5, 4, fill='white')
 
+onMousePress(250, 190)
+onMousePress(180, 160)
+onMousePress(320, 240)
+onMousePress(220, 110)
 
 
 # -
@@ -77,4 +81,6 @@ def onMousePress(mouseX, mouseY):
     elif (outerMoon.hits(mouseX, mouseY) == False):
         Star(mouseX, mouseY, 5, 4, fill='white')
 
+onMousePress(320, 360)
+onMousePress(90, 140)
 

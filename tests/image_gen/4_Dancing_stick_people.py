@@ -70,6 +70,7 @@ def onKeyPress(key):
         toggleRightArms()
 
 onMousePress(200, 200)
+onKeyPress('left')
 
 
 # -
@@ -144,7 +145,8 @@ def onKeyPress(key):
     elif (key == 'right'):
         toggleRightArms()
 
-onMousePress(200, 200)
+onMousePress(100, 100)
+onMousePress(300, 300)
 
 
 # -
@@ -219,6 +221,10 @@ def onKeyPress(key):
     elif (key == 'right'):
         toggleRightArms()
 
+onMousePress(100, 100)
+onKeyPress('left')
 onMousePress(200, 200)
+onKeyPress('right')
+onMousePress(300, 300)
 onKeyPress('left')
 

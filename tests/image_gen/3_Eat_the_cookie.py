@@ -25,14 +25,6 @@ def onMouseRelease(mouseX, mouseY):
     # Add code to draw a circular bite.
     Circle(mouseX, mouseY, 40, fill='lightSteelBlue')
 
-onMouseRelease(100, 110)
-onMouseRelease(145, 150)
-onMouseRelease(70, 160)
-onMouseRelease(120, 195)
-onMouseRelease(65, 220)
-onMouseRelease(90, 267)
-onMouseRelease(150, 253)
-onMouseRelease(180, 200)
 
 
 # -
@@ -63,7 +55,6 @@ def onMouseRelease(mouseX, mouseY):
     # Add code to draw a circular bite.
     Circle(mouseX, mouseY, 40, fill='lightSteelBlue')
 
-onMouseRelease(100, 110)
 
 
 # -
@@ -94,4 +85,6 @@ def onMouseRelease(mouseX, mouseY):
     # Add code to draw a circular bite.
     Circle(mouseX, mouseY, 40, fill='lightSteelBlue')
 
+onMouseRelease(10, 10)
+onMouseRelease(390, 390)
 

@@ -24,7 +24,7 @@ def drawBunny(bunnyColor):
     Oval(250, 275, 30, 50)
     Oval(250, 270, 10, 20, fill='white')
 
-drawBunny('pink')
+drawBunny('saddleBrown')
 
 
 # -
@@ -54,7 +54,7 @@ def drawBunny(bunnyColor):
     Oval(250, 275, 30, 50)
     Oval(250, 270, 10, 20, fill='white')
 
-drawBunny('saddleBrown')
+drawBunny('gold')
 
 
 # -

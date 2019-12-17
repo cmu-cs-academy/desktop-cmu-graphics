@@ -19,9 +19,10 @@ def drawEye(centerX, centerY, eyeSize, pupilSize):
     Circle(centerX, centerY, eyeSize, fill='white')
     Circle(centerX, centerY, pupilSize)
 
-drawEye(145, 195, 35, 17)
-drawEye(200, 150, 30, 15)
-drawEye(255, 195, 35, 17)
+drawEye(175, 200, 25, 13)
+drawEye(225, 200, 25, 13)
+drawEye(175, 150, 25, 13)
+drawEye(225, 150, 25, 13)
 
 
 # -
@@ -46,8 +47,10 @@ def drawEye(centerX, centerY, eyeSize, pupilSize):
     Circle(centerX, centerY, eyeSize, fill='white')
     Circle(centerX, centerY, pupilSize)
 
-drawEye(100, 200, 15, 12)
-drawEye(300, 200, 15, 12)
+drawEye(175, 200, 25, 13)
+drawEye(225, 200, 25, 13)
+drawEye(175, 150, 25, 13)
+drawEye(225, 150, 25, 13)
 
 
 # -

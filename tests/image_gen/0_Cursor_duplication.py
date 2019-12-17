@@ -25,7 +25,8 @@ def onMouseMove(mouseX, mouseY):
     cursor.left = mouseX
     cursor.top = 400 - mouseY
 
-onMouseMove(200, 100)
+onMouseMove(200, 350)
+onMouseMove(150, 120)
 
 
 # -

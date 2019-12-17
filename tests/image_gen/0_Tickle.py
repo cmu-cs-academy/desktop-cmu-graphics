@@ -21,18 +21,6 @@ def onStep():
             fadedTickles.remove(tickle)
 
 onMouseMove(200, 200)
-onStep()
-onMouseMove(200, 200)
-onStep()
-onMouseMove(200, 200)
-onStep()
-onMouseMove(200, 200)
-onStep()
-onMouseMove(200, 200)
-onStep()
-onMouseMove(200, 200)
-onStep()
-onMouseMove(200, 200)
 app.paused = True
 
 
@@ -59,9 +47,6 @@ def onStep():
         if (tickle.opacity == 0):
             fadedTickles.remove(tickle)
 
-onMouseMove(200, 200)
-onSteps(5)
-app.paused = True
 
 
 # -

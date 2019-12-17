@@ -9,14 +9,6 @@ def onMousePress(mouseX, mouseY):
     RegularPolygon(mouseX, mouseY - 15, 15, 3,
                    fill=gradient('lightGreen', 'darkGreen', start='top'))
 
-onMousePress(160, 105)
-onMousePress(100, 175)
-onMousePress(220, 280)
-onMousePress(315, 230)
-onMousePress(240, 165)
-onMousePress(170, 210)
-onMousePress(135, 310)
-onMousePress(270, 85)
 
 
 # -
@@ -31,14 +23,7 @@ def onMousePress(mouseX, mouseY):
     RegularPolygon(mouseX, mouseY - 15, 15, 3,
                    fill=gradient('lightGreen', 'darkGreen', start='top'))
 
-onMousePress(160, 105)
-onMousePress(100, 175)
-onMousePress(220, 280)
-onMousePress(315, 230)
-onMousePress(240, 165)
-onMousePress(170, 210)
-onMousePress(135, 310)
-onMousePress(270, 85)
+onMousePress(200, 200)
 
 
 # -
@@ -53,12 +38,6 @@ def onMousePress(mouseX, mouseY):
     RegularPolygon(mouseX, mouseY - 15, 15, 3,
                    fill=gradient('lightGreen', 'darkGreen', start='top'))
 
-onMousePress(160, 105)
-onMousePress(100, 175)
-onMousePress(220, 280)
-onMousePress(315, 230)
-onMousePress(240, 165)
-onMousePress(170, 210)
-onMousePress(135, 310)
-onMousePress(270, 85)
+onMousePress(100, 150)
+onMousePress(200, 250)
 

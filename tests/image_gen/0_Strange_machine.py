@@ -19,7 +19,7 @@ def onStep():
                border=rgb(redGreen, 255 - redGreen, 255),
                borderWidth=newBorderWidth, dashes=(dashWidth, dashSpace))
 
-onSteps(5)
+onSteps(20)
 app.paused = True
 
 

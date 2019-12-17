@@ -79,8 +79,11 @@ def onMouseDrag(mouseX, mouseY):
     rightEyelid.fill = 'sandyBrown'
 
 
-onMouseRelease(300, 140)
-onMouseRelease(150, 90)
+onMouseDrag(280, 300)
+onMouseDrag(370, 350)
+onMouseDrag(330, 320)
+onMouseDrag(50, 130)
+onMouseDrag(200, 200)
 
 
 # -
@@ -165,12 +168,7 @@ def onMouseDrag(mouseX, mouseY):
     rightEyelid.fill = 'sandyBrown'
 
 
-onMouseDrag(140, 50)
-onMouseRelease(140, 50)
-onMouseDrag(270, 330)
-onMouseRelease(90, 260)
-onMouseRelease(180, 150)
-onMouseDrag(0, 0)
+onMouseDrag(50, 150)
 
 
 # -
@@ -255,6 +253,5 @@ def onMouseDrag(mouseX, mouseY):
     rightEyelid.fill = 'sandyBrown'
 
 
-onMouseRelease(300, 140)
-onMouseRelease(150, 90)
+onMouseRelease(200, 200)
 

@@ -34,7 +34,10 @@ def onMouseMove(mouseX, mouseY):
         barMid.fill = None
         barHigh.fill = None
 
-onMouseMove(320, 310)
+onMouseMove(100, 50)
+onMouseMove(150, 160)
+onMouseMove(370, 280)
+onMouseMove(40, 330)
 
 
 # -
@@ -74,7 +77,9 @@ def onMouseMove(mouseX, mouseY):
         barMid.fill = None
         barHigh.fill = None
 
-onMouseMove(200, 99)
+onMouseMove(340, 20)
+onMouseMove(140, 30)
+onMouseMove(260, 50)
 
 
 # -
@@ -114,5 +119,7 @@ def onMouseMove(mouseX, mouseY):
         barMid.fill = None
         barHigh.fill = None
 
-onMouseMove(300, 10)
+onMouseMove(340, 20)
+onMouseMove(140, 30)
+onMouseMove(260, 50)
 

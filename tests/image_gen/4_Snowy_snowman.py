@@ -90,6 +90,7 @@ def onMousePress(mouseX, mouseY):
     Star(mouseX, mouseY, radius, points, fill=gradient('white', 'snow', 'white'),
          roundness=roundness, opacity=opacity)
 
+onMousePress(100, 50)
 
 
 # -
@@ -135,6 +136,5 @@ def onMousePress(mouseX, mouseY):
     Star(mouseX, mouseY, radius, points, fill=gradient('white', 'snow', 'white'),
          roundness=roundness, opacity=opacity)
 
-onMousePress(165, 225)
-onMousePress(300, 100)
+onMousePress(200, 100)
 

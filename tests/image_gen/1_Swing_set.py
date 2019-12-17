@@ -126,4 +126,5 @@ def onMouseMove(mouseX, mouseY):
     rightRope.x2 = seat.x2
     rightRope.y2 = seat.y2
 
+onMouseMove(150, 275)
 

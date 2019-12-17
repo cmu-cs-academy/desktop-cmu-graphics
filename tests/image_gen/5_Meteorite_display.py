@@ -42,9 +42,9 @@ def onMouseMove(mouseX, mouseY):
         alarmLights.visible = False
         light.visible = True
 
-onMouseMove(190, 230)
-onMouseMove(250, 250)
-onMouseMove(140, 260)
+onMouseMove(300, 200)
+onMouseMove(200, 330)
+onMouseMove(130, 275)
 
 
 # -
@@ -142,5 +142,14 @@ def onMouseMove(mouseX, mouseY):
         alarmLights.visible = False
         light.visible = True
 
-onMouseMove(200, 200)
+onMouseMove(320, 160)
+onMouseMove(130, 200)
+onMouseMove(70, 210)
+onMouseMove(110, 130)
+onMouseMove(370, 290)
+onMouseMove(390, 20)
+onMouseMove(310, 190)
+onMouseMove(300, 80)
+onMouseMove(240, 100)
+onMouseMove(250, 220)
 

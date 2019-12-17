@@ -22,7 +22,7 @@ def scoreboard(timeLeft, homeScore, awayScore):
     Label(awayScore, 300, 300, fill='red', size=100, font='monospace', bold=True)
 
 
-scoreboard('10:53', 13, 24)
+scoreboard('01:02', 50, 48)
 
 
 # -
@@ -78,5 +78,5 @@ def scoreboard(timeLeft, homeScore, awayScore):
     Label(awayScore, 300, 300, fill='red', size=100, font='monospace', bold=True)
 
 
-scoreboard('08:17', 42, 24)
+scoreboard('10:53', 13, 24)
 

@@ -28,7 +28,6 @@ def onMousePress(mouseX, mouseY):
     elif (yellowButton.contains(mouseX, mouseY) == True):
         ghost.fill = 'yellow'
 
-onMousePress(100, 350)
 
 
 # -
@@ -62,10 +61,9 @@ def onMousePress(mouseX, mouseY):
     elif (yellowButton.contains(mouseX, mouseY) == True):
         ghost.fill = 'yellow'
 
-onMousePress(210, 340)
-onMousePress(110, 360)
-onMousePress(200, 200)
-onMousePress(310, 350)
+onMousePress(100, 350)
+onMousePress(200, 350)
+onMousePress(300, 350)
 
 
 # -

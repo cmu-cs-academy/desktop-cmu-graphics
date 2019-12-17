@@ -77,8 +77,6 @@ def onMousePress(mouseX, mouseY):
         app.selectedCol = -1
         checkWin()
 
-onMousePress(250, 50)
-onMousePress(150, 350)
 
 
 # -
@@ -245,5 +243,7 @@ def onMousePress(mouseX, mouseY):
         app.selectedCol = -1
         checkWin()
 
-onMousePress(50, 150)
+onMousePress(50, 100)
+onMousePress(290, 250)
+onMousePress(150, 370)
 

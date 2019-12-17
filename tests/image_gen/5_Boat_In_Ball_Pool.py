@@ -72,8 +72,8 @@ def onStep():
     ball.centerX += ball.dx
     ball.centerY += ball.dy
 
-onKeyHolds(['left'], 10)
-onSteps(20)
+onKeyHold(['down'])
+onSteps(50)
 app.paused = True
 
 
@@ -152,6 +152,9 @@ def onStep():
     ball.centerX += ball.dx
     ball.centerY += ball.dy
 
+onKeyHold(['down'])
+onSteps(50)
+app.paused = True
 
 
 # -
@@ -229,4 +232,7 @@ def onStep():
     ball.centerX += ball.dx
     ball.centerY += ball.dy
 
+onKeyHold(['down'])
+onSteps(50)
+app.paused = True
 

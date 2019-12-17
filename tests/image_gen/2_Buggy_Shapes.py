@@ -18,6 +18,11 @@ onMousePress(200, 200)
 onMousePress(200, 200)
 onMousePress(200, 200)
 onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
 
 
 # -

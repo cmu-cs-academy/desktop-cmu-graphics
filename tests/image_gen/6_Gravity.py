@@ -55,7 +55,19 @@ def onStep():
             letters.remove(letter)
 
 onMouseMove(50, 50)
-onStep()
+onSteps(2)
+onMouseMove(50, 100)
+onSteps(2)
+onMouseMove(50, 150)
+onSteps(2)
+onMouseMove(50, 200)
+onSteps(2)
+onMouseMove(50, 250)
+onSteps(2)
+onMouseMove(50, 300)
+onSteps(2)
+onMouseMove(50, 350)
+onSteps(2)
 app.paused = True
 
 
@@ -117,7 +129,19 @@ def onStep():
             letters.remove(letter)
 
 onMouseMove(50, 50)
-onMouseMove(350, 350)
+onSteps(2)
+onMouseMove(50, 100)
+onSteps(2)
+onMouseMove(50, 150)
+onSteps(2)
+onMouseMove(50, 200)
+onSteps(2)
+onMouseMove(50, 250)
+onSteps(2)
+onMouseMove(50, 300)
+onSteps(2)
+onMouseMove(50, 350)
+onSteps(2)
 app.paused = True
 
 
@@ -179,6 +203,5 @@ def onStep():
             letters.remove(letter)
 
 onMouseMove(50, 50)
-onStep()
 app.paused = True
 

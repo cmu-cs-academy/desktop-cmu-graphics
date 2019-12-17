@@ -96,8 +96,6 @@ def onMouseMove(mouseX, mouseY):
         eye.centerX = newCenterX
         eye.centerY = newCenterY
 
-onMouseMove(120, 320)
-onMouseMove(230, 350)
 
 
 # -
@@ -148,5 +146,4 @@ def onMouseMove(mouseX, mouseY):
         eye.centerX = newCenterX
         eye.centerY = newCenterY
 
-onMouseMove(250, 200)
 

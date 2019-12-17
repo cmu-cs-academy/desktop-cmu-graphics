@@ -51,10 +51,7 @@ def onMousePress(mouseX, mouseY):
                 wordLabel.value = app.synonyms[i][0]
                 wordLabel.fill = 'dodgerBlue'
 
-onMousePress(30, 200)
-onMousePress(320, 360)
-onMousePress(240, 30)
-onMousePress(220, 180)
+onMousePress(300, 330)
 
 
 # -
@@ -112,13 +109,7 @@ def onMousePress(mouseX, mouseY):
                 wordLabel.fill = 'dodgerBlue'
 
 onMousePress(200, 30)
-onMousePress(120, 90)
-onMousePress(120, 150)
-onMousePress(200, 150)
-onMousePress(220, 210)
-onMousePress(220, 270)
-onMousePress(340, 270)
-onMousePress(340, 330)
+onMousePress(200, 30)
 
 
 # -
@@ -175,5 +166,6 @@ def onMousePress(mouseX, mouseY):
                 wordLabel.value = app.synonyms[i][0]
                 wordLabel.fill = 'dodgerBlue'
 
-onMousePress(300, 330)
+onMousePress(200, 30)
+onMousePress(200, 30)
 

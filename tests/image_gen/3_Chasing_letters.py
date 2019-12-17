@@ -37,7 +37,7 @@ def onStep():
     if (app.currentIndex == len(app.alphabet)):
         app.currentIndex = 0
 
-onSteps(10)
+onSteps(100)
 app.paused = True
 
 
@@ -125,6 +125,6 @@ def onStep():
     if (app.currentIndex == len(app.alphabet)):
         app.currentIndex = 0
 
-onSteps(25)
+onStep()
 app.paused = True
 

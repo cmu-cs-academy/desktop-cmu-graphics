@@ -234,4 +234,8 @@ def onStep():
               rotateAngle=randrange(0, 360), bold=True)
         )
 
+app.setTextInputs('CS Academy is cool')
+onKeyPress('space')
+onSteps(5)
+app.paused = True
 

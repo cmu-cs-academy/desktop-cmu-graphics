@@ -99,10 +99,6 @@ def onMouseRelease(mouseX, mouseY):
     windows.fill = 'saddleBrown'
     door.fill = 'saddleBrown'
 
-onMousePress(200, 200)
-onMouseRelease(200, 200)
-onMousePress(200, 200)
-onMouseRelease(200, 200)
 
 
 # -
@@ -208,8 +204,6 @@ def onMouseRelease(mouseX, mouseY):
     door.fill = 'saddleBrown'
 
 onMousePress(200, 200)
-onMouseRelease(200, 200)
-onMousePress(200, 200)
 
 
 # -
@@ -315,7 +309,4 @@ def onMouseRelease(mouseX, mouseY):
     door.fill = 'saddleBrown'
 
 onMousePress(200, 200)
-onMouseRelease(200, 200)
-onMousePress(200, 200)
-onMouseRelease(200, 200)
 

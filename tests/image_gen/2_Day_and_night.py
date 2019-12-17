@@ -34,7 +34,7 @@ def onMouseMove(mouseX, mouseY):
     else:
         changeFillsAndMoon('lightSkyBlue', 'yellow', 'mediumSeaGreen', False)
 
-onMouseMove(200, 251)
+onMouseMove(200, 300)
 
 
 # -
@@ -74,6 +74,7 @@ def onMouseMove(mouseX, mouseY):
     else:
         changeFillsAndMoon('lightSkyBlue', 'yellow', 'mediumSeaGreen', False)
 
+onMouseMove(200, 251)
 
 
 # -

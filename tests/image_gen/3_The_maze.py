@@ -85,7 +85,9 @@ def onKeyHold(keys):
         checkLose()
         checkWin()
 
-onKeyHolds(['right'], 40)
+player.centerX = 340
+player.centerY = 330
+onKeyHolds(['left'], 20)
 
 
 # -
@@ -176,6 +178,10 @@ def onKeyHold(keys):
         checkLose()
         checkWin()
 
+player.centerX = 340
+player.centerY = 330
+onKeyHolds(['right'], 20)
+onKeyPress('r')
 
 
 # -
@@ -266,4 +272,5 @@ def onKeyHold(keys):
         checkLose()
         checkWin()
 
+onKeyHolds(['right'], 10)
 

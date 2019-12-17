@@ -25,15 +25,8 @@ def onMousePress(mouseX, mouseY):
             footsteps.remove(footstep)
     drawFootstep(mouseX, mouseY)
 
-onMousePress(100, 200)
-onMousePress(120, 180)
-onMousePress(140, 220)
-onMousePress(160, 160)
-onMousePress(180, 240)
-onMousePress(200, 140)
-onMousePress(220, 260)
-onMousePress(240, 120)
-onMousePress(260, 280)
+onMousePress(100, 100)
+onMousePress(130, 130)
 
 
 # -
@@ -64,7 +57,8 @@ def onMousePress(mouseX, mouseY):
             footsteps.remove(footstep)
     drawFootstep(mouseX, mouseY)
 
-onMousePress(100, 320)
+onMousePress(100, 100)
+onMousePress(130, 130)
 
 
 # -
@@ -95,5 +89,5 @@ def onMousePress(mouseX, mouseY):
             footsteps.remove(footstep)
     drawFootstep(mouseX, mouseY)
 
-onMousePress(100, 320)
+onMousePress(200, 200)
 

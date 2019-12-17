@@ -120,6 +120,9 @@ def onStep():
                        border='red', opacity=70)
                 )
 
+onMousePress(175, 300)
+onMousePress(280, 350)
+app.paused = True
 
 
 # -
@@ -178,13 +181,7 @@ def onStep():
                        border='red', opacity=70)
                 )
 
-onMousePress(100, 100)
-onSteps(5)
-onMousePress(100, 300)
-onSteps(5)
-onMousePress(300, 100)
-onSteps(5)
-onMousePress(300, 300)
-onSteps(5)
+onMousePress(175, 300)
+onMousePress(280, 350)
 app.paused = True
 

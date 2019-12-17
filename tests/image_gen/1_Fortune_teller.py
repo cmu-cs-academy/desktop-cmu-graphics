@@ -41,7 +41,6 @@ def onStep():
 
     glass.fill = colors[app.index]
 
-onSteps(15)
 onMousePress(200, 200)
 
 
@@ -89,7 +88,7 @@ def onStep():
 
     glass.fill = colors[app.index]
 
-onSteps(15)
+onStep()
 onMousePress(200, 200)
 
 
@@ -137,4 +136,6 @@ def onStep():
 
     glass.fill = colors[app.index]
 
+onStep()
+onMousePress(200, 200)
 

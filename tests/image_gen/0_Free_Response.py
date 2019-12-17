@@ -116,9 +116,6 @@ def onStep():
                     elif (flower.state == 'leaf'):
                         bloom(flower)
 
-app.stepsPerSecond = 300
-onSteps(40)
-app.paused = True
 
 
 # -
@@ -241,14 +238,7 @@ def onStep():
                         bloom(flower)
 
 app.stepsPerSecond = 300
-onSteps(285)
-stem = app.plantedFlowers[randrange(0, 2)][randrange(0, 5)]
-stem.timeInState = 150
-onStep()
-stem.timeInState = 150
-onStep()
-stem.timeInState = 150
-onStep()
+onSteps(135)
 app.paused = True
 
 
@@ -371,14 +361,4 @@ def onStep():
                     elif (flower.state == 'leaf'):
                         bloom(flower)
 
-app.stepsPerSecond = 300
-onSteps(285)
-stem = app.plantedFlowers[randrange(0, 2)][randrange(0, 5)]
-stem.timeInState = 150
-onStep()
-stem.timeInState = 150
-onStep()
-stem.timeInState = 150
-onStep()
-app.paused = True
 

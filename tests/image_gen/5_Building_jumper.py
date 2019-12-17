@@ -38,9 +38,6 @@ def onMouseMove(mouseX, mouseY):
     index = mouseX // 25
     spiderman.bottom = app.buildingHeights[index]
 
-onMouseMove(380, 340)
-onMouseMove(80, 210)
-onMouseMove(360, 340)
 
 
 # -
@@ -129,7 +126,4 @@ def onMouseMove(mouseX, mouseY):
     index = mouseX // 25
     spiderman.bottom = app.buildingHeights[index]
 
-onMouseMove(380, 340)
-onMouseMove(80, 210)
-onMouseMove(360, 340)
 

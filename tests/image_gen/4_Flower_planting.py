@@ -31,10 +31,8 @@ def onMousePress(mouseX, mouseY):
         text.value = 'Flowers cannot be planted inside the earth!'
     earth.toFront()
 
-onMousePress(100, 150)
-onMousePress(100, 250)
-onMousePress(300, 250)
-onMousePress(300, 150)
+onMousePress(271, 200)
+onMousePress(270, 200)
 
 
 # -
@@ -71,8 +69,7 @@ def onMousePress(mouseX, mouseY):
         text.value = 'Flowers cannot be planted inside the earth!'
     earth.toFront()
 
-onMousePress(319, 200)
-onMousePress(320, 200)
+onMousePress(200, 200)
 
 
 # -
@@ -109,8 +106,5 @@ def onMousePress(mouseX, mouseY):
         text.value = 'Flowers cannot be planted inside the earth!'
     earth.toFront()
 
-onMousePress(100, 150)
-onMousePress(100, 250)
-onMousePress(300, 250)
-onMousePress(300, 150)
+onMousePress(120, 270)
 

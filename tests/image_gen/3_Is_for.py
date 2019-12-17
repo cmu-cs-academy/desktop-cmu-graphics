@@ -47,9 +47,9 @@ def onMouseMove(mouseX, mouseY):
         if (letter.contains(mouseX, mouseY) == True):
             drawSentenceBox(letter)
 
-letters.add(Label('d', 300, 150))
-onMouseMove(300, 150)
-app.paused
+shape = letters.children[0]
+onMouseMove(shape.centerX, shape.centerY)
+app.paused = True
 
 
 # -
@@ -102,8 +102,8 @@ def onMouseMove(mouseX, mouseY):
         if (letter.contains(mouseX, mouseY) == True):
             drawSentenceBox(letter)
 
-letters.add(Label('a', 200, 200))
-onMouseMove(200, 200)
+shape = letters.children[0]
+onMouseMove(shape.centerX, shape.centerY)
 app.paused = True
 
 

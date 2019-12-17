@@ -47,9 +47,9 @@ def onStep():
     elif ((app.y > 310) and (app.x > 200)):
         app.paused = True
 
-onKeyPress('r')
-app.setTextInputs('or')
+app.setTextInputs('Hello')
 onKeyPress('space')
+onKeyPress('r')
 onSteps(50)
 app.paused = True
 
@@ -104,7 +104,8 @@ def onStep():
     elif ((app.y > 310) and (app.x > 200)):
         app.paused = True
 
-onStep()
+onKeyPresses('r', 7)
+onSteps(50)
 app.paused = True
 
 
@@ -158,8 +159,12 @@ def onStep():
     elif ((app.y > 310) and (app.x > 200)):
         app.paused = True
 
-onKeyPress('r')
-onKeyPress('r')
+app.setTextInputs('quick')
+onKeyPress('space')
+app.setTextInputs('brown')
+onKeyPress('space')
+app.setTextInputs('fox')
+onKeyPress('space')
 onSteps(50)
 app.paused = True
 

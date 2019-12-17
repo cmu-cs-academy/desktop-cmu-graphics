@@ -45,7 +45,7 @@ def onStep():
         rays.opacity = 40
         raysCover.fill = gradient('mediumSeaGreen', 'seaGreen')
 
-onSteps(101)
+onSteps(61)
 app.paused = True
 
 
@@ -149,6 +149,6 @@ def onStep():
         rays.opacity = 40
         raysCover.fill = gradient('mediumSeaGreen', 'seaGreen')
 
-onSteps(100)
+onSteps(101)
 app.paused = True
 

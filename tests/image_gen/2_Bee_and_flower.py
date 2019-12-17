@@ -20,8 +20,7 @@ def beeAndFlower(backgroundColor, flowerColor):
     Oval(80, 112, 40, 75, fill=gradient('gainsboro', 'dimGrey', start='top'),
          opacity=60)
 
-beeAndFlower(gradient('skyBlue', 'dodgerBlue', start='bottom'),
-             gradient('gold', 'pink', 'hotPink'))
+beeAndFlower(rgb(75, 20, 130), gradient('aqua', 'blue', 'forestGreen'))
 
 
 # -
@@ -47,8 +46,7 @@ def beeAndFlower(backgroundColor, flowerColor):
     Oval(80, 112, 40, 75, fill=gradient('gainsboro', 'dimGrey', start='top'),
          opacity=60)
 
-beeAndFlower(gradient('skyBlue', 'dodgerBlue', start='bottom'),
-             gradient('gold', 'pink', 'hotPink'))
+beeAndFlower(rgb(75, 20, 130), gradient('aqua', 'blue', 'forestGreen'))
 
 
 # -

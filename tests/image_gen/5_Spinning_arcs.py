@@ -75,7 +75,7 @@ def onStep():
     for arc in arcs:
         moveArcs(arc)
 
-onSteps(75)
+onStep()
 app.paused = True
 
 
@@ -116,6 +116,6 @@ def onStep():
     for arc in arcs:
         moveArcs(arc)
 
-onSteps(30)
+onStep()
 app.paused = True
 

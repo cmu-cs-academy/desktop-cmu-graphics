@@ -115,6 +115,6 @@ def onStep():
         letterSize -= sizeChange
         index += 1
 
-onStep()
+onSteps(5)
 app.paused = True
 

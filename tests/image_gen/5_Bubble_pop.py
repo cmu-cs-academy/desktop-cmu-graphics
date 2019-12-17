@@ -76,7 +76,7 @@ def onKeyHold(keys):
         bubble.radius = 10
         bubble.centerY = 330
 
-onKeyHold('up')
+onKeyHolds(['up'], 50)
 
 
 # -
@@ -117,5 +117,4 @@ def onKeyHold(keys):
         bubble.radius = 10
         bubble.centerY = 330
 
-onKeyHolds(['up'], 50)
 

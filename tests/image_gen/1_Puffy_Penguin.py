@@ -37,6 +37,8 @@ def onMousePress(mouseX, mouseY):
 
 
 onMousePress(100, 100)
+onMousePress(200, 200)
+onMousePress(100, 300)
 
 
 # -
@@ -123,14 +125,6 @@ def onMousePress(mouseX, mouseY):
 
 
 onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
+onMousePress(200, 200)
+onMousePress(100, 300)
 

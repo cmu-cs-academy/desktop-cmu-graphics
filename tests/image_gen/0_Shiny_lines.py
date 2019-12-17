@@ -17,14 +17,10 @@ def onMouseMove(mouseX, mouseY):
         else:
             Line(400, 400, mouseX, mouseY, fill=gradient('yellow', 'black'))
 
-onMouseMove(195, 55)
-onMouseMove(205, 175)
-onMouseMove(65, 195)
-onMouseMove(25, 205)
-onMouseMove(295, 195)
-onMouseMove(340, 205)
-onMouseMove(195, 290)
-onMouseMove(205, 330)
+onMouseMove(175, 175)
+onMouseMove(175, 225)
+onMouseMove(225, 175)
+onMouseMove(225, 225)
 
 
 # -
@@ -47,13 +43,6 @@ def onMouseMove(mouseX, mouseY):
         else:
             Line(400, 400, mouseX, mouseY, fill=gradient('yellow', 'black'))
 
-onMouseMove(120, 300)
-onMouseMove(380, 240)
-onMouseMove(320, 320)
-onMouseMove(50, 180)
-onMouseMove(240, 160)
-onMouseMove(190, 90)
-onMouseMove(30, 300)
 
 
 # -

@@ -46,6 +46,9 @@ def onKeyHold(keys):
         leftBlade.fill = 'lightGrey'
         rightBlade.fill = 'grey'
 
+onKeyHold(['right'])
+onKeyHold(['down'])
+onKeyHold(['left'])
 
 
 # -
@@ -97,8 +100,11 @@ def onKeyHold(keys):
         leftBlade.fill = 'lightGrey'
         rightBlade.fill = 'grey'
 
-onKeyHolds(['up'], 4)
-onKeyHolds(['left'], 4)
+onKeyHolds(['up', 'left'], 50)
+onKeyHolds(['down'], 100)
+onKeyHolds(['right'], 100)
+onKeyHolds(['up'], 100)
+onKeyHolds(['left'], 50)
 
 
 # -
@@ -150,5 +156,6 @@ def onKeyHold(keys):
         leftBlade.fill = 'lightGrey'
         rightBlade.fill = 'grey'
 
-onKeyHolds(['down', 'left'], 50)
+onKeyHold(['left'])
+onKeyHold(['right'])
 

@@ -31,7 +31,7 @@ def onKeyHold(keys):
         else:
             app.isMouthGrowing = True
 
-onKeyHolds(['a'], 22)
+onKeyHolds(['a', 'd'], 50)
 
 
 # -
@@ -68,7 +68,7 @@ def onKeyHold(keys):
         else:
             app.isMouthGrowing = True
 
-onKeyHolds(['a'], 20)
+onKeyHolds(['a', 'd'], 50)
 
 
 # -

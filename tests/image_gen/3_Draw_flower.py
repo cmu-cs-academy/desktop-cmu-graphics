@@ -14,7 +14,7 @@ def drawFlower(points):
          fill=gradient('magenta', 'darkViolet', 'royalBlue'))
     Circle(200, 200, 20, fill=gradient('yellow', 'gold'))
 
-drawFlower(5)
+drawFlower(10)
 
 
 # -
@@ -34,7 +34,7 @@ def drawFlower(points):
          fill=gradient('magenta', 'darkViolet', 'royalBlue'))
     Circle(200, 200, 20, fill=gradient('yellow', 'gold'))
 
-drawFlower(7)
+drawFlower(5)
 
 
 # -

@@ -76,8 +76,15 @@ def onKeyHold(keys):
     # Move the bird based on the new center of the body.
     moveBird(body.centerX, body.centerY)
 
+onKeyHolds(['a'], 20)
+onKeyHolds(['w'], 10)
+onKeyHolds(['s'], 10)
+onKeyHolds(['a'], 40)
+onKeyHolds(['d'], 40)
 onKeyHolds(['w'], 30)
-onKeyHolds(['a'], 20)
+onKeyHolds(['w'], 30)
+onKeyHolds(['d'], 10)
+onKeyHolds(['a'], 50)
 
 
 # -
@@ -159,7 +166,7 @@ def onKeyHold(keys):
     # Move the bird based on the new center of the body.
     moveBird(body.centerX, body.centerY)
 
-onKeyHolds(['a'], 10)
+onKeyHolds(['d'], 20)
 
 
 # -
@@ -241,6 +248,4 @@ def onKeyHold(keys):
     # Move the bird based on the new center of the body.
     moveBird(body.centerX, body.centerY)
 
-onKeyHolds(['a'], 20)
-onKeyHolds(['d'], 30)
 

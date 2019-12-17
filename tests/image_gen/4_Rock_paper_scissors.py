@@ -70,14 +70,8 @@ def onKeyPress(key):
 drawLeftHand()
 drawRightHand()
 
-onKeyPress('f')
 onKeyPress('d')
-onKeyPress('s')
-onKeyPress('l')
-onKeyPress('d')
-onKeyPress('j')
 onKeyPress('k')
-onKeyPress('s')
 
 
 # -
@@ -153,8 +147,12 @@ def onKeyPress(key):
 drawLeftHand()
 drawRightHand()
 
-onKeyPress('s')
-onKeyPress('j')
+onKeyPress('q')
+onKeyPress('9')
+onKeyPress('/')
+onKeyPress('m')
+onKeyPress('a')
+onKeyPress('left')
 
 
 # -

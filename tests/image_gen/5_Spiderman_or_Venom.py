@@ -23,6 +23,11 @@ def onMouseRelease(mouseX, mouseY):
     app.background = 'red'
 
 onMousePress(100, 100)
+onMouseRelease(100, 100)
+onMousePress(100, 100)
+onMouseRelease(200, 200)
+onMousePress(100, 100)
+onMouseRelease(200, 200)
 
 
 # -
@@ -50,12 +55,6 @@ def onMouseRelease(mouseX, mouseY):
     # Change from Venom to Spiderman.
     app.background = 'red'
 
-onMousePress(100, 100)
-onMouseRelease(100, 100)
-onMousePress(100, 100)
-onMouseRelease(200, 200)
-onMousePress(100, 100)
-onMouseRelease(200, 200)
 
 
 # -

@@ -32,11 +32,9 @@ def onMouseMove(mouseX, mouseY):
         rightEyebrow.rotateAngle = 15
 
 onMouseMove(50, 350)
-onMouseMove(150, 375)
-onMouseMove(250, 320)
-onMouseMove(350, 300)
-onMouseMove(200, 360)
-onMouseMove(0, 400)
+onMouseMove(350, 375)
+onMouseMove(180, 200)
+onMouseMove(230, 100)
 
 
 # -
@@ -73,10 +71,6 @@ def onMouseMove(mouseX, mouseY):
         leftEyebrow.rotateAngle = -15
         rightEyebrow.rotateAngle = 15
 
-onMouseMove(100, 300)
-onMouseMove(300, 300)
-onMouseMove(160, 250)
-onMouseMove(220, 240)
 
 
 # -

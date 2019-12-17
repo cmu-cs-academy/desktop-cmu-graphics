@@ -28,7 +28,6 @@ def makeWatch(centerX, centerY, smallerTickRadius, largerTickRadius, outerRadius
 
 makeWatch(200, 200, 120, 145, 165)
 makeWatch(245, 235, 25, 35, 45)
-makeWatch(140, 205, 20, 28, 30)
 
 
 # -
@@ -60,6 +59,8 @@ def makeWatch(centerX, centerY, smallerTickRadius, largerTickRadius, outerRadius
         outerX, outerY = getPointInDir(centerX, centerY, angle, outerRadius)
         Line(innerX, innerY, outerX, outerY)
 
+makeWatch(200, 200, 120, 145, 165)
+makeWatch(245, 235, 25, 35, 45)
 
 
 # -
@@ -91,4 +92,5 @@ def makeWatch(centerX, centerY, smallerTickRadius, largerTickRadius, outerRadius
         outerX, outerY = getPointInDir(centerX, centerY, angle, outerRadius)
         Line(innerX, innerY, outerX, outerY)
 
+makeWatch(200, 200, 145, 120, 165)
 

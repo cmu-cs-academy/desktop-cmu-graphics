@@ -85,6 +85,5 @@ def onKeyHold(keys):
             star1.roundness -= 2
             star2.roundness += 2
 
-onKeyHolds(['up'], 10)
-onKeyHolds(['down'], 12)
+onKeyHolds(['up'], 8)
 

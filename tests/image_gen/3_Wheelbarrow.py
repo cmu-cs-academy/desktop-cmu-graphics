@@ -111,8 +111,6 @@ def onKeyPress(key):
         elif (key == 'left'):
             moveWheelbarrow(-35)
 
-onKeyPress('up')
-onKeyPress('down')
 
 
 # -

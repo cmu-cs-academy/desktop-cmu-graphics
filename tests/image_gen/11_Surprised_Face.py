@@ -27,7 +27,7 @@ def onKeyHold(keys):
     if (('up' in keys) and ('down' in keys)):
         expandVertical()
 
-onKeyHolds(['right'], 20)
+onKeyHolds(['left'], 20)
 
 
 # -
@@ -60,7 +60,7 @@ def onKeyHold(keys):
     if (('up' in keys) and ('down' in keys)):
         expandVertical()
 
-onKeyHolds(['up'], 20)
+onKeyHolds(['left', 'right'], 100)
 
 
 # -
@@ -93,5 +93,5 @@ def onKeyHold(keys):
     if (('up' in keys) and ('down' in keys)):
         expandVertical()
 
-onKeyHolds(['up', 'down'], 20)
+onKeyHolds(['left', 'right'], 100)
 

@@ -37,8 +37,6 @@ def onStep():
         cartwheelCounter.value += 1
         app.degreesSinceLastCartwheel = 0
 
-onSteps(20)
-app.paused = True
 
 
 # -
@@ -81,6 +79,7 @@ def onStep():
         cartwheelCounter.value += 1
         app.degreesSinceLastCartwheel = 0
 
+onStep()
 onStep()
 app.paused = True
 

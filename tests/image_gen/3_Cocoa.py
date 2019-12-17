@@ -60,7 +60,6 @@ def onKeyHold(keys):
     if (steamCover.opacity < 99):
         steamCover.opacity += 1
 
-onKeyHolds(['space'], 100)
 
 
 # -
@@ -191,4 +190,5 @@ def onKeyHold(keys):
     if (steamCover.opacity < 99):
         steamCover.opacity += 1
 
+onKeyHolds(['space'], 50)
 

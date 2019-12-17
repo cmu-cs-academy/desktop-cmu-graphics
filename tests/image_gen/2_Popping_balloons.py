@@ -18,7 +18,8 @@ def onMouseRelease(mouseX, mouseY):
     Star(200, 200, 210, 9, fill='grey', roundness=10)
     Star(200, 200, 190, 9, fill='lightSkyBlue', roundness=70)
 
-onMousePress(300, 300)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
 
 
 # -
@@ -42,7 +43,8 @@ def onMouseRelease(mouseX, mouseY):
     Star(200, 200, 210, 9, fill='grey', roundness=10)
     Star(200, 200, 190, 9, fill='lightSkyBlue', roundness=70)
 
-onMousePress(300, 300)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
 
 
 # -
@@ -66,5 +68,6 @@ def onMouseRelease(mouseX, mouseY):
     Star(200, 200, 210, 9, fill='grey', roundness=10)
     Star(200, 200, 190, 9, fill='lightSkyBlue', roundness=70)
 
-onMousePress(300, 300)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
 

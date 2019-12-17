@@ -76,7 +76,7 @@ def onKeyHold(keys):
     halo.centerX = star.centerX
     halo.centerY = star.centerY
 
-onKeyHolds(['right'], 10)
+onKeyHolds(['right'], 79)
 
 
 # -
@@ -118,4 +118,7 @@ def onKeyHold(keys):
     halo.centerY = star.centerY
 
 onKeyHolds(['left'], 5)
+onKeyHolds(['1'], 15)
+onKeyHolds(['t'], 5)
+onKeyHolds(['L'], 10)
 

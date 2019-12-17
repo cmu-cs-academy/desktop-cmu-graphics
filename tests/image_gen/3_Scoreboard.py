@@ -95,8 +95,9 @@ def finalScoreboard(homeScore, awayScore):
         homeLabel.fill = 'red'
 
 
-finalScoreboard(32, 19)
-finalScoreboard(25, 24)
+finalScoreboard(19, 10)
+finalScoreboard(55, 25)
+finalScoreboard(40, 30)
 
 
 # -
@@ -146,6 +147,11 @@ def finalScoreboard(homeScore, awayScore):
         homeLabel.fill = 'red'
 
 
-finalScoreboard(24, 27)
-finalScoreboard(40, 56)
+finalScoreboard(65, 56)
+finalScoreboard(24, 28)
+finalScoreboard(26, 53)
+finalScoreboard(36, 31)
+finalScoreboard(50, 66)
+finalScoreboard(61, 24)
+finalScoreboard(14, 42)
 

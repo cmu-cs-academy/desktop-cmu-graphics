@@ -43,7 +43,6 @@ def onKeyRelease(key):
 
 onKeyPress('space')
 onKeyRelease('space')
-onKeyPress('space')
 
 
 # -
@@ -92,6 +91,7 @@ def onKeyRelease(key):
 
 onKeyPress('space')
 onKeyRelease('space')
+onKeyPress('space')
 onKeyRelease('space')
 
 
@@ -140,6 +140,5 @@ def onKeyRelease(key):
         upWing.visible = True
 
 onKeyPress('space')
-onKeyRelease('space')
 onKeyRelease('space')
 

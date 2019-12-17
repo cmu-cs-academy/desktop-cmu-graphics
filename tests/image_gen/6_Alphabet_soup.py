@@ -45,6 +45,7 @@ def onKeyPress(key):
         labels.clear()
         drawLettersInSoup()
 
+onKeyPress('space')
 
 
 # -
@@ -147,5 +148,6 @@ def onKeyPress(key):
         labels.clear()
         drawLettersInSoup()
 
+onKeyPress('space')
 onKeyPress('space')
 

@@ -63,7 +63,7 @@ def onMouseMove(mouseX, mouseY):
     secondArm.x1 = firstArm.x2
     secondArm.y1 = firstArm.y2
 
-onMouseMove(200, 50)
+onMouseMove(355, 355)
 
 
 # -
@@ -132,7 +132,8 @@ def onMouseMove(mouseX, mouseY):
     secondArm.x1 = firstArm.x2
     secondArm.y1 = firstArm.y2
 
-onMouseMove(50, 300)
+onMouseMove(370, 80)
+onMouseMove(250, 150)
 
 
 # -

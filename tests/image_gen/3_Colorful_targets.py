@@ -9,12 +9,8 @@ def onMousePress(mouseX, mouseY):
     Circle(mouseX, mouseY, 2 * radius, fill=color1)
     Circle(mouseX, mouseY, radius, fill=color2)
 
-onMousePress(30, 240)
-onMousePress(290, 220)
-onMousePress(260, 140)
-onMousePress(250, 380)
-onMousePress(300, 280)
-onMousePress(90, 70)
+onMousePress(100, 300)
+onMousePress(300, 100)
 
 
 # -
@@ -29,7 +25,6 @@ def onMousePress(mouseX, mouseY):
     Circle(mouseX, mouseY, 2 * radius, fill=color1)
     Circle(mouseX, mouseY, radius, fill=color2)
 
-onMousePress(100, 100)
 
 
 # -

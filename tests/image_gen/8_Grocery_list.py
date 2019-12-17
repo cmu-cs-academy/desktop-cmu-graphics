@@ -101,12 +101,8 @@ def onStep():
     if (app.time <= 0):
         app.stop()
 
-onMousePress(320, 200)
-onMousePress(80, 200)
-onMousePress(200, 80)
 onMousePress(200, 200)
-onMousePress(80, 80)
-onMousePress(320, 80)
+onMousePress(320, 200)
 app.paused = True
 
 
@@ -214,6 +210,9 @@ def onStep():
     if (app.time <= 0):
         app.stop()
 
+onMousePress(200, 200)
+onMousePress(320, 200)
+app.paused = True
 
 
 # -
@@ -320,6 +319,4 @@ def onStep():
     if (app.time <= 0):
         app.stop()
 
-onMousePress(80, 80)
-app.paused = True
 

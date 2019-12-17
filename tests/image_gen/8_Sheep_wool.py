@@ -55,7 +55,7 @@ def onStep():
     letter = alphabet[randrange(0, len(alphabet))]
     writeLetter(letter)
 
-onStep()
+onSteps(5)
 app.paused = True
 
 
@@ -179,4 +179,6 @@ def onStep():
     letter = alphabet[randrange(0, len(alphabet))]
     writeLetter(letter)
 
+onStep()
+app.paused = True
 

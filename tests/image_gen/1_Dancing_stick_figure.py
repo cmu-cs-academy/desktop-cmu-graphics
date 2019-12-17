@@ -36,7 +36,10 @@ def onKeyPress(key):
     elif (key == 'right'):
         toggleRightArm()
 
-onKeyPress('left')
+onKeyPress('right')
+onKeyPress('right')
+onKeyPress('right')
+onKeyPress('right')
 onKeyPress('right')
 
 
@@ -79,8 +82,7 @@ def onKeyPress(key):
     elif (key == 'right'):
         toggleRightArm()
 
-onKeyPress('left')
-onKeyPress('left')
+onKeyPress('down')
 
 
 # -
@@ -122,5 +124,5 @@ def onKeyPress(key):
     elif (key == 'right'):
         toggleRightArm()
 
-onKeyPress('left')
+onKeyPress('down')
 

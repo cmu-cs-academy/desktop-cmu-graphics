@@ -44,8 +44,6 @@ onMousePress(100, 100)
 onMousePress(100, 100)
 onMousePress(100, 100)
 onMousePress(100, 100)
-onMousePress(100, 100)
-onMousePress(100, 100)
 
 
 # -
@@ -134,5 +132,7 @@ def onMousePress(mouseX, mouseY):
         app.background = gradient('lightSlateGrey', 'lightGrey', start='top')
         drawSpill()
 
+onMousePress(100, 100)
+onMousePress(100, 100)
 onMousePress(100, 100)
 

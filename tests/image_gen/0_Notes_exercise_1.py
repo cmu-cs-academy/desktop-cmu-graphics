@@ -193,6 +193,8 @@ def onStep():
         Label('GAME OVER', 200, 200, fill='white', size=40)
         app.stop()
 
+onMousePress(50, 150)
+app.paused = True
 
 
 # -
@@ -290,6 +292,14 @@ def onStep():
         Label('GAME OVER', 200, 200, fill='white', size=40)
         app.stop()
 
-onSteps(30)
+onMousePress(50, 150)
+onMousePress(150, 150)
+onStep()
+onMousePress(250, 250)
+onMousePress(250, 350)
+onStep()
+onMousePress(50, 350)
+onMousePress(250, 350)
+onStep()
 app.paused = True
 
