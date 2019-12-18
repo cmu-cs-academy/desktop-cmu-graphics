@@ -1,26 +1,35 @@
-import time
-import uuid
 import os
+import sys
 from shutil import copy2
 
-import requests
-from selenium import webdriver
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
+'''
+The following imports are imported inline because they need to be imported
+after the venv is initialized.
+'''
+# import time
+# import uuid
+# import requests
+
+# from selenium import webdriver
+# from selenium.webdriver.support import expected_conditions as EC
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.support.ui import WebDriverWait
 
 FRONTEND_HOST = "http://localhost:3000"
 BACKEND_HOST = "http://localhost:8000"
 REGISTRATION_CODE = "woo_teacher"
 
 def copy_file(original_path, new_path):
-    try:
-        os.system('cp %s %s' % (original_path, new_path))
-    except:
+    if sys.platform.startswith('win'):
         copy2(original_path, new_path)
+    else:
+        os.system('cp %s %s' % (original_path, new_path))
 
 
 def wait_for_server(url, timeout, label):
+    import time
+    import requests
+
     num_retries = 0
     while True:
         try:
@@ -37,6 +46,15 @@ def wait_for_server(url, timeout, label):
 
 
 def setup_driver(headless=False, use_firefox=False):
+    import uuid
+
+    import requests
+
+    from selenium import webdriver
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+
     if use_firefox:
         options = webdriver.firefox.options.Options()
         options.set_headless(headless)

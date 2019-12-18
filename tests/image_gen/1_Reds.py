@@ -31,6 +31,8 @@ def onStep():
     if (app.y >= 400):
         app.paused = True
 
+onSteps(10)
+app.paused = True
 
 
 # -
@@ -67,7 +69,7 @@ def onStep():
     if (app.y >= 400):
         app.paused = True
 
-onSteps(16)
+onSteps(20)
 app.paused = True
 
 

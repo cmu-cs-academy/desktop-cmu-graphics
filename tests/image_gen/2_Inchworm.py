@@ -52,6 +52,9 @@ def onMouseRelease(mouseX, mouseY):
     wormUp.centerX += 15
 
 onMousePress(200, 200)
+onMouseRelease(200, 200)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
 
 
 # -
@@ -108,8 +111,6 @@ def onMouseRelease(mouseX, mouseY):
     wormDown.centerX += 15
     wormUp.centerX += 15
 
-onMousePress(200, 200)
-onMouseRelease(200, 200)
 onMousePress(200, 200)
 
 

@@ -9,6 +9,14 @@ def onMousePress(mouseX, mouseY):
     ball.bottom = platform.top
 
 onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
 
 
 # -
@@ -22,6 +30,14 @@ def onMousePress(mouseX, mouseY):
     platform.rotateAngle -= 10
     ball.bottom = platform.top
 
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
+onMousePress(200, 200)
 onMousePress(200, 200)
 
 

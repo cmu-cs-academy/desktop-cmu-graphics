@@ -67,6 +67,8 @@ def onMousePress(mouseX, mouseY):
     cactusTop.toFront()
     sand.toFront()
 
+onMousePress(70, 150)
+onMousePress(330, 180)
 
 
 # -

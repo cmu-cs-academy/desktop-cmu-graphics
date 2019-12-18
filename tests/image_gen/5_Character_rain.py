@@ -45,7 +45,7 @@ def onStep():
 
     tanks.toFront()
 
-onSteps(30)
+onStep()
 app.paused = True
 
 

@@ -96,7 +96,6 @@ def onStep():
                 bubbles.remove(bubble)
 
 onSteps(10)
-onMouseMove(100, 300)
 app.paused = True
 
 
@@ -199,8 +198,7 @@ def onStep():
                 bubbles.remove(bubble)
 
 onSteps(10)
-onMouseMove(bubbles.centerX, bubbles.centerY)
-onStep()
+onMouseMove(100, 300)
 app.paused = True
 
 
@@ -302,8 +300,10 @@ def onStep():
             if (bubble.top >= 400):
                 bubbles.remove(bubble)
 
-onSteps(15)
-onMouseMove(bubbles.centerX, bubbles.centerY)
+player.width = 400
+player.height = 100
+onSteps(50)
+onMouseMove(200, 200)
 onStep()
 app.paused = True
 

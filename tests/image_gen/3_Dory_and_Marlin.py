@@ -51,6 +51,7 @@ def onMouseMove(mouseX, mouseY):
         rightBubble.centerY = 200
         rightBubble.left = 200
 
+onMouseMove(130, 250)
 
 
 # -
@@ -163,5 +164,5 @@ def onMouseMove(mouseX, mouseY):
         rightBubble.centerY = 200
         rightBubble.left = 200
 
-onMouseMove(40, 140)
+onMouseMove(399, 300)
 

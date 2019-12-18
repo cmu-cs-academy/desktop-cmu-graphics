@@ -108,9 +108,13 @@ def onStep():
         score.value += 1
 
 onKeyPress('r')
-onSteps(5)
+onSteps(7)
 onKeyPress('a')
-onSteps(9)
+onSteps(4)
+onKeyPress('w')
+onSteps(2)
+onKeyPress('d')
+onSteps(4)
 app.paused = True
 
 
@@ -225,6 +229,8 @@ def onStep():
         score.value += 1
 
 onKeyPress('r')
+onSteps(5)
+onKeyPress('a')
 onSteps(10)
 app.paused = True
 
@@ -340,5 +346,6 @@ def onStep():
         score.value += 1
 
 onKeyPress('r')
+onStep()
 app.paused = True
 

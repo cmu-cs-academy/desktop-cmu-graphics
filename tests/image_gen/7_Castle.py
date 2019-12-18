@@ -150,7 +150,7 @@ def drawCastleScene(skyColor, groundColor, moatColor, bushColor1, bushColor2,
     drawCover(125, 220, 150, 5)
     drawGate(gateColor, gateLineColor, windowColor)
 
-drawCastleScene(rgb(180, 220, 255), rgb(40, 170, 100), rgb(180, 220, 255),
-                'forestGreen', rgb(30, 160, 80), 'mintCream',
-                rgb(80, 120, 200), 'grey', 'peru', 'saddleBrown')
+drawCastleScene(rgb(20, 25, 70), 'darkGreen', rgb(50, 55, 110), 'darkGreen',
+                'forestGreen', 'silver', rgb(55, 70, 140), 'gold', 'sienna',
+                rgb(80, 30, 15))
 

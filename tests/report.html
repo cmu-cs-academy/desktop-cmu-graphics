@@ -14,4 +14,1512 @@ div.error img {
 </style>
 </head>
 <body>
-</body></html>
+<div class='error'><p>Part 1 MSE 3910</p><img src='image_gen/0_Bumper_cars/correct_1.png' /><img src='image_gen/0_Bumper_cars/output_1.png' /><img src='image_gen/0_Bumper_cars/diff_1.png' /><p>Source code for part 1:</p><pre>import sys
+
+
+
+sys.path.insert(0, "..")
+
+
+
+from cmu_graphics import *
+
+
+
+app.background = 'darkRed'
+
+
+
+
+
+
+
+# players
+
+
+
+player1 = Group(
+
+
+
+    Oval(30, 30, 60, 40, fill=gradient('salmon', 'white', start='left'),
+
+
+
+         border='white', borderWidth=5),
+
+
+
+    Line(10, 10, 25, 10, lineWidth=8),
+
+
+
+    Line(40, 10, 55, 10, lineWidth=8),
+
+
+
+    Line(10, 50, 25, 50, lineWidth=8),
+
+
+
+    Line(40, 50, 55, 50, lineWidth=8),
+
+
+
+    Oval(50, 30, 5, 20),
+
+
+
+    Line(25, 20, 50, 25, fill='dimGrey'),
+
+
+
+    Line(25, 40, 50, 35, fill='dimGrey'),
+
+
+
+    Oval(30, 30, 20, 30, fill='dimGrey'),
+
+
+
+    Circle(30, 30, 10),
+
+
+
+    Polygon(5, 30, -5, -10, -10, -10, -10, -8)
+
+
+
+    )
+
+
+
+
+
+
+
+player2 = Group(
+
+
+
+    Oval(370, 370, 60, 40, fill=gradient('cornflowerBlue', 'white', start='left'),
+
+
+
+         border='white', borderWidth=5),
+
+
+
+    Line(390, 390, 375, 390, lineWidth=8),
+
+
+
+    Line(360, 390, 345, 390, lineWidth=8),
+
+
+
+    Line(390, 350, 375, 350, lineWidth=8),
+
+
+
+    Line(360, 350, 345, 350, lineWidth=8),
+
+
+
+    Oval(350, 370, 5, 20),
+
+
+
+    Line(375, 380, 350, 375, fill='dimGrey'),
+
+
+
+    Line(375, 360, 350, 365, fill='dimGrey'),
+
+
+
+    Oval(370, 370, 20, 30, fill='dimGrey'),
+
+
+
+    Circle(370, 370, 10),
+
+
+
+    Polygon(395, 370, 405, 410, 410, 410, 410, 408)
+
+
+
+    )
+
+
+
+
+
+
+
+offenseInfo = Label('Player 1 is on Offense', 200, 20, fill='salmon', size=24)
+
+
+
+Label('Time until switch:', 180, 50, fill='white', size=15)
+
+
+
+timer = Label(50, 250, 50, fill='white', size=15)
+
+
+
+
+
+
+
+def wrapPlayer(player):
+
+
+
+    if (player.centerX > 400):
+
+
+
+        player.centerX = 0
+
+
+
+    elif (player.centerX < 0):
+
+
+
+        player.centerX = 400
+
+
+
+
+
+
+
+    if (player.centerY > 400):
+
+
+
+        player.centerY = 0
+
+
+
+    elif (player.centerY < 0):
+
+
+
+        player.centerY = 400
+
+
+
+
+
+
+
+def onKeyHold(keys):
+
+
+
+    # Move player1 in response to the keys w-a-s-d (up-left-down-right).
+
+
+
+    # Turn the car to the appropriate angle for each direction it moves.
+
+
+
+    if ('w' in keys):
+
+
+
+        player1.centerY -= 10
+
+
+
+        player1.rotateAngle = -90
+
+
+
+    if ('s' in keys):
+
+
+
+        player1.centerY += 10
+
+
+
+        player1.rotateAngle = 90
+
+
+
+    if ('a' in keys):
+
+
+
+        player1.centerX -= 10
+
+
+
+        player1.rotateAngle = 180
+
+
+
+    if ('d' in keys):
+
+
+
+        player1.centerX += 10
+
+
+
+        player1.rotateAngle = 0
+
+
+
+
+
+
+
+    # Move player2 in response to the respective arrow keys. Turn the car
+
+
+
+    # to the appropriate angle for each direction it moves.
+
+
+
+    if ('up' in keys):
+
+
+
+        player2.centerY -= 10
+
+
+
+        player2.rotateAngle = 90
+
+
+
+    if ('down' in keys):
+
+
+
+        player2.centerY += 10
+
+
+
+        player2.rotateAngle = -90
+
+
+
+    if ('left' in keys):
+
+
+
+        player2.centerX -= 10
+
+
+
+        player2.rotateAngle = 0
+
+
+
+    if ('right' in keys):
+
+
+
+        player2.centerX += 10
+
+
+
+        player2.rotateAngle = 180
+
+
+
+
+
+
+
+    # Call the helper function to wrap the players around when they leave the
+
+
+
+    # canvas.
+
+
+
+    wrapPlayer(player1)
+
+
+
+    wrapPlayer(player2)
+
+
+
+
+
+
+
+    # End the game if the cars collide, and then display the winner.
+
+
+
+    if (player1.hitsShape(player2) == True):
+
+
+
+        if (offenseInfo.fill == 'salmon'):
+
+
+
+            Label('Player 1 Wins!', 200, 20, fill='salmon', size=24)
+
+
+
+        else:
+
+
+
+            Label('Player 2 Wins!', 200, 20, fill='cornflowerBlue', size=24)
+
+
+
+
+
+
+
+        offenseInfo.visible = False
+
+
+
+        app.stop()
+
+
+
+
+
+
+
+def onStep():
+
+
+
+    # When the timer is 0, change who is on offense and reset the timer.
+
+
+
+    timer.value -= 1
+
+
+
+    if (timer.value <= 0):
+
+
+
+        if (offenseInfo.fill == 'cornflowerBlue'):
+
+
+
+            offenseInfo.value = 'Player 1 is on Offense'
+
+
+
+            offenseInfo.fill = 'salmon'
+
+
+
+            app.background = 'darkRed'
+
+
+
+        else:
+
+
+
+            offenseInfo.value = 'Player 2 is on Offense'
+
+
+
+            offenseInfo.fill = 'cornflowerBlue'
+
+
+
+            app.background = 'darkBlue'
+
+
+
+
+
+
+
+        timer.value = 50
+
+
+
+
+
+
+
+
+
+def onKeyHolds(keys, n):
+
+    for i in range(n):
+
+        onKeyHold(keys)
+
+
+
+
+def onSteps(n):
+    for i in range(n):
+        onStep()
+
+
+
+
+onSteps(110)
+
+
+
+onKeyHolds(['s', 'd'], 35)
+
+
+
+app.paused = True
+
+
+
+
+
+
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Bumper_cars/output_1.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><div class='error'><p>Part 2 MSE 4662</p><img src='image_gen/0_Bumper_cars/correct_2.png' /><img src='image_gen/0_Bumper_cars/output_2.png' /><img src='image_gen/0_Bumper_cars/diff_2.png' /><p>Source code for part 2:</p><pre>import sys
+
+sys.path.insert(0, "..")
+
+from cmu_graphics import *
+
+app.background = 'darkRed'
+
+
+
+# players
+
+player1 = Group(
+
+    Oval(30, 30, 60, 40, fill=gradient('salmon', 'white', start='left'),
+
+         border='white', borderWidth=5),
+
+    Line(10, 10, 25, 10, lineWidth=8),
+
+    Line(40, 10, 55, 10, lineWidth=8),
+
+    Line(10, 50, 25, 50, lineWidth=8),
+
+    Line(40, 50, 55, 50, lineWidth=8),
+
+    Oval(50, 30, 5, 20),
+
+    Line(25, 20, 50, 25, fill='dimGrey'),
+
+    Line(25, 40, 50, 35, fill='dimGrey'),
+
+    Oval(30, 30, 20, 30, fill='dimGrey'),
+
+    Circle(30, 30, 10),
+
+    Polygon(5, 30, -5, -10, -10, -10, -10, -8)
+
+    )
+
+
+
+player2 = Group(
+
+    Oval(370, 370, 60, 40, fill=gradient('cornflowerBlue', 'white', start='left'),
+
+         border='white', borderWidth=5),
+
+    Line(390, 390, 375, 390, lineWidth=8),
+
+    Line(360, 390, 345, 390, lineWidth=8),
+
+    Line(390, 350, 375, 350, lineWidth=8),
+
+    Line(360, 350, 345, 350, lineWidth=8),
+
+    Oval(350, 370, 5, 20),
+
+    Line(375, 380, 350, 375, fill='dimGrey'),
+
+    Line(375, 360, 350, 365, fill='dimGrey'),
+
+    Oval(370, 370, 20, 30, fill='dimGrey'),
+
+    Circle(370, 370, 10),
+
+    Polygon(395, 370, 405, 410, 410, 410, 410, 408)
+
+    )
+
+
+
+offenseInfo = Label('Player 1 is on Offense', 200, 20, fill='salmon', size=24)
+
+Label('Time until switch:', 180, 50, fill='white', size=15)
+
+timer = Label(50, 250, 50, fill='white', size=15)
+
+
+
+def wrapPlayer(player):
+
+    if (player.centerX > 400):
+
+        player.centerX = 0
+
+    elif (player.centerX < 0):
+
+        player.centerX = 400
+
+
+
+    if (player.centerY > 400):
+
+        player.centerY = 0
+
+    elif (player.centerY < 0):
+
+        player.centerY = 400
+
+
+
+def onKeyHold(keys):
+
+    # Move player1 in response to the keys w-a-s-d (up-left-down-right).
+
+    # Turn the car to the appropriate angle for each direction it moves.
+
+    if ('w' in keys):
+
+        player1.centerY -= 10
+
+        player1.rotateAngle = -90
+
+    if ('s' in keys):
+
+        player1.centerY += 10
+
+        player1.rotateAngle = 90
+
+    if ('a' in keys):
+
+        player1.centerX -= 10
+
+        player1.rotateAngle = 180
+
+    if ('d' in keys):
+
+        player1.centerX += 10
+
+        player1.rotateAngle = 0
+
+
+
+    # Move player2 in response to the respective arrow keys. Turn the car
+
+    # to the appropriate angle for each direction it moves.
+
+    if ('up' in keys):
+
+        player2.centerY -= 10
+
+        player2.rotateAngle = 90
+
+    if ('down' in keys):
+
+        player2.centerY += 10
+
+        player2.rotateAngle = -90
+
+    if ('left' in keys):
+
+        player2.centerX -= 10
+
+        player2.rotateAngle = 0
+
+    if ('right' in keys):
+
+        player2.centerX += 10
+
+        player2.rotateAngle = 180
+
+
+
+    # Call the helper function to wrap the players around when they leave the
+
+    # canvas.
+
+    wrapPlayer(player1)
+
+    wrapPlayer(player2)
+
+
+
+    # End the game if the cars collide, and then display the winner.
+
+    if (player1.hitsShape(player2) == True):
+
+        if (offenseInfo.fill == 'salmon'):
+
+            Label('Player 1 Wins!', 200, 20, fill='salmon', size=24)
+
+        else:
+
+            Label('Player 2 Wins!', 200, 20, fill='cornflowerBlue', size=24)
+
+
+
+        offenseInfo.visible = False
+
+        app.stop()
+
+
+
+def onStep():
+
+    # When the timer is 0, change who is on offense and reset the timer.
+
+    timer.value -= 1
+
+    if (timer.value <= 0):
+
+        if (offenseInfo.fill == 'cornflowerBlue'):
+
+            offenseInfo.value = 'Player 1 is on Offense'
+
+            offenseInfo.fill = 'salmon'
+
+            app.background = 'darkRed'
+
+        else:
+
+            offenseInfo.value = 'Player 2 is on Offense'
+
+            offenseInfo.fill = 'cornflowerBlue'
+
+            app.background = 'darkBlue'
+
+
+
+        timer.value = 50
+
+
+def onKeyHolds(keys, n):
+    for i in range(n):
+        onKeyHold(keys)
+
+
+
+
+onKeyHolds(['d'], 30)
+
+onKeyHolds(['s'], 20)
+
+onKeyHolds(['a'], 10)
+
+app.paused = True
+
+
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Bumper_cars/output_2.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><div class='error'><p>Part 3 MSE 4655</p><img src='image_gen/0_Bumper_cars/correct_3.png' /><img src='image_gen/0_Bumper_cars/output_3.png' /><img src='image_gen/0_Bumper_cars/diff_3.png' /><p>Source code for part 3:</p><pre>import sys
+
+sys.path.insert(0, "..")
+
+from cmu_graphics import *
+
+app.background = 'darkRed'
+
+
+
+# players
+
+player1 = Group(
+
+    Oval(30, 30, 60, 40, fill=gradient('salmon', 'white', start='left'),
+
+         border='white', borderWidth=5),
+
+    Line(10, 10, 25, 10, lineWidth=8),
+
+    Line(40, 10, 55, 10, lineWidth=8),
+
+    Line(10, 50, 25, 50, lineWidth=8),
+
+    Line(40, 50, 55, 50, lineWidth=8),
+
+    Oval(50, 30, 5, 20),
+
+    Line(25, 20, 50, 25, fill='dimGrey'),
+
+    Line(25, 40, 50, 35, fill='dimGrey'),
+
+    Oval(30, 30, 20, 30, fill='dimGrey'),
+
+    Circle(30, 30, 10),
+
+    Polygon(5, 30, -5, -10, -10, -10, -10, -8)
+
+    )
+
+
+
+player2 = Group(
+
+    Oval(370, 370, 60, 40, fill=gradient('cornflowerBlue', 'white', start='left'),
+
+         border='white', borderWidth=5),
+
+    Line(390, 390, 375, 390, lineWidth=8),
+
+    Line(360, 390, 345, 390, lineWidth=8),
+
+    Line(390, 350, 375, 350, lineWidth=8),
+
+    Line(360, 350, 345, 350, lineWidth=8),
+
+    Oval(350, 370, 5, 20),
+
+    Line(375, 380, 350, 375, fill='dimGrey'),
+
+    Line(375, 360, 350, 365, fill='dimGrey'),
+
+    Oval(370, 370, 20, 30, fill='dimGrey'),
+
+    Circle(370, 370, 10),
+
+    Polygon(395, 370, 405, 410, 410, 410, 410, 408)
+
+    )
+
+
+
+offenseInfo = Label('Player 1 is on Offense', 200, 20, fill='salmon', size=24)
+
+Label('Time until switch:', 180, 50, fill='white', size=15)
+
+timer = Label(50, 250, 50, fill='white', size=15)
+
+
+
+def wrapPlayer(player):
+
+    if (player.centerX > 400):
+
+        player.centerX = 0
+
+    elif (player.centerX < 0):
+
+        player.centerX = 400
+
+
+
+    if (player.centerY > 400):
+
+        player.centerY = 0
+
+    elif (player.centerY < 0):
+
+        player.centerY = 400
+
+
+
+def onKeyHold(keys):
+
+    # Move player1 in response to the keys w-a-s-d (up-left-down-right).
+
+    # Turn the car to the appropriate angle for each direction it moves.
+
+    if ('w' in keys):
+
+        player1.centerY -= 10
+
+        player1.rotateAngle = -90
+
+    if ('s' in keys):
+
+        player1.centerY += 10
+
+        player1.rotateAngle = 90
+
+    if ('a' in keys):
+
+        player1.centerX -= 10
+
+        player1.rotateAngle = 180
+
+    if ('d' in keys):
+
+        player1.centerX += 10
+
+        player1.rotateAngle = 0
+
+
+
+    # Move player2 in response to the respective arrow keys. Turn the car
+
+    # to the appropriate angle for each direction it moves.
+
+    if ('up' in keys):
+
+        player2.centerY -= 10
+
+        player2.rotateAngle = 90
+
+    if ('down' in keys):
+
+        player2.centerY += 10
+
+        player2.rotateAngle = -90
+
+    if ('left' in keys):
+
+        player2.centerX -= 10
+
+        player2.rotateAngle = 0
+
+    if ('right' in keys):
+
+        player2.centerX += 10
+
+        player2.rotateAngle = 180
+
+
+
+    # Call the helper function to wrap the players around when they leave the
+
+    # canvas.
+
+    wrapPlayer(player1)
+
+    wrapPlayer(player2)
+
+
+
+    # End the game if the cars collide, and then display the winner.
+
+    if (player1.hitsShape(player2) == True):
+
+        if (offenseInfo.fill == 'salmon'):
+
+            Label('Player 1 Wins!', 200, 20, fill='salmon', size=24)
+
+        else:
+
+            Label('Player 2 Wins!', 200, 20, fill='cornflowerBlue', size=24)
+
+
+
+        offenseInfo.visible = False
+
+        app.stop()
+
+
+
+def onStep():
+
+    # When the timer is 0, change who is on offense and reset the timer.
+
+    timer.value -= 1
+
+    if (timer.value <= 0):
+
+        if (offenseInfo.fill == 'cornflowerBlue'):
+
+            offenseInfo.value = 'Player 1 is on Offense'
+
+            offenseInfo.fill = 'salmon'
+
+            app.background = 'darkRed'
+
+        else:
+
+            offenseInfo.value = 'Player 2 is on Offense'
+
+            offenseInfo.fill = 'cornflowerBlue'
+
+            app.background = 'darkBlue'
+
+
+
+        timer.value = 50
+
+
+def onKeyHolds(keys, n):
+    for i in range(n):
+        onKeyHold(keys)
+
+
+
+
+onKeyHolds(['up', 'left'], 20)
+
+onKeyHolds(['d', 's'], 10)
+
+app.paused = True
+
+
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Bumper_cars/output_3.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><p>image_gen/0_Bumper_cars.py failed</div><div class='error'><p>Part 1 MSE 2024</p><img src='image_gen/0_Bunny_with_a_spot/correct_1.png' /><img src='image_gen/0_Bunny_with_a_spot/output_1.png' /><img src='image_gen/0_Bunny_with_a_spot/diff_1.png' /><p>Source code for part 1:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+def drawBunny(bunnyColor):
+    Rect(0, 0, 400, 400, fill=gradient('dodgerBlue', 'deepSkyBlue'))
+
+    # Change the ears below to use the parameter of the function as the fill.
+    Oval(155, 110, 60, 170, fill=bunnyColor)
+    Oval(245, 110, 60, 170, fill=bunnyColor)
+    Oval(155, 115, 40, 140, fill=gradient('seashell', 'wheat', start='bottom'))
+    Oval(245, 115, 40, 140, fill=gradient('seashell', 'wheat', start='bottom'))
+
+    # head
+    Oval(200, 230, 200, 160, fill='white')
+    Circle(150, 300, 80, fill='white')
+    Circle(250, 300, 80, fill='white')
+
+    # nose
+    Polygon(180, 310, 220, 310, 200, 350)
+
+    # Draw the spot around the eye.
+    Oval(250, 270, 60, 100, fill=bunnyColor)
+
+    # eyes
+    Oval(150, 275, 30, 50)
+    Oval(150, 270, 10, 20, fill='white')
+    Oval(250, 275, 30, 50)
+    Oval(250, 270, 10, 20, fill='white')
+
+drawBunny('gold')
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Bunny_with_a_spot/output_1.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><div class='error'><p>Part 2 MSE 2019</p><img src='image_gen/0_Bunny_with_a_spot/correct_2.png' /><img src='image_gen/0_Bunny_with_a_spot/output_2.png' /><img src='image_gen/0_Bunny_with_a_spot/diff_2.png' /><p>Source code for part 2:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+def drawBunny(bunnyColor):
+    Rect(0, 0, 400, 400, fill=gradient('dodgerBlue', 'deepSkyBlue'))
+
+    # Change the ears below to use the parameter of the function as the fill.
+    Oval(155, 110, 60, 170, fill=bunnyColor)
+    Oval(245, 110, 60, 170, fill=bunnyColor)
+    Oval(155, 115, 40, 140, fill=gradient('seashell', 'wheat', start='bottom'))
+    Oval(245, 115, 40, 140, fill=gradient('seashell', 'wheat', start='bottom'))
+
+    # head
+    Oval(200, 230, 200, 160, fill='white')
+    Circle(150, 300, 80, fill='white')
+    Circle(250, 300, 80, fill='white')
+
+    # nose
+    Polygon(180, 310, 220, 310, 200, 350)
+
+    # Draw the spot around the eye.
+    Oval(250, 270, 60, 100, fill=bunnyColor)
+
+    # eyes
+    Oval(150, 275, 30, 50)
+    Oval(150, 270, 10, 20, fill='white')
+    Oval(250, 275, 30, 50)
+    Oval(250, 270, 10, 20, fill='white')
+
+drawBunny('saddleBrown')
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Bunny_with_a_spot/output_2.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><p>image_gen/0_Bunny_with_a_spot.py failed</div><div class='error'><p>Part 1 MSE 6804</p><img src='image_gen/0_Cactus_party_with_sombreros/correct_1.png' /><img src='image_gen/0_Cactus_party_with_sombreros/output_1.png' /><img src='image_gen/0_Cactus_party_with_sombreros/diff_1.png' /><p>Source code for part 1:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+app.background = gradient('dodgerBlue', 'deepSkyBlue', 'lightCyan', start='top')
+
+cactus = Rect(160, 50, 80, 350,
+              fill=gradient('forestGreen', 'green', 'forestGreen', start='left'))
+cactusTop = Circle(200, 50, 40, fill=gradient('forestGreen', 'green',
+                                              'forestGreen', start='left'))
+sand = Oval(200, 440, 500, 160, fill='darkKhaki')
+
+def drawCactusArm(x, y):
+    # An arm is two rounded lines connecting at (x, y). The arm connects to
+    # the body of the cactus at the point (200, y).
+    Line(200, y, x, y, fill='forestGreen', lineWidth=30)
+    Circle(x, y, 15, fill='forestGreen')
+    Line(x, y, x, y - 40, fill='forestGreen', lineWidth=30)
+    Circle(x, y - 40, 15, fill='forestGreen')
+
+def drawCactusHat(x, y):
+    # Here (x, y) is the center of the bill of the sombrero, 50 pixels above
+    # the elbow of the arm.
+    Oval(x, y - 10, 25, 35, fill=gradient('yellow', 'darkOrange', start='left'))
+    Oval(x, y, 60, 15,
+         fill=gradient('lime', 'red', 'orange', 'orange', start='top'))
+
+def onMousePress(mouseX, mouseY):
+    # Add a cactus arm and hat.
+    # Make sure the cactus and sand is in front of the added arms.
+    drawCactusArm(mouseX, mouseY)
+    drawCactusHat(mouseX, mouseY - 50)
+    cactus.toFront()
+    cactusTop.toFront()
+    sand.toFront()
+
+onMousePress(70, 150)
+onMousePress(330, 180)
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Cactus_party_with_sombreros/output_1.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><div class='error'><p>Part 2 MSE 6804</p><img src='image_gen/0_Cactus_party_with_sombreros/correct_2.png' /><img src='image_gen/0_Cactus_party_with_sombreros/output_2.png' /><img src='image_gen/0_Cactus_party_with_sombreros/diff_2.png' /><p>Source code for part 2:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+app.background = gradient('dodgerBlue', 'deepSkyBlue', 'lightCyan', start='top')
+
+cactus = Rect(160, 50, 80, 350,
+              fill=gradient('forestGreen', 'green', 'forestGreen', start='left'))
+cactusTop = Circle(200, 50, 40, fill=gradient('forestGreen', 'green',
+                                              'forestGreen', start='left'))
+sand = Oval(200, 440, 500, 160, fill='darkKhaki')
+
+def drawCactusArm(x, y):
+    # An arm is two rounded lines connecting at (x, y). The arm connects to
+    # the body of the cactus at the point (200, y).
+    Line(200, y, x, y, fill='forestGreen', lineWidth=30)
+    Circle(x, y, 15, fill='forestGreen')
+    Line(x, y, x, y - 40, fill='forestGreen', lineWidth=30)
+    Circle(x, y - 40, 15, fill='forestGreen')
+
+def drawCactusHat(x, y):
+    # Here (x, y) is the center of the bill of the sombrero, 50 pixels above
+    # the elbow of the arm.
+    Oval(x, y - 10, 25, 35, fill=gradient('yellow', 'darkOrange', start='left'))
+    Oval(x, y, 60, 15,
+         fill=gradient('lime', 'red', 'orange', 'orange', start='top'))
+
+def onMousePress(mouseX, mouseY):
+    # Add a cactus arm and hat.
+    # Make sure the cactus and sand is in front of the added arms.
+    drawCactusArm(mouseX, mouseY)
+    drawCactusHat(mouseX, mouseY - 50)
+    cactus.toFront()
+    cactusTop.toFront()
+    sand.toFront()
+
+onMousePress(70, 150)
+onMousePress(330, 180)
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Cactus_party_with_sombreros/output_2.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><div class='error'><p>Part 3 MSE 11476</p><img src='image_gen/0_Cactus_party_with_sombreros/correct_3.png' /><img src='image_gen/0_Cactus_party_with_sombreros/output_3.png' /><img src='image_gen/0_Cactus_party_with_sombreros/diff_3.png' /><p>Source code for part 3:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+app.background = gradient('dodgerBlue', 'deepSkyBlue', 'lightCyan', start='top')
+
+cactus = Rect(160, 50, 80, 350,
+              fill=gradient('forestGreen', 'green', 'forestGreen', start='left'))
+cactusTop = Circle(200, 50, 40, fill=gradient('forestGreen', 'green',
+                                              'forestGreen', start='left'))
+sand = Oval(200, 440, 500, 160, fill='darkKhaki')
+
+def drawCactusArm(x, y):
+    # An arm is two rounded lines connecting at (x, y). The arm connects to
+    # the body of the cactus at the point (200, y).
+    Line(200, y, x, y, fill='forestGreen', lineWidth=30)
+    Circle(x, y, 15, fill='forestGreen')
+    Line(x, y, x, y - 40, fill='forestGreen', lineWidth=30)
+    Circle(x, y - 40, 15, fill='forestGreen')
+
+def drawCactusHat(x, y):
+    # Here (x, y) is the center of the bill of the sombrero, 50 pixels above
+    # the elbow of the arm.
+    Oval(x, y - 10, 25, 35, fill=gradient('yellow', 'darkOrange', start='left'))
+    Oval(x, y, 60, 15,
+         fill=gradient('lime', 'red', 'orange', 'orange', start='top'))
+
+def onMousePress(mouseX, mouseY):
+    # Add a cactus arm and hat.
+    # Make sure the cactus and sand is in front of the added arms.
+    drawCactusArm(mouseX, mouseY)
+    drawCactusHat(mouseX, mouseY - 50)
+    cactus.toFront()
+    cactusTop.toFront()
+    sand.toFront()
+
+onMousePress(200, 200)
+onMousePress(50, 300)
+onMousePress(140, 50)
+onMousePress(310, 170)
+onMousePress(250, 350)
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Cactus_party_with_sombreros/output_3.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><p>image_gen/0_Cactus_party_with_sombreros.py failed</div><div class='error'><p>Part 1 MSE 619</p><img src='image_gen/0_Chameleon/correct_1.png' /><img src='image_gen/0_Chameleon/output_1.png' /><img src='image_gen/0_Chameleon/diff_1.png' /><p>Source code for part 1:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+# background
+Rect(0, 0, 200, 400, fill='blueViolet', opacity=70)
+Rect(200, 0, 200, 400, fill='limeGreen', opacity=50)
+
+chameleon = Polygon(215, 170, 235, 130, 250, 145, 280, 110, 330, 105, 360, 135,
+                    370, 175, 350, 230, 330, 220, 320, 200,  345, 215, 335,
+                    175, 250, 175, 240, 180, fill='limeGreen')
+
+def onMousePress(mouseX, mouseY):
+    # Move the chameleon to the location of your mouse click.
+    chameleon.centerX = mouseX
+    chameleon.centerY = mouseY
+
+    # Change the fill of chameleon based on mouseX value.
+    if (mouseX < 150):
+        chameleon.fill = 'blueViolet'
+    elif (mouseX < 250):
+        chameleon.fill = gradient('blueViolet', 'limeGreen', start='left')
+    else:
+        chameleon.fill = 'limeGreen'
+
+onMousePress(100, 290)
+onMousePress(140, 20)
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Chameleon/output_1.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><div class='error'><p>Part 2 MSE 1240</p><img src='image_gen/0_Chameleon/correct_2.png' /><img src='image_gen/0_Chameleon/output_2.png' /><img src='image_gen/0_Chameleon/diff_2.png' /><p>Source code for part 2:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+# background
+Rect(0, 0, 200, 400, fill='blueViolet', opacity=70)
+Rect(200, 0, 200, 400, fill='limeGreen', opacity=50)
+
+chameleon = Polygon(215, 170, 235, 130, 250, 145, 280, 110, 330, 105, 360, 135,
+                    370, 175, 350, 230, 330, 220, 320, 200,  345, 215, 335,
+                    175, 250, 175, 240, 180, fill='limeGreen')
+
+def onMousePress(mouseX, mouseY):
+    # Move the chameleon to the location of your mouse click.
+    chameleon.centerX = mouseX
+    chameleon.centerY = mouseY
+
+    # Change the fill of chameleon based on mouseX value.
+    if (mouseX < 150):
+        chameleon.fill = 'blueViolet'
+    elif (mouseX < 250):
+        chameleon.fill = gradient('blueViolet', 'limeGreen', start='left')
+    else:
+        chameleon.fill = 'limeGreen'
+
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Chameleon/output_2.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><div class='error'><p>Part 3 MSE 1469</p><img src='image_gen/0_Chameleon/correct_3.png' /><img src='image_gen/0_Chameleon/output_3.png' /><img src='image_gen/0_Chameleon/diff_3.png' /><p>Source code for part 3:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+# background
+Rect(0, 0, 200, 400, fill='blueViolet', opacity=70)
+Rect(200, 0, 200, 400, fill='limeGreen', opacity=50)
+
+chameleon = Polygon(215, 170, 235, 130, 250, 145, 280, 110, 330, 105, 360, 135,
+                    370, 175, 350, 230, 330, 220, 320, 200,  345, 215, 335,
+                    175, 250, 175, 240, 180, fill='limeGreen')
+
+def onMousePress(mouseX, mouseY):
+    # Move the chameleon to the location of your mouse click.
+    chameleon.centerX = mouseX
+    chameleon.centerY = mouseY
+
+    # Change the fill of chameleon based on mouseX value.
+    if (mouseX < 150):
+        chameleon.fill = 'blueViolet'
+    elif (mouseX < 250):
+        chameleon.fill = gradient('blueViolet', 'limeGreen', start='left')
+    else:
+        chameleon.fill = 'limeGreen'
+
+onMousePress(260, 360)
+onMousePress(320, 150)
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Chameleon/output_3.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><p>image_gen/0_Chameleon.py failed</div><div class='error'><p>Part 1 MSE 718</p><img src='image_gen/0_Chick/correct_1.png' /><img src='image_gen/0_Chick/output_1.png' /><img src='image_gen/0_Chick/diff_1.png' /><p>Source code for part 1:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+speechBubble = Polygon(280, 110, 310, 95, 390, 95, 390, 45, 290, 45, 290, 95,
+                       fill=None, border='black', visible=False)
+speechText = Label('...', 340, 70, size=25, visible=False)
+
+def drawEggBottom():
+    Circle(200, 260, 100, fill='lightBlue')
+    Rect(200, 260, 200, 120, fill='white', align='bottom')
+
+def drawCrack():
+    Polygon(100, 260, 120, 220, 150, 255, 175, 215, 200, 260, 220, 230,
+            250, 260, 275, 210, 300, 260, fill='lightBlue', border='grey',
+            borderWidth=1)
+    Line(100, 260, 300, 260, fill='lightBlue')
+
+def drawEggTop():
+    Oval(200, 230, 205, 260, fill='lightBlue')
+
+def drawBabyChicken():
+    # beak
+    Polygon(245, 115, 250, 145, 270, 130, fill='orange')
+
+    # body
+    Oval(200, 235, 140, 150, fill=rgb(255, 205, 0))
+    Oval(200, 135, 105, 100, fill=rgb(255, 205, 0))
+
+    # cover the bottom half of the body
+    Rect(135, 260, 130, 75, fill='lightBlue')
+
+    # eye
+    Oval(235, 115, 20, 20)
+    Circle(240, 110, 5, fill='aliceBlue')
+
+def onMousePress(mouseX, mouseY):
+    # Show the speechBubble with appropriate text.
+    speechText.visible = True
+    speechBubble.visible = True
+
+def onMouseRelease(mouseX, mouseY):
+    # Hide the speechBubble.
+    speechText.visible = False
+    speechBubble.visible = False
+
+def HatchedOrNot(hasHatched):
+    # Draw image and text based on whether it has hatched or not.
+    if (hasHatched == True):
+        drawEggBottom()
+        drawBabyChicken()
+        drawCrack()
+        speechText.value = 'Peep!'
+    else:
+        drawEggBottom()
+        drawEggTop()
+        drawCrack()
+        speechText.value = '...'
+
+HatchedOrNot(False)
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Chick/output_1.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><div class='error'><p>Part 2 MSE 7571</p><img src='image_gen/0_Chick/correct_2.png' /><img src='image_gen/0_Chick/output_2.png' /><img src='image_gen/0_Chick/diff_2.png' /><p>Source code for part 2:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+speechBubble = Polygon(280, 110, 310, 95, 390, 95, 390, 45, 290, 45, 290, 95,
+                       fill=None, border='black', visible=False)
+speechText = Label('...', 340, 70, size=25, visible=False)
+
+def drawEggBottom():
+    Circle(200, 260, 100, fill='lightBlue')
+    Rect(200, 260, 200, 120, fill='white', align='bottom')
+
+def drawCrack():
+    Polygon(100, 260, 120, 220, 150, 255, 175, 215, 200, 260, 220, 230,
+            250, 260, 275, 210, 300, 260, fill='lightBlue', border='grey',
+            borderWidth=1)
+    Line(100, 260, 300, 260, fill='lightBlue')
+
+def drawEggTop():
+    Oval(200, 230, 205, 260, fill='lightBlue')
+
+def drawBabyChicken():
+    # beak
+    Polygon(245, 115, 250, 145, 270, 130, fill='orange')
+
+    # body
+    Oval(200, 235, 140, 150, fill=rgb(255, 205, 0))
+    Oval(200, 135, 105, 100, fill=rgb(255, 205, 0))
+
+    # cover the bottom half of the body
+    Rect(135, 260, 130, 75, fill='lightBlue')
+
+    # eye
+    Oval(235, 115, 20, 20)
+    Circle(240, 110, 5, fill='aliceBlue')
+
+def onMousePress(mouseX, mouseY):
+    # Show the speechBubble with appropriate text.
+    speechText.visible = True
+    speechBubble.visible = True
+
+def onMouseRelease(mouseX, mouseY):
+    # Hide the speechBubble.
+    speechText.visible = False
+    speechBubble.visible = False
+
+def HatchedOrNot(hasHatched):
+    # Draw image and text based on whether it has hatched or not.
+    if (hasHatched == True):
+        drawEggBottom()
+        drawBabyChicken()
+        drawCrack()
+        speechText.value = 'Peep!'
+    else:
+        drawEggBottom()
+        drawEggTop()
+        drawCrack()
+        speechText.value = '...'
+
+HatchedOrNot(True)
+onMousePress(200, 200)
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Chick/output_2.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre><p>image_gen/0_Chick.py failed</div><div class='error'><p>Part 1 MSE 9518</p><img src='image_gen/0_Circled_polygon/correct_1.png' /><img src='image_gen/0_Circled_polygon/output_1.png' /><img src='image_gen/0_Circled_polygon/diff_1.png' /><p>Source code for part 1:</p><pre>import sys
+sys.path.insert(0, "..")
+from cmu_graphics import *
+# background
+Rect(0, 0, 400, 400, fill=gradient('grey', 'black'))
+
+def drawCircledPolygon(centerX, centerY, circleColor, numberOfSides, polyColor):
+    # Fill in this function so that it draws the circled polygons.
+    Circle(centerX, centerY, 65, fill=circleColor)
+    RegularPolygon(centerX, centerY, 65, numberOfSides, fill=polyColor)
+
+drawCircledPolygon(100, 275, 'darkGreen', 3, gradient('springGreen', 'darkGreen'))
+drawCircledPolygon(200, 125, 'lightGreen', 4, 'darkGreen')
+drawCircledPolygon(300, 275, 'darkGreen', 5, gradient('springGreen', 'darkGreen'))
+
+
+app.background = "honeydew"
+app.paused = True
+from threading import Timer
+
+import time
+def screenshotAndExit():
+    time.sleep(1)
+    app.getScreenshot("C:/Users/311eh/Documents/Work/CS_Academy2/cpython-cmu-graphics/tests/image_gen/0_Circled_polygon/output_1.png")
+    app.quit()
+Timer(3, screenshotAndExit).start()
+cmu_graphics.loop()</pre></body></html>

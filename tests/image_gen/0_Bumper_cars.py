@@ -107,8 +107,8 @@ def onStep():
 
         timer.value = 50
 
-onSteps(55)
-onKeyHolds(['down', 'right'], 5)
+onSteps(110)
+onKeyHolds(['s', 'd'], 35)
 app.paused = True
 
 
@@ -222,6 +222,10 @@ def onStep():
 
         timer.value = 50
 
+onKeyHolds(['d'], 30)
+onKeyHolds(['s'], 20)
+onKeyHolds(['a'], 10)
+app.paused = True
 
 
 # -
@@ -334,8 +338,7 @@ def onStep():
 
         timer.value = 50
 
-onKeyHolds(['left'], 30)
-onKeyHolds(['up'], 20)
-onKeyHolds(['right'], 10)
+onKeyHolds(['up', 'left'], 20)
+onKeyHolds(['d', 's'], 10)
 app.paused = True
 

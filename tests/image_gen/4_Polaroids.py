@@ -30,7 +30,7 @@ def onKeyHold(keys):
         if (cover.opacity >= 5):
             cover.opacity -= 5
 
-onKeyHolds(['space'], 5)
+onKeyHold('space')
 
 
 # -
@@ -66,7 +66,7 @@ def onKeyHold(keys):
         if (cover.opacity >= 5):
             cover.opacity -= 5
 
-onKeyHolds(['space'], 5)
+onKeyHolds(['space'], 15)
 
 
 # -
@@ -102,4 +102,5 @@ def onKeyHold(keys):
         if (cover.opacity >= 5):
             cover.opacity -= 5
 
+onKeyHolds(['space'], 30)
 

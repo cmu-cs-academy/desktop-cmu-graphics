@@ -66,6 +66,10 @@ def onMouseRelease(mouseX, mouseY):
         handle.centerY -= 90
 
 onMousePress(70, 230)
+onMouseRelease(70, 230)
+onMousePress(70, 230)
+onMouseRelease(70, 230)
+onMousePress(70, 230)
 
 
 # -
@@ -208,4 +212,7 @@ def onMouseRelease(mouseX, mouseY):
 
 onMousePress(70, 230)
 onMouseRelease(70, 230)
+onMousePress(70, 230)
+onMouseRelease(70, 230)
+onMousePress(70, 230)
 

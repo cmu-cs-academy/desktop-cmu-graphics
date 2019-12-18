@@ -87,7 +87,8 @@ def onKeyHold(keys):
 
 player.centerX = 340
 player.centerY = 330
-onKeyHolds(['left'], 20)
+onKeyHolds(['left'], 10)
+onKeyHolds(['up'], 40)
 
 
 # -
@@ -181,7 +182,6 @@ def onKeyHold(keys):
 player.centerX = 340
 player.centerY = 330
 onKeyHolds(['right'], 20)
-onKeyPress('r')
 
 
 # -

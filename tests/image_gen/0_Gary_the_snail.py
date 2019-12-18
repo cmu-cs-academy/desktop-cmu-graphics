@@ -398,6 +398,6 @@ def onStep():
     if (gary.left >= 400):
         gary.right = 0
 
-onSteps(100)
+onSteps(30)
 app.paused = True
 

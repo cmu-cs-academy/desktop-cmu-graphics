@@ -43,7 +43,11 @@ def onMouseRelease(mouseX, mouseY):
     leftEyebrow.rotateAngle = -15
     rightEyebrow.rotateAngle = 15
 
-drawAnimal('porcupine')
+drawAnimal('hedgehog')
+onMousePress(200, 200)
+onMouseRelease(200, 200)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
 onMousePress(200, 200)
 
 
@@ -94,6 +98,7 @@ def onMouseRelease(mouseX, mouseY):
     rightEyebrow.rotateAngle = 15
 
 drawAnimal('hedgehog')
+onMousePress(200, 200)
 
 
 # -

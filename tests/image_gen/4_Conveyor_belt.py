@@ -91,7 +91,13 @@ def onStep():
         if (dot.left < 0):
             leftDots.remove(dot)
 
-onSteps(10)
+onKeyPress('left')
+onSteps(5)
+onKeyRelease('left')
+onSteps(5)
+onKeyPress('right')
+onSteps(5)
+onKeyRelease('right')
 app.paused = True
 
 
@@ -189,6 +195,14 @@ def onStep():
         if (dot.left < 0):
             leftDots.remove(dot)
 
+onKeyPress('left')
+onSteps(5)
+onKeyRelease('left')
+onSteps(5)
+onKeyPress('right')
+onSteps(5)
+onKeyRelease('right')
+app.paused = True
 
 
 # -
@@ -285,6 +299,6 @@ def onStep():
         if (dot.left < 0):
             leftDots.remove(dot)
 
-onStep()
+onSteps(50)
 app.paused = True
 

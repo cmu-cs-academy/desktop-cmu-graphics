@@ -28,6 +28,19 @@ def onStep():
             (snowflake.left > 400)):
             snowflakes.remove(snowflake)
 
+onSteps(10)
+flake = snowflakes.children[0]
+onMouseMove(flake.centerX, flake.centerY)
+onMouseMove(flake.centerX, flake.centerY)
+onMouseMove(flake.centerX, flake.centerY)
+onMouseMove(flake.centerX, flake.centerY)
+onMouseMove(flake.centerX, flake.centerY)
+onMouseMove(flake.centerX, flake.centerY)
+onMouseMove(flake.centerX, flake.centerY)
+onMouseMove(flake.centerX, flake.centerY)
+onMouseMove(flake.centerX, flake.centerY)
+onSteps(5)
+app.paused = True
 
 
 # -

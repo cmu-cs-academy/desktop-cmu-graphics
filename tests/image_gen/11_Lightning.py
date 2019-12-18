@@ -71,8 +71,6 @@ def onStep():
         clouds.fill = 'grey'
         app.background = gradient('black', 'slateGrey', start='top')
 
-onSteps(20)
-app.paused = True
 
 
 # -
@@ -149,6 +147,8 @@ def onStep():
         clouds.fill = 'grey'
         app.background = gradient('black', 'slateGrey', start='top')
 
+onSteps(15)
+app.paused = True
 
 
 # -

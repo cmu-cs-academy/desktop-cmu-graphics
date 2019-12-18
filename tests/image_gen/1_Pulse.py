@@ -60,7 +60,9 @@ def onStep():
         else:
             star.fill = 'mediumSeaGreen'
 
-onSteps(71)
+onSteps(15)
+onKeyPress('a')
+onKeyPress('a')
 app.paused = True
 
 
@@ -127,8 +129,6 @@ def onStep():
         else:
             star.fill = 'mediumSeaGreen'
 
-onStep()
-app.paused = True
 
 
 # -
@@ -194,6 +194,7 @@ def onStep():
         else:
             star.fill = 'mediumSeaGreen'
 
-onSteps(70)
+onSteps(30)
+onKeyPress('a')
 app.paused = True
 

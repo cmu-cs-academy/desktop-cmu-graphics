@@ -14,12 +14,9 @@ def onMousePress(mouseX, mouseY):
     else:
         drawFootstep(mouseX, mouseY, 'brown')
 
-onMousePress(100, 100)
-onMousePress(70, 120)
-onMousePress(100, 300)
-onMousePress(70, 320)
-onMousePress(300, 200)
-onMousePress(270, 220)
+onMousePress(300, 50)
+onMousePress(350, 200)
+onMousePress(250, 300)
 
 
 # -
@@ -39,12 +36,7 @@ def onMousePress(mouseX, mouseY):
     else:
         drawFootstep(mouseX, mouseY, 'brown')
 
-onMousePress(100, 100)
-onMousePress(70, 120)
-onMousePress(100, 300)
-onMousePress(70, 320)
-onMousePress(300, 200)
-onMousePress(270, 220)
+onMousePress(195, 360)
 
 
 # -
@@ -64,7 +56,5 @@ def onMousePress(mouseX, mouseY):
     else:
         drawFootstep(mouseX, mouseY, 'brown')
 
-onMousePress(100, 100)
-onMousePress(50, 200)
-onMousePress(150, 300)
+onMousePress(300, 100)
 

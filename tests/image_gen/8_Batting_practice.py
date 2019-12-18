@@ -140,6 +140,9 @@ def onStep():
             hitCount.value += 1
             ball.visible = False
 
+onKeyPress('space')
+onSteps(30)
+app.paused = True
 
 
 # -
@@ -211,4 +214,9 @@ def onStep():
             hitCount.value += 1
             ball.visible = False
 
+onKeyPress('space')
+onSteps(10)
+onKeyPress('space')
+onSteps(10)
+app.paused = True
 

@@ -85,8 +85,6 @@ def onMouseRelease(mouseX, mouseY):
 
 onMousePress(100, 100)
 onMouseRelease(200, 200)
-onMousePress(100, 100)
-onMouseRelease(200, 200)
 
 
 # -
@@ -131,8 +129,4 @@ def onMouseRelease(mouseX, mouseY):
     # Draw a label stating the ice cream is melting.
     Label('Your ice cream is melting!', 300, 360, size=15)
 
-onMousePress(100, 100)
-onMouseRelease(200, 200)
-onMousePress(100, 100)
-onMouseRelease(200, 200)
 

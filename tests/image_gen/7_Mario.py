@@ -84,9 +84,7 @@ def onKeyRelease(key):
     elif (key == 'enter'):
         hat.centerX -= 100
 
-onKeyPresses('right', 10)
-onKeyRelease('right')
-onKeyPress('enter')
+onKeyPress('right')
 
 
 # -
@@ -176,9 +174,6 @@ def onKeyRelease(key):
     elif (key == 'enter'):
         hat.centerX -= 100
 
-onKeyPresses('right', 10)
-onKeyRelease('right')
-onKeyPress('enter')
 
 
 # -
@@ -268,4 +263,6 @@ def onKeyRelease(key):
     elif (key == 'enter'):
         hat.centerX -= 100
 
+onKeyPress('left')
+onKeyRelease('left')
 

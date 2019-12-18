@@ -80,7 +80,7 @@ def onKeyHold(keys):
         beachBall.direction *= -1
     shadow.centerX = beachBall.centerX
 
-onKeyHolds(['space'], 23)
+onKeyHold(['space'])
 
 
 # -
@@ -123,5 +123,5 @@ def onKeyHold(keys):
         beachBall.direction *= -1
     shadow.centerX = beachBall.centerX
 
-onKeyHolds(['space'], 22)
+onKeyHolds(['space'], 30)
 

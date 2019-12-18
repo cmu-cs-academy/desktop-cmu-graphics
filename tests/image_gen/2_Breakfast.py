@@ -37,7 +37,7 @@ def drawBreakfast(isThirsty, isTired, isVegan, isVegetarian):
             Oval(140, 135, 100, 40, fill='maroon', rotateAngle=350)
             Oval(190, 130, 100, 40, fill='brown', rotateAngle=320)
 
-drawBreakfast(False, False, True, True)
+drawBreakfast(True, True, False, False)
 
 
 # -
@@ -80,7 +80,7 @@ def drawBreakfast(isThirsty, isTired, isVegan, isVegetarian):
             Oval(140, 135, 100, 40, fill='maroon', rotateAngle=350)
             Oval(190, 130, 100, 40, fill='brown', rotateAngle=320)
 
-drawBreakfast(False, False, False, False)
+drawBreakfast(True, True, True, False)
 
 
 # -
@@ -123,5 +123,5 @@ def drawBreakfast(isThirsty, isTired, isVegan, isVegetarian):
             Oval(140, 135, 100, 40, fill='maroon', rotateAngle=350)
             Oval(190, 130, 100, 40, fill='brown', rotateAngle=320)
 
-drawBreakfast(False, True, False, False)
+drawBreakfast(True, True, True, True)
 

@@ -42,15 +42,14 @@ def drawWordCloud(text):
         seenWords.add(label)
 
 drawWordCloud([
-    'in', 'the', 'town', 'where', 'I', 'was', 'born', 'lived', 'a', 'man',
-    'who', 'sailed', 'to', 'sea', 'and', 'he', 'told', 'us', 'of', 'his',
-    'life', 'in', 'the', 'land', 'of', 'submarines', 'so', 'we', 'sailed',
-    'up', 'to', 'the', 'sun', 'till', 'we', 'found', 'a', 'sea', 'of',
-    'green', 'and', 'we', 'lived', 'beneath', 'the', 'waves', 'in', 'our',
-    'yellow', 'submarine', 'we', 'all', 'live', 'in', 'a', 'yellow',
-    'submarine', 'yellow', 'submarine', 'yellow', 'submarine', 'we', 'all',
-    'live', 'in', 'a', 'yellow', 'submarine', 'yellow', 'submarine',
-    'yellow', 'submarine'
+    'CS', 'Academy', 'computer', 'science', 'CS', 'bugs', 'debug',
+    'for loop', 'CS', 'computer', 'program', 'code', 'Python', 'functions',
+    'Python', 'animation', 'conditional', 'if', 'else', 'functions',
+    'Academy', 'CS', 'Academy', 'Python', 'code', 'Rect', 'Label', 'if',
+    'if', 'else', 'functions', 'bugs', 'CS', 'conditional', 'loops',
+    'strings', 'ints', 'lists', 'locals', 'globals', 'variables', 'shape',
+    'strings', 'strings', 'lists', 'CS', 'Academy', 'bugs', 'code', 'conditional',
+    'loops', 'loops', 'lists', 'Python', 'Rect', 'if', 'if', 'strings'
     ])
 
 
@@ -99,9 +98,15 @@ def drawWordCloud(text):
         seenWords.add(label)
 
 drawWordCloud([
-    'Half', 'a', 'league', 'half', 'a', 'league', 'half', 'a', 'league',
-    'onward', 'all', 'in', 'the', 'Valley', 'of', 'Death', 'rode', 'the',
-    'six', 'hundred'
+    'in', 'the', 'town', 'where', 'I', 'was', 'born', 'lived', 'a', 'man',
+    'who', 'sailed', 'to', 'sea', 'and', 'he', 'told', 'us', 'of', 'his',
+    'life', 'in', 'the', 'land', 'of', 'submarines', 'so', 'we', 'sailed',
+    'up', 'to', 'the', 'sun', 'till', 'we', 'found', 'a', 'sea', 'of',
+    'green', 'and', 'we', 'lived', 'beneath', 'the', 'waves', 'in', 'our',
+    'yellow', 'submarine', 'we', 'all', 'live', 'in', 'a', 'yellow',
+    'submarine', 'yellow', 'submarine', 'yellow', 'submarine', 'we', 'all',
+    'live', 'in', 'a', 'yellow', 'submarine', 'yellow', 'submarine',
+    'yellow', 'submarine'
     ])
 
 

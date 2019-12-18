@@ -7,7 +7,7 @@ def threeStripeFlag(country, color1, color2, color3):
     Rect(150, 100, 100, 200, fill=color2)
     Rect(250, 100, 100, 200, fill=color3)
 
-threeStripeFlag('France', 'darkBlue', 'white', 'crimson')
+threeStripeFlag('Ireland', 'green', 'white', 'orange')
 
 
 # -
@@ -20,7 +20,7 @@ def threeStripeFlag(country, color1, color2, color3):
     Rect(150, 100, 100, 200, fill=color2)
     Rect(250, 100, 100, 200, fill=color3)
 
-threeStripeFlag('Romania', 'mediumBlue', 'yellow', 'red')
+threeStripeFlag('Ireland', 'green', 'white', 'orange')
 
 
 # -
@@ -33,5 +33,5 @@ def threeStripeFlag(country, color1, color2, color3):
     Rect(150, 100, 100, 200, fill=color2)
     Rect(250, 100, 100, 200, fill=color3)
 
-threeStripeFlag('France', 'darkBlue', 'white', 'crimson')
+threeStripeFlag('Belgium', 'black', 'gold', 'red')
 

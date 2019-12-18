@@ -196,7 +196,7 @@ def drawActivity(activity):
     else:
         drawConfused()
 
-drawActivity('singing')
+drawActivity('jelly-fishing')
 
 
 # -
@@ -297,5 +297,5 @@ def drawActivity(activity):
     else:
         drawConfused()
 
-drawActivity('huh?')
+drawActivity('jelly-fishing')
 

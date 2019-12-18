@@ -151,8 +151,6 @@ def onStep():
             sand.right = randrange(-40, 0)
             sand.centerY = randrange(0, 300)
 
-onSteps(20)
-app.paused = True
 
 
 # -

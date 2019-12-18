@@ -52,7 +52,7 @@ def onMouseMove(mouseX, mouseY):
     else:
         message.value = 'You are very cold.'
 
-onMouseMove(320, 250)
+onMouseMove(230, 130)
 
 
 # -
@@ -168,4 +168,5 @@ def onMouseMove(mouseX, mouseY):
     else:
         message.value = 'You are very cold.'
 
+onMouseMove(230, 130)
 

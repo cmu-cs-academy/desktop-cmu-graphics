@@ -45,6 +45,8 @@ def onStep():
     removeCircle()
     drawCircles()
 
+onSteps(5)
+app.paused = True
 
 
 # -
@@ -95,7 +97,7 @@ def onStep():
     removeCircle()
     drawCircles()
 
-onSteps(10)
+onSteps(20)
 app.paused = True
 
 

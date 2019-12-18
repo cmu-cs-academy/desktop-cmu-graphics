@@ -148,10 +148,6 @@ def onStep():
         Label('WINNER!', 200, 300, fill='gold', border='black', size=50, bold=True)
     wheel.rotateAngle += 3
 
-onSteps(10)
-onKeyPress('space')
-onSteps(30)
-app.paused = True
 
 
 # -
@@ -227,4 +223,7 @@ def onStep():
         Label('WINNER!', 200, 300, fill='gold', border='black', size=50, bold=True)
     wheel.rotateAngle += 3
 
+onKeyPress('space')
+onSteps(30)
+app.paused = True
 

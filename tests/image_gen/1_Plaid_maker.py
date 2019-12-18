@@ -36,5 +36,4 @@ def onMousePress(mouseX, mouseY):
     Line(mouseX, 0, mouseX, 400, fill='fireBrick', lineWidth=7, opacity=80)
     Line(0, mouseY, 400, mouseY, fill='fireBrick', lineWidth=7, opacity=80)
 
-onMousePress(250, 150)
 

@@ -25,8 +25,6 @@ def onStep():
         if (circle.radius > 50):
             circles.remove(circle)
 
-onSteps(10)
-app.paused = True
 
 
 # -
@@ -57,7 +55,7 @@ def onStep():
         if (circle.radius > 50):
             circles.remove(circle)
 
-onSteps(40)
+onStep()
 app.paused = True
 
 

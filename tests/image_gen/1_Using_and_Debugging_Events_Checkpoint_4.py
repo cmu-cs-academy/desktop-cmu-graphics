@@ -22,7 +22,7 @@ def onMousePress(mouseX, mouseY):
     # Add a roundness to the star depending on where the mouse is pressed.
     Star(mouseX, mouseY, 50, 5, fill='gold', roundness=mouseX/4)
 
-onMousePress(300, 250)
+onMousePress(100, 100)
 
 
 # -
@@ -36,4 +36,5 @@ def onMousePress(mouseX, mouseY):
     # Add a roundness to the star depending on where the mouse is pressed.
     Star(mouseX, mouseY, 50, 5, fill='gold', roundness=mouseX/4)
 
+onMousePress(300, 250)
 

@@ -33,13 +33,6 @@ def onMouseMove(mouseX, mouseY):
     if (seesaw.rotateAngle < -45):
         seesaw.rotateAngle = -45
 
-seesaw.rotateAngle = -40
-onMouseMove(100, 200)
-onMouseMove(100, 200)
-onMouseMove(100, 200)
-onMouseMove(100, 200)
-onMouseMove(100, 200)
-onMouseMove(100, 200)
 onMouseMove(100, 200)
 
 
@@ -79,13 +72,6 @@ def onMouseMove(mouseX, mouseY):
     if (seesaw.rotateAngle < -45):
         seesaw.rotateAngle = -45
 
-seesaw.rotateAngle = -40
-onMouseMove(100, 200)
-onMouseMove(100, 200)
-onMouseMove(100, 200)
-onMouseMove(100, 200)
-onMouseMove(100, 200)
-onMouseMove(100, 200)
 onMouseMove(100, 200)
 
 
@@ -125,13 +111,6 @@ def onMouseMove(mouseX, mouseY):
     if (seesaw.rotateAngle < -45):
         seesaw.rotateAngle = -45
 
-onMouseMove(210, 50)
-onMouseMove(90, 180)
-onMouseMove(130, 90)
-onMouseMove(40, 90)
-onMouseMove(260, 280)
-onMouseMove(200, 330)
-onMouseMove(260, 260)
-onMouseMove(50, 210)
-onMouseMove(170, 300)
+onMouseMove(100, 200)
+onMouseMove(150, 300)
 

@@ -60,7 +60,7 @@ def onStep():
     if (tardis.left > 400):
         tardis.right = 0
 
-onSteps(7)
+onStep()
 app.paused = True
 
 

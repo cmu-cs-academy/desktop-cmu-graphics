@@ -23,8 +23,7 @@ def onKeyHold(keys):
         app.rippleSpace -= 2
     drawRipples()
 
-onKeyHolds(['up'], 10)
-onKeyHolds(['down'], 10)
+onKeyHolds(['up'], 20)
 
 
 # -
@@ -53,7 +52,7 @@ def onKeyHold(keys):
         app.rippleSpace -= 2
     drawRipples()
 
-onKeyHolds(['down'], 50)
+onKeyHolds(['up'], 20)
 
 
 # -
@@ -82,5 +81,5 @@ def onKeyHold(keys):
         app.rippleSpace -= 2
     drawRipples()
 
-onKeyHolds(['down'], 50)
+onKeyHolds(['up'], 20)
 

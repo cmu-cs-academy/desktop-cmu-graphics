@@ -28,7 +28,6 @@ def onMouseDrag(mouseX, mouseY):
         mouth.fill = 'yellow'
         background.fill = 'black'
 
-onMouseDrag(100, 100)
 
 
 # -
@@ -95,9 +94,4 @@ def onMouseDrag(mouseX, mouseY):
         mouth.fill = 'yellow'
         background.fill = 'black'
 
-onMouseDrag(350, 90)
-onMouseDrag(170, 350)
-onMouseDrag(70, 270)
-onMouseDrag(260, 200)
-onMouseDrag(100, 210)
 

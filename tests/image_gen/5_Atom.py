@@ -44,7 +44,6 @@ def onStep():
             ring.rotateAngle -= 1
 
 makeNRings(3)
-onStep()
 app.paused = True
 
 

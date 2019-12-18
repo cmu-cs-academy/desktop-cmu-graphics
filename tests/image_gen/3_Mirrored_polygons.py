@@ -19,10 +19,15 @@ def onMousePress(mouseX, mouseY):
         greenPolygon.addPoint(mouseX, mouseY)
         pinkPolygon.addPoint(400 - mouseX, mouseY)
 
-onMousePress(100, 100)
-onMousePress(150, 320)
-onMousePress(300, 200)
-onMousePress(30, 250)
+onMousePress(130, 150)
+onMousePress(250, 320)
+onMousePress(100, 200)
+onMousePress(40, 40)
+onMousePress(240, 160)
+onMousePress(70, 330)
+onMousePress(190, 250)
+onMousePress(140, 110)
+onMousePress(0, 0)
 
 
 # -
@@ -48,9 +53,8 @@ def onMousePress(mouseX, mouseY):
         pinkPolygon.addPoint(400 - mouseX, mouseY)
 
 onMousePress(100, 100)
-onMousePress(150, 320)
-onMousePress(300, 200)
-onMousePress(30, 250)
+onMousePress(150, 200)
+onMousePress(50, 300)
 
 
 # -
@@ -75,9 +79,7 @@ def onMousePress(mouseX, mouseY):
         greenPolygon.addPoint(mouseX, mouseY)
         pinkPolygon.addPoint(400 - mouseX, mouseY)
 
-onMousePress(140, 30)
-onMousePress(40, 150)
-onMousePress(120, 300)
-onMousePress(190, 100)
-onMousePress(60, 240)
+onMousePress(210, 120)
+onMousePress(300, 340)
+onMousePress(370, 50)
 

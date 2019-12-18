@@ -44,9 +44,10 @@ def onMousePress(mouseX, mouseY):
     if (color != None):
         app.color = color.fill
 
-onMousePress(370, 370)
 onMousePress(370, 200)
-onMousePress(20, 200)
+onMousePress(50, 50)
+onMousePress(370, 370)
+onMousePress(50, 50)
 
 
 # -
@@ -96,6 +97,10 @@ def onMousePress(mouseX, mouseY):
     if (color != None):
         app.color = color.fill
 
+onMousePress(370, 300)
+onMousePress(200, 320)
+onMousePress(370, 50)
+onMousePress(300, 320)
 
 
 # -

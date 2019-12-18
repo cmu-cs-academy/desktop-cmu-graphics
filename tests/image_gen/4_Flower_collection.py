@@ -19,10 +19,10 @@ def onMousePress(mouseX, mouseY):
         drawLeaf(mouseX, mouseY)
     drawFlower(mouseX, mouseY)
 
-onMousePress(60, 199)
-onMousePress(100, 200)
-onMousePress(200, 200)
-onMousePress(250, 201)
+onMousePress(100, 10)
+onMousePress(150, 50)
+onMousePress(200, 100)
+onMousePress(250, 150)
 
 
 # -
@@ -47,10 +47,11 @@ def onMousePress(mouseX, mouseY):
         drawLeaf(mouseX, mouseY)
     drawFlower(mouseX, mouseY)
 
-onMousePress(60, 199)
-onMousePress(100, 200)
-onMousePress(200, 200)
-onMousePress(250, 201)
+onMousePress(210, 60)
+onMousePress(100, 180)
+onMousePress(280, 240)
+onMousePress(60, 40)
+onMousePress(380, 250)
 
 
 # -

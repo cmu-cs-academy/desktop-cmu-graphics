@@ -13,13 +13,7 @@ def onMousePress(mouseX, mouseY):
     Star(mouseX, mouseY, 20, 6, fill='hotPink', roundness=70)
     Circle(mouseX, mouseY, 8, fill=gradient('orange', 'yellow'))
 
-onMousePress(150, 150)
 onMousePress(200, 100)
-onMousePress(250, 150)
-onMousePress(100, 250)
-onMousePress(260, 260)
-onMousePress(150, 210)
-onMousePress(280, 195)
 
 
 # -
@@ -63,6 +57,4 @@ def onMousePress(mouseX, mouseY):
     Star(mouseX, mouseY, 20, 6, fill='hotPink', roundness=70)
     Circle(mouseX, mouseY, 8, fill=gradient('orange', 'yellow'))
 
-onMousePress(200, 100)
-onMousePress(100, 200)
 

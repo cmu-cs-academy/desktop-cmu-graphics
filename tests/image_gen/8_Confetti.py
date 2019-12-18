@@ -24,9 +24,6 @@ def onStep():
         if ((arc.right < 0) or (arc.top > 400) or (arc.left > 400)):
             arcs.remove(arc)
 
-onMouseMove(200, 100)
-onSteps(20)
-app.paused = True
 
 
 # -
@@ -56,9 +53,6 @@ def onStep():
         if ((arc.right < 0) or (arc.top > 400) or (arc.left > 400)):
             arcs.remove(arc)
 
-onMouseMove(200, 100)
-onSteps(20)
-app.paused = True
 
 
 # -
@@ -88,18 +82,7 @@ def onStep():
         if ((arc.right < 0) or (arc.top > 400) or (arc.left > 400)):
             arcs.remove(arc)
 
-onMouseMove(200, 100)
-onSteps(5)
-onMouseMove(200, 100)
-onSteps(5)
-onMouseMove(200, 100)
-onSteps(5)
-onMouseMove(200, 100)
-onSteps(5)
-onMouseMove(200, 100)
-onSteps(5)
-onMouseMove(200, 100)
-onSteps(5)
-onMouseMove(200, 100)
+onMouseMove(100, 100)
+onMouseMove(300, 150)
 app.paused = True
 

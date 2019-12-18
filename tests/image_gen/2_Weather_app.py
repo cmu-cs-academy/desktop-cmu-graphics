@@ -223,4 +223,6 @@ def onMousePress(mouseX, mouseY):
             unitCircle.centerX -= 20
             temperatures.isCelsius = True
 
+onMousePress(50, 280)
+onMousePress(50, 280)
 

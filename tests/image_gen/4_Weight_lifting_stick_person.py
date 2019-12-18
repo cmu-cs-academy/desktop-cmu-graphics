@@ -37,9 +37,7 @@ def onKeyRelease(key):
     rightArm.y2 = 300
     weight.centerY = 300
 
-onKeyPress('space')
-onKeyRelease('space')
-onKeyPress('space')
+onKeyPress('a')
 
 
 # -
@@ -128,6 +126,6 @@ def onKeyRelease(key):
     weight.centerY = 300
 
 onKeyPress('space')
-onKeyPress('space')
 onKeyRelease('space')
+onKeyPress('space')
 

@@ -87,6 +87,5 @@ def onMouseRelease(x, y):
     mouth.visible = False
     eye.radius = 15
 
-onMousePress(100, 200)
-onMouseRelease(100, 200)
+onMousePress(100, 100)
 

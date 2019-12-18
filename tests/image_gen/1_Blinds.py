@@ -35,7 +35,7 @@ def onMousePress(mouseX, mouseY):
     cord.y2 = 400 - mouseY
     sun.centerX = mouseY
 
-onMousePress(200, 50)
+onMousePress(200, 350)
 
 
 # -
@@ -76,7 +76,7 @@ def onMousePress(mouseX, mouseY):
     cord.y2 = 400 - mouseY
     sun.centerX = mouseY
 
-onMousePress(200, 80)
+onMousePress(200, 350)
 
 
 # -
@@ -117,5 +117,5 @@ def onMousePress(mouseX, mouseY):
     cord.y2 = 400 - mouseY
     sun.centerX = mouseY
 
-onMousePress(200, 80)
+onMousePress(200, 200)
 

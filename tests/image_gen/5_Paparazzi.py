@@ -52,7 +52,10 @@ def onMouseRelease(mouseX, mouseY):
     for flash in flashes.children:
         flash.opacity = 0
 
-onMousePress(150, 220)
+onMousePress(160, 220)
+onMouseRelease(160, 220)
+onMousePress(300, 90)
+onMouseRelease(300, 90)
 
 
 # -
@@ -110,7 +113,6 @@ def onMouseRelease(mouseX, mouseY):
     for flash in flashes.children:
         flash.opacity = 0
 
-onMousePress(200, 100)
 
 
 # -
@@ -168,7 +170,4 @@ def onMouseRelease(mouseX, mouseY):
     for flash in flashes.children:
         flash.opacity = 0
 
-onMousePress(100, 200)
-onMouseRelease(100, 200)
-onMousePress(300, 200)
 

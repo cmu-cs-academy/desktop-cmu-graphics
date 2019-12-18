@@ -44,6 +44,8 @@ def onStep():
         drawFlower(flowerX, flowerY, size, color)
         flowerCount.value += 1
 
+onSteps(100)
+app.paused = True
 
 
 # -
@@ -93,7 +95,7 @@ def onStep():
         drawFlower(flowerX, flowerY, size, color)
         flowerCount.value += 1
 
-onSteps(100)
+onSteps(175)
 app.paused = True
 
 

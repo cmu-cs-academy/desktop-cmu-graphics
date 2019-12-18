@@ -13,7 +13,10 @@ def onMousePress(mouseX, mouseY):
     else:
         RegularPolygon(mouseX, mouseY, 25, 6, fill='orange')
 
+onMousePress(100, 100)
 onMousePress(100, 300)
+onMousePress(300, 100)
+onMousePress(300, 300)
 
 
 # -
@@ -51,7 +54,4 @@ def onMousePress(mouseX, mouseY):
         RegularPolygon(mouseX, mouseY, 25, 6, fill='orange')
 
 onMousePress(100, 100)
-onMousePress(100, 300)
-onMousePress(300, 100)
-onMousePress(300, 300)
 

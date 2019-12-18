@@ -33,8 +33,7 @@ def onMousePress(mouseX, mouseY):
         moon.centerY = 400 - mouseY
 
 
-onMousePress(120, 220)
-onMousePress(250, 370)
+onMousePress(300, 250)
 
 
 # -
@@ -73,6 +72,11 @@ def onMousePress(mouseX, mouseY):
         moon.centerY = 400 - mouseY
 
 
+onMousePress(320, 170)
+onMousePress(130, 150)
+onMousePress(220, 30)
+onMousePress(70, 100)
+onMousePress(300, 120)
 
 
 # -
@@ -111,5 +115,5 @@ def onMousePress(mouseX, mouseY):
         moon.centerY = 400 - mouseY
 
 
-onMousePress(200, 150)
+onMousePress(200, 190)
 

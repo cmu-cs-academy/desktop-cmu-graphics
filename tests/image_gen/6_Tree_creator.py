@@ -32,7 +32,7 @@ def onStep():
     app.lastX = newX
     app.lastY = newY
 
-onSteps(100)
+onStep()
 app.paused = True
 
 
@@ -71,6 +71,8 @@ def onStep():
     app.lastX = newX
     app.lastY = newY
 
+onSteps(30)
+app.paused = True
 
 
 # -
@@ -108,6 +110,4 @@ def onStep():
     app.lastX = newX
     app.lastY = newY
 
-onSteps(100)
-app.paused = True
 

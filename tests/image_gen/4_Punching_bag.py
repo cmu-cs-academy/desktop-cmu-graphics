@@ -56,6 +56,7 @@ def onMouseMove(mouseX, mouseY):
         hit.visible = False
     cord.x2 = punchingBag.centerX
 
+onMouseMove(100, 100)
 
 
 # -
@@ -117,7 +118,6 @@ def onMouseMove(mouseX, mouseY):
         hit.visible = False
     cord.x2 = punchingBag.centerX
 
-onMouseMove(230, 200)
 
 
 # -
@@ -179,5 +179,6 @@ def onMouseMove(mouseX, mouseY):
         hit.visible = False
     cord.x2 = punchingBag.centerX
 
-onMouseMove(229, 200)
+onMouseMove(300, 200)
+onMouseMove(200, 200)
 

@@ -28,7 +28,7 @@ def drawButterfly(wingColor, bodyColor, patternColor1, patternColor2):
     Circle(250, 300, 8, fill=bodyColor)
     Circle(150, 300, 8, fill=bodyColor)
 
-drawButterfly('navy', 'purple', 'dodgerBlue', 'indigo')
+drawButterfly('black', 'yellow', 'darkOrange', 'hotPink')
 
 
 # -
@@ -62,7 +62,7 @@ def drawButterfly(wingColor, bodyColor, patternColor1, patternColor2):
     Circle(250, 300, 8, fill=bodyColor)
     Circle(150, 300, 8, fill=bodyColor)
 
-drawButterfly('saddleBrown', 'chocolate', 'sandyBrown', 'moccasin')
+drawButterfly('black', 'teal', 'lime', 'darkGreen')
 
 
 # -

@@ -36,14 +36,6 @@ def onMouseMove(mouseX, mouseY):
     rightRope.x2 = seat.x2
     rightRope.y2 = seat.y2
 
-onMouseMove(10, 10)
-onMouseMove(130, 300)
-onMouseMove(350, 40)
-onMouseMove(400, 390)
-onMouseMove(200, 150)
-onMouseMove(20, 170)
-onMouseMove(50, 30)
-onMouseMove(250, 250)
 
 
 # -
@@ -85,6 +77,7 @@ def onMouseMove(mouseX, mouseY):
     rightRope.x2 = seat.x2
     rightRope.y2 = seat.y2
 
+onMouseMove(240, 360)
 
 
 # -
@@ -126,5 +119,4 @@ def onMouseMove(mouseX, mouseY):
     rightRope.x2 = seat.x2
     rightRope.y2 = seat.y2
 
-onMouseMove(150, 275)
 

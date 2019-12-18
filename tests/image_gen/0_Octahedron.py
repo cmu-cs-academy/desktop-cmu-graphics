@@ -17,10 +17,6 @@ def onMousePress(mouseX, mouseY):
     Circle(400 - mouseX, 400 - mouseY, 5, fill='lime')
 
 onMousePress(300, 200)
-onMousePress(100, 200)
-onMousePress(65, 85)
-onMousePress(125, 30)
-onMousePress(145, 290)
 
 
 # -
@@ -42,7 +38,7 @@ def onMousePress(mouseX, mouseY):
     Line(400, 400, 400 - mouseX, 400 - mouseY, fill=gradient('black', 'lime'))
     Circle(400 - mouseX, 400 - mouseY, 5, fill='lime')
 
-onMousePress(300, 200)
+onMousePress(200, 200)
 
 
 # -
@@ -64,5 +60,5 @@ def onMousePress(mouseX, mouseY):
     Line(400, 400, 400 - mouseX, 400 - mouseY, fill=gradient('black', 'lime'))
     Circle(400 - mouseX, 400 - mouseY, 5, fill='lime')
 
-onMousePress(250, 100)
+onMousePress(200, 200)
 

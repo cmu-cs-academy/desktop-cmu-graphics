@@ -156,6 +156,10 @@ def onStep():
 
             app.stop()
 
+onKeyPress('space')
+onKeyPress('space')
+onKeyPress('c')
+app.paused = True
 
 
 # -

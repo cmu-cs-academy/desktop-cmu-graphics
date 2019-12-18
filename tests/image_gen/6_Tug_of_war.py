@@ -63,8 +63,6 @@ onKeyPress('a')
 onKeyRelease('a')
 onKeyPress('a')
 onKeyRelease('a')
-onKeyPress('a')
-onKeyRelease('a')
 
 
 # -
@@ -123,6 +121,7 @@ def onKeyRelease(key):
     elif (key == 'l'):
         rightPersonArm.centerX -= 10
 
+onKeyPress('r')
 onKeyPress('a')
 
 
@@ -182,16 +181,6 @@ def onKeyRelease(key):
     elif (key == 'l'):
         rightPersonArm.centerX -= 10
 
-onKeyPress('l')
-onKeyRelease('l')
-onKeyPress('l')
-onKeyRelease('l')
-onKeyPress('l')
-onKeyRelease('l')
-onKeyPress('l')
-onKeyRelease('l')
-onKeyPress('l')
-onKeyRelease('l')
 onKeyPress('l')
 onKeyRelease('l')
 

@@ -35,10 +35,4 @@ def onMousePress(mouseX, mouseY):
 
 onMousePress(250, 150)
 onMousePress(350, 50)
-onMousePress(300, 100)
-onMousePress(250, 150)
-onMousePress(200, 200)
-onMousePress(150, 250)
-onMousePress(100, 300)
-onMousePress(50, 350)
 

@@ -30,8 +30,6 @@ def onStep():
         if (eachStar.radius > 700):
             stars.remove(eachStar)
 
-onSteps(10)
-app.paused = True
 
 
 # -
@@ -104,6 +102,6 @@ def onStep():
         if (eachStar.radius > 700):
             stars.remove(eachStar)
 
-onSteps(5)
+onSteps(100)
 app.paused = True
 

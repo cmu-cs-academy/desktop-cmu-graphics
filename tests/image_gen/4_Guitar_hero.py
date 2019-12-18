@@ -91,8 +91,11 @@ def onStep():
 
     moveNotes()
 
-addNote(1, 100)
-onSteps(5)
+score.value = 10
+addNote(0, 395)
+onSteps(10)
+addNote(2, 300)
+onKeyPress('d')
 app.paused = True
 
 
@@ -191,6 +194,9 @@ def onStep():
     moveNotes()
 
 addNote(0, 275)
+addNote(0, 270)
+onKeyPress('a')
+onStep()
 onKeyPress('a')
 app.paused = True
 
@@ -289,10 +295,11 @@ def onStep():
 
     moveNotes()
 
-addNote(0, 50)
-addNote(1, 100)
-addNote(2, 150)
-addNote(3, 200)
+score.value = 20
+addNote(0, 395)
+addNote(1, 395)
+addNote(2, 395)
+addNote(3, 395)
 onSteps(10)
 app.paused = True
 

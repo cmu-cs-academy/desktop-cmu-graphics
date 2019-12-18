@@ -75,6 +75,8 @@ def onStep():
         letterSize -= sizeChange
         index += 1
 
+onSteps(15)
+app.paused = True
 
 
 # -
@@ -115,6 +117,6 @@ def onStep():
         letterSize -= sizeChange
         index += 1
 
-onSteps(5)
+onSteps(15)
 app.paused = True
 

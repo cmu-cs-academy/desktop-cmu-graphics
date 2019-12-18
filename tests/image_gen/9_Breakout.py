@@ -84,6 +84,8 @@ def onStep():
         Label('You Win!', 200, 200, fill='white', size=50)
         app.paused = True
 
+onSteps(70)
+onMouseMove(365, 200)
 onSteps(50)
 app.paused = True
 
@@ -175,8 +177,6 @@ def onStep():
         Label('You Win!', 200, 200, fill='white', size=50)
         app.paused = True
 
-onSteps(80)
-app.paused = True
 
 
 # -
@@ -266,4 +266,6 @@ def onStep():
         Label('You Win!', 200, 200, fill='white', size=50)
         app.paused = True
 
+onSteps(50)
+app.paused = True
 

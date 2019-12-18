@@ -47,7 +47,6 @@ def onMouseRelease(mouseX, mouseY):
     # Change the title text back.
     title.value = 'Fruit'
 
-onMouseDrag(200, 200)
 
 
 # -
@@ -100,7 +99,6 @@ def onMouseRelease(mouseX, mouseY):
     # Change the title text back.
     title.value = 'Fruit'
 
-onMouseDrag(50, 240)
 
 
 # -

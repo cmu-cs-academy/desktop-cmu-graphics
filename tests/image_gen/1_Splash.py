@@ -27,8 +27,6 @@ def drawSplash(centerX, centerY):
     Circle(centerX, centerY, 20, fill='deepSkyBlue', opacity=90)
 
 drawSplash(200, 200)
-drawSplash(150, 100)
-drawSplash(270, 130)
 
 
 # -
@@ -61,8 +59,6 @@ def drawSplash(centerX, centerY):
     Circle(centerX, centerY, 20, fill='deepSkyBlue', opacity=90)
 
 drawSplash(200, 200)
-drawSplash(150, 100)
-drawSplash(270, 130)
 
 
 # -

@@ -52,8 +52,9 @@ def onMouseMove(mouseX, mouseY):
     elif (greenStar.contains(mouseX, mouseY) == True):
         drawEndScreen('honeydew', 'YOU WIN!', 'green')
 
-onMouseMove(200, 200)
-onMouseMove(220, 240)
+onMouseMove(100, 50)
+onMouseMove(140, 50)
+onMouseMove(180, 50)
 
 
 # -
@@ -82,6 +83,6 @@ def onMouseMove(mouseX, mouseY):
     elif (greenStar.contains(mouseX, mouseY) == True):
         drawEndScreen('honeydew', 'YOU WIN!', 'green')
 
-onMouseMove(200, 200)
-onMouseMove(220, 240)
+onMouseMove(195, 280)
+onMouseMove(200, 350)
 

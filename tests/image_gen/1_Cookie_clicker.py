@@ -22,6 +22,7 @@ def onMousePress(mouseX, mouseY):
     # Increase the number of times we clicked on the cookie.
     counter.value += 1
 
+onMousePress(200, 200)
 
 
 # -
@@ -49,8 +50,6 @@ def onMousePress(mouseX, mouseY):
     # Increase the number of times we clicked on the cookie.
     counter.value += 1
 
-onMousePress(200, 200)
-onMousePress(200, 200)
 
 
 # -

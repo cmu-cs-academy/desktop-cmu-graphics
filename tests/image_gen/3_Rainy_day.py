@@ -57,7 +57,7 @@ def onStep():
     if (rain.centerY > 400):
         rain.clear()
 
-onSteps(22)
+onSteps(140)
 app.paused = True
 
 
@@ -90,6 +90,4 @@ def onStep():
     if (rain.centerY > 400):
         rain.clear()
 
-onStep()
-app.paused = True
 

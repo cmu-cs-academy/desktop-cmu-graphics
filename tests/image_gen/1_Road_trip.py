@@ -38,7 +38,7 @@ def drawScene(isMountainous, isDesert, isBeach, isNightTime, destination,
         Rect(0, 0, 400, 400, opacity=50)
 
 
-drawScene(True, False, True, False, 'Pittsburgh', 35)
+drawScene(True, True, False, False, 'Pittsburgh', 35)
 
 
 # -
@@ -82,7 +82,7 @@ def drawScene(isMountainous, isDesert, isBeach, isNightTime, destination,
         Rect(0, 0, 400, 400, opacity=50)
 
 
-drawScene(True, False, True, False, 'Pittsburgh', 35)
+drawScene(True, True, False, False, 'Pittsburgh', 35)
 
 
 # -
@@ -126,5 +126,5 @@ def drawScene(isMountainous, isDesert, isBeach, isNightTime, destination,
         Rect(0, 0, 400, 400, opacity=50)
 
 
-drawScene(True, True, True, False, 'Pittsburgh', 35)
+drawScene(False, False, True, False, 'Miami', 10)
 

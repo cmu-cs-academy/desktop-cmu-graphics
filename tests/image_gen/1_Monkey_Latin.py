@@ -133,8 +133,6 @@ def onKeyPress(key):
     if (key == 'space'):
         speakMonkeyLatin()
 
-app.setTextInputs('monkey')
-onKeyPress('space')
 
 
 # -
@@ -203,4 +201,6 @@ def onKeyPress(key):
     if (key == 'space'):
         speakMonkeyLatin()
 
+app.setTextInputs('monkey')
+onKeyPress('space')
 
