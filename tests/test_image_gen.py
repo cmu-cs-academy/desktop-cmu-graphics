@@ -198,8 +198,6 @@ def main():
                     p.terminate()
                     break
 
-        os.system('pip -V')
-
     num_failures = 0
     num_successes = 0
     start_time = time.time()
