@@ -11,7 +11,11 @@ from PIL import Image
 import numpy
 
 import subprocess
-from shutil import copy2
+
+import re
+
+NON_SPACE_RE = r'[^ ]'
+TEST_SPLITTER = '\n# -\n'
 
 SIZE = 400
 
@@ -37,11 +41,6 @@ div.error img {
 <body>
 '''
 REPORT_FOOTER = '</body></html>'
-
-IS_CI = os.environ.get('CI', 'false') == 'true'
-if IS_CI:
-    S3 = boto3.resource('s3')
-    S3_BUCKET = S3.Bucket('cmu-cs-academy.backend.files.eddie')
 
 def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     image_1 = Image.open(path_1)
@@ -78,14 +77,7 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
                     visual_diff[i][j][3] = 128  # half alpha
 
         imageio.imwrite(diff_image_path, visual_diff)
-        # if IS_CI:
-        #     S3_BUCKET.put_object(
-        #         Key='test_image_gen/%s' % path_2.replace('/', '_'),
-        #         Body=open(path_2, 'rb'))
-        #     S3_BUCKET.put_object(
-        #         Key='test_image_gen/%s' % diff_image_path.replace('/', '_'),
-        #         Body=open(diff_image_path, 'rb'))
-        # print("Part %d MSE %.0f" % (test_piece_i, mean_squared_error))
+        print("Part %d MSE %.0f" % (test_piece_i, mean_squared_error))
         REPORT_FILE.write("<div class='error'><p>Part %d MSE %.0f</p>" %
             (test_piece_i, mean_squared_error))
         for path in [path_1, path_2, diff_image_path]:
@@ -93,12 +85,12 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
 
     return mean_squared_error < threshold
 
-def run_test(driver, test_name, all_source_code):
-    source_code_pieces = all_source_code.split('\n# -\n')
+
+def run_test(test_name, all_source_code):
+    source_code_pieces = all_source_code.split(TEST_SPLITTER)
     source_code = ''
     i = 0
     all_passed = True
-
     addEventFnCaller = {
         'onKeyHolds': '\ndef onKeyHolds(keys, n):\n    for i in range(n):\n        onKeyHold(keys)\n',
         'onSteps': '\ndef onSteps(n):\n    for i in range(n):\n        onStep()\n',
@@ -106,9 +98,9 @@ def run_test(driver, test_name, all_source_code):
         'onMousePresses': '\ndef onMousePresses(mouseX, mouseY, n):\n    for i in range(n):\n        onMousePress(mouseX, mouseY)\n'
     }
 
-    for piece_i in range(len(source_code_pieces)):
-        # skip exercises with random calls
-        if 'randrange' in source_code_pieces[piece_i] or 'onMouseMove' in source_code_pieces[piece_i]:
+    for piece_i in source_code_pieces:
+        # skip exercises with random or onMouseMove calls
+        if 'randrange' in piece_i or 'onMouseMove' in piece_i:
             continue
 
         i += 1
@@ -118,19 +110,16 @@ def run_test(driver, test_name, all_source_code):
 
         correct_path = 'image_gen/%s/correct_%d.png' % (test_name, i)
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
-
         if not os.path.exists(output_path):
             print('Generating new %s' % output_path)
-            copy2('cs-academy-canvas.png', output_path)
+            copy_file('cs-academy-canvas.png', output_path)
 
         source_code = r'import sys'
         source_code += '\nsys.path.insert(0, "..")'
         source_code += '\nfrom cmu_graphics import *\n'
-        # source_code += '\n######\n'.join(source_code_pieces[:piece_i])
-        # source_code += '\ndef onMousePress(x, y):\n'
-        source_code += '\n'.join([(s) for s in source_code_pieces[piece_i].split('\n')])
+        source_code += piece_i
 
-        # if any event wrapper is called, insert a definition for it above the first line.
+        # if any event wrapper is called, insert a definition for it above the first line it appears.
         for val in addEventFnCaller.keys():
             ind = 0
             source_code_lines = source_code.split('\n')
@@ -173,7 +162,7 @@ def run_test(driver, test_name, all_source_code):
 
         if not os.path.exists(correct_path):
             print('Generating new %s' % correct_path)
-            os.system('cp %s %s' % (output_path, correct_path))
+            copy_file(output_path, correct_path)
             continue
         else:
             if not compare_images(correct_path, output_path, test_name, i,
@@ -188,29 +177,45 @@ def run_test(driver, test_name, all_source_code):
 
     return all_passed
 
+
 def main():
-    global REPORT_FILE, WAIT
+    global REPORT_FILE
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('directory', type=str, default='../CMU_CS_Academy_CS_1/', nargs='?')
-    parser.add_argument('--only', type=str, help='The name of a single python file to run')
+    parser.add_argument('generate_tests', type=bool, default=False, nargs='?')
+    if (parser.parse_args().generate_tests):
+        # run the python file and brython image generations in a subprocess since they need a venv
+        p = subprocess.Popen([sys.executable, './test_image_gen_subproc.py'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        while True:
+            if p.returncode != None:
+                break
+            line = p.stdout.readline()
+            if line:
+                if line.strip() == b'---END SUBPROCESS---':
+                    p.terminate()
+                    break
 
-    args = parser.parse_args()
+        os.system('pip -V')
 
     num_failures = 0
     num_successes = 0
     start_time = time.time()
 
+
     try:
         REPORT_FILE = open('report.html', 'w')
         REPORT_FILE.write(REPORT_HEADER)
 
-        for test_py_name in (args.only and [args.only] or os.listdir('image_gen')):
+        print('Running cpython-cmu-graphics tests...')
+        for test_py_name in os.listdir('image_gen'):
             if not test_py_name.endswith('.py'):
                 continue
             REPORT_FILE.flush()
             with open('image_gen/%s' % test_py_name) as f:
-                if not run_test(driver, test_py_name[:-3], f.read()):
+                if not run_test(test_py_name[:-3], f.read()):
                     print('image_gen/%s failed' % test_py_name)
                     REPORT_FILE.write('<p>image_gen/%s failed' % (test_py_name))
                     REPORT_FILE.write('</div>')
