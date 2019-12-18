@@ -54,7 +54,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
-./tests/image_gen
+tests/image_gen
 
 # pyenv
 .python-version
