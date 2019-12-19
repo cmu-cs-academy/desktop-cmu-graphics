@@ -38,6 +38,7 @@ def onMousePress(mouseX, mouseY):
     Circle(mouseX, mouseY - 20, 5, fill='crimson')
 
 onMousePress(200, 200)
+onMousePress(300, 100)
 
 
 # -
@@ -127,5 +128,4 @@ def onMousePress(mouseX, mouseY):
     Line(mouseX, mouseY, mouseX, mouseY - 20)
     Circle(mouseX, mouseY - 20, 5, fill='crimson')
 
-onMousePress(200, 200)
 

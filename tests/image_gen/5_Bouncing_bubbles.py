@@ -54,8 +54,6 @@ def onStep():
     moveBubbles()
     checkWallCollision()
 
-bubble0 = bubbles.children[0]
-onMouseMove(bubble0.centerX, bubble0.centerY + 30)
 onSteps(20)
 app.paused = True
 

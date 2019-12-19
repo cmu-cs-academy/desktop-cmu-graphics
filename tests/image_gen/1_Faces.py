@@ -41,7 +41,10 @@ def onMousePress(mouseX, mouseY):
         else:
             purpleMouth.value = '-'
 
-onMousePress(100, 100)
+onMousePress(50, 340)
+onMousePress(210, 40)
+onMousePress(300, 280)
+onMousePress(140, 100)
 
 
 # -
@@ -88,8 +91,9 @@ def onMousePress(mouseX, mouseY):
         else:
             purpleMouth.value = '-'
 
-onMousePress(100, 100)
-onMousePress(100, 100)
+onMousePress(130, 250)
+onMousePress(60, 320)
+onMousePress(180, 210)
 
 
 # -
@@ -136,5 +140,7 @@ def onMousePress(mouseX, mouseY):
         else:
             purpleMouth.value = '-'
 
-onMousePress(250, 210)
+onMousePress(130, 250)
+onMousePress(60, 320)
+onMousePress(180, 210)
 

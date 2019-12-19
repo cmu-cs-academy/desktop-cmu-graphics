@@ -82,8 +82,8 @@ def onStep():
             cow.centerY = light.centerY
             cow.rotateAngle += 5
 
-onMouseMove(100, 250)
-onSteps(20)
+onMouseMove(300, 200)
+onSteps(50)
 app.paused = True
 
 
@@ -172,8 +172,6 @@ def onStep():
             cow.centerY = light.centerY
             cow.rotateAngle += 5
 
-onMouseMove(300, 200)
-onSteps(30)
 onMouseMove(275, 225)
 onSteps(30)
 app.paused = True
@@ -265,6 +263,6 @@ def onStep():
             cow.rotateAngle += 5
 
 onMouseMove(100, 250)
-onStep()
+onSteps(20)
 app.paused = True
 

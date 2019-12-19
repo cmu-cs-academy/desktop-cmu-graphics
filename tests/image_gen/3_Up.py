@@ -60,8 +60,7 @@ def onKeyHold(keys):
     elif (upHouse.right < 0):
         upHouse.left = 400
 
-onKeyHolds(['left'], 100)
-onSteps(60)
+onKeyHolds(['left'], 20)
 app.paused = True
 
 
@@ -128,7 +127,7 @@ def onKeyHold(keys):
     elif (upHouse.right < 0):
         upHouse.left = 400
 
-onSteps(20)
+onStep()
 app.paused = True
 
 
@@ -195,6 +194,4 @@ def onKeyHold(keys):
     elif (upHouse.right < 0):
         upHouse.left = 400
 
-onSteps(60)
-app.paused = True
 

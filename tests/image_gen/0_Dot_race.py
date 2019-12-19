@@ -55,7 +55,7 @@ def onKeyPress(key):
         blueDot.centerX = 350
         blueDot.centerY = 240
 
-onKeyHolds(['s'], 20)
+onKeyHold(['s'])
 
 
 # -
@@ -116,6 +116,7 @@ def onKeyPress(key):
         blueDot.centerX = 350
         blueDot.centerY = 240
 
+onKeyHold(['up'])
 
 
 # -
@@ -176,5 +177,8 @@ def onKeyPress(key):
         blueDot.centerX = 350
         blueDot.centerY = 240
 
-onKeyHolds(['right'], 10)
+onKeyPress('q')
+onKeyHold(['w'])
+onKeyHold(['down'])
+onKeyHold(['w'])
 

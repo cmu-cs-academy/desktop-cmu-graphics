@@ -27,7 +27,11 @@ def onStep():
     # Increase the number of points of the sun by 1.
     sun.points += 1
 
-onSteps(200)
+onSteps(20)
+onKeyPress('left')
+onSteps(20)
+onKeyPress('right')
+onSteps(20)
 app.paused = True
 
 
@@ -99,4 +103,8 @@ def onStep():
     # Increase the number of points of the sun by 1.
     sun.points += 1
 
+onSteps(20)
+onKeyPress('left')
+onSteps(20)
+app.paused = True
 

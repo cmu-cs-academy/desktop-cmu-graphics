@@ -65,7 +65,7 @@ onMouseDrag(250, 340)
 onMouseDrag(210, 340)
 onMouseDrag(170, 340)
 onMouseDrag(140, 340)
-onMouseDrag(130, 340)
+onKeyPress('r')
 
 
 # -
@@ -197,5 +197,10 @@ def onMouseDrag(mouseX, mouseY):
         fishTail.centerX = mouseX + 50
         fishTail.centerY = mouseY
 
-onMouseDrag(380, 380)
+onMouseDrag(290, 340)
+onMouseDrag(250, 340)
+onMouseDrag(210, 340)
+onMouseDrag(170, 340)
+onMouseDrag(140, 340)
+onMouseDrag(130, 340)
 

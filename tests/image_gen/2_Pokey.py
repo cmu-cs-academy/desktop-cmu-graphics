@@ -81,15 +81,9 @@ def drawPokeyBodyPiece(x, y):
            border='black')
 
 drawBackground()
-drawPokeyBodyPiece(100, 320)
-drawPokeyHead(100, 255)
 drawPokeyBodyPiece(200, 320)
 drawPokeyBodyPiece(200, 255)
 drawPokeyHead(200, 190)
-drawPokeyBodyPiece(300, 320)
-drawPokeyBodyPiece(300, 255)
-drawPokeyBodyPiece(300, 190)
-drawPokeyHead(300, 125)
 
 
 # -

@@ -18,7 +18,14 @@ def stickFigure(x, y, size):
     Line(x, y + 2 * size, x - size, y + 3 * size)
     Line(x, y + 2 * size, x + size, y + 3 * size)
 
-stickFigure(150, 300, 10)
+stickFigure(50, 200, 4)
+stickFigure(70, 200, 8)
+stickFigure(95, 200, 12)
+stickFigure(130, 200, 16)
+stickFigure(170, 200, 20)
+stickFigure(220, 200, 24)
+stickFigure(280, 200, 28)
+stickFigure(350, 200, 32)
 
 
 # -
@@ -66,5 +73,7 @@ def stickFigure(x, y, size):
     Line(x, y + 2 * size, x - size, y + 3 * size)
     Line(x, y + 2 * size, x + size, y + 3 * size)
 
-stickFigure(200, 200, 25)
+stickFigure(100, 100, 10)
+stickFigure(200, 150, 10)
+stickFigure(300, 100, 10)
 

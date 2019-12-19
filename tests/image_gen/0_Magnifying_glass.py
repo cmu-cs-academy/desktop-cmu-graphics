@@ -30,6 +30,7 @@ def onMouseMove(mouseX, mouseY):
         else:
             dot.radius = 5
 
+onMouseMove(200, 200)
 
 
 # -
@@ -65,7 +66,6 @@ def onMouseMove(mouseX, mouseY):
         else:
             dot.radius = 5
 
-onMouseMove(120, 310)
 
 
 # -

@@ -43,7 +43,8 @@ def onStep():
         else:
             ring.rotateAngle -= 1
 
-makeNRings(3)
+makeNRings(4)
+onSteps(15)
 app.paused = True
 
 
@@ -94,8 +95,6 @@ def onStep():
             ring.rotateAngle -= 1
 
 makeNRings(3)
-onSteps(20)
-app.paused = True
 
 
 # -
@@ -144,6 +143,6 @@ def onStep():
         else:
             ring.rotateAngle -= 1
 
-makeNRings(5)
+makeNRings(3)
 app.paused = True
 

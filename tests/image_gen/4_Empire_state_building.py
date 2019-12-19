@@ -40,8 +40,8 @@ def onKeyHold(keys):
             elevator.centerY += 3
             floor.value -= 1
 
-onKeyHolds(['up'], 125)
-onKeyHolds(['down'], 50)
+onKeyHolds(['up'], 20)
+onKeyHolds(['down'], 10)
 
 
 # -
@@ -87,7 +87,9 @@ def onKeyHold(keys):
             elevator.centerY += 3
             floor.value -= 1
 
-onKeyHold(['up'])
+onKeyHolds(['up'], 10)
+onKeyHolds(['up'], 20)
+onKeyHolds(['up'], 30)
 
 
 # -

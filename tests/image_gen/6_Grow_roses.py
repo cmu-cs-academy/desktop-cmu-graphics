@@ -113,8 +113,6 @@ def onMousePress(mouseX, mouseY):
         for num in numberOfPetalsInRing:
             drawPetalRing(num, mouseX, mouseY)
 
-onMousePress(60, 230)
-onMousePress(320, 130)
 
 
 # -
@@ -173,5 +171,5 @@ def onMousePress(mouseX, mouseY):
         for num in numberOfPetalsInRing:
             drawPetalRing(num, mouseX, mouseY)
 
-onMousePress(200, 200)
+onMousePress(150, 250)
 

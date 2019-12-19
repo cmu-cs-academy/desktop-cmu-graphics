@@ -26,6 +26,8 @@ def onMouseRelease(mouseX, mouseY):
     flash.visible = False
     background.fill = 'black'
 
+onMousePress(200, 200)
+onMouseRelease(100, 300)
 
 
 # -
@@ -57,6 +59,12 @@ def onMouseRelease(mouseX, mouseY):
     flash.visible = False
     background.fill = 'black'
 
+onMousePress(200, 200)
+onMouseRelease(200, 200)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
 
 
 # -
@@ -89,9 +97,4 @@ def onMouseRelease(mouseX, mouseY):
     background.fill = 'black'
 
 onMousePress(200, 200)
-onMouseRelease(200, 200)
-onMousePress(200, 200)
-onMouseRelease(200, 200)
-onMousePress(200, 200)
-onMouseRelease(200, 200)
 

@@ -84,10 +84,8 @@ def onStep():
     bug.visible = True
     checkGameOver()
 
-bug0 = app.bugs[0]
-bug0.visible = True
-onMouseMove(70, 200)
-onMousePress(70, 200)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
 app.paused = True
 
 
@@ -178,7 +176,7 @@ def onStep():
     bug.visible = True
     checkGameOver()
 
-onMousePress(200, 200)
+onSteps(10)
 app.paused = True
 
 

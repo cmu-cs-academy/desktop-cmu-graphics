@@ -41,6 +41,7 @@ def onMousePress(mouseX, mouseY):
     dipperTop.y1 = mouseY
     dipperTop.y2 = mouseY - 20
 
+onMousePress(100, 180)
 
 
 # -
@@ -87,6 +88,7 @@ def onMousePress(mouseX, mouseY):
     dipperTop.y1 = mouseY
     dipperTop.y2 = mouseY - 20
 
+onMousePress(200, 280)
 
 
 # -
@@ -133,5 +135,4 @@ def onMousePress(mouseX, mouseY):
     dipperTop.y1 = mouseY
     dipperTop.y2 = mouseY - 20
 
-onMousePress(300, 20)
 

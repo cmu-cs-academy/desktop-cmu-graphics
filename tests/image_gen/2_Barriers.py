@@ -68,11 +68,7 @@ def onStep():
             gameOverText.visible = True
             app.paused = True
 
-barrier.centerX = 150
-onMouseMove(150, 300)
-onSteps(80)
-barrier.centerX = 320
-onSteps(80)
+onStep()
 app.paused = True
 
 
@@ -147,10 +143,6 @@ def onStep():
             gameOverText.visible = True
             app.paused = True
 
-barrier.centerX = 100
-onSteps(60)
-onKeyPress('space')
-app.paused = True
 
 
 # -
@@ -224,4 +216,7 @@ def onStep():
             gameOverText.visible = True
             app.paused = True
 
+barrier.centerX = 200
+onSteps(50)
+app.paused = True
 

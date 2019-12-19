@@ -84,7 +84,7 @@ def onKeyHold(keys):
         if ((cacoon.opacity == 100) and (app.phase == 'cacoon')):
             app.phase='butterfly'
 
-onKeyHolds(['space'], 150)
+onKeyHolds(['space'], 50)
 
 
 # -
@@ -174,6 +174,7 @@ def onKeyHold(keys):
         if ((cacoon.opacity == 100) and (app.phase == 'cacoon')):
             app.phase='butterfly'
 
+onKeyHold(['space'])
 
 
 # -

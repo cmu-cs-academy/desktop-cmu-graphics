@@ -88,8 +88,8 @@ def onStep():
 
     glass.fill = colors[app.index]
 
-onSteps(10)
-onMousePress(200, 200)
+onSteps(1)
+app.paused = True
 
 
 # -

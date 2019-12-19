@@ -114,6 +114,7 @@ def HatchedOrNot(hasHatched):
 
 HatchedOrNot(True)
 onMousePress(200, 200)
+onMouseRelease(200, 200)
 
 
 # -
@@ -174,5 +175,4 @@ def HatchedOrNot(hasHatched):
 
 HatchedOrNot(False)
 onMousePress(200, 200)
-onMouseRelease(200, 200)
 

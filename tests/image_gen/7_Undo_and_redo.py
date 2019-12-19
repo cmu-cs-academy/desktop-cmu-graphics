@@ -95,6 +95,12 @@ def onStep():
     for star in app.stars:
         star.rotateAngle += 5
 
+onMousePress(100, 100)
+onMousePress(300, 300)
+onKeyPress('left')
+onKeyPress('right')
+onKeyPress('right')
+app.paused = True
 
 
 # -
@@ -143,6 +149,9 @@ def onStep():
         star.rotateAngle += 5
 
 onMousePress(100, 100)
-onSteps(20)
+onSteps(10)
+onMousePress(300, 300)
+onKeyPress('right')
+onKeyPress('left')
 app.paused = True
 

@@ -55,8 +55,6 @@ def onStep():
             letters.remove(letter)
 
 onMouseMove(50, 50)
-onMouseMove(350, 350)
-onSteps(10)
 app.paused = True
 
 
@@ -178,6 +176,4 @@ def onStep():
         if (abs(letter.centerX - 200) < 25):
             letters.remove(letter)
 
-onMouseMove(50, 50)
-app.paused = True
 

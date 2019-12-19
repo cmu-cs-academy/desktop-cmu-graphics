@@ -22,9 +22,7 @@ def onMouseMove(mouseX, mouseY):
         line.x2 = mouseX
         line.y2 = mouseY
 
-makeCone(10)
-onMouseMove(50, 350)
-
+makeCone(20)
 
 # -
 app.background = 'black'
@@ -52,6 +50,8 @@ def onMouseMove(mouseX, mouseY):
         line.y2 = mouseY
 
 makeCone(20)
+onMouseMove(200, 200)
+
 
 # -
 app.background = 'black'

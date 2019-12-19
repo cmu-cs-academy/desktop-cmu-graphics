@@ -95,7 +95,6 @@ def capsLock(isCapsLockOn, text1, text2, text3):
     drawKeyboard()
     capsLockArrow.toFront()
 
-capsLock(False, 'NEW PHONE WHO DIS', 'pls stop w that lol', 'sorry sorry')
 
 
 # -
@@ -297,5 +296,5 @@ def capsLock(isCapsLockOn, text1, text2, text3):
     drawKeyboard()
     capsLockArrow.toFront()
 
-capsLock(False, 'NEW PHONE WHO DIS', 'pls stop w that lol', 'sorry sorry')
+capsLock(True, 'sup ma dude', 'y u yelling?', 'sorry caps lock')
 

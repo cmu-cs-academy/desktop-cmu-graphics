@@ -39,7 +39,7 @@ def onStep():
     for letter in letters:
         letter.rotateAngle += 5
 
-onSteps(20)
+onStep()
 app.paused = True
 
 
@@ -85,6 +85,9 @@ def onStep():
     for letter in letters:
         letter.rotateAngle += 5
 
+onMousePress(100, 100)
+onMousePress(300, 300)
+app.paused = True
 
 
 # -
@@ -129,4 +132,8 @@ def onStep():
     for letter in letters:
         letter.rotateAngle += 5
 
+onMousePress(100, 100)
+onSteps(25)
+onMousePress(300, 300)
+app.paused = True
 

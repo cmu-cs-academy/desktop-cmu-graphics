@@ -63,8 +63,6 @@ def onStep():
         oddPieces.dy *= -1
 
 
-onSteps(2)
-app.paused = True
 
 
 # -
@@ -203,6 +201,4 @@ def onStep():
         oddPieces.dy *= -1
 
 
-onStep()
-app.paused = True
 

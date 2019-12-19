@@ -52,7 +52,7 @@ def nameTag(name, color1, color2, color3):
     Label(name, 200, 250, border='black', size=75, bold=True,
           fill=gradient(color1, color2, color3, start='top'))
 
-nameTag('Panda', 'mediumSeaGreen', 'limeGreen', 'white')
+nameTag('Owl', 'tan', 'saddleBrown', 'moccasin')
 
 
 # -
@@ -81,5 +81,5 @@ def nameTag(name, color1, color2, color3):
     Label(name, 200, 250, border='black', size=75, bold=True,
           fill=gradient(color1, color2, color3, start='top'))
 
-nameTag('Python', 'red', 'orange', 'yellow')
+nameTag('Panda', 'mediumSeaGreen', 'limeGreen', 'white')
 

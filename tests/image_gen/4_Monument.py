@@ -37,7 +37,7 @@ def drawMonument(year):
         Polygon(150, 350, 120, 400, 280, 400, 250, 350, border='grey',
                 fill=gradient('paleTurquoise', 'deepSkyBlue', start='top'))
 
-drawMonument(2000)
+drawMonument(1692)
 
 
 # -
@@ -80,7 +80,7 @@ def drawMonument(year):
         Polygon(150, 350, 120, 400, 280, 400, 250, 350, border='grey',
                 fill=gradient('paleTurquoise', 'deepSkyBlue', start='top'))
 
-drawMonument(1776)
+drawMonument(1692)
 
 
 # -
@@ -123,5 +123,5 @@ def drawMonument(year):
         Polygon(150, 350, 120, 400, 280, 400, 250, 350, border='grey',
                 fill=gradient('paleTurquoise', 'deepSkyBlue', start='top'))
 
-drawMonument(1890)
+drawMonument(1854)
 

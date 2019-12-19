@@ -82,8 +82,6 @@ def onStep():
     app.steps += 1
 
 
-drawPokeyBodyPiece(195, 300)
-drawPokeyFace(205, 235)
 
 
 # -
@@ -173,7 +171,7 @@ def onStep():
 
 drawPokeyBodyPiece(195, 320)
 drawPokeyFace(205, 255)
-onSteps(10)
+onStep()
 app.paused = True
 
 
@@ -263,7 +261,14 @@ def onStep():
 
 
 drawPokeyBodyPiece(195, 320)
-drawPokeyFace(205, 255)
-onSteps(50)
+drawPokeyBodyPiece(205, 255)
+drawPokeyFace(195, 190)
+drawPokeyBodyPiece(105, 320)
+drawPokeyFace(95, 255)
+drawPokeyBodyPiece(305, 320)
+drawPokeyBodyPiece(295, 255)
+drawPokeyBodyPiece(305, 190)
+drawPokeyFace(295, 125)
+onSteps(10)
 app.paused = True
 

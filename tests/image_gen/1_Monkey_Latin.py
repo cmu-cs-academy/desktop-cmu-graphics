@@ -63,7 +63,7 @@ def onKeyPress(key):
     if (key == 'space'):
         speakMonkeyLatin()
 
-app.setTextInputs('amazing')
+app.setTextInputs('hello')
 onKeyPress('space')
 
 
@@ -201,6 +201,6 @@ def onKeyPress(key):
     if (key == 'space'):
         speakMonkeyLatin()
 
-app.setTextInputs('monkey')
+app.setTextInputs('amazing')
 onKeyPress('space')
 

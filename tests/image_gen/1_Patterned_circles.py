@@ -30,8 +30,6 @@ def onStep():
         else:
             wave.radius += waves.stepSize
 
-onSteps(5)
-app.paused = True
 
 
 # -
@@ -104,6 +102,4 @@ def onStep():
         else:
             wave.radius += waves.stepSize
 
-onSteps(100)
-app.paused = True
 

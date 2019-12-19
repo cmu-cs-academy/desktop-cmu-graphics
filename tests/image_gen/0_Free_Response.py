@@ -240,6 +240,12 @@ def onStep():
                     elif (flower.state == 'leaf'):
                         bloom(flower)
 
+app.stepsPerSecond = 300
+onSteps(55)
+stem = app.plantedFlowers[0][0]
+stem.timeInState = 150
+onStep()
+app.paused = True
 
 
 # -
@@ -364,10 +370,6 @@ def onStep():
 app.stepsPerSecond = 300
 onSteps(55)
 stem = app.plantedFlowers[0][0]
-stem.timeInState = 150
-onStep()
-stem.timeInState = 150
-onStep()
 stem.timeInState = 150
 onStep()
 app.paused = True

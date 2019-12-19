@@ -26,7 +26,8 @@ def onMouseMove(mouseX, mouseY):
     dot4.centerX = 400 - mouseX
     dot4.centerY = 400 - mouseY
 
-onMouseMove(250, 340)
+onMouseMove(140, 330)
+onMouseMove(290, 70)
 
 
 # -
@@ -58,11 +59,6 @@ def onMouseMove(mouseX, mouseY):
     dot4.centerX = 400 - mouseX
     dot4.centerY = 400 - mouseY
 
-onMouseMove(100, 200)
-onMouseMove(200, 50)
-onMouseMove(200, 200)
-onMouseMove(200, 250)
-onMouseMove(300, 200)
 
 
 # -
@@ -94,5 +90,6 @@ def onMouseMove(mouseX, mouseY):
     dot4.centerX = 400 - mouseX
     dot4.centerY = 400 - mouseY
 
-onMouseMove(140, 50)
+onMouseMove(140, 330)
+onMouseMove(290, 70)
 

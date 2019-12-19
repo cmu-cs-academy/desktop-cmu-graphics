@@ -117,7 +117,8 @@ def onStep():
         if (bubbles.hitsShape(player) == True):
             gameOver()
 
-onSteps(8)
+onMouseMove(-400, 0)
+onSteps(100)
 app.paused = True
 
 
@@ -241,7 +242,8 @@ def onStep():
         if (bubbles.hitsShape(player) == True):
             gameOver()
 
-onSteps(10)
+onMouseMove(-400, 0)
+onSteps(100)
 app.paused = True
 
 

@@ -102,9 +102,6 @@ def onMouseMove(mouseX, mouseY):
         if (letter.contains(mouseX, mouseY) == True):
             drawSentenceBox(letter)
 
-shape = letters.children[0]
-onMouseMove(shape.centerX, shape.centerY)
-app.paused = True
 
 
 # -

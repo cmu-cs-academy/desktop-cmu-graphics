@@ -47,11 +47,11 @@ def onStep():
         Label('You finished in ' + str(app.step) + ' steps', 200, 200, size=25)
         app.stop()
 
-onSteps(40)
+onSteps(200)
+onMouseMove(0, 0)
+onMouseMove(400, 200)
 onMouseMove(200, 400)
-onMouseMove(200, 400)
-onMouseMove(0, 400)
-onSteps(40)
+onSteps(100)
 app.paused = True
 
 
@@ -159,7 +159,7 @@ def onStep():
         Label('You finished in ' + str(app.step) + ' steps', 200, 200, size=25)
         app.stop()
 
-onMouseMove(180, 180)
-onMouseMove(170, 170)
+onMouseMove(200, 50)
+onMouseMove(200, 50)
 app.paused = True
 

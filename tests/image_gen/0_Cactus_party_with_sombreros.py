@@ -30,8 +30,7 @@ def onMousePress(mouseX, mouseY):
     cactusTop.toFront()
     sand.toFront()
 
-onMousePress(70, 150)
-onMousePress(330, 180)
+onMousePress(250, 250)
 
 
 # -
@@ -104,9 +103,5 @@ def onMousePress(mouseX, mouseY):
     cactusTop.toFront()
     sand.toFront()
 
-onMousePress(200, 200)
-onMousePress(50, 300)
-onMousePress(140, 50)
-onMousePress(310, 170)
-onMousePress(250, 350)
+onMousePress(250, 250)
 

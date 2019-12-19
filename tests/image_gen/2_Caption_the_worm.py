@@ -41,14 +41,6 @@ onKeyPress('e')
 onKeyPress('l')
 onKeyPress('l')
 onKeyPress('o')
-onKeyPress('space')
-onKeyPress('w')
-onKeyPress('o')
-onKeyPress('r')
-onKeyPress('l')
-onKeyPress('d')
-onKeyPress('!')
-onKeyPress('space')
 
 
 # -
@@ -90,19 +82,19 @@ def onKeyPress(key):
         cursor.centerY += 40
         cursor.centerX = 20
 
-onKeyPress('H')
-onKeyPress('e')
-onKeyPress('l')
-onKeyPress('l')
-onKeyPress('o')
+onKeyPress('1')
+onKeyPress('2')
 onKeyPress('space')
-onKeyPress('w')
-onKeyPress('o')
+onKeyPress('c')
+onKeyPress('h')
+onKeyPress('a')
 onKeyPress('r')
-onKeyPress('l')
-onKeyPress('d')
-onKeyPress('!')
-onKeyPress('space')
+onKeyPress('a')
+onKeyPress('c')
+onKeyPress('t')
+onKeyPress('e')
+onKeyPress('r')
+onKeyPress('s')
 
 
 # -

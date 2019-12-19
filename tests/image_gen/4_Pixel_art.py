@@ -39,7 +39,7 @@ def onKeyPress(key):
     placeRect(key)
     cursor.toFront()
 
-onKeyPress('w')
+onKeyPress('r')
 
 
 # -
@@ -129,5 +129,10 @@ def onKeyPress(key):
     placeRect(key)
     cursor.toFront()
 
+onKeyPress('g')
 onKeyPress('space')
+onKeyPress('down')
+onKeyPress('right')
+onKeyPress('space')
+onKeyPress('up')
 

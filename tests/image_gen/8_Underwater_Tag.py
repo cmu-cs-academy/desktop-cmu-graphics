@@ -80,9 +80,7 @@ def onKeyHold(keys):
     # Update score appropriately, if fish intersect each other.
     checkFishIntersection()
 
-onKeyHolds(['right', 's'], 15)
-onKeyHolds(['right'], 40)
-onKeyHolds(['w', 'left'], 20)
+onKeyHolds(['up', 's'], 8)
 
 
 # -
@@ -168,11 +166,8 @@ def onKeyHold(keys):
     # Update score appropriately, if fish intersect each other.
     checkFishIntersection()
 
-onKeyHolds(['left'], 10)
-onKeyHolds(['up'], 40)
-onKeyHolds(['right'], 10)
-onKeyHolds(['d'], 10)
-onKeyHolds(['s'], 20)
+onKeyHolds(['up'], 20)
+onKeyHolds(['right'], 20)
 
 
 # -
@@ -258,5 +253,6 @@ def onKeyHold(keys):
     # Update score appropriately, if fish intersect each other.
     checkFishIntersection()
 
-onKeyHolds(['right'], 40)
+onKeyHolds(['up'], 20)
+onKeyHolds(['right'], 20)
 

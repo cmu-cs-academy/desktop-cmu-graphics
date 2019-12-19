@@ -44,7 +44,7 @@ def onStep():
     stars.height = stars.height * 1.01
     stars.count += 1
 
-onSteps(50)
+onSteps(300)
 app.paused = True
 
 
@@ -95,7 +95,7 @@ def onStep():
     stars.height = stars.height * 1.01
     stars.count += 1
 
-onStep()
+onSteps(300)
 app.paused = True
 
 
@@ -146,6 +146,6 @@ def onStep():
     stars.height = stars.height * 1.01
     stars.count += 1
 
-onSteps(125)
+onSteps(10)
 app.paused = True
 

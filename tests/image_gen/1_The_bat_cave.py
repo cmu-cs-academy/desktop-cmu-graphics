@@ -139,6 +139,12 @@ def onMouseRelease(mouseX, mouseY):
     caveRoof.fill = gradient('black', rgb(30, 15, 10), start='top')
     light.fill = 'black'
 
+onMousePress(200, 200)
+onMouseRelease(200, 200)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
+onMousePress(200, 200)
+onMouseRelease(200, 200)
 
 
 # -

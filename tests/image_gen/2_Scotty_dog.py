@@ -16,7 +16,7 @@ def onMousePress(mouseX, mouseY):
     # The height of the backlight should change depending on the mouse.
     backlight.height = mouseY + 1
 
-onMousePress(100, 350)
+onMousePress(300, 210)
 
 
 # -
@@ -60,5 +60,5 @@ def onMousePress(mouseX, mouseY):
     # The height of the backlight should change depending on the mouse.
     backlight.height = mouseY + 1
 
-onMousePress(100, 350)
+onMousePress(300, 210)
 

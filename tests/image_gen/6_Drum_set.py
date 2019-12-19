@@ -53,7 +53,6 @@ def onMouseRelease(mouseX, mouseY):
 
 onMousePress(200, 100)
 onMouseRelease(200, 100)
-onMousePress(250, 100)
 
 
 # -
@@ -166,6 +165,4 @@ def onMouseRelease(mouseX, mouseY):
     leftHitHat.rotateAngle = 45
     rightHitHat.rotateAngle = -45
 
-onMousePress(200, 100)
-onMouseRelease(200, 100)
 

@@ -112,8 +112,7 @@ def onKeyPress(key):
             moveWheelbarrow(-35)
 
 onKeyPress('up')
-onKeyPress('left')
-onKeyPress('left')
+onKeyPress('down')
 
 
 # -
@@ -230,8 +229,9 @@ def onKeyPress(key):
         elif (key == 'left'):
             moveWheelbarrow(-35)
 
-onKeyPress('left')
-onKeyPress('left')
+onKeyPress('up')
+onKeyPress('down')
+onKeyPress('up')
 
 
 # -
@@ -348,5 +348,9 @@ def onKeyPress(key):
         elif (key == 'left'):
             moveWheelbarrow(-35)
 
+onKeyPress('up')
+onKeyPress('right')
+onKeyPress('down')
+onKeyPress('right')
 onKeyPress('up')
 

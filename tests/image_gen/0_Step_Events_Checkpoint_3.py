@@ -40,7 +40,7 @@ def onStep():
         toggleRightArm()
         app.counter = 0
 
-onStep()
+onSteps(3)
 app.paused = True
 
 
@@ -87,7 +87,7 @@ def onStep():
         toggleRightArm()
         app.counter = 0
 
-onSteps(15)
+onSteps(4)
 app.paused = True
 
 
@@ -134,6 +134,6 @@ def onStep():
         toggleRightArm()
         app.counter = 0
 
-onSteps(2)
+onSteps(3)
 app.paused = True
 

@@ -34,6 +34,7 @@ def onKeyPress(key):
         drawConstellation()
 
 onKeyPress('r')
+onKeyPress('r')
 
 
 # -
@@ -72,6 +73,7 @@ def onKeyPress(key):
         connections.clear()
         drawConstellation()
 
+onKeyPress('r')
 
 
 # -

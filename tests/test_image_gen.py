@@ -6,6 +6,8 @@ import sys
 import time
 import traceback
 
+from utils import copy_file
+
 import imageio
 from PIL import Image
 import numpy
@@ -190,10 +192,12 @@ def main():
             stderr=subprocess.PIPE,
         )
         while True:
-            if p.returncode != None:
+            if p.returncode is not None:
                 break
+
             line = p.stdout.readline()
             if line:
+                print(line.strip())
                 if line.strip() == b'---END SUBPROCESS---':
                     p.terminate()
                     break

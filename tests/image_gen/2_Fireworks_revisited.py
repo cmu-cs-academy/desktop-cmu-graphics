@@ -202,8 +202,7 @@ def onStep():
     rotateFerrisWheel()
     moveCloud()
 
-onMousePress(200, 50)
-onSteps(100)
+onSteps(30)
 app.paused = True
 
 
@@ -307,7 +306,4 @@ def onStep():
     rotateFerrisWheel()
     moveCloud()
 
-onMousePress(300, 200)
-onSteps(40)
-app.paused = True
 

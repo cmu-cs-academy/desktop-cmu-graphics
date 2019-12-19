@@ -31,10 +31,7 @@ def onKeyPress(key):
     if (cursor.centerX >= 370):
         moveToNextLine()
 
-onKeyPress('space')
-onKeyPress('O')
-onKeyPress('space')
-onKeyPress('O')
+onKeyPress('a')
 
 
 # -
@@ -81,7 +78,7 @@ onKeyPress('backspace')
 onKeyPress('n')
 onKeyPress('o')
 onKeyPress('t')
-onKeyPress('enter')
+onKeyPress('space')
 onKeyPress('t')
 onKeyPress('i')
 onKeyPress('backspace')
@@ -124,16 +121,21 @@ def onKeyPress(key):
     if (cursor.centerX >= 370):
         moveToNextLine()
 
-onKeyPress('H')
+onKeyPress('I')
+onKeyPress('space')
+onKeyPress('c')
+onKeyPress('a')
+onKeyPress('n')
+onKeyPress('o')
+onKeyPress('backspace')
+onKeyPress('n')
+onKeyPress('o')
+onKeyPress('t')
+onKeyPress('space')
+onKeyPress('t')
+onKeyPress('i')
+onKeyPress('backspace')
+onKeyPress('y')
+onKeyPress('p')
 onKeyPress('e')
-onKeyPress('l')
-onKeyPress('l')
-onKeyPress('o')
-onKeyPress('enter')
-onKeyPress('W')
-onKeyPress('o')
-onKeyPress('r')
-onKeyPress('l')
-onKeyPress('d')
-onKeyPress('!')
 

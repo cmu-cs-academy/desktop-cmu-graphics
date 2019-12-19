@@ -143,7 +143,7 @@ def onStep():
             else:
                 score.value += 1
 
-onSteps(50)
+onSteps(200)
 for letter in 'abcdefghijklmnopqrstuvwxyz':
   onKeyPress(letter)
 app.paused = True
@@ -220,8 +220,8 @@ def onStep():
             else:
                 score.value += 1
 
-app.setTextInputs('abcdefgh')
-onKeyPress('space')
 onSteps(50)
+for letter in 'abcdefghijklmnopqrstuvwxyz':
+  onKeyPress(letter)
 app.paused = True
 

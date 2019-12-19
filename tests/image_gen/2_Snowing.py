@@ -74,6 +74,8 @@ def onStep():
             (snowflake.left > 400)):
             snowflakes.remove(snowflake)
 
+onSteps(50)
+app.paused = True
 
 
 # -

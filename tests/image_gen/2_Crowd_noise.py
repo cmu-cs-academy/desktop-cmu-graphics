@@ -74,7 +74,7 @@ def onStep():
 
 app.setTextInputs('laugh out loud')
 onKeyPress('space')
-onStep()
+onSteps(20)
 app.paused = True
 
 
@@ -234,8 +234,8 @@ def onStep():
               rotateAngle=randrange(0, 360), bold=True)
         )
 
-app.setTextInputs('CS Academy is cool')
+app.setTextInputs('cereal before milk')
 onKeyPress('space')
-onSteps(5)
+onSteps(10)
 app.paused = True
 

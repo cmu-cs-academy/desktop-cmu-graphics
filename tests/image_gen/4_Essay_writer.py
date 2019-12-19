@@ -13,7 +13,10 @@ def onKeyPress(key):
         essay.y2 = 30
         pageNumber.value += 1
 
-onKeyPresses('space', 1000)
+onKeyPresses('G', 10)
+onKeyPresses('space', 20)
+onKeyPresses('9', 5)
+onKeyPress('d')
 
 
 # -
@@ -32,11 +35,9 @@ def onKeyPress(key):
         essay.y2 = 30
         pageNumber.value += 1
 
-onKeyPresses('G', 10)
-onKeyPresses('space', 20)
-onKeyPresses('9', 5)
-onKeyPress('d')
-onKeyPresses('p', 100)
+onKeyPress('a')
+onKeyPress('b')
+onKeyPress('C')
 
 
 # -
@@ -55,9 +56,10 @@ def onKeyPress(key):
         essay.y2 = 30
         pageNumber.value += 1
 
-onKeyPresses('G', 10)
-onKeyPresses('space', 20)
-onKeyPresses('9', 5)
-onKeyPress('d')
-onKeyPresses('p', 100)
+onKeyPress('a')
+onKeyPress('b')
+onKeyPress('c')
+onKeyPress('backspace')
+onKeyPress('backspace')
+onKeyPress('a')
 

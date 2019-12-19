@@ -32,8 +32,11 @@ def onStep():
         Circle(x, y, 5, fill='royalBlue')
         p.addPoint(x, y)
 
-onMousePress(150, 100)
-onMousePress(250, 300)
+onMousePress(100, 100)
+onMousePress(300, 200)
+onMousePress(200, 300)
+onMousePress(100, 200)
+onMousePress(300, 100)
 onSteps(5)
 app.paused = True
 
@@ -73,8 +76,11 @@ def onStep():
         Circle(x, y, 5, fill='royalBlue')
         p.addPoint(x, y)
 
-onMousePress(150, 100)
-onMousePress(250, 300)
+onMousePress(100, 100)
+onMousePress(300, 200)
+onMousePress(200, 300)
+onMousePress(100, 200)
+onMousePress(300, 100)
 onSteps(5)
 app.paused = True
 
@@ -119,5 +125,6 @@ onMousePress(100, 200)
 onMousePress(200, 300)
 onMousePress(300, 200)
 onMousePress(300, 100)
+onSteps(3)
 app.paused = True
 

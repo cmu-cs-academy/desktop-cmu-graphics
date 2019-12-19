@@ -87,8 +87,6 @@ def onKeyPress(key):
         inputLabel.value = app.getTextInput('Memefy a sentence:')
         memefy()
 
-app.setTextInputs('A SpongeBob Meme!')
-onKeyPress('space')
 
 
 # -
@@ -135,6 +133,6 @@ def onKeyPress(key):
         inputLabel.value = app.getTextInput('Memefy a sentence:')
         memefy()
 
-app.setTextInputs('String MEMES!')
+app.setTextInputs('A SpongeBob Meme!')
 onKeyPress('space')
 

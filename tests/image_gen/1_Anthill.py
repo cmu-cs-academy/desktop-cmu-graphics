@@ -57,5 +57,7 @@ def onKeyHold(keys):
     if ('space' in keys):
         ants.radius += 3
 
-onKeyHolds(['space'], 20)
+onKeyHolds(['a'], 10)
+onKeyHolds(['5'], 10)
+onKeyHolds(['left'], 10)
 

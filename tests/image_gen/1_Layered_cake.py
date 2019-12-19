@@ -65,9 +65,6 @@ def onKeyPress(key):
 # Start with the 5 layers already drawn.
 drawCake(layersCountLabel.value)
 
-onKeyPress('up')
-onKeyPress('up')
-onKeyPress('down')
 
 
 # -
@@ -138,8 +135,7 @@ def onKeyPress(key):
 # Start with the 5 layers already drawn.
 drawCake(layersCountLabel.value)
 
-onKeyPress('up')
-onKeyPress('up')
+onKeyPresses('down', 5)
 
 
 # -
@@ -210,5 +206,4 @@ def onKeyPress(key):
 # Start with the 5 layers already drawn.
 drawCake(layersCountLabel.value)
 
-onKeyPress('down')
 

@@ -75,7 +75,8 @@ def onMousePress(mouseX, mouseY):
     elif (steps.hits(mouseX, mouseY) == False):
         loseGame('Not a step!')
 
-onMousePress(350, 250)
+onMousePress(50, 350)
+onMousePress(300, 290)
 
 
 # -
@@ -156,8 +157,8 @@ def onMousePress(mouseX, mouseY):
     elif (steps.hits(mouseX, mouseY) == False):
         loseGame('Not a step!')
 
-onMousePress(170, 340)
 onMousePress(55, 240)
+onMousePress(135, 170)
 
 
 # -
@@ -238,4 +239,7 @@ def onMousePress(mouseX, mouseY):
     elif (steps.hits(mouseX, mouseY) == False):
         loseGame('Not a step!')
 
+onMousePress(55, 240)
+onMousePress(35, 240)
+onMousePress(150, 150)
 

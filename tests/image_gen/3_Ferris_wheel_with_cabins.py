@@ -68,7 +68,7 @@ def onStep():
         cabin.centerX = newCenterX
         cabin.centerY = newCenterY
 
-onSteps(10)
+onSteps(50)
 app.paused = True
 
 
@@ -143,6 +143,8 @@ def onStep():
         cabin.centerX = newCenterX
         cabin.centerY = newCenterY
 
+onStep()
+app.paused = True
 
 
 # -

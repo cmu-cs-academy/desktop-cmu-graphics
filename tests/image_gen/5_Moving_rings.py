@@ -97,7 +97,6 @@ def onKeyRelease(key):
     for ring in app.ringList:
         ring.border = 'mediumAquamarine'
 
-onKeyHold(['a'])
 
 
 # -
@@ -149,6 +148,4 @@ def onKeyRelease(key):
     for ring in app.ringList:
         ring.border = 'mediumAquamarine'
 
-onKeyHold(['space'])
-onKeyRelease('space')
 

@@ -227,13 +227,7 @@ def onStep():
         if (meteor.top > 400):
             meteors.remove(meteor)
 
-onSteps(30)
-onMousePress(200, 200)
-for meteor in meteors:
-    meteor.word = meteor.word.lower()
-    spaceships.centerX = meteor.centerX
-    spaceships.centerY = meteor.centerY
-onStep()
+onSteps(50)
 app.paused = True
 
 
@@ -350,12 +344,6 @@ def onStep():
         if (meteor.top > 400):
             meteors.remove(meteor)
 
-onSteps(30)
-onMousePress(200, 200)
-for meteor in meteors:
-    meteor.word = meteor.word.lower()
-    spaceships.centerX = meteor.centerX
-    spaceships.centerY = meteor.centerY
-onStep()
+onSteps(25)
 app.paused = True
 

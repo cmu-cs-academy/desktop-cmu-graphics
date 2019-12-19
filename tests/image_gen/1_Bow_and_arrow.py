@@ -67,11 +67,6 @@ def onMouseDrag(mouseX, mouseY):
 
 
 onMouseDrag(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
 
 
 # -
@@ -144,11 +139,6 @@ def onMouseDrag(mouseX, mouseY):
 
 
 onMouseDrag(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
 
 
 # -
@@ -220,11 +210,6 @@ def onMouseDrag(mouseX, mouseY):
         rightArm.x2 = bow.right
 
 
-onMouseDrag(200, 200)
-onMouseRelease(200, 200)
-onMousePress(200, 200)
-onMouseDrag(200, 200)
-onMouseDrag(200, 200)
 onMouseDrag(200, 200)
 onMouseRelease(200, 200)
 

@@ -21,6 +21,12 @@ def onMousePress(mouseX, mouseY):
     drawBuilding(mouseX, mouseY)
     mainBuilding.toFront()
 
+onMousePress(150, 50)
+onMousePress(230, 140)
+onMousePress(40, 40)
+onMousePress(300, 100)
+onMousePress(360, 280)
+onMousePress(120, 300)
 
 
 # -
@@ -47,7 +53,8 @@ def onMousePress(mouseX, mouseY):
     drawBuilding(mouseX, mouseY)
     mainBuilding.toFront()
 
-onMousePress(350, 200)
+onMousePress(300, 50)
+onMousePress(200, 200)
 
 
 # -
@@ -74,4 +81,6 @@ def onMousePress(mouseX, mouseY):
     drawBuilding(mouseX, mouseY)
     mainBuilding.toFront()
 
+onMousePress(300, 50)
+onMousePress(200, 200)
 

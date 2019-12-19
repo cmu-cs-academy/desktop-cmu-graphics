@@ -61,7 +61,7 @@ def onStep():
             popcornPiece.centerY += 10
             popcornPiece.isMovingUp = True
 
-onStep()
+onSteps(50)
 app.paused = True
 
 
@@ -197,6 +197,6 @@ def onStep():
             popcornPiece.centerY += 10
             popcornPiece.isMovingUp = True
 
-onSteps(10)
+onStep()
 app.paused = True
 

@@ -145,6 +145,9 @@ def onStep():
         Label('You Won!', 265, 273, fill='white', size=24)
         app.stop()
 
+onKeyHold(['up'])
+onSteps(20)
+app.paused = True
 
 
 # -
@@ -452,13 +455,4 @@ def onStep():
         Label('You Won!', 265, 273, fill='white', size=24)
         app.stop()
 
-pacman.centerX = 300
-pacman.centerY = 343
-onKeyHold(['left'])
-onSteps(20)
-pacman.centerX = 300
-pacman.centerY = 200
-onKeyHold(['right'])
-onSteps(20)
-app.paused = True
 

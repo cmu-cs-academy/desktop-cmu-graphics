@@ -42,6 +42,13 @@ WAIT = None
 IS_CI = True#os.environ.get('CI', 'false') == 'true'
 
 
+def printLine(msg):
+    '''
+    Don't let the subprocess buffer stdout.
+    '''
+    print(msg)
+    sys.stdout.flush()
+
 
 def split_exercise_code(exercise_code):
     '''
@@ -58,7 +65,7 @@ def split_exercise_code(exercise_code):
         try:
             return line.index('if')
         except ValueError:
-            print(f'_SOLN used outside of an if statement on line {i+1} of {exercise_code_path}', -1)
+            printLine(f'_SOLN used outside of an if statement on line {i+1} of {exercise_code_path}', -1)
 
     for (i, line) in enumerate(exercise_code):
         if copy_to_starter and copy_to_soln:
@@ -82,7 +89,7 @@ def split_exercise_code(exercise_code):
                     if_level = None
 
                 if line.strip() and if_level is not None and line[0:4] != '    ':
-                    print(f'Line "{line}" has bad indentation', -1)
+                    printLine(f'Line "{line}" has bad indentation', -1)
 
                 if copy_to_starter:
                     starter_content.append(line[4 if if_level is not None else 0:])
@@ -133,7 +140,7 @@ def get_test_cases(test_cases_path):
 
 def generate_py_files():
     import os
-    print('Generating python files...')
+    printLine('Generating python files...')
     max_tests_per_exercise = 3
     for (current_path, _, file_list) in os.walk(DEFAULT_EXERCISE_DIR):
         current_path = current_path.replace('\\', '/')
@@ -166,7 +173,7 @@ def generate_py_files():
             with open('image_gen/' + current_path.split('/')[-1] + '.py', 'w') as fileObject:
                 fileObject.write(output)
 
-    print('Python file generation has finished!')
+    printLine('Python file generation has finished!')
 
 
 def is_image_blank(path):
@@ -248,7 +255,7 @@ def generate_image(driver, test_name, all_source_code):
             tries += 1
             if tries >= 5 or not is_image_blank(download_path):
                 break
-            print('Image is blank -- waiting and retrying')
+            printLine('Image is blank -- waiting and retrying')
             time.sleep(1)
 
         if not os.path.exists('image_gen/%s' % test_name):
@@ -269,7 +276,7 @@ def generate_brython_images():
     from selenium.webdriver.support.ui import WebDriverWait
 
     global WAIT
-    print('Generating brython images...')
+    printLine('Generating brython images...')
 
     start_time = time.time()
     driver = None
@@ -293,10 +300,10 @@ def generate_brython_images():
         for test_py_name in os.listdir('image_gen'):
             if not test_py_name.endswith('.py'):
                 continue
-            print("File Name: %s" % test_py_name)
+            printLine("File Name: %s" % test_py_name)
             with open('image_gen/%s' % test_py_name) as f:
                 if not generate_image(driver, test_py_name[:-3], f.read()):
-                    print('image_gen/%s failed' % test_py_name)
+                    printLine('image_gen/%s failed' % test_py_name)
 
     except KeyboardInterrupt:
         pass
@@ -306,7 +313,7 @@ def generate_brython_images():
         except:
             pass
 
-    print('Image generation has finished!')
+    printLine('Image generation has finished!')
 
 def main():
     activate_script = '%s/%s/activate_this.py' % (VENV_DIR, 'Scripts' if sys.platform.startswith('win') else 'bin')
@@ -314,12 +321,9 @@ def main():
         exec(ActivateObject.read(), dict(__file__=activate_script))
 
     generate_py_files()
-    try:
-        generate_brython_images()
-    except Exception as e:
-        print(e)
+    generate_brython_images()
 
-    print('---END SUBPROCESS---')
+    printLine('---END SUBPROCESS---')
 
 
 

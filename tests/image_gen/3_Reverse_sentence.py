@@ -71,7 +71,6 @@ def reverseSentence(wordList):
     # Draws the reversed sentence.
     drawSentence(reversedList, 200, 300, True)
 
-reverseSentence([ 'ok', 'is', 'he', 'well' ])
 
 
 # -
@@ -110,5 +109,5 @@ def reverseSentence(wordList):
     # Draws the reversed sentence.
     drawSentence(reversedList, 200, 300, True)
 
-reverseSentence([ 'ok', 'is', 'he', 'well' ])
+reverseSentence([ 'fall', 'leaves', 'after', 'leaves', 'fall' ])
 

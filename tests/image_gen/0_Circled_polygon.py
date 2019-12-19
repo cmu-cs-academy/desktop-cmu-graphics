@@ -20,8 +20,11 @@ def drawCircledPolygon(centerX, centerY, circleColor, numberOfSides, polyColor):
     Circle(centerX, centerY, 65, fill=circleColor)
     RegularPolygon(centerX, centerY, 65, numberOfSides, fill=polyColor)
 
-drawCircledPolygon(140, 260, 'mediumBlue', 3, 'turquoise')
-drawCircledPolygon(260, 140, 'mediumBlue', 6, 'turquoise')
+drawCircledPolygon(135, 135, 'fireBrick', 4, 'indianRed')
+drawCircledPolygon(265, 135, 'fireBrick', 5, 'salmon')
+drawCircledPolygon(70, 250, 'lightSalmon', 7, 'crimson')
+drawCircledPolygon(200, 250, 'lightSalmon', 6, 'lightCoral')
+drawCircledPolygon(330, 250, 'lightSalmon', 3, 'fireBrick')
 
 
 # -
@@ -33,6 +36,7 @@ def drawCircledPolygon(centerX, centerY, circleColor, numberOfSides, polyColor):
     Circle(centerX, centerY, 65, fill=circleColor)
     RegularPolygon(centerX, centerY, 65, numberOfSides, fill=polyColor)
 
-drawCircledPolygon(140, 260, 'mediumBlue', 3, 'turquoise')
-drawCircledPolygon(260, 140, 'mediumBlue', 6, 'turquoise')
+drawCircledPolygon(100, 275, 'darkGreen', 3, gradient('springGreen', 'darkGreen'))
+drawCircledPolygon(200, 125, 'lightGreen', 4, 'darkGreen')
+drawCircledPolygon(300, 275, 'darkGreen', 5, gradient('springGreen', 'darkGreen'))
 

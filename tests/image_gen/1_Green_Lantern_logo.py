@@ -29,9 +29,6 @@ def onKeyPress(key):
     app.logoSize = 2
     drawLogos()
 
-onKeyPress('space')
-onKeyPress('a')
-onKeyPress('d')
 
 
 # -
@@ -101,7 +98,5 @@ def onKeyPress(key):
     app.logoSize = 2
     drawLogos()
 
-onKeyPress('space')
 onKeyPress('a')
-onKeyPress('d')
 

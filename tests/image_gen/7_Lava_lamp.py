@@ -51,6 +51,8 @@ def onStep():
             (blob.centerY - blob.radius < 100)):
             blob.dy *= -1
 
+onSteps(5)
+app.paused = True
 
 
 # -
@@ -165,4 +167,6 @@ def onStep():
             (blob.centerY - blob.radius < 100)):
             blob.dy *= -1
 
+onSteps(20)
+app.paused = True
 

@@ -137,8 +137,8 @@ def onStep():
               bold=True)
         app.paused = True
 
-onSteps(205)
-app.paused = True
+onSteps(100)
+onKeyPress('space')
 
 
 # -
@@ -209,6 +209,6 @@ def onStep():
               bold=True)
         app.paused = True
 
-onSteps(20)
+onSteps(205)
 app.paused = True
 

@@ -14,7 +14,7 @@ def drawTwoHexagons(color):
     RegularPolygon(200, 100, 100, 6, fill=color)
     RegularPolygon(200, 300, 100, 6, fill=None, border=color, borderWidth=8)
 
-drawTwoHexagons('green')
+drawTwoHexagons('purple')
 
 
 # -
@@ -24,5 +24,5 @@ def drawTwoHexagons(color):
     RegularPolygon(200, 100, 100, 6, fill=color)
     RegularPolygon(200, 300, 100, 6, fill=None, border=color, borderWidth=8)
 
-drawTwoHexagons('green')
+drawTwoHexagons('sienna')
 

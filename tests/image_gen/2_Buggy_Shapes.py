@@ -13,10 +13,6 @@ def onMousePress(mouseX, mouseY):
         s.points -= 1
         p.points -= 1
 
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
 
 
 # -

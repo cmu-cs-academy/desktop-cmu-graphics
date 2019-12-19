@@ -24,6 +24,8 @@ def onStep():
     for block in blocks.children:
         block.fill = rgb(randrange(0, 256), 0, randrange(0, 256))
 
+onSteps(12)
+app.paused = True
 
 
 # -
@@ -53,7 +55,7 @@ def onStep():
     for block in blocks.children:
         block.fill = rgb(randrange(0, 256), 0, randrange(0, 256))
 
-onStep()
+onSteps(20)
 app.paused = True
 
 

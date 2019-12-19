@@ -34,7 +34,7 @@ def rocketShip(planetColor, isEngineOn, isOnPlanet):
     # The planet should also be set by planetColor.
     Circle(200, 1000, 650, fill=planetColor, visible=isOnPlanet)
 
-rocketShip('grey', False, False)
+rocketShip('grey', False, True)
 
 
 # -
@@ -114,5 +114,5 @@ def rocketShip(planetColor, isEngineOn, isOnPlanet):
     # The planet should also be set by planetColor.
     Circle(200, 1000, 650, fill=planetColor, visible=isOnPlanet)
 
-rocketShip('salmon', True, True)
+rocketShip('salmon', True, False)
 

@@ -130,7 +130,8 @@ def onStep():
     if (laser.visible == True):
         moveDotUp()
 
-onKeyHold(['left'])
+onKeyPress('space')
+onSteps(20)
 app.paused = True
 
 
@@ -267,7 +268,9 @@ def onStep():
     if (laser.visible == True):
         moveDotUp()
 
+onMousePress(200, 340)
 onKeyPress('space')
+onSteps(5)
 app.paused = True
 
 

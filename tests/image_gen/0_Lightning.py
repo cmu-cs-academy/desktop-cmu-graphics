@@ -41,7 +41,6 @@ def onMouseRelease(mouseX, mouseY):
     backgroundLight.opacity = 0
     lightning.opacity = 0
 
-onMousePress(200, 200)
 
 
 # -
@@ -135,5 +134,4 @@ def onMouseRelease(mouseX, mouseY):
     lightning.opacity = 0
 
 onMousePress(200, 200)
-onMouseRelease(200, 200)
 

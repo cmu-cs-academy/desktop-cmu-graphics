@@ -75,6 +75,13 @@ def onMousePress(mouseX, mouseY):
               size=20, bold=True)
         app.paused = True
 
+onMousePress(70, 55)
+onMousePress(330, 60)
+onMousePress(200, 80)
+onMousePress(85, 325)
+onMousePress(290, 320)
+onMousePress(80, 210)
+onMousePress(295, 220)
 
 
 # -
@@ -155,8 +162,9 @@ def onMousePress(mouseX, mouseY):
               size=20, bold=True)
         app.paused = True
 
-onMousePress(100, 100)
-onMousePress(300, 300)
+onMousePress(200, 120)
+onMousePress(90, 230)
+onMousePress(300, 280)
 
 
 # -
@@ -237,6 +245,7 @@ def onMousePress(mouseX, mouseY):
               size=20, bold=True)
         app.paused = True
 
-onMousePress(100, 100)
-onMousePress(300, 300)
+onMousePress(200, 120)
+onMousePress(90, 230)
+onMousePress(300, 280)
 

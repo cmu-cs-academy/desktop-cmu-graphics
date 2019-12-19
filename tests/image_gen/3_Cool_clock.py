@@ -109,7 +109,7 @@ def onStep():
     clock.rotateAngle += 2
     app.actualTime += 1
 
-onSteps(250)
+onSteps(150)
 onKeyPress('space')
 
 

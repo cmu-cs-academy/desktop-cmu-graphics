@@ -102,6 +102,4 @@ def onStep():
         if (eachStar.radius > 700):
             stars.remove(eachStar)
 
-onSteps(100)
-app.paused = True
 

@@ -142,7 +142,10 @@ def onKeyPress(key):
         s3.radius = 10
 
 onMouseMove(200, 200)
-onKeyPress('a')
+onMouseMove(200, 200)
+onMouseMove(200, 200)
+onMouseMove(200, 200)
+onMouseMove(200, 200)
 onMouseMove(200, 200)
 onMouseMove(200, 200)
 

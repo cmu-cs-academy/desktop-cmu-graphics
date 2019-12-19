@@ -96,9 +96,9 @@ def onKeyPress(key):
         hippoFace.toBack()
 
 onKeyPress('b')
-onMousePress(200, 200)
-onMousePress(200, 200)
 onKeyPress('f')
+onMousePress(200, 200)
+onMousePress(200, 200)
 onMousePress(200, 200)
 
 
@@ -150,10 +150,9 @@ def onKeyPress(key):
         hippo.isMovingForward = False
         hippoFace.toBack()
 
-onMousePress(200, 200)
-onMousePress(200, 200)
 onKeyPress('b')
 onMousePress(200, 200)
 onMousePress(200, 200)
+onKeyPress('f')
 onMousePress(200, 200)
 

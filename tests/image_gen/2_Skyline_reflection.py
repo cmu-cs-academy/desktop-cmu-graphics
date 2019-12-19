@@ -21,10 +21,7 @@ def onMousePress(mouseX, mouseY):
         drawBuilding(mouseX, mouseY)
         drawReflection(mouseX)
 
-onMousePress(100, 75)
-onMousePress(200, 150)
-onMousePress(300, 50)
-onMousePress(350, 120)
+onMousePress(200, 100)
 
 
 # -
@@ -51,8 +48,7 @@ def onMousePress(mouseX, mouseY):
         drawBuilding(mouseX, mouseY)
         drawReflection(mouseX)
 
-onMousePress(250, 70)
-onMousePress(300, 150)
+onMousePress(200, 100)
 
 
 # -

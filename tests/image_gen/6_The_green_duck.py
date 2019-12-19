@@ -66,7 +66,12 @@ def onKeyPress(key):
 
 drawDucks()
 
-onKeyPresses('down', 5)
+onKeyPress('right')
+onKeyPress('up')
+onKeyPress('right')
+onKeyPress('up')
+onKeyPress('left')
+onKeyPress('up')
 
 
 # -
@@ -138,7 +143,7 @@ def onKeyPress(key):
 
 drawDucks()
 
-onKeyPress('right')
+onKeyPresses('down', 5)
 
 
 # -

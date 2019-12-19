@@ -17,11 +17,8 @@ def onMouseDrag(mouseX, mouseY):
     light.centerX = mouseX
     light.centerY = mouseY
 
-onMouseDrag(280, 300)
-onMouseDrag(370, 350)
-onMouseDrag(330, 320)
-onMouseDrag(50, 130)
-onMouseDrag(200, 200)
+onMouseRelease(200, 340)
+onMouseDrag(120, 250)
 
 
 # -
@@ -44,7 +41,7 @@ def onMouseDrag(mouseX, mouseY):
     light.centerX = mouseX
     light.centerY = mouseY
 
-onMouseDrag(200, 200)
+onMouseRelease(300, 300)
 
 
 # -
@@ -67,9 +64,5 @@ def onMouseDrag(mouseX, mouseY):
     light.centerX = mouseX
     light.centerY = mouseY
 
-onMouseDrag(280, 300)
-onMouseDrag(370, 350)
-onMouseDrag(330, 320)
-onMouseDrag(50, 130)
-onMouseDrag(200, 200)
+onMouseRelease(300, 300)
 

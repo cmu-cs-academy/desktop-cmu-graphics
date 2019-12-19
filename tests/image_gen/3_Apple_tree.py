@@ -64,10 +64,6 @@ def onMousePress(mouseX, mouseY):
 
 onMousePress(200, 200)
 onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
-onMousePress(200, 200)
 
 
 # -
@@ -135,6 +131,8 @@ def onMousePress(mouseX, mouseY):
         changeApples(gradient('pink', 'violet'), 50)
         season.value = 'Spring'
 
+onMousePress(200, 200)
+onMousePress(200, 200)
 onMousePress(200, 200)
 onMousePress(200, 200)
 onMousePress(200, 200)

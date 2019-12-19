@@ -68,7 +68,7 @@ def onStep():
         score.value -= 20
         resetArrow()
 
-onSteps(20)
+onSteps(107)
 onKeyPress('down')
 app.paused = True
 
@@ -145,6 +145,9 @@ def onStep():
         resetArrow()
 
 onSteps(107)
+onKeyPress('up')
+onSteps(80)
+onKeyPress('right')
 app.paused = True
 
 
@@ -219,7 +222,8 @@ def onStep():
         score.value -= 20
         resetArrow()
 
-onSteps(100)
+onSteps(107)
 onKeyPress('up')
+onSteps(20)
 app.paused = True
 

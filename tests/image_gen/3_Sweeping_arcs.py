@@ -17,7 +17,8 @@ def onMouseMove(mouseX, mouseY):
             newSweepAngle = (mouseX / 400) * 360
             arc.sweepAngle = newSweepAngle
 
-onMouseMove(100, 100)
+onMouseMove(170, 240)
+onMouseMove(30, 150)
 
 
 # -
@@ -40,8 +41,7 @@ def onMouseMove(mouseX, mouseY):
             newSweepAngle = (mouseX / 400) * 360
             arc.sweepAngle = newSweepAngle
 
-onMouseMove(200, 120)
-onMouseMove(230, 200)
+onMouseMove(100, 100)
 
 
 # -

@@ -19,6 +19,8 @@ def onStep():
     if ((icon.top <= 0) or (icon.bottom >= 400)):
         icon.dy = -icon.dy
 
+onSteps(35)
+app.paused = True
 
 
 # -
@@ -43,8 +45,7 @@ def onStep():
     if ((icon.top <= 0) or (icon.bottom >= 400)):
         icon.dy = -icon.dy
 
-onStep()
-onStep()
+onSteps(105)
 app.paused = True
 
 

@@ -10,7 +10,6 @@ def onMouseMove(mouseX, mouseY):
     cursor.left = mouseX
     cursor.top = 400 - mouseY
 
-onMouseMove(100, 300)
 
 
 # -
@@ -26,12 +25,7 @@ def onMouseMove(mouseX, mouseY):
     cursor.left = mouseX
     cursor.top = 400 - mouseY
 
-onMouseMove(200, 50)
-onMouseMove(30, 150)
-onMouseMove(350, 200)
-onMouseMove(300, 300)
-onMouseMove(50, 280)
-onMouseMove(100, 200)
+onMouseMove(200, 100)
 
 
 # -
@@ -47,5 +41,4 @@ def onMouseMove(mouseX, mouseY):
     cursor.left = mouseX
     cursor.top = 400 - mouseY
 
-onMouseMove(100, 300)
 

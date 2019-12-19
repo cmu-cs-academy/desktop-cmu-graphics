@@ -28,6 +28,11 @@ def onMouseDrag(mouseX, mouseY):
         mouth.fill = 'yellow'
         background.fill = 'black'
 
+onMouseDrag(350, 90)
+onMouseDrag(170, 350)
+onMouseDrag(70, 270)
+onMouseDrag(260, 200)
+onMouseDrag(100, 210)
 
 
 # -
@@ -61,6 +66,7 @@ def onMouseDrag(mouseX, mouseY):
         mouth.fill = 'yellow'
         background.fill = 'black'
 
+onMouseDrag(300, 300)
 
 
 # -
@@ -94,4 +100,6 @@ def onMouseDrag(mouseX, mouseY):
         mouth.fill = 'yellow'
         background.fill = 'black'
 
+onMouseDrag(180, 290)
+onMouseDrag(210, 40)
 

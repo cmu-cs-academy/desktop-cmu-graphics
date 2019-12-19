@@ -36,7 +36,15 @@ def onKeyPress(key):
         else:
             app.circleFull = True
 
-onKeyPress('space')
+onKeyPress('C')
+onKeyPress('S')
+onKeyPress('A')
+onKeyPress('c')
+onKeyPress('a')
+onKeyPress('d')
+onKeyPress('e')
+onKeyPress('m')
+onKeyPress('y')
 
 
 # -
@@ -78,8 +86,7 @@ def onKeyPress(key):
         else:
             app.circleFull = True
 
-onKeyPress('H')
-onKeyPress('I')
+onKeyPress('space')
 
 
 # -

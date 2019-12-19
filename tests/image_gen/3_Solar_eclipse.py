@@ -34,8 +34,7 @@ def onKeyPress(key):
         moonMask.opacity += 10
         moon.rotateAngle = 0
 
-onKeyPresses('space', 9)
-onKeyPress('space')
+onKeyPresses('space', 200)
 
 
 # -
@@ -75,11 +74,7 @@ def onKeyPress(key):
         moonMask.opacity += 10
         moon.rotateAngle = 0
 
-onKeyPresses('space', 9)
-onKeyPress('space')
-onKeyPress('space')
-onKeyPress('space')
-onKeyPress('space')
+onKeyPresses('space', 200)
 
 
 # -
@@ -119,12 +114,9 @@ def onKeyPress(key):
         moonMask.opacity += 10
         moon.rotateAngle = 0
 
+onKeyPresses('space', 19)
 onKeyPress('space')
-onKeyPress('a')
-onKeyPress('u')
-onKeyPress('4')
-onKeyPress(';')
-onKeyPress('left')
-onKeyPress('M')
-onKeyPress('!')
+onKeyPress('space')
+onKeyPress('space')
+onKeyPress('space')
 

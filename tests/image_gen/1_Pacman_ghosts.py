@@ -28,7 +28,8 @@ def drawGhost(centerX, centerY, name, color):
     # Create a label with the name of the ghost.
     Label(name, centerX, centerY + 70, fill='white', size=25, font='monospace')
 
-drawGhost(200, 200, 'Sue', 'forestGreen')
+drawGhost(100, 100, 'Dave', 'red')
+drawGhost(300, 300, 'Markus', 'blue')
 
 
 # -
@@ -62,10 +63,8 @@ def drawGhost(centerX, centerY, name, color):
     # Create a label with the name of the ghost.
     Label(name, centerX, centerY + 70, fill='white', size=25, font='monospace')
 
-drawGhost(100, 100, 'Blinky', 'red')
-drawGhost(100, 300, 'Pinky', 'lightPink')
-drawGhost(300, 100, 'Inky', 'cyan')
-drawGhost(300, 300, 'Clyde', 'orange')
+drawGhost(100, 100, 'Dave', 'red')
+drawGhost(300, 300, 'Markus', 'blue')
 
 
 # -
@@ -99,5 +98,6 @@ def drawGhost(centerX, centerY, name, color):
     # Create a label with the name of the ghost.
     Label(name, centerX, centerY + 70, fill='white', size=25, font='monospace')
 
-drawGhost(200, 200, 'Olivia', 'forestGreen')
+drawGhost(100, 100, 'Dave', 'red')
+drawGhost(300, 300, 'Markus', 'blue')
 
