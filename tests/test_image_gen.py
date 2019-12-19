@@ -181,6 +181,14 @@ def run_test(test_name, all_source_code):
 
 
 def main():
+    '''
+    Compares cpython-cmu-graphics images with the brython-cmu-graphics and
+    reports differences. Images are generated using the python files in the
+    image_gen folder.
+
+    To generate new python files and brython-cmu-graphics images,
+    run "python test_image_gen.py True"
+    '''
     global REPORT_FILE
 
     parser = argparse.ArgumentParser()
