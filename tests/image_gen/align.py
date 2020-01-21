@@ -21,6 +21,27 @@ def makeShapes(shapeType, args):
         else:
             assert r.centerY == 200, r.centerY
 
+    # Try to get or set the align property
+    r = shapeType(*args, fill='blue', align=align, opacity=50, rotateAngle=10, db='bbox')
+    for align in [
+            'left', 'top-left', 'right', 'right-top',
+            'bottom', 'bottom-right', 'bottom-left',
+            'top', 'center'
+        ]:
+        try:
+            print(r.align)
+            assert False
+        except:
+            pass
+
+        try:
+            r.align = align
+            assert False
+        except:
+            pass
+
+
+
 makeShapes(Rect, [100, 200, 100, 150])
 # -
 for shape in app.group: shape.visible = False
