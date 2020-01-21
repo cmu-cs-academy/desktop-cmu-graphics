@@ -27,3 +27,4 @@ script:
   - export PYVER='3.7.5'
   - ./.travis/install_python_dependencies.sh
   - ./.travis/build_pycairo.sh
+  - ./travis/zip_binaries.sh
