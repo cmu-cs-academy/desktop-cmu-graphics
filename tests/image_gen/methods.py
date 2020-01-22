@@ -1,5 +1,5 @@
 # general shape methods
-r1 = Rect(110, 110, 50, 50)
+r1 = Rect(110, 110, 50, 50, fill='blue')
 assert r1.contains(110, 110)
 assert r1.hits(110, 110)
 r1.visible = False
@@ -11,7 +11,7 @@ assert r1.contains(110, 110)
 assert r1.hits(110, 110)
 r1.opacity = 100
 
-r2 = Rect(150, 150, 50, 50, fill=None, border='black', borderWidth=15)
+r2 = Rect(150, 150, 50, 50, fill=None, border='green', borderWidth=15)
 assert r2.contains(152, 152)
 assert r2.hits(152, 152)
 assert r2.contains(175, 175)
@@ -19,7 +19,7 @@ assert not r2.hits(175, 175)
 assert not r2.containsShape(r1)
 assert r2.hitsShape(r1)
 
-r3 = Rect(150, 150, 5, 5)
+r3 = Rect(150, 150, 5, 5, fill='red')
 assert r2.containsShape(r3)
 assert r2.hitsShape(r3)
 assert not r3.containsShape(r2)
@@ -31,9 +31,13 @@ assert not r2.hitsShape(r3)
 assert not r3.containsShape(r2)
 assert not r3.hitsShape(r2)
 
-p = Polygon(200, 200, 300, 200, 200, 300)
+p = Polygon(200, 200, 300, 200, 200, 300, fill='purple')
 p.addPoint(300, 300)
 assert p.pointList == [[200, 200], [300, 200], [200, 300], [300, 300]]
+p2 = Polygon()
+for i in range(3):
+    p.addPoint(200 + i*i*25, 50 * i)
+assert p.pointList == [[200, 0], [225, 50], [300, 100]]
 
 # group methods
 g = Group()
@@ -59,15 +63,22 @@ g.centerX -= 10
 g.centerY -= 10
 assert g.hitsShape(r2)
 assert not g.containsShape(r2)
+g.add(r2)
+assert g.children == [p, r2]
+r2.toFront()
+assert g.children == [p, r2]
 
 # groups containing other groups
 h = Group(r1, g)
 assert h.children == [r1, g]
-assert h.children != [r1, p]
+assert h.children != [r1, p, r2]
 h.remove(g)
+assert h.children == [r1]
 assert g.visible == False
 assert p.visible == False
 p.visible = True
-assert g.children == []
+assert g.children == [r2]
 g.visible = True
-assert g.children == []
+assert g.children == [r2]
+g.visible = False
+assert h.children == [r1]

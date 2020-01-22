@@ -120,7 +120,7 @@ def run_test(driver, test_name, all_source_code):
         source_code += 'def screenshotAndExit():\n'
         source_code += '    app.callUserFn("onMousePress", (200,200))\n'
         source_code += '    time.sleep(1)\n'
-        source_code += '    app.getScreenshot("%s")\n' % os.path.abspath(output_path)
+        source_code += '    app.getScreenshot("%s")\n' % os.path.abspath(output_path).replace('\\', '/')
         source_code += '    app.quit()\n'
         source_code += 'Timer(3, screenshotAndExit).start()\n'
         source_code += 'cmu_graphics.loop()'

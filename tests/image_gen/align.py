@@ -30,15 +30,15 @@ def makeShapes(shapeType, args):
         ]:
         try:
             print(r.align)
-            assert False
-        except:
-            pass
+        except Exception as e:
+            if (str(e) != "You can't get or set the align property"):
+                assert False
 
         try:
             r.align = align
-            assert False
-        except:
-            pass
+        except Exception as e:
+            if (str(e) != "You can't get or set the align property"):
+                assert False
 
 
 
