@@ -36,8 +36,10 @@ p.addPoint(300, 300)
 assert p.pointList == [[200, 200], [300, 200], [200, 300], [300, 300]]
 p2 = Polygon()
 for i in range(3):
-    p.addPoint(200 + i*i*25, 50 * i)
-assert p.pointList == [[200, 0], [225, 50], [300, 100]]
+    p2.addPoint(200 + i*i*25, 50 * i)
+assert p2.pointList == [[200, 0], [225, 50], [300, 100]]
+p2.pointList[0] = [0, 200]
+assert p2.pointList == [[200, 0], [225, 50], [300, 100]]
 
 # group methods
 g = Group()
@@ -82,3 +84,13 @@ g.visible = True
 assert g.children == [r2]
 g.visible = False
 assert h.children == [r1]
+
+# app group
+assert app.group.children == [r3, p2, h, p]
+assert app.group.hitTest(175, 175) == r3
+assert app.group.hitTest(152, 152) == h
+assert app.group.hitTest(175, 155) == None
+assert app.group.hitTest(100, 100) == None
+shape = app.group.children.pop()
+assert shape.visible == True
+assert app.group.children == [r3, p2, h, p]

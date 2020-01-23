@@ -28,17 +28,19 @@ def makeShapes(shapeType, args):
             'bottom', 'bottom-right', 'bottom-left',
             'top', 'center'
         ]:
+        errorMsg = ''
         try:
             print(r.align)
         except Exception as e:
-            if (str(e) != "You can't get or set the align property"):
-                assert False
+            errorMsg = str(e)
 
         try:
             r.align = align
         except Exception as e:
-            if (str(e) != "You can't get or set the align property"):
-                assert False
+            errorMsg = str(e)
+
+        if (errorMsg != "You can't get or set the align property"):
+            assert False
 
 
 
