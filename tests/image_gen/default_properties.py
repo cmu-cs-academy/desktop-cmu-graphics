@@ -41,5 +41,5 @@ try:
     assert g.fill == 'black'
 except Exception as e:
     errorMsg = str(e)
-if (errorMsg != "You can't get or set the align property"):
+if (errorMsg != "Group.fill has no value because its children don't all have the same value for fill"):
     assert False

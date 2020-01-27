@@ -103,6 +103,17 @@ r.visible = False
 # Radial gradients should move with their object
 r = Rect(0, 380, 20, 20, fill=gradient('black', 'white'))
 # -
+def assertRaises(fn):
+    raised = True
+    try:
+        fn()
+        raised = False
+    except:
+        pass
+    if not raised:
+        raise Exception('fn failed to raise an exception')
+
+r = Rect(0, 380, 20, 20, fill=gradient('black', 'white'))
 r.left += 10
 
 assert isinstance(app.group, Group)
@@ -138,3 +149,11 @@ grad = gradient('red', 'black', start='left-top')
 assert grad.start == 'left-top'
 grad2 = gradient('red', 'black', start='top-left')
 assert grad2.start == 'top-left'
+
+r142 = Rect(50, 50, 200, 200)
+g = Group(r142)
+g.clear()
+assert r142.visible == False
+r142.visible = False
+r142.visible = True
+r142.visible = False

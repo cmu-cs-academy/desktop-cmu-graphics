@@ -9,34 +9,117 @@ g = Group(c1, c2, c3)
 r3 = Rect(100, 200, 200, 200, fill='yellow')
 
 # -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
 r2.visible = True
 
 # -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
 r2.visible = False
 
 # -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
+
 r2.visible = True
 r1.visible = False
 
-# -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
+r1 = Rect(100, 0, 200, 200, fill='orange')
+
 r1.visible = True
 g.visible = False
 
 # -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
 g.visible = True
 
 # -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
 c1.visible = False
 
 # -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
 c1.visible = True
 c2.visible = False
 
 # -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
 c2.visible = True
 c3.visible = False
 
 # -
+r1 = Rect(100, 0, 200, 200, fill='orange')
+r2 = Rect(100, 100, 200, 200, fill='green', visible=False)
+
+c1 = Circle(100, 180, 60, fill='blue')
+c2 = Circle(200, 180, 60, fill='cyan')
+c3 = Circle(300, 180, 60, fill='navy')
+g = Group(c1, c2, c3)
+
+r3 = Rect(100, 200, 200, 200, fill='yellow')
 c3.visible = True
 
 # -
