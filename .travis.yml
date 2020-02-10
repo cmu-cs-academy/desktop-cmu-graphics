@@ -3,7 +3,8 @@ osx_image: xcode10.3
 language: generic
 
 stages:
-  - build_pycairo_binaries
+  - name: build_pycairo_binaries
+    if: commit_message =~ /(travis-build-pycairo-binaries)/
   - build_release
 
 jobs:
@@ -14,6 +15,7 @@ jobs:
         - chmod +x .travis/install_python_dependencies.sh
         - chmod +x .travis/build_pycairo.sh
         - chmod +x .travis/zip_binaries.sh
+        - chmod +x .travis/build_release.sh
         - ./.travis/install_global_dependencies.sh
       script:
         - export PYVER='3.5.4'
