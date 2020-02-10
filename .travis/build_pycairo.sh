@@ -6,7 +6,7 @@ source ../venv/bin/activate
 python3 --version
 
 cd pycairo
-git checkout 06a76dc704fad9aea046ea5ddb658ff3dc4521b2
+git checkout $PYCAIRO_COMMIT
 
 python3 setup.py sdist bdist_wheel
 cd dist
