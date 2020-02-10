@@ -37,4 +37,11 @@ jobs:
         local_dir: build
         upload-dir: cpython-cmu-graphics-binaries
     - stage: build_release
+      install:
+        - chmod +x .travis/build_release.sh
+        - chmod +x .travis/install_global_dependencies.sh
+        - chmod +x .travis/install_python_dependencies.sh
+        - ./.travis/install_global_dependencies.sh
+        - export PYVER='3.8.1'
+        - ./.travis/install_python_dependencies.sh
       script: ./.travis/build_release.sh
