@@ -1,6 +1,6 @@
 export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
 
-mkdir build || true
+mkdir release || true
 
 source ../venv/bin/activate
 python3 --version
@@ -22,14 +22,12 @@ tar -xvf binaries.tgz
 rm binaries.tgz
 cd ..
 
+mkdir ../../cmu_graphics/cairo/modules || true
 mv cairo ../../cmu_graphics/cairo/modules/cairo_mac
 
 cd ../../
-pwd
-ls
-mkdir release || true
 mkdir cmu_graphics_installer
 mv cmu_graphics cmu_graphics_installer
 mv sample.py cmu_graphics_installer
-tar -zcvf cmu_graphics_installer.tgz cmu_graphics_installer
-mv cmu_graphics_installer.tgz release
+zip -r cmu_graphics_installer.zip cmu_graphics_installer
+mv cmu_graphics_installer.zip release
