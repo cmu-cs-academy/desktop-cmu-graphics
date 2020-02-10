@@ -11,8 +11,6 @@ git checkout $PYCAIRO_COMMIT
 python3 setup.py sdist bdist_wheel
 cd dist
 
-pwd
-ls
 mv *.whl wheel
 unzip wheel
 cd cairo

@@ -1,12 +1,15 @@
 import os
+import sys
+import importlib
 
 def get_valid_cairo_module():
     current_directory = os.path.dirname(__file__)
     modules = os.path.join(current_directory, 'modules')
+    sys.path.append(current_directory)
     for module in os.listdir(modules):
         if module.startswith('cairo_'):
             try:
-                cairo = __import__(module)
+                cairo = importlib.import_module(f'modules.{module}')
                 return cairo
             except ModuleNotFoundError:
                 continue
@@ -21,4 +24,4 @@ if cairo is None:
     )
     raise Exception(error_string)
 
-from cairo import *
+globals().update(cairo.__dict__)
