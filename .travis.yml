@@ -2,30 +2,37 @@ os: osx
 osx_image: xcode10.3
 language: generic
 
-deploy:
-  provider: s3
-  access_key_id: $AWS_ACCESS_KEY
-  secret_access_key: $AWS_SECRET_KEY
-  bucket: cmu-cs-academy.lib.prod
-  skip_cleanup: true
-  local_dir: build
-  upload-dir: cpython-cmu-graphics-binaries
+stages:
+  - build_pycairo_binaries
+  - build_release
 
-install:
-  - chmod +x .travis/install_global_dependencies.sh
-  - chmod +x .travis/install_python_dependencies.sh
-  - chmod +x .travis/build_pycairo.sh
-  - chmod +x .travis/zip_binaries.sh
-  - ./.travis/install_global_dependencies.sh
-
-script:
-  - export PYVER='3.5.4'
-  - ./.travis/install_python_dependencies.sh
-  - ./.travis/build_pycairo.sh
-  - export PYVER='3.6.2'
-  - ./.travis/install_python_dependencies.sh
-  - ./.travis/build_pycairo.sh
-  - export PYVER='3.7.5'
-  - ./.travis/install_python_dependencies.sh
-  - ./.travis/build_pycairo.sh
-  - ./.travis/zip_binaries.sh
+jobs:
+  include:
+    - stage: build_pycairo_binaries
+      install:
+        - chmod +x .travis/install_global_dependencies.sh
+        - chmod +x .travis/install_python_dependencies.sh
+        - chmod +x .travis/build_pycairo.sh
+        - chmod +x .travis/zip_binaries.sh
+        - ./.travis/install_global_dependencies.sh
+      script:
+        - export PYVER='3.5.4'
+        - ./.travis/install_python_dependencies.sh
+        - ./.travis/build_pycairo.sh
+        - export PYVER='3.6.2'
+        - ./.travis/install_python_dependencies.sh
+        - ./.travis/build_pycairo.sh
+        - export PYVER='3.7.5'
+        - ./.travis/install_python_dependencies.sh
+        - ./.travis/build_pycairo.sh
+        - ./.travis/zip_binaries.sh
+      deploy:
+        provider: s3
+        access_key_id: $AWS_ACCESS_KEY
+        secret_access_key: $AWS_SECRET_KEY
+        bucket: cmu-cs-academy.lib.prod
+        skip_cleanup: true
+        local_dir: build
+        upload-dir: cpython-cmu-graphics-binaries
+    - stage: build_release
+      script: ./.travis/build_release.sh
