@@ -44,10 +44,13 @@ jobs:
         - chmod +x .travis/build_release.sh
         - chmod +x .travis/install_global_dependencies.sh
         - chmod +x .travis/install_python_dependencies.sh
+        - chmod +x .travis/setup_keychain.sh
         - ./.travis/install_global_dependencies.sh
         - export PYVER='3.8.1'
         - ./.travis/install_python_dependencies.sh
-      script: ./.travis/build_release.sh
+      script:
+        - ./.travis/build_release.sh
+        - python3 .travis/find-and-sign-binaries.py "$(.travis/setup_keychain.sh)" "$(pwd)/release"
       deploy:
         provider: s3
         access_key_id: $AWS_ACCESS_KEY
