@@ -53,12 +53,13 @@ jobs:
         - mkdir c; cd c; touch d.so; touch e.so # for testing
         - cd ../../ # for testing
         # - ./.travis/build_release.sh
-        - python3 .travis/find-and-sign-binaries.py "$(.travis/setup_keychain.sh)" "$(pwd)/release"
-      deploy:
-        provider: s3
-        access_key_id: $AWS_ACCESS_KEY
-        secret_access_key: $AWS_SECRET_KEY
-        bucket: cmu-cs-academy.lib.prod
-        skip_cleanup: true
-        local_dir: release
-        upload-dir: cpython-cmu-graphics-binaries
+        - ./.travis/setup_keychain.sh
+        # - python3 .travis/find-and-sign-binaries.py "$(.travis/setup_keychain.sh)" "$(pwd)/release"
+      # deploy:
+      #   provider: s3
+      #   access_key_id: $AWS_ACCESS_KEY
+      #   secret_access_key: $AWS_SECRET_KEY
+      #   bucket: cmu-cs-academy.lib.prod
+      #   skip_cleanup: true
+      #   local_dir: release
+      #   upload-dir: cpython-cmu-graphics-binaries
