@@ -41,6 +41,8 @@ jobs:
         upload-dir: cpython-cmu-graphics-binaries
     - stage: build_release
       install:
+        - python3 --version
+        - which python3
         - chmod +x .travis/build_release.sh
         - chmod +x .travis/install_global_dependencies.sh
         - chmod +x .travis/install_python_dependencies.sh
@@ -51,7 +53,7 @@ jobs:
         - ./.travis/install_python_dependencies.sh
       script:
         - ./.travis/build_release.sh
-        - python3 .travis/find-and-sign-binaries.py "$(.travis/setup_keychain.sh)" "$(pwd)/cmu_graphics"
+        - python3 .travis/find_and_sign_binaries.py "$(.travis/setup_keychain.sh)" "$(pwd)/cmu_graphics"
         - ./.travis/zip_release.sh
       deploy:
         provider: s3
