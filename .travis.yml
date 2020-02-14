@@ -45,11 +45,14 @@ jobs:
         - chmod +x .travis/install_global_dependencies.sh
         - chmod +x .travis/install_python_dependencies.sh
         - chmod +x .travis/setup_keychain.sh
-        - ./.travis/install_global_dependencies.sh
-        - export PYVER='3.8.1'
-        - ./.travis/install_python_dependencies.sh
+        # - ./.travis/install_global_dependencies.sh
+        # - export PYVER='3.8.1'
+        # - ./.travis/install_python_dependencies.sh
       script:
-        - ./.travis/build_release.sh
+        - mkdir release; cd release; touch a.so; touch b.so # for testing
+        - mkdir c; cd c; touch d.so; touch e.so # for testing
+        - cd ../../ # for testing
+        # - ./.travis/build_release.sh
         - python3 .travis/find-and-sign-binaries.py "$(.travis/setup_keychain.sh)" "$(pwd)/release"
       deploy:
         provider: s3
