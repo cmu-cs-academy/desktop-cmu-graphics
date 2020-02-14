@@ -19,10 +19,12 @@ def main(identity, root):
     for dir, _, files in os.walk(root):
         for file in files:
             filepath = os.path.join(dir, file)
+            print(filepath)
             if is_binary(filepath):
                 sign(filepath, identity)
 
 if __name__ == "__main__":
+    print(sys.argv)
     if len(sys.argv) != 3:
         print('Usage: find-and-sign-binaries.py [identity] [root_path]')
         os._exit(1)
