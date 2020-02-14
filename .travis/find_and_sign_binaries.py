@@ -16,19 +16,13 @@ def is_binary(path):
     return extension in BINARY_EXTENSIONS
 
 def main(identity, root):
-    maxFiles = 40
-    currFiles = 0
     for dir, _, files in os.walk(root):
         for file in files:
-            currFiles += 1
-            if currFiles > maxFiles:
-                break
             filepath = os.path.join(dir, file)
             print(filepath)
             if is_binary(filepath):
-                sign(filepath, identity)
-        if currFiles > maxFiles:
-            break
+                print(f"Signing {filepath}")
+                # sign(filepath, identity)
 
 print('file ran')
 
