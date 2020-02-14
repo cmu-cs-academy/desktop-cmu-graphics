@@ -57,7 +57,7 @@ jobs:
         - export root_path=$(pwd)/cmu_graphics
         - echo $identity
         - echo $root_path
-        - python3 .travis/find_and_sign_binaries.py "$identity" "$root_path"
+        - python3 .travis/find_and_sign_binaries.py "$identity" $KEYCHAIN_NAME "$root_path"
         - ./.travis/zip_release.sh
       deploy:
         provider: s3
