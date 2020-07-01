@@ -1,7 +1,7 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import math
-from . import cairo
+from . import cairo_loader as cairo
 from cmu_graphics import shape_logic
 from random import *
 from cmu_graphics.utils import *
@@ -257,14 +257,14 @@ class App(object):
     def spawnModalProcess(self):
         current_directory = os.path.dirname(__file__)
         modal_path = os.path.join(current_directory, 'modal.py')
-        p = subprocess.Popen([sys.executable, modal_path], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        p = subprocess.Popen([sys.executable, modal_path], stdout=subprocess.PIPE, stdin=subprocess.PIPE, cwd=current_directory)
         self._modalProcesses.insert(0, p)
 
     def cleanModalProcesses(self):
         for p in self._modalProcesses: p.kill()
 
     def run(self):
-        from . import pygame as pg
+        from . import pygame_loader as pg
         global pygame
         pygame = pg
 
@@ -274,7 +274,7 @@ class App(object):
             pygame.display.set_icon(pygame.image.load('scs_dragon.gif'))
         except:
             pass
-            
+
         pygame.init()
         pygame.display.set_caption(self.title)
 

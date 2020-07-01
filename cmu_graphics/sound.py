@@ -1,7 +1,7 @@
 import json
 import requests
 import io
-from pygame import mixer
+from pygame_loader import mixer
 from threading import Timer, Lock
 
 class Sound(object):

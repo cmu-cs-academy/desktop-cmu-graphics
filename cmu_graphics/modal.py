@@ -1,6 +1,6 @@
-import cairo
+import cairo_loader as cairo
 import math
-import pygame
+import pygame_loader as pygame
 import sys
 import json
 
