@@ -1,5 +1,6 @@
 cd pycairo_build
 tar -zcvf binaries.tgz .
-aws s3 cp binaries.tgz s3://cmu-cs-academy.lib.prod/cpython-cmu-graphics-binaries/binaries.tgz
+aws s3 cp binaries.tgz $UPLOAD_BUCKET/binaries.tgz
 cd ..
 rm -rf pycairo_build
+rm .python-version
