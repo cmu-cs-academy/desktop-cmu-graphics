@@ -5,14 +5,15 @@ import importlib
 def get_valid_pygame_module():
     current_directory = os.path.dirname(__file__)
     modules = os.path.join(current_directory, 'modules')
-    sys.path.append(current_directory)
     for module in os.listdir(modules):
         if module.startswith('pygame_'):
             try:
-                pygame = importlib.import_module(f'modules.{module}')
+                module_path = f'{current_directory}{os.sep}modules{os.sep}{module}'
+                sys.path.append(module_path)
+                pygame = importlib.import_module('pygame')
                 return pygame
             except ModuleNotFoundError:
-                continue
+                sys.path.pop()
     return None
 
 pygame = get_valid_pygame_module()

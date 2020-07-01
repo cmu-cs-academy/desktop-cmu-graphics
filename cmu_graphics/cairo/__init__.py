@@ -5,14 +5,15 @@ import importlib
 def get_valid_cairo_module():
     current_directory = os.path.dirname(__file__)
     modules = os.path.join(current_directory, 'modules')
-    sys.path.append(current_directory)
     for module in os.listdir(modules):
         if module.startswith('cairo_'):
             try:
-                cairo = importlib.import_module(f'modules.{module}')
+                module_path = f'{current_directory}{os.sep}modules{os.sep}{module}'
+                sys.path.append(module_path)
+                cairo = importlib.import_module('cairo')
                 return cairo
             except ModuleNotFoundError:
-                continue
+                sys.path.pop()
     return None
 
 cairo = get_valid_cairo_module()

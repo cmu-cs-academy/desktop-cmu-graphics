@@ -264,7 +264,7 @@ class App(object):
         for p in self._modalProcesses: p.kill()
 
     def run(self):
-        import pygame as pg
+        from . import pygame as pg
         global pygame
         pygame = pg
 
@@ -274,8 +274,9 @@ class App(object):
             pygame.display.set_icon(pygame.image.load('scs_dragon.gif'))
         except:
             pass
-        pygame.display.set_caption(self.title)
+            
         pygame.init()
+        pygame.display.set_caption(self.title)
 
         # Make antialiasing possible
         self._screen = pygame.display.set_mode((self.width,self.height))
