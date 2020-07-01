@@ -1,5 +1,6 @@
 import math
 import copy
+import os
 from . import utils
 from . import cairo_loader as cairo
 from PIL import Image
@@ -1882,7 +1883,7 @@ class CMUSound(object):
     def __init__(self, url):
         current_directory = os.path.dirname(__file__)
         sound_path = os.path.join(current_directory, 'sound.py')
-        self.soundProcess = subprocess.Popen([sys.executable, sound_path], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        self.soundProcess = subprocess.Popen([sys.executable, sound_path], stdout=subprocess.PIPE, stdin=subprocess.PIPE, cwd=current_directory)
         CMUSound.processes.append(self.soundProcess)
         self.sendProcessMessage({'url': url})
 
