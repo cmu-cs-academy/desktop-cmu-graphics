@@ -1,0 +1,5 @@
+mkdir cmu_graphics_installer
+mv cmu_graphics cmu_graphics_installer
+mv sample.py cmu_graphics_installer
+zip -r cmu_graphics_installer.zip cmu_graphics_installer
+mv cmu_graphics_installer.zip release
