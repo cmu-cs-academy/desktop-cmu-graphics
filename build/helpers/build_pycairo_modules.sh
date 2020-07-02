@@ -27,4 +27,4 @@ cd ../../
 rm -rf pycairo
 rm -rf ../venv
 
-pyenv local system
+pyenv global system
