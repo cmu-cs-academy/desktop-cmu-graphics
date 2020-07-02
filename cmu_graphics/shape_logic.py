@@ -3,6 +3,7 @@ import copy
 import os
 from . import utils
 from . import cairo_loader as cairo
+from . import pil_loader as PIL
 from PIL import Image
 from io import BytesIO
 import requests
@@ -236,9 +237,9 @@ def getAlignAttrs(align):
 def loadImage(path):
     if (path.startswith('http')):
         response = requests.request('GET', path) # path is a URL!
-        image = Image.open(BytesIO(response.content))
+        image = PIL.Image.open(BytesIO(response.content))
     else:
-        image = Image.open(path)
+        image = PIL.Image.open(path)
 
     image = image.convert('RGBA') # ensure we have the correct number of channels
     a = array.array('B', image.tobytes('raw', 'RGBA'))
