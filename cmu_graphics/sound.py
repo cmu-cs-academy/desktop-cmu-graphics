@@ -1,5 +1,5 @@
+import webrequest
 import json
-import requests
 import io
 from pygame_loader import mixer
 from threading import Timer, Lock
@@ -46,8 +46,8 @@ import sys
 def main():
     soundUrl = json.loads(sys.stdin.readline())['url']
 
-    r = requests.get(soundUrl, stream=True)
-    s = Sound(io.BytesIO(r.content))
+    response = webrequest.get(soundUrl)
+    s = Sound(io.BytesIO(response.read()))
 
     while True:
         request = json.loads(input())

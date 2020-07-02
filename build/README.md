@@ -8,4 +8,4 @@ This folder contains scripts for
 
 `binaries.sh` and `release.sh` both upload to our AWS S3 bucket. Run `aws configure` to set up your credentials before running these.
 
-You will also need an Apple Develop ID Certificate in your Mac Keychain to run `release.sh`.
+To run `release.sh` you will also need an Apple Develop ID Certificate in your Mac Keychain (for signing) and environment variables `APPLE_ID` and `APPLE_PASSWORD` (for notarization).

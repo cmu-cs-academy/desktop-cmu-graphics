@@ -3,10 +3,9 @@ import copy
 import os
 from . import utils
 from . import cairo_loader as cairo
-from . import pil_loader as PIL
-from PIL import Image
+from . import pil_image_loader as Image
+from . import webrequest
 from io import BytesIO
-import requests
 import array
 import sys
 import traceback
@@ -236,10 +235,13 @@ def getAlignAttrs(align):
 
 def loadImage(path):
     if (path.startswith('http')):
-        response = requests.request('GET', path) # path is a URL!
-        image = PIL.Image.open(BytesIO(response.content))
+        try:
+            response = webrequest.get(path)
+            image = Image.open(response)
+        except:
+            pyThrow('Failed to load image data')
     else:
-        image = PIL.Image.open(path)
+        image = Image.open(path)
 
     image = image.convert('RGBA') # ensure we have the correct number of channels
     a = array.array('B', image.tobytes('raw', 'RGBA'))

@@ -216,7 +216,6 @@ class App(object):
         self._modalProcesses = []
         # clean up processes when the interpreter closes
         atexit.register(self.cleanModalProcesses)
-        for i in range(3): self.spawnModalProcess()
 
     def get_group(self):
         return self._tlg
@@ -257,13 +256,18 @@ class App(object):
     def spawnModalProcess(self):
         current_directory = os.path.dirname(__file__)
         modal_path = os.path.join(current_directory, 'modal.py')
-        p = subprocess.Popen([sys.executable, modal_path], stdout=subprocess.PIPE, stdin=subprocess.PIPE, cwd=current_directory)
+        p = subprocess.Popen(
+            [sys.executable, modal_path], stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            cwd=current_directory)
         self._modalProcesses.insert(0, p)
 
     def cleanModalProcesses(self):
         for p in self._modalProcesses: p.kill()
 
     def run(self):
+        for i in range(3): self.spawnModalProcess()
+
         from . import pygame_loader as pg
         global pygame
         pygame = pg

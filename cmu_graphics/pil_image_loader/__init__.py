@@ -3,11 +3,11 @@ import sys
 import importlib
 
 try:
-    importError = ModuleNotFoundError
+    ModuleNotFoundError
 except NameError:
-    importError = ImportError
+    ModuleNotFoundError = ImportError
 
-def get_valid_pil_module():
+def get_valid_pil_image_module():
     current_directory = os.path.dirname(__file__)
     modules = os.path.join(current_directory, 'modules')
     for module in os.listdir(modules):
@@ -15,20 +15,20 @@ def get_valid_pil_module():
             try:
                 module_path = '%s%smodules%s%s' % (current_directory, os.sep, os.sep, module)
                 sys.path.append(module_path)
-                pil = importlib.import_module('PIL')
-                return pil
-            except importError as e:
-                print(e)
-                print(sys.path.pop())
-    return None
+                if 'PIL' in sys.modules:
+                    del sys.modules['PIL']
+                from PIL import Image
+                return Image
+            except (ModuleNotFoundError, ImportError) as e:
+                sys.path.pop()
 
-PIL = get_valid_pil_module()
-if PIL is None:
+PIL_Image = get_valid_pil_image_module()
+if PIL_Image is None:
     error_string = (
-        "We do not have a precompiled version of pil available "
+        "We do not have a precompiled version of pygame available "
         + "for your operating system and computer. You may need to install "
-        + "pil manually."
+        + "pygame manually."
     )
     raise Exception(error_string)
 
-globals().update(PIL.__dict__)
+globals().update(PIL_Image.__dict__)
