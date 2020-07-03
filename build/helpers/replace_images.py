@@ -2,7 +2,7 @@ import os
 import shutil
 
 pygame_loader_path = '../../cmu_graphics/pygame_loader'
-our_images_path = '../images'
+our_images_path = './images'
 
 pygame_images = ['pygame_icon.bmp', 'pygame_icon.icns', 'pygame_icon.svg', 'pygame_icon.tiff', 'pygame.ico']
 extension_to_image = dict()

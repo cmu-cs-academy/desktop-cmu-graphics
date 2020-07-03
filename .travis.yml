@@ -2,68 +2,9 @@ os: osx
 osx_image: xcode10.3
 language: generic
 
-stages:
-  - name: build_pycairo_binaries
-    if: commit_message =~ /(travis-build-pycairo-binaries)/
-  - build_release
+install:
+  - find build -type f -iname "*.sh" -exec chmod +x {} \;
 
-jobs:
-  include:
-    - stage: build_pycairo_binaries
-      install:
-        - chmod +x .travis/install_global_dependencies.sh
-        - chmod +x .travis/install_python_dependencies.sh
-        - chmod +x .travis/build_pycairo.sh
-        - chmod +x .travis/zip_binaries.sh
-        - chmod +x .travis/build_release.sh
-        - ./.travis/install_global_dependencies.sh
-      script:
-        - export PYVER='3.5.4'
-        - ./.travis/install_python_dependencies.sh
-        - ./.travis/build_pycairo.sh
-        - export PYVER='3.6.2'
-        - ./.travis/install_python_dependencies.sh
-        - ./.travis/build_pycairo.sh
-        - export PYVER='3.7.5'
-        - ./.travis/install_python_dependencies.sh
-        - ./.travis/build_pycairo.sh
-        - export PYVER='3.8.1'
-        - ./.travis/install_python_dependencies.sh
-        - ./.travis/build_pycairo.sh
-        - ./.travis/zip_binaries.sh
-      deploy:
-        provider: s3
-        access_key_id: $AWS_ACCESS_KEY
-        secret_access_key: $AWS_SECRET_KEY
-        bucket: cmu-cs-academy.lib.prod
-        skip_cleanup: true
-        local_dir: build
-        upload-dir: cpython-cmu-graphics-binaries
-    - stage: build_release
-      install:
-        - python3 --version
-        - which python3
-        - chmod +x .travis/build_release.sh
-        - chmod +x .travis/install_global_dependencies.sh
-        - chmod +x .travis/install_python_dependencies.sh
-        - chmod +x .travis/setup_keychain.sh
-        - chmod +x .travis/zip_release.sh
-        - ./.travis/install_global_dependencies.sh
-        - export PYVER='3.8.1'
-        - ./.travis/install_python_dependencies.sh
-      script:
-        - ./.travis/build_release.sh
-        - export identity=$(.travis/setup_keychain.sh)
-        - export root_path=$(pwd)/cmu_graphics
-        - echo $identity
-        - echo $root_path
-        - python3 .travis/find_and_sign_binaries.py "$identity" $KEYCHAIN_NAME "$root_path"
-        - ./.travis/zip_release.sh
-      deploy:
-        provider: s3
-        access_key_id: $AWS_ACCESS_KEY
-        secret_access_key: $AWS_SECRET_KEY
-        bucket: cmu-cs-academy.lib.prod
-        skip_cleanup: true
-        local_dir: release
-        upload-dir: cpython-cmu-graphics-binaries
+script:
+  - cd build
+  - ./release.sh

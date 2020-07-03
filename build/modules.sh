@@ -1,3 +1,5 @@
+set -e
+
 source env.sh
 ./helpers/install_global_dependencies.sh
 

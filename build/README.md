@@ -6,6 +6,15 @@ This folder contains scripts for
 * Setting up modules `modules.sh`
 * Creating and signing a release zip `release.sh`
 
-`binaries.sh` and `release.sh` both upload to our AWS S3 bucket. Run `aws configure` to set up your credentials before running these.
+`./release.sh --deploy` uploads to the S3 bucket
 
-To run `release.sh` you will also need an Apple Develop ID Certificate in your Mac Keychain (for signing) and environment variables `APPLE_ID` and `APPLE_PASSWORD` (for notarization).
+These scripts use a variety of passwords, certificates, and keys, all of which should be stored in the following environment variables
+
+```
+export APPLE_ID= # your apple developer id, for notarization
+export APPLE_PASSWORD= # your apple developer id password
+export AWS_ACCESS_KEY_ID= # an access key for your AWS S3 bucket
+export AWS_SECRET_ACCESS_KEY= # a secret key for the above access key
+export SIGNING_IDENTITY_P12_B64= # a base64 encoded version of your private.p12 file from Apple, for signing binaries
+export SIGNING_IDENTITY_PASSWORD= # the password to unlock your private.p12 file
+```
