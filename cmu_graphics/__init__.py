@@ -1,3 +1,6 @@
+from . import loader_util
+loader_util.verify_support()
+
 from cmu_graphics.cmu_graphics import (
     App,
     Arc,

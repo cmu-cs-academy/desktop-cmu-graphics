@@ -9,3 +9,4 @@ xcrun altool --notarize-app \
              --primary-bundle-id "cmu-graphics-installer.zip" \
              --username "$APPLE_ID" --password "$APPLE_PASSWORD" \
              --file cmu_graphics_installer.zip
+rm cmu_graphics_installer.zip
