@@ -646,6 +646,10 @@ class Shape(object):
     def set_align(self, v): pyThrow("You can't get or set the align property")
     align = property(get_align, set_align)
 
+    def get_doNotInspect(self): return self.attrs.get('doNotInspect', None)
+    def set_doNotInspect(self, v): self.attrs['doNotInspect'] = v; return v
+    doNotInspect = property(get_doNotInspect, set_doNotInspect)
+
     def get_centerX(self): return self.get('centerX', None)
     def set_centerX(self, v): self.set({'centerX', v}); return v
     centerX = property(get_centerX, set_centerX)
@@ -1304,7 +1308,7 @@ class Group(Shape):
 
 fontCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
 
-def getFont(baseFontName, isBold, isItalic):
+def getFont(baseFontName, isBold=False, isItalic=False):
     ok = True
     if 'mono' in baseFontName or 'courier' in baseFontName:
         fontName = 'Courier New'
@@ -2176,6 +2180,402 @@ objConstructors = {
   'RGB': RGB,
   'Star': Star,
 }
+
+BACKGROUND_POINTS = [
+  [0, 0],
+  [400, 0],
+  [0, 400],
+  [400, 400],
+];
+BACKGROUND_DUMMY = object()
+
+class Inspector(object):
+    def __init__(self, app):
+        self.app = app
+        self.keyPoints = None
+        self.keyPointsToShapes = None
+        self.bestX = self.bestY = self.mouseX = self.mouseY = None
+
+    def getKeyPoints(self, shape):
+        x0 = shape.left
+        y0 = shape.top
+        x1 = shape.right
+        y1 = shape.bottom
+
+        points = [
+            [x0, y0],
+            [x0, y1],
+            [x1, y0],
+            [x1, y1],
+        ]
+
+        if isinstance(shape, Arc):
+            points = []
+            points.append([shape.pointList[0][0], shape.pointList[0][1]])
+            points.append([shape.pointList[1][0], shape.pointList[1][1]])
+            numPoints = len(shape.pointList)
+            points.append([
+                shape.pointList[numPoints-1][0],
+                shape.pointList[numPoints-1][1],
+            ])
+        elif (
+            (shape.rotateAngle % 360 != 0 and
+                (isinstance(shape, Oval) or isinstance(shape, Rect))) or
+            isinstance(shape, Circle) or
+            isinstance(shape, Oval) or
+            isinstance(shape, Star) or
+            isinstance(shape, RegularPolygon) or
+            isinstance(shape, Label)
+        ):
+            points = [[shape.centerX, shape.centerY]]
+        elif isinstance(shape, Line):
+            points = [
+                [shape.x1, shape.y1],
+                [shape.x2, shape.y2],
+            ]
+        elif isinstance(shape, Polygon):
+            points = []
+            for i in range(len(shape.pointList)):
+                points.append([shape.pointList[i][0], shape.pointList[i][1]])
+
+        return list(map(lambda pt: [round(pt[0]), round(pt[1])], points))
+
+    def getKeyPointKey(self, point):
+        return '%d-%d' % (point[0], point[1])
+
+    def ensureKeyPointToShapesMap(self):
+        if (self.keyPointsToShapes != None):
+            return
+        self.keyPointsToShapes = dict()
+        self.keyPoints = list()
+
+        def addKeyPointTo(shape):
+            def addKeyPoint(keyPoint):
+                key = self.getKeyPointKey(keyPoint)
+                if self.keyPointsToShapes.get(key, None) is None:
+                    self.keyPointsToShapes[key] = []
+                    self.keyPoints.append(keyPoint)
+                self.keyPointsToShapes[key].append(shape)
+            return addKeyPoint
+
+        def processShape(shape):
+            if shape.isGroup:
+                list(map(processShape, shape._shapes))
+                return
+            if shape.doNotInspect:
+                return
+
+            list(map(addKeyPointTo(shape), self.getKeyPoints(shape)))
+
+        processShape(self.app._tlg)
+        if self.app.background is not None:
+            list(map(addKeyPointTo(BACKGROUND_DUMMY), BACKGROUND_POINTS))
+
+
+    def getKeyPointExtraShapeInfo(self, kx, ky):
+        key = self.getKeyPointKey([kx, ky])
+        attrVals = dict()
+        def msgsAdd(attr, value):
+            if attrVals.get(attr, None) is None:
+                attrVals[attr] = set()
+            if utils.isNumber(value):
+                value = utils.round2(value)
+            elif value == True:
+                value = 'True'
+            elif value == False:
+                value = 'False'
+            attrVals[attr].add(value)
+
+        if self.keyPointsToShapes.get(key, None) is None:
+            return ''
+
+        def gradientToString(color):
+            result = ''
+            for value in color.colors:
+                if isinstance(value, str):
+                    result += value
+                    result += ', '
+                else:
+                    result += value.attrs['strVal']
+                    result += ', '
+            return result[:-2]
+
+        for shape in self.keyPointsToShapes[key]:
+            if (shape is BACKGROUND_DUMMY):
+                if isinstance(self.app.background, Gradient):
+                    msgsAdd('background', gradientToString(self.app.background))
+                else:
+                    msgsAdd('background', self.app.background)
+                continue
+
+            for attr in ['fill', 'border']:
+                color = getattr(shape, attr)
+                if color is not None:
+                    if isinstance(color, Gradient):
+                        msgsAdd('gradient', gradientToString(color))
+                    else:
+                        msgsAdd('color', color)
+                elif attr == 'fill' and not isinstance(shape, CMUImage):
+                    msgsAdd('color', 'None')
+
+            def checkAttrDefaults(attrDefaults):
+                for attr, defaultVal in attrDefaults:
+                    try:
+                        val = getattr(shape, attr)
+                        if val != None and val != defaultVal:
+                            msgsAdd(attr, val)
+                    except:
+                        pass
+            checkAttrDefaults([
+                ['opacity', 100],
+                ['lineWidth', 2],
+                ['radius', None],
+                ['dashes', False]
+            ])
+            if isinstance(shape, Label):
+                checkAttrDefaults([
+                    ['font', 'Arial'],
+                    ['size', 12],
+                    ['style', 'normal'],
+                    ['bold', False],
+                    ['italic', False],
+                ])
+            if isinstance(shape, Line):
+                checkAttrDefaults([
+                    ['arrowStart', False]
+                    ['arrowEnd', False]
+                ])
+            if (not isinstance(shape, Label) and not isinstance(shape, Line)):
+                checkAttrDefaults([['borderWidth', 2]])
+            if isinstance(shape, Star):
+                checkAttrDefaults([
+                    ['roundness', utils.getDefaultRoundness(shape.points)],
+                ])
+            if isinstance(shape, Star) or isinstance(shape, RegularPolygon):
+                checkAttrDefaults([['points', None]])
+            if shape.rotateAngle % 360 != 0:
+                msgsAdd('rotateAngle', shape.rotateAngle)
+            if isinstance(shape, Arc):
+                checkAttrDefaults([
+                    ['sweepAngle', None],
+                    ['startAngle', None],
+                ])
+                if (shape.ovalWidth != None and shape.ovalHeight != None):
+                    msgsAdd(
+                        'oval size',
+                        '(%d, %d)' % (
+                            utils.round2(shape.ovalWidth),
+                            utils.round2(shape.ovalHeight)
+                        )
+                    )
+            if (
+                (isinstance(shape, Oval) and
+                    not isinstance(shape, Circle) and
+                    not isinstance(shape, Arc)) or
+                (shape.rotateAngle % 360 != 0 and isinstance(shape, Rect))
+            ):
+                pts = shape.getApproxPoints()
+                unrotatedPoints = utils.rotatePoints(
+                    pts,
+                    -shape.rotateAngle,
+                    shape.centerX,
+                    shape.centerY
+                )
+                bounds = utils.getBoxDims(unrotatedPoints)
+                msgsAdd(
+                    'size',
+                    '(%d, %d)' % (
+                        utils.round2(bounds['width']),
+                        utils.round2(bounds['height'])
+                    )
+                )
+        msgs = [self.getPointStr(kx, ky)];
+        for attr in attrVals:
+            for val in attrVals[attr]:
+                msgs.append('%s: %s' % (attr, str(val)))
+        return '\n'.join(msgs)
+
+    def getPointStr(self, x, y):
+        return '(%d, %d)' % (x, y)
+
+    def nearestKeyPoint(self, x, y):
+        bestD = 100000000
+        bestX = None
+        bestY = None
+        for pt in self.keyPoints:
+            d = (pt[0] - x) ** 2 + (pt[1] - y) ** 2
+            if d < bestD:
+                bestD = d
+                [bestX, bestY] = pt
+        return [bestX, bestY]
+
+    def reset(self):
+        self.mouseX = self.mouseY = None
+        self.clearCache()
+
+    def clearCache(self):
+        self.keyPoints = self.keyPointsToShapes = None
+        self.bestX = self.bestY = None
+
+    def setMousePosition(self, x, y):
+        self.mouseX = x
+        self.mouseY = y
+        self.bestX = self.bestY = None
+
+    def computeBestPoint(self):
+        if self.mouseX is None or self.mouseX is None:
+            return
+        self.ensureKeyPointToShapesMap()
+        bestX, bestY = self.nearestKeyPoint(self.mouseX, self.mouseY)
+
+        if (
+            bestX is None or
+            utils.distance(self.mouseX, self.mouseY, bestX, bestY) > 300
+        ):
+            self.bestX = self.bestY = None
+        else:
+            self.bestX = bestX
+            self.bestY = bestY
+
+    def draw(self, ctx):
+        self.computeBestPoint()
+        if self.bestX is None or self.bestY is None:
+            return
+
+        black = (0, 0, 0)
+        red = (0, 0, 255)
+        gold = (0, 215, 255)
+        white = (255, 255, 255)
+
+        for pt in self.keyPoints:
+            ctx.new_path()
+            ctx.arc(pt[0], pt[1], 2, 0, 2 * math.pi)
+            ctx.close_path()
+            ctx.set_source_rgba(*black)
+            ctx.set_line_width(2)
+            ctx.stroke_preserve()
+            ctx.set_source_rgba(*gold)
+            ctx.fill()
+
+        ctx.set_source_rgba(*red)
+        for r in [5, 4, 3, 2, 1]:
+            ctx.set_source_rgb(*(red if r % 2 == 1 else black))
+            ctx.new_path()
+            ctx.arc(self.bestX, self.bestY, r, 0, 2 * math.pi)
+            ctx.close_path()
+            ctx.fill()
+
+        def textWidth(text):
+            return ctx.text_extents(text)[2]
+
+        def drawCenteredText(text, x, y):
+            _, _, width, _, _, _ = ctx.text_extents(text)
+            ctx.move_to(x - width / 2, y)
+            ctx.show_text(text)
+
+        ctx.select_font_face(*getFont('arial'))
+        ctx.set_font_size(12)
+        pointLabelText = self.getPointStr(self.bestX, self.bestY)
+        w = textWidth(pointLabelText)
+        h = 12
+        margin = 10
+        pointLabelCenterX = min(
+            400 - margin - w / 2,
+            max(margin + w / 2, self.bestX - 10)
+        )
+        pointLabelCenterY = min(
+            400 - margin - h / 2,
+            max(margin + h / 2, self.bestY - 10)
+        )
+
+        ctx.set_source_rgba(*white, 0.5)
+        ctx.rectangle(
+            pointLabelCenterX - w / 2 - 2,
+            pointLabelCenterY - h / 2 - 2,
+            w + 4,
+            h + 4
+        )
+        ctx.fill()
+
+        ctx.set_source_rgba(*black)
+        drawCenteredText(
+            pointLabelText,
+            pointLabelCenterX,
+            pointLabelCenterY + h / 2 - 2,
+        )
+
+        minTop = 10
+        if pointLabelCenterX > 300 and pointLabelCenterY < 50:
+            minTop = pointLabelCenterY + margin
+        info = self.getKeyPointExtraShapeInfo(self.bestX, self.bestY)
+        infoLines = info.split('\n')
+        ctx.set_source_rgba(*white, 0.5)
+        infoWidth = 0
+        newLines = []
+        maxWidth = 300
+
+        def shortenLine(line):
+            splitLine = line.split(',')
+            return [splitLine.pop(), ''.join(splitLine)]
+
+        for line in infoLines:
+            if textWidth(line) < maxWidth:
+                newLines.append(line)
+            else:
+                leftover = ''
+                while textWidth(line) > maxWidth:
+                    lastWord, line = shortenLine(line)
+                    if len(leftover) > 0:
+                        leftover = ',' + leftover
+                    leftover = lastWord + leftover
+                if len(leftover) > 0:
+                    line = line + ','
+                newLines.append(line, leftover)
+
+        for line in newLines:
+            infoWidth = max(infoWidth, textWidth(line))
+
+        lineHeight = 12
+        infoHeight = lineHeight * len(newLines)
+        ctx.rectangle(
+            400 - 2 * margin - infoWidth,
+            minTop,
+            infoWidth + 2 * margin,
+            infoHeight + margin
+        )
+        ctx.fill()
+        ctx.set_source_rgba(*black)
+        verticalOffset = 0
+        for line in newLines:
+            firstword = line[0:line.find(':')+1]
+            newline = line[line.find(':')+1:]
+            ctx.select_font_face(*getFont('arial', isBold=True))
+            firstwordWidth = textWidth(firstword)
+            ctx.select_font_face(*getFont('arial'))
+            newlineWidth = textWidth(newline)
+            ctx.select_font_face(*getFont('arial', isBold=True))
+
+            drawCenteredText(
+                firstword,
+                400 -
+                    margin -
+                    infoWidth / 2 -
+                    (newlineWidth + firstwordWidth) / 2 +
+                    firstwordWidth / 2,
+                minTop + lineHeight + verticalOffset
+            )
+
+            ctx.select_font_face(*getFont('arial'))
+            drawCenteredText(
+                newline,
+                400 -
+                    margin -
+                    infoWidth / 2 +
+                    (newlineWidth + firstwordWidth) / 2 -
+                    newlineWidth / 2,
+                minTop + lineHeight + verticalOffset
+            )
+            verticalOffset += lineHeight
 
 class ShapeLogicInterface(object):
     def rgb(self, r, g, b):

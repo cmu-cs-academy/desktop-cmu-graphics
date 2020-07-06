@@ -217,6 +217,9 @@ def getArcPoints(cx, cy, width, height, startAngle = None, sweepAngle = None, si
         pts.append([x, y])
     return pts
 
+def isNumber(value):
+    return isinstance(value, int) or isinstance(value, float)
+
 def round2(value):
     return pythonRound((value + 0.001) * 100) / 100
 

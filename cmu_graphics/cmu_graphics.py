@@ -125,7 +125,8 @@ class App(object):
     def getKey(keyCode, modifier):
         keyNameMap = { pygame.K_TAB: 'tab', pygame.K_RETURN: 'enter', pygame.K_BACKSPACE: 'backspace',
                        pygame.K_DELETE: 'delete', pygame.K_ESCAPE: 'escape', pygame.K_SPACE: 'space',
-                       pygame.K_RIGHT: 'right', pygame.K_LEFT: 'left', pygame.K_UP: 'up', pygame.K_DOWN: 'down'}
+                       pygame.K_RIGHT: 'right', pygame.K_LEFT: 'left', pygame.K_UP: 'up', pygame.K_DOWN: 'down',
+                       pygame.K_RCTRL: 'ctrl', pygame.K_LCTRL: 'ctrl'}
 
         shiftMap = { '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*',
                      '9':'(', '0':')', '[':'{', ']':'}', '/':'?', '=':'+', '\\':'|', '\'':'"',
@@ -142,6 +143,9 @@ class App(object):
     def handleKeyPress(self, keyCode, modifier):
         key = App.getKey(keyCode, modifier)
 
+        if key == 'ctrl':
+            self.isCtrlKeyDown = True
+            return
         if key is None: return
         if key == 'space' and (modifier & pygame.KMOD_SHIFT):
             self.paused = not self.paused
@@ -153,8 +157,11 @@ class App(object):
 
     def handleKeyRelease(self, keyCode, modifier):
         key = App.getKey(keyCode, modifier)
-        if key is None: return
 
+        if key == 'ctrl':
+            self.isCtrlKeyDown = False
+            return
+        if key is None: return
         if key.upper() in self._allKeysDown: self._allKeysDown.remove(key.upper())
         if key.lower() in self._allKeysDown: self._allKeysDown.remove(key.lower())
 
@@ -170,7 +177,19 @@ class App(object):
             'fill': self.background,
         });
         shape.draw(ctx)
-        self._tlg.draw(ctx)
+
+        ctx.save()
+        try:
+            self._tlg.draw(ctx)
+        finally:
+            ctx.restore()
+
+        ctx.save()
+        try:
+            if self.shouldDrawInspector():
+                self.inspector.draw(ctx)
+        finally:
+            ctx.restore()
 
         # Get the cairo buffer and convert it from BGRA to RGBA
         data_string = cairo_surface.get_data()
@@ -180,6 +199,15 @@ class App(object):
 
         # Show PyGame surface
         screen.blit(pygame_surface, (0,0))
+
+    def shouldDrawInspector(self):
+        return (
+            self.inspectorEnabled and
+            (self.paused or
+                self.stopped or
+                self.alwaysShowInspector or
+                self.isCtrlKeyDown)
+        )
 
     def __init__(self, width=400, height=400, title=None):
         import __main__
@@ -212,6 +240,11 @@ class App(object):
         self.paused = False
         self._stopped = False
         self.textInputs = []
+
+        self.inspector = shape_logic.Inspector(self)
+        self.inspectorEnabled = True
+        self.alwaysShowInspector = False
+        self.isCtrlKeyDown = False
 
         self._modalProcesses = []
         # clean up processes when the interpreter closes
@@ -296,12 +329,12 @@ class App(object):
                         self.callUserFn('onMousePress', event.pos)
                     elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                         self.callUserFn('onMouseRelease', event.pos)
-                    elif (event.type == pygame.MOUSEMOTION and
-                          event.buttons == (0, 0, 0)):
-                        self.callUserFn('onMouseMove', event.pos)
-                    elif (event.type == pygame.MOUSEMOTION and
-                          event.buttons[0] == 1):
-                        self.callUserFn('onMouseDrag', event.pos)
+                    elif (event.type == pygame.MOUSEMOTION):
+                        self.inspector.setMousePosition(*event.pos)
+                        if event.buttons == (0, 0, 0):
+                            self.callUserFn('onMouseMove', event.pos)
+                        elif event.buttons[0] == 1:
+                            self.callUserFn('onMouseDrag', event.pos)
                     elif event.type == pygame.KEYDOWN:
                         self.handleKeyPress(event.key, event.mod)
                     elif event.type == pygame.KEYUP:
