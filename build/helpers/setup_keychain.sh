@@ -1,12 +1,16 @@
-security create-keychain -p $keychain_password $keychain_name || true
-security unlock-keychain -p $keychain_password $keychain_name || true
+export KEYCHAIN_NAME=tmp
+export KEYCHAIN_PASSWORD=tmp
+
+security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_NAME
+
+security list-keychains -d user -s $KEYCHAIN_NAME
+security default-keychain -s $KEYCHAIN_NAME
 
 echo $SIGNING_IDENTITY_P12_B64 > encoded_identity
 base64 --decode encoded_identity > identity.p12
 rm encoded_identity
 
-security import identity.p12 -k $keychain_name -P $SIGNING_IDENTITY_PASSWORD -T /usr/bin/codesign > /dev/null
+security import identity.p12 -k $KEYCHAIN_NAME -P $SIGNING_IDENTITY_PASSWORD -T /usr/bin/codesign > /dev/null
 rm identity.p12
-
-# stop password popup from appearing (for Travis)
-security set-key-partition-list -S apple-tool:,apple: -s -k $keychain_password $keychain_name > /dev/null
+security set-key-partition-list -S apple-tool:,apple: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_NAME > /dev/null
