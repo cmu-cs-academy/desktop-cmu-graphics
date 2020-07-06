@@ -7,4 +7,5 @@ install:
 
 script:
   - cd build
+  - ./notarize.sh
   - ./release.sh
