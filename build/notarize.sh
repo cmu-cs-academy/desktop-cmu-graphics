@@ -70,3 +70,6 @@ do
         sleep 30
     fi
 done
+
+# clean up
+rm $zipname
