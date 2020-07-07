@@ -7,7 +7,6 @@ import json
 from datetime import datetime
 current_directory = os.path.dirname(__file__)
 parent_directory = os.path.dirname(current_directory)
-parent_directory = '/Users/schickmeister/Projects/cmu-cs-academy/cpython-cmu-graphics'
 sys.path.insert(0, parent_directory)
 most_recent_version = input()
 
@@ -26,14 +25,24 @@ def update():
         with open(zip_path, 'xb') as f:
             f.write(zip_bytes)
 
+        installer_dir = os.path.join(parent_directory, 'cmu_graphics_installer')
+        if os.path.exists(installer_dir):
+            shutil.rmtree(installer_dir)
+        os.mkdir(installer_dir)
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(installer_dir)
+        os.remove(zip_path)
+
+        shutil.rmtree(current_directory)
+        shutil.move(os.path.join(installer_dir, 'cmu_graphics'), current_directory)
+        shutil.rmtree(installer_dir)
+
 def get_update_info():
-    current_directory = os.path.dirname(__file__)
     with open(os.path.join(current_directory, 'meta/updates.json'), 'r') as f:
         update_info = json.loads(f.read())
     return update_info
 
 def save_update_info(update_info):
-    current_directory = os.path.dirname(__file__)
     with open(os.path.join(current_directory, 'meta/updates.json'), 'w') as f:
         f.write(json.dumps(update_info))
 
@@ -51,9 +60,6 @@ updateLater()
 
 CMU_GRAPHICS_NO_UPDATE = True
 from cmu_graphics import *
-
-fireworks = Group()
-streams = Group()
 
 Label(
     "Version %s of CMU Graphics" % most_recent_version,
@@ -78,6 +84,7 @@ streams = Group()
 app.totalFireworks = 0
 app.timeToNextFirework = 0
 app.updateIn = math.inf
+app.mode = 'selection'
 
 def onMouseMove(mouseX, mouseY):
     for button in [downloadNow, downloadLater, skipThisVersion]:
@@ -87,17 +94,19 @@ def onMouseMove(mouseX, mouseY):
             button.fill = rgb(90,153,179)
 
 def onMousePress(mouseX, mouseY):
-    if downloadNow.hits(mouseX, mouseY):
-        app.group.clear()
-        app.updateIn = 10
-        Label('Updating ...', 200, 200, size=30)
-    elif downloadLater.hits(mouseX, mouseY):
-        # No action here because we "update later" on every run
-        # No matter the outcome, don't check again until tomorrow
-        app.quit()
-    elif skipThisVersion.hits(mouseX, mouseY):
-        skipUpdate()
-        app.quit()
+    if app.mode == 'selection':
+        if downloadNow.hits(mouseX, mouseY):
+            app.group.clear()
+            app.updateIn = 10
+            Label('Updating ...', 200, 200, size=30)
+            app.mode = 'update'
+        elif downloadLater.hits(mouseX, mouseY):
+            # No action here because we "update later" on every run
+            # No matter the outcome, don't check again until tomorrow
+            app.quit()
+        elif skipThisVersion.hits(mouseX, mouseY):
+            skipUpdate()
+            app.quit()
 
 def makeFirework():
     fireWorkColors = [ 'red', 'lime', 'magenta', 'yellow', 'orangeRed',
@@ -147,7 +156,7 @@ def animateExplosions():
 def onStep():
     animateExplosions()
     animateLaunches()
-    if (app.timeToNextFirework == 0  and app.totalFireworks < 6):
+    if (app.timeToNextFirework <= 0  and app.totalFireworks < 6):
         makeFirework()
         app.totalFireworks += 1
         app.timeToNextFirework = 10
@@ -157,6 +166,11 @@ def onStep():
     if app.updateIn == 0:
         update()
         print('update')
-        app.quit()
+        app.group.clear()
+        app.group.add(fireworks)
+        app.group.add(streams)
+        Label('Done!', 200, 175, size=30)
+        Label('Rerun your app to continue', 200, 225, size=30)
+        app.totalFireworks = 0
 
 cmu_graphics.loop()

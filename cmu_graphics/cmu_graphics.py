@@ -379,7 +379,7 @@ def check_for_update():
         if 'skip_past' in update_info and version <= update_info[skip_past]:
             return
 
-        if most_recent_version != version:
+        if most_recent_version >= version:
             updater_path = os.path.join(current_directory, 'updater.py')
             p = subprocess.Popen(
                 [sys.executable, updater_path],
