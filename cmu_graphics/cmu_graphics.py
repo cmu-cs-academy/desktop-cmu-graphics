@@ -2,9 +2,12 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import math
 from . import cairo_loader as cairo
+from . import webrequest
 from cmu_graphics import shape_logic
 from random import *
 from cmu_graphics.utils import *
+from datetime import datetime
+from datetime import timedelta
 import subprocess
 import sys
 import json
@@ -307,11 +310,6 @@ class App(object):
 
         clock = pygame.time.Clock()
 
-        try:
-            pygame.display.set_icon(pygame.image.load('scs_dragon.gif'))
-        except:
-            pass
-
         pygame.init()
         pygame.display.set_caption(self.title)
 
@@ -354,6 +352,47 @@ class App(object):
             pygame.display.flip()
 
         pygame.quit()
+
+def check_for_update():
+    import __main__
+    if 'CMU_GRAPHICS_NO_UPDATE' in __main__.__dict__:
+        return
+
+    try:
+        current_directory = os.path.dirname(__file__)
+        with open(os.path.join(current_directory, 'meta/updates.json')) as f:
+            update_info = json.loads(f.read())
+
+        if 'last_attempt' in update_info:
+            last_attempt = datetime.fromtimestamp(update_info['last_attempt'])
+            if datetime.now() - last_attempt < timedelta(days=1):
+                return
+
+        most_recent_version = webrequest.get(
+            'https://raw.githubusercontent.com/cmu-cs-academy/' +
+            'cpython-cmu-graphics/master/cmu_graphics/meta/version.txt'
+        ).read().decode('ascii').strip()
+        current_directory = os.path.dirname(__file__)
+        with open(os.path.join(current_directory, 'meta/version.txt')) as f:
+            version = f.read().strip()
+
+        if 'skip_past' in update_info and version <= update_info[skip_past]:
+            return
+
+        if most_recent_version != version:
+            updater_path = os.path.join(current_directory, 'updater.py')
+            p = subprocess.Popen(
+                [sys.executable, updater_path],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                cwd=current_directory)
+            result, _ = p.communicate(bytes(most_recent_version + '\n', encoding='utf-8'))
+            result = result.decode('utf-8').strip()
+            if result == 'update':
+                os._exit(0)
+    except:
+        pass
+
+check_for_update()
 
 app = App()
 

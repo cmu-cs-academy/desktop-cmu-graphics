@@ -2342,7 +2342,7 @@ class Inspector(object):
                 ])
             if isinstance(shape, Line):
                 checkAttrDefaults([
-                    ['arrowStart', False]
+                    ['arrowStart', False],
                     ['arrowEnd', False]
                 ])
             if (not isinstance(shape, Label) and not isinstance(shape, Line)):
