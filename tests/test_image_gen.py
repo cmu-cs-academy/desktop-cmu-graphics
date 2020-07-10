@@ -115,15 +115,26 @@ def run_test(driver, test_name, all_source_code):
         source_code += '\ndef onMousePress(x, y):\n'
         source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
         source_code += '\n    app.background = "honeydew"'
-        source_code += '\nfrom threading import Timer\n'
-        source_code += '\nimport time\n'
-        source_code += 'def screenshotAndExit():\n'
-        source_code += '    app.callUserFn("onMousePress", (200,200))\n'
-        source_code += '    time.sleep(1)\n'
-        source_code += '    app.getScreenshot("%s")\n' % os.path.abspath(output_path)
-        source_code += '    app.quit()\n'
-        source_code += 'Timer(3, screenshotAndExit).start()\n'
-        source_code += 'cmu_graphics.loop()'
+
+        source_code += '''
+from threading import Thread
+import time
+
+
+def screenshotAndExit():
+    while not getattr(app, '_running', False):
+        time.sleep(0.01)
+    with cmu_graphics.DRAWING_LOCK:
+        app.callUserFn("onMousePress", (200,200))
+        app.frameworkRedrew = False
+    while not app.frameworkRedrew:
+        time.sleep(0.01)
+    app.getScreenshot("%s")
+    app.quit()
+Thread(target=screenshotAndExit).start()
+
+cmu_graphics.loop()
+''' % os.path.abspath(output_path)
 
         with open(TEST_FILE_PATH, 'w') as f:
             f.write(source_code)
@@ -136,10 +147,11 @@ def run_test(driver, test_name, all_source_code):
         stdout, stderr = p.communicate()
         console_output = stdout + stderr
 
-        if stderr != b'':
+        if p.returncode != 0 or stderr != b'':
+            print('Return code', p.returncode)
             print(stdout.decode('utf-8'))
             print(stderr.decode('utf-8'))
-            os._exit(0)
+            os._exit(1)
 
         if not os.path.exists(correct_path):
             print('Generating new %s' % correct_path)
