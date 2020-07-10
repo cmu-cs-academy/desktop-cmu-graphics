@@ -1,3 +1,13 @@
+# Project-specific
+
+cmu_graphics/meta/updates.json
+tests/image_gen/**/diff*.png
+tests/image_gen/**/output*.png
+tests/report.html
+
+
+##########################
+
 # Mac/OSX
 .DS_Store
 

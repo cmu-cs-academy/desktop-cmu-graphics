@@ -12,6 +12,9 @@ import subprocess
 import sys
 import json
 import atexit
+from threading import RLock
+
+DRAWING_LOCK = RLock()
 
 pygame = None # defer module load until run
 # pygame takes a few seconds to load. when a getTextInput happens before we
@@ -113,7 +116,8 @@ class App(object):
         shape_logic.printFullTracebacks()
 
     def getScreenshot(self, path):
-        pygame.image.save(self._screen, path)
+        with DRAWING_LOCK:
+            pygame.image.save(self._screen, path)
 
     def quit(self):
         self._running = False
@@ -321,35 +325,37 @@ class App(object):
         lastTick = 0
         self._running = True
         while self._running:
-            for event in pygame.event.get():
-                if not self.stopped:
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        self.callUserFn('onMousePress', event.pos)
-                    elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                        self.callUserFn('onMouseRelease', event.pos)
-                    elif (event.type == pygame.MOUSEMOTION):
-                        self.inspector.setMousePosition(*event.pos)
-                        if event.buttons == (0, 0, 0):
-                            self.callUserFn('onMouseMove', event.pos)
-                        elif event.buttons[0] == 1:
-                            self.callUserFn('onMouseDrag', event.pos)
-                    elif event.type == pygame.KEYDOWN:
-                        self.handleKeyPress(event.key, event.mod)
-                    elif event.type == pygame.KEYUP:
-                        self.handleKeyRelease(event.key, event.mod)
-                if event.type == pygame.QUIT:
-                    self._running = False
+            with DRAWING_LOCK:
+                for event in pygame.event.get():
+                    if not self.stopped:
+                        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                            self.callUserFn('onMousePress', event.pos)
+                        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                            self.callUserFn('onMouseRelease', event.pos)
+                        elif (event.type == pygame.MOUSEMOTION):
+                            self.inspector.setMousePosition(*event.pos)
+                            if event.buttons == (0, 0, 0):
+                                self.callUserFn('onMouseMove', event.pos)
+                            elif event.buttons[0] == 1:
+                                self.callUserFn('onMouseDrag', event.pos)
+                        elif event.type == pygame.KEYDOWN:
+                            self.handleKeyPress(event.key, event.mod)
+                        elif event.type == pygame.KEYUP:
+                            self.handleKeyRelease(event.key, event.mod)
+                    if event.type == pygame.QUIT:
+                        self._running = False
 
-            msPassed = pygame.time.get_ticks() - lastTick
-            if (math.floor(1000 / self.stepsPerSecond) - msPassed < 10):
-                lastTick = pygame.time.get_ticks()
-                if not self.paused and not self.stopped:
-                    self.callUserFn('onStep', ())
-                    if len(self._allKeysDown) > 0:
-                        self.callUserFn('onKeyHold', (list(self._allKeysDown),))
+                msPassed = pygame.time.get_ticks() - lastTick
+                if (math.floor(1000 / self.stepsPerSecond) - msPassed < 10):
+                    lastTick = pygame.time.get_ticks()
+                    if not self.paused and not self.stopped:
+                        self.callUserFn('onStep', ())
+                        if len(self._allKeysDown) > 0:
+                            self.callUserFn('onKeyHold', (list(self._allKeysDown),))
 
-            self.redrawAll(self._screen, cairo_surface, ctx)
-            pygame.display.flip()
+                self.redrawAll(self._screen, cairo_surface, ctx)
+                pygame.display.flip()
+                self.frameworkRedrew = True
 
         pygame.quit()
 
