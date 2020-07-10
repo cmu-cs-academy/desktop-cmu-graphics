@@ -2,6 +2,7 @@
 
 cmu_graphics/meta/updates.json
 tests/image_gen/**/diff*.png
+tests/report.html
 
 
 ##########################
