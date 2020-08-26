@@ -365,9 +365,8 @@ def check_for_update():
         return
 
     try:
-        current_directory = os.path.dirname(__file__)
-        with open(os.path.join(current_directory, 'meta/updates.json')) as f:
-            update_info = json.loads(f.read())
+        from .updater import get_update_info
+        update_info = get_update_info()
 
         if 'last_attempt' in update_info:
             last_attempt = datetime.fromtimestamp(update_info['last_attempt'])
@@ -382,10 +381,10 @@ def check_for_update():
         with open(os.path.join(current_directory, 'meta/version.txt')) as f:
             version = f.read().strip()
 
-        if 'skip_past' in update_info and version <= update_info[skip_past]:
+        if 'skip_past' in update_info and version <= update_info['skip_past']:
             return
 
-        if most_recent_version >= version:
+        if most_recent_version > version:
             updater_path = os.path.join(current_directory, 'updater.py')
             p = subprocess.Popen(
                 [sys.executable, updater_path],

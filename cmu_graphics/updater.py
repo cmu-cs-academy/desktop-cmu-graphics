@@ -1,19 +1,24 @@
+from datetime import datetime
+import json
+import math
 import os
 import sys
-import time
-import webrequest
-import math
-import json
-from datetime import datetime
+
+CMU_GRAPHICS_NO_UPDATE = True
+
 current_directory = os.path.dirname(__file__)
 parent_directory = os.path.dirname(current_directory)
 sys.path.insert(0, parent_directory)
-most_recent_version = input()
+update_config_file_path = os.path.join(current_directory, 'meta/updates.json')
+
+
 
 def update():
     try:
         import shutil
         import zipfile
+
+        import webrequest
     finally:
         zip_bytes = webrequest.get(
             'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/' +
@@ -38,12 +43,13 @@ def update():
         shutil.rmtree(installer_dir)
 
 def get_update_info():
-    with open(os.path.join(current_directory, 'meta/updates.json'), 'r') as f:
-        update_info = json.loads(f.read())
-    return update_info
+    if os.path.exists(update_config_file_path):
+        with open(update_config_file_path, 'r') as f:
+            return json.loads(f.read())
+    return {}
 
 def save_update_info(update_info):
-    with open(os.path.join(current_directory, 'meta/updates.json'), 'w') as f:
+    with open(update_config_file_path, 'w') as f:
         f.write(json.dumps(update_info))
 
 def skipUpdate():
@@ -55,36 +61,6 @@ def updateLater():
     update_info= get_update_info()
     update_info['last_attempt'] = datetime.now().timestamp()
     save_update_info(update_info)
-
-updateLater()
-
-CMU_GRAPHICS_NO_UPDATE = True
-from cmu_graphics import *
-
-Label(
-    "Version %s of CMU Graphics" % most_recent_version,
-    200, 25,
-    size = 25
-)
-Label(
-    "is available for download",
-    200, 60,
-    size = 25
-)
-
-downloadNow = Rect(50, 90, 300, 75, fill=rgb(90,153,179))
-Label("Update Now", 200, 90 + (75 / 2), align='center', fill='white', size=25)
-downloadLater = Rect(50, 190, 300, 75, fill=rgb(90,153,179))
-Label("Update Later", 200, 190 + (75 / 2), align='center', fill='white', size=25)
-skipThisVersion = Rect(50, 290, 300, 75, fill=rgb(90,153,179))
-Label("Skip This Version", 200, 290 + (75 / 2), align='center', fill='white', size=25)
-
-fireworks = Group()
-streams = Group()
-app.totalFireworks = 0
-app.timeToNextFirework = 0
-app.updateIn = math.inf
-app.mode = 'selection'
 
 def onMouseMove(mouseX, mouseY):
     for button in [downloadNow, downloadLater, skipThisVersion]:
@@ -173,4 +149,37 @@ def onStep():
         Label('Rerun your app to continue', 200, 225, size=30)
         app.totalFireworks = 0
 
-cmu_graphics.loop()
+
+if __name__ == '__main__':
+    most_recent_version = input()
+
+    updateLater()
+
+    from cmu_graphics import *
+
+    Label(
+        "Version %s of CMU Graphics" % most_recent_version,
+        200, 25,
+        size = 25
+    )
+    Label(
+        "is available for download",
+        200, 60,
+        size = 25
+    )
+
+    downloadNow = Rect(50, 90, 300, 75, fill=rgb(90,153,179))
+    Label("Update Now", 200, 90 + (75 / 2), align='center', fill='white', size=25)
+    downloadLater = Rect(50, 190, 300, 75, fill=rgb(90,153,179))
+    Label("Update Later", 200, 190 + (75 / 2), align='center', fill='white', size=25)
+    skipThisVersion = Rect(50, 290, 300, 75, fill=rgb(90,153,179))
+    Label("Skip This Version", 200, 290 + (75 / 2), align='center', fill='white', size=25)
+
+    fireworks = Group()
+    streams = Group()
+    app.totalFireworks = 0
+    app.timeToNextFirework = 0
+    app.updateIn = math.inf
+    app.mode = 'selection'
+
+    cmu_graphics.loop()
