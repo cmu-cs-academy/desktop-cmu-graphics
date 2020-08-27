@@ -362,6 +362,7 @@ class App(object):
                 self.frameworkRedrew = True
 
         pygame.quit()
+        os._exit(0)
 
 def check_for_update():
     import __main__
