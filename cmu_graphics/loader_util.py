@@ -8,7 +8,7 @@ def get_platform_string():
     if sys.platform == "darwin":
         plat = "mac"
     elif sys.platform == "win32":
-        plat == "win"
+        plat = "win"
         n_bits = struct.calcsize("P") * 8
         plat += "_%d" % n_bits
     python_major, python_minor, _ = platform.python_version_tuple()
