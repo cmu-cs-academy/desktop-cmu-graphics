@@ -16,7 +16,10 @@ from cmu_graphics.cmu_graphics import (
     Star,
     Sound,
     gradient,
-    rgb
+    rgb,
+    almostEqual,
+    rounded,
+    round,
 )
 
 from cmu_graphics.utils import (
@@ -36,3 +39,5 @@ from random import (
     randrange,
     seed,
 )
+
+__all__ = ['cmu_graphics', 'Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Sound', 'Star', 'almostEqual', 'angleTo', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle']

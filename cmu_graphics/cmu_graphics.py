@@ -29,6 +29,20 @@ rgb = sli.rgb
 gradient = sli.gradient
 slNewSound = sli.newSound
 
+EPSILON = 10e-7
+def almostEqual(x, y, epsilon=EPSILON):
+    return abs(x - y) <= epsilon
+
+def rounded(d):
+    sign = 1 if (d >= 0) else -1
+    d = abs(d)
+    n = int(d)
+    if (d - n >= 0.5): n += 1
+    return sign * n
+
+def round(*args):
+    raise Exception(t("Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound"))
+
 class Shape(object):
     def __init__(self, clsName, argNames, args, kwargs):
         self._shape = slInitShape(clsName, argNames, args, kwargs)
