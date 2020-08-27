@@ -1,7 +1,7 @@
-import webrequest
+from libs import webrequest
 import json
 import io
-from pygame_loader import mixer
+from libs.pygame_loader import mixer
 from threading import Timer, Lock
 
 class Sound(object):

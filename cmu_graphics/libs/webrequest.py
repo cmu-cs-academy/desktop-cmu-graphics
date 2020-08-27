@@ -1,7 +1,4 @@
-try:
-    import certifi
-except ImportError:
-    from . import certifi
+from . import certifi
 
 import urllib.request
 
