@@ -47,7 +47,9 @@ def printTraceback(exceptionType, exception, tb):
     else:
         print('Exception: ' + str(exception))
 
-sys.excepthook = printTraceback
+import __main__
+if 'CMU_GRAPHICS_DEBUG' not in __main__.__dict__:
+    sys.excepthook = printTraceback
 
 def printFullTracebacks():
     sys.excepthook = sys.__excepthook__

@@ -1,4 +1,20 @@
 import os
+import sys
+
+import __main__
+if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
+    import platform
+    current_directory = os.path.dirname(__file__)
+    with open(os.path.join(current_directory, 'meta/version.txt')) as f:
+        version = f.read().strip()
+    print('='*80)
+    print('CMU Graphics Version:', version)
+    print('Platform:', sys.platform)
+    print('Python Version:', '.'.join(platform.python_version_tuple()))
+    print('Executable Path:', sys.executable)
+    print('Working Directory:', current_directory)
+    print('='*80)
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import math
 from cmu_graphics.libs import cairo_loader as cairo
@@ -9,7 +25,6 @@ from cmu_graphics.utils import *
 from datetime import datetime
 from datetime import timedelta
 import subprocess
-import sys
 import json
 import atexit
 from threading import RLock
@@ -231,7 +246,6 @@ class App(object):
         )
 
     def __init__(self, width=400, height=400, title=None):
-        import __main__
         self.userGlobals = __main__.__dict__
         self.userGlobals['app'] = self
         if title is None:
@@ -370,10 +384,6 @@ class App(object):
         os._exit(0)
 
 def check_for_update():
-    import __main__
-    if 'CMU_GRAPHICS_NO_UPDATE' in __main__.__dict__:
-        return
-
     try:
         from .updater import get_update_info
         update_info = get_update_info()
@@ -407,7 +417,8 @@ def check_for_update():
     except:
         pass
 
-check_for_update()
+if 'CMU_GRAPHICS_NO_UPDATE' not in __main__.__dict__:
+    check_for_update()
 
 app = App()
 
