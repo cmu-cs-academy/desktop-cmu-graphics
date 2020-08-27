@@ -267,10 +267,6 @@ class App(object):
         self.alwaysShowInspector = False
         self.isCtrlKeyDown = False
 
-        self._modalProcesses = []
-        # clean up processes when the interpreter closes
-        atexit.register(self.cleanModalProcesses)
-
     def get_group(self):
         return self._tlg
     def set_group(self, _):
@@ -295,10 +291,9 @@ class App(object):
     def getTextInput(self, prompt='Enter some text'):
         if self.textInputs:
             return self.textInputs.pop(0)
-        p = self._modalProcesses.pop()
+        p = self.spawnModalProcess()
         packet = bytes(json.dumps({'title': self.title, 'prompt': prompt}) + '\n', encoding='utf-8')
         result, _ = p.communicate(packet)
-        self.spawnModalProcess()
         return result.decode('utf-8')
 
     def setTextInputs(self, *args):
@@ -314,14 +309,9 @@ class App(object):
             [sys.executable, modal_path], stdout=subprocess.PIPE,
             stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
             cwd=current_directory)
-        self._modalProcesses.insert(0, p)
-
-    def cleanModalProcesses(self):
-        for p in self._modalProcesses: p.kill()
+        return p
 
     def run(self):
-        for i in range(3): self.spawnModalProcess()
-
         from cmu_graphics.libs import pygame_loader as pg
         global pygame
         pygame = pg
