@@ -316,8 +316,6 @@ class App(object):
         global pygame
         pygame = pg
 
-        clock = pygame.time.Clock()
-
         pygame.init()
         pygame.display.set_caption(self.title)
 
@@ -330,6 +328,7 @@ class App(object):
         self._running = True
         while self._running:
             with DRAWING_LOCK:
+                ran_user_code = True # assume we're going to run code
                 for event in pygame.event.get():
                     if not self.stopped:
                         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -346,6 +345,8 @@ class App(object):
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
                             self.handleKeyRelease(event.key, event.mod)
+                        else:
+                            ran_user_code = False
                     if event.type == pygame.QUIT:
                         self._running = False
 
@@ -356,10 +357,14 @@ class App(object):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn('onKeyHold', (list(self._allKeysDown),))
+                        ran_user_code = True
 
-                self.redrawAll(self._screen, cairo_surface, ctx)
-                pygame.display.flip()
-                self.frameworkRedrew = True
+                if ran_user_code:
+                    self.redrawAll(self._screen, cairo_surface, ctx)
+                    pygame.display.flip()
+                    self.frameworkRedrew = True
+
+                pygame.time.wait(1)
 
         pygame.quit()
         os._exit(0)
