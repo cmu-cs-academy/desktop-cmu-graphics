@@ -1,7 +1,7 @@
 import os
 import shutil
 
-pygame_loader_path = '../../cmu_graphics/pygame_loader'
+pygame_loader_path = '../../cmu_graphics/libs/pygame_loader'
 our_images_path = './images'
 
 pygame_images = ['pygame_icon.bmp', 'pygame_icon.icns', 'pygame_icon.svg', 'pygame_icon.tiff', 'pygame.ico']
