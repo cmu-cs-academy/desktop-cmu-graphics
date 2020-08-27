@@ -1,6 +1,6 @@
-import cairo_loader as cairo
+import libs.cairo_loader as cairo
 import math
-import pygame_loader as pygame
+import libs.pygame_loader as pygame
 import sys
 import json
 
@@ -334,7 +334,6 @@ class TextBoxModal(object):
 
         self.mouseIsDown = False
 
-        pygame.display.set_icon(pygame.image.load('scs_dragon.gif'))
         pygame.display.set_caption(self.title)
         pygame.init()
 

@@ -1,8 +1,8 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import math
-from . import cairo_loader as cairo
-from . import webrequest
+from cmu_graphics.libs import cairo_loader as cairo
+from cmu_graphics.libs import webrequest
 from cmu_graphics import shape_logic
 from random import *
 from cmu_graphics.utils import *
@@ -308,7 +308,7 @@ class App(object):
     def run(self):
         for i in range(3): self.spawnModalProcess()
 
-        from . import pygame_loader as pg
+        from cmu_graphics.libs import pygame_loader as pg
         global pygame
         pygame = pg
 

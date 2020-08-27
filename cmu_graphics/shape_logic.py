@@ -1,10 +1,10 @@
 import math
 import copy
 import os
-from . import utils
-from . import cairo_loader as cairo
-from . import pil_image_loader as Image
-from . import webrequest
+from cmu_graphics import utils
+from cmu_graphics.libs import cairo_loader as cairo
+from cmu_graphics.libs import pil_image_loader as Image
+from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
 import sys
