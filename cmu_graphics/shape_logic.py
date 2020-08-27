@@ -2469,6 +2469,7 @@ class Inspector(object):
             return ctx.text_extents(text)[2]
 
         def drawCenteredText(text, x, y):
+            x, y = int(x), int(y)
             _, _, width, _, _, _ = ctx.text_extents(text)
             ctx.move_to(x - width / 2, y)
             ctx.show_text(text)
