@@ -1892,7 +1892,10 @@ class CMUSound(object):
     def __init__(self, url):
         current_directory = os.path.dirname(__file__)
         sound_path = os.path.join(current_directory, 'sound.py')
-        self.soundProcess = subprocess.Popen([sys.executable, sound_path], stdout=subprocess.PIPE, stdin=subprocess.PIPE, cwd=current_directory)
+        self.soundProcess = subprocess.Popen(
+            [sys.executable, sound_path], stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE, stderr=subprocess.PIPE,
+            cwd=current_directory)
         CMUSound.processes.append(self.soundProcess)
         self.sendProcessMessage({'url': url})
 
@@ -1900,6 +1903,11 @@ class CMUSound(object):
         packet = bytes(json.dumps(message) + '\n', encoding='utf-8')
         self.soundProcess.stdin.write(packet)
         self.soundProcess.stdin.flush()
+        self.soundProcess.stdout.readline()
+        self.soundProcess.poll()
+        if self.soundProcess.returncode is not None and self.soundProcess.returncode != 0:
+            print(self.soundProcess.stderr.read().decode('utf-8'))
+            raise Exception('Exception in Sound.')
 
     def play(self, doLoop, doRestart):
         self.sendProcessMessage({

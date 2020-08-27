@@ -307,7 +307,10 @@ class App(object):
             return self.textInputs.pop(0)
         p = self.spawnModalProcess()
         packet = bytes(json.dumps({'title': self.title, 'prompt': prompt}) + '\n', encoding='utf-8')
-        result, _ = p.communicate(packet)
+        result, errors = p.communicate(packet)
+        if p.returncode is not None and p.returncode != 0:
+            print(errors.decode('utf-8'))
+            raise Exception('Exception in getTextInput.')
         return result.decode('utf-8')
 
     def setTextInputs(self, *args):
@@ -321,7 +324,7 @@ class App(object):
         modal_path = os.path.join(current_directory, 'modal.py')
         p = subprocess.Popen(
             [sys.executable, modal_path], stdout=subprocess.PIPE,
-            stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdin=subprocess.PIPE, stderr=subprocess.PIPE,
             cwd=current_directory)
         return p
 
@@ -409,11 +412,14 @@ def check_for_update():
             p = subprocess.Popen(
                 [sys.executable, updater_path],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                cwd=current_directory)
-            result, _ = p.communicate(bytes(most_recent_version + '\n', encoding='utf-8'))
+                stderr=subprocess.PIPE, cwd=current_directory)
+            result, errors = p.communicate(bytes(most_recent_version + '\n', encoding='utf-8'))
             result = result.decode('utf-8').strip()
             if result == 'update':
                 os._exit(0)
+            else:
+                print(errors.decode('utf-8').strip())
+                os._exit(1)
     except:
         pass
 

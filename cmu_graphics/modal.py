@@ -3,6 +3,7 @@ import math
 import libs.pygame_loader as pygame
 import sys
 import json
+import os
 
 def roundedrec(ctx,x,y,w,h,radius_x=5,radius_y=5):
     # from mono moonlight aka mono silverlight
@@ -478,11 +479,8 @@ class TextBoxModal(object):
         pygame.quit()
 
 def main():
-    try:
-        request = json.loads(input())
-        TextBoxModal(request['title'], request['prompt'])
-    except:
-        pass
+    request = json.loads(input())
+    TextBoxModal(request['title'], request['prompt'])
 
 if __name__ == '__main__':
     main()

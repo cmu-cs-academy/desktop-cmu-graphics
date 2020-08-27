@@ -45,9 +45,9 @@ import sys
 
 def main():
     soundUrl = json.loads(sys.stdin.readline())['url']
-
     response = webrequest.get(soundUrl)
     s = Sound(io.BytesIO(response.read()))
+    print('done')
 
     while True:
         request = json.loads(input())
@@ -55,6 +55,7 @@ def main():
         kwargs = request['kwargs']
         commandMap = {'pause': s.pause, 'play': s.play}
         commandMap[command](**kwargs)
+        print('done')
 
 if __name__ == "__main__":
     main()

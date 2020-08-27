@@ -12,35 +12,32 @@ sys.path.insert(0, parent_directory)
 update_config_file_path = os.path.join(current_directory, 'meta/updates.json')
 
 
-
 def update():
-    try:
-        import shutil
-        import zipfile
+    import shutil
+    import zipfile
+    from libs import webrequest
 
-        import webrequest
-    finally:
-        zip_bytes = webrequest.get(
-            'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/' +
-            'cpython-cmu-graphics-binaries/cmu_graphics_installer.zip'
-        ).read()
-        zip_path = os.path.join(parent_directory, 'cmu_graphics_installer.zip')
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
-        with open(zip_path, 'xb') as f:
-            f.write(zip_bytes)
-
-        installer_dir = os.path.join(parent_directory, 'cmu_graphics_installer')
-        if os.path.exists(installer_dir):
-            shutil.rmtree(installer_dir)
-        os.mkdir(installer_dir)
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(installer_dir)
+    zip_bytes = webrequest.get(
+        'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/' +
+        'cpython-cmu-graphics-binaries/cmu_graphics_installer.zip'
+    ).read()
+    zip_path = os.path.join(parent_directory, 'cmu_graphics_installer.zip')
+    if os.path.exists(zip_path):
         os.remove(zip_path)
+    with open(zip_path, 'xb') as f:
+        f.write(zip_bytes)
 
-        shutil.rmtree(current_directory)
-        shutil.move(os.path.join(installer_dir, 'cmu_graphics'), current_directory)
+    installer_dir = os.path.join(parent_directory, 'cmu_graphics_installer')
+    if os.path.exists(installer_dir):
         shutil.rmtree(installer_dir)
+    os.mkdir(installer_dir)
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(installer_dir)
+    os.remove(zip_path)
+
+    shutil.rmtree(current_directory)
+    shutil.move(os.path.join(installer_dir, 'cmu_graphics'), current_directory)
+    shutil.rmtree(installer_dir)
 
 def get_update_info():
     if os.path.exists(update_config_file_path):
