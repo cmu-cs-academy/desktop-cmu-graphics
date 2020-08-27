@@ -1,4 +1,4 @@
-from cmu_graphics.libs import loader_util
+from .libs import loader_util
 loader_util.verify_support()
 
 from cmu_graphics.cmu_graphics import (

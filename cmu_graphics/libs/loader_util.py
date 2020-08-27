@@ -16,15 +16,23 @@ def get_platform_string():
     return plat
 
 def verify_support():
-    supported_platforms = [
-        'mac_35', 'mac_36', 'mac_37', 'mac_38',
-        'win_32_35', 'win_32_36', 'win_32_37', 'win_32_38',
-        'win_64_35', 'win_64_36', 'win_64_37', 'win_64_38',
-    ]
-    if get_platform_string() not in supported_platforms:
+    python_major, python_minor, _ = platform.python_version_tuple()
+    if sys.platform not in ["darwin", "win32"]:
         print("""\
-Sorry, your operating system or Python version is not currently supported
-by CMU Graphics. We support Python 3.5 through Python 3.8 on Windows and
-MacOS. You may need to download a newer version of Python to run your
-application.""")
+It looks like your computer is using a(n) %(os)s operating system.
+%(os)s is not currently supported by CMU Graphics. We support Python3.5
+through Python3.8 on Windows and MacOS.""" % {'os': sys.platform})
+        os._exit(1)
+    elif python_major != '3':
+        print("""\
+It looks like you're running a version of Python 2. Since Python 2 is no
+longer maintaned as of January 1 2020, CMU Graphics does not support Python 2.
+We recommend installing Python 3.8 from python.org""")
+        os._exit(1)
+    elif python_minor < '5' or python_minor > '8':
+        print("""\
+It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
+supported by CMU Graphics. We support Python 3.5 through Python3.8.
+We recommend installing Python 3.8 from python.org""" %
+{"minor": python_minor})
         os._exit(1)
