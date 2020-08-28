@@ -5,3 +5,5 @@ source env.sh
 
 export PYVER='3.8.1'
 ./helpers/build_pycairo_modules.sh
+
+python3 ./helpers/replace_images.py
