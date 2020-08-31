@@ -4,6 +4,7 @@ import zipfile
 from http.server import HTTPServer, CGIHTTPRequestHandler
 import threading
 import subprocess
+import sys
 
 PORT = 3000
 
@@ -22,6 +23,11 @@ def create_folder_and_zip():
     shutil.move('cmu_graphics_installer/cmu_graphics', 'cmu_graphics')
     os.rmdir('cmu_graphics_installer')
 
+    # server version
+    with open('version.txt', 'w+') as f:
+        f.write('0.0.1')
+
+    # local version
     with open('cmu_graphics/meta/version.txt', 'w') as f:
         f.write('0.0.0')
 
@@ -36,13 +42,13 @@ def set_mock_urls():
     replace_in_file(
         'cmu_graphics/updater.py',
         'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/cpython-cmu-graphics-binaries/cmu_graphics_installer.zip',
-        'localhost:%d/cmu_graphics_installer.zip' % PORT
+        'http://localhost:%d/cmu_graphics_installer.zip' % PORT
     )
 
     replace_in_file(
         'cmu_graphics/cmu_graphics.py',
         'https://raw.githubusercontent.com/cmu-cs-academy/cpython-cmu-graphics/master/cmu_graphics/meta/version.txt',
-        'localhost:%d/cmu_graphics/meta/version.txt' % PORT
+        'http://localhost:%d/version.txt' % PORT
     )
 
 def run_server():
@@ -57,7 +63,7 @@ def spawn_server():
 def run_student_code():
     p = subprocess.Popen(
         [sys.executable, 'update_trigger.py'],
-        env={**os.environ, 'CMU_GRAPHICS_AUTO_UPDATE': 1}
+        env={**os.environ, 'CMU_GRAPHICS_AUTO_UPDATE': 'YES'}
     )
     assert(p.wait() == 0)
 
@@ -66,12 +72,28 @@ def assert_update_succeeded():
         assert f.read() != '0.0.0'
     run_student_code()
 
+def cleanup():
+    for dir in ('cmu_graphics', 'cmu_graphics_installer'):
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+    for file in ('cmu_graphics_installer.zip', 'version.txt'):
+        if os.path.exists(file):
+            os.remove('version.txt')
+
 def main():
-    create_folder_and_zip()
-    set_mock_urls()
-    spawn_server()
-    run_student_code()
-    assert_update_succeeded()
+    exit_code = 0
+    try:
+        create_folder_and_zip()
+        set_mock_urls()
+        spawn_server()
+        run_student_code() # causes an update
+        assert_update_succeeded()
+    except:
+        exit_code = 1
+    finally:
+        cleanup()
+
+    os._exit(exit_code)
 
 if __name__ == "__main__":
     main()

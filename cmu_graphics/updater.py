@@ -5,6 +5,7 @@ import os
 import sys
 
 CMU_GRAPHICS_NO_UPDATE = True
+FORCE_UPDATE = os.environ.get('CMU_GRAPHICS_AUTO_UPDATE') is not None
 
 current_directory = os.path.dirname(__file__)
 parent_directory = os.path.dirname(current_directory)
@@ -31,7 +32,7 @@ def update():
         shutil.rmtree(installer_dir)
     os.mkdir(installer_dir)
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(installer_dir)
+        zip_ref.extractall(parent_directory)
     os.remove(zip_path)
 
     shutil.rmtree(current_directory)
@@ -141,12 +142,15 @@ def onStep():
     if app.updateIn == 0:
         update()
         print('update')
+        sys.stdout.flush()
         app.group.clear()
         app.group.add(fireworks)
         app.group.add(streams)
         Label('Done!', 200, 175, size=30)
         Label('Rerun your app to continue', 200, 225, size=30)
         app.totalFireworks = 0
+        if FORCE_UPDATE:
+            os._exit(0)
 
 
 if __name__ == '__main__':
@@ -181,7 +185,7 @@ if __name__ == '__main__':
     app.updateIn = math.inf
     app.mode = 'selection'
 
-    if os.environ.get('CMU_GRAPHICS_AUTO_UPDATE') is not None:
+    if FORCE_UPDATE:
         startUpdate()
 
     cmu_graphics.loop()
