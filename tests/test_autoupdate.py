@@ -8,6 +8,8 @@ import sys
 
 PORT = 3000
 
+os.chdir('autoupdate')
+
 def create_folder_and_zip():
     def zipdir(path, ziph):
         for root, dirs, files in os.walk(path):
