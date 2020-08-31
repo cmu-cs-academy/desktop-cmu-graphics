@@ -25,7 +25,7 @@ Oval(290, 160, 35, 110, fill='white', rotateAngle=40)
 
 # belly
 Oval(200, 150, 150, 230)
-belly = Circle(200, 230, 70, fill='white', border='black', borderWidth=15)
+belly = Circle(200, 230, 80, fill='white', border='black', borderWidth=15)
 
 # body
 Oval(175, 160, 65, 180, fill='white')
