@@ -18,8 +18,7 @@ def update():
     from libs import webrequest
 
     zip_bytes = webrequest.get(
-        'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/' +
-        'cpython-cmu-graphics-binaries/cmu_graphics_installer.zip'
+        'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/cpython-cmu-graphics-binaries/cmu_graphics_installer.zip'
     ).read()
     zip_path = os.path.join(parent_directory, 'cmu_graphics_installer.zip')
     if os.path.exists(zip_path):
@@ -66,13 +65,16 @@ def onMouseMove(mouseX, mouseY):
         else:
             button.fill = rgb(90,153,179)
 
+def startUpdate():
+    app.group.clear()
+    app.updateIn = 10
+    Label('Updating ...', 200, 200, size=30)
+    app.mode = 'update'
+
 def onMousePress(mouseX, mouseY):
     if app.mode == 'selection':
         if downloadNow.hits(mouseX, mouseY):
-            app.group.clear()
-            app.updateIn = 10
-            Label('Updating ...', 200, 200, size=30)
-            app.mode = 'update'
+            startUpdate()
         elif downloadLater.hits(mouseX, mouseY):
             # No action here because we "update later" on every run
             # No matter the outcome, don't check again until tomorrow
@@ -178,5 +180,8 @@ if __name__ == '__main__':
     app.timeToNextFirework = 0
     app.updateIn = math.inf
     app.mode = 'selection'
+
+    if os.environ.get('CMU_GRAPHICS_AUTO_UPDATE') is not None:
+        startUpdate()
 
     cmu_graphics.loop()
