@@ -63,7 +63,7 @@ def typeError(obj, attr, value, typeName):
         callSpec = '{className}.{attr}'.format(className=obj.__class__.__name__, attr=attr)
     valueType = type(value).__name__
     err = 'Type Error: {callSpec} should be {typeName} (but {value} is of type {valueType})'.format(
-        callSpec=callSpec, typeName=typeName, value=value
+        callSpec=callSpec, typeName=typeName, value=value, valueType=valueType
     )
     pyThrow(err)
 
@@ -1784,7 +1784,7 @@ class Line(Polygon):
             ctx.move_to(x, y)
             ctx.line_to(x + dir * arrowLength * dx - arrowWidth * normalDx,
                 y + dir * arrowLength * dy - arrowWidth * normalDy)
-            ctx.lineTo(x + dir * arrowLength * dx + arrowWidth * normalDx,
+            ctx.line_to(x + dir * arrowLength * dx + arrowWidth * normalDx,
                 y + dir * arrowLength * dy + arrowWidth * normalDy)
             ctx.close_path()
             ctx.fill_preserve()
