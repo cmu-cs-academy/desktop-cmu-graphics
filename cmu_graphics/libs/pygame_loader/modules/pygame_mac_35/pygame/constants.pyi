@@ -7,14 +7,9 @@ for element in dir(pygame.constants):
     if not element.startswith("_"):
         const.append("{}: {}\n".format(element, constant_type.__class__.__name__))
 with open("constants.pyi", "w") as f:
-    f.write("from typing import List\n\n\n")
     for line in const:
         f.write(str(line))
-    f.write("__all__: List[str]\n")
 """
-
-from typing import List
-
 
 ACTIVEEVENT: int
 ANYFORMAT: int
@@ -524,6 +519,3 @@ VIDEOEXPOSE: int
 VIDEORESIZE: int
 WINDOWEVENT: int
 WINDOWEVENT_CLOSE: int
-
-
-__all__: List[str]

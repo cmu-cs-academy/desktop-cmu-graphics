@@ -24,18 +24,20 @@ New in pygame 1.9.0.
 #          once the input object is running.  Like joysticks.
 
 
-
-import atexit
+# In Python 2.7 pygame.math is imported instead of the built-in math module.
+# This import from future allows the built-in math module to be imported.
+from __future__ import absolute_import
 import math
+import atexit
 
 import pygame
 import pygame.locals
 
 
+# For backward compatibility.
+MIDIIN = pygame.locals.MIDIIN
+MIDIOUT = pygame.locals.MIDIOUT
 
-#
-MIDIIN = pygame.locals.USEREVENT + 10
-MIDIOUT = pygame.locals.USEREVENT + 11
 
 _init = False
 _pypm = None
@@ -96,8 +98,7 @@ def quit():
         # TODO: find all Input and Output classes and close them first?
         _pypm.Terminate()
         _init = False
-        del _pypm
-        #del pygame._pypm
+        _pypm = None
 
 
 def get_init():
@@ -134,7 +135,7 @@ def get_default_input_id():
 
 
     Return the default device ID or -1 if there are no devices.
-    The result can be passed to the Input()/Ouput() class.
+    The result can be passed to the Input()/Output() class.
 
     On the PC, the user can specify a default device by
     setting an environment variable. For example, to use device #1.
@@ -174,6 +175,7 @@ def get_default_input_id():
     Note: in the current release, the default is simply the first device
     (the input or output device with the lowest PmDeviceID).
     """
+    _check_init()
     return _pypm.GetDefaultInputDeviceID()
 
 
@@ -185,7 +187,7 @@ def get_default_output_id():
 
 
     Return the default device ID or -1 if there are no devices.
-    The result can be passed to the Input()/Ouput() class.
+    The result can be passed to the Input()/Output() class.
 
     On the PC, the user can specify a default device by
     setting an environment variable. For example, to use device #1.
@@ -272,7 +274,7 @@ class Input(object):
             raise OverflowError("long int too large to convert to int")
 
         # and now some nasty looking error checking, to provide nice error
-        #   messages to the kind, lovely, midi using people of whereever.
+        #   messages to the kind, lovely, midi using people of wherever.
         if r:
             interf, name, input, output, opened = r
             if input:
@@ -631,6 +633,7 @@ def time():
 
     The time is reset to 0, when the module is inited.
     """
+    _check_init()
     return _pypm.Time()
 
 
@@ -673,7 +676,7 @@ class MidiException(Exception):
 
 
 
-def frequency_to_midi(freqency):
+def frequency_to_midi(frequency):
     """ converts a frequency into a MIDI note.
 
     Rounds to the closest midi note.
@@ -690,7 +693,7 @@ def frequency_to_midi(freqency):
     return int(
         round(
             69 + (
-                12 * math.log(freqency / 440.0)
+                12 * math.log(frequency / 440.0)
             ) / math.log(2)
         )
     )
@@ -724,5 +727,5 @@ def midi_to_ansi_note(midi_note):
     notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
     num_notes = 12
     note_name = notes[int(((midi_note - 21) % num_notes))]
-    note_number = int(round(((midi_note - 21) / 11.0)))
+    note_number = (midi_note - 12) // num_notes
     return '%s%s' % (note_name, note_number)

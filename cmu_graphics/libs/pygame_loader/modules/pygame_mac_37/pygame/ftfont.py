@@ -1,6 +1,7 @@
 """pygame module for loading and rendering fonts (freetype alternative)"""
 
-__all__ = ['Font', 'init', 'quit', 'get_default_font', 'get_init', 'SysFont']
+__all__ = ['Font', 'init', 'quit', 'get_default_font', 'get_init', 'SysFont',
+           "match_font", "get_fonts"]
 
 from pygame._freetype import init, Font as _Font, get_default_resolution
 from pygame._freetype import quit, get_default_font, get_init as _get_init
@@ -8,7 +9,7 @@ from pygame._freetype import __PYGAMEinit__
 from pygame.sysfont import match_font, get_fonts, SysFont as _SysFont
 from pygame import encode_file_path
 from pygame.compat import bytes_, unicode_, as_unicode, as_bytes
-from pygame import Surface as _Surface, Color as _Color, SRCALPHA as _SRCALPHA
+
 
 class Font(_Font):
     """Font(filename, size) -> Font
@@ -41,7 +42,7 @@ class Font(_Font):
         if file is None:
             resolution = int(self.__get_default_resolution() * 0.6875)
             if resolution == 0:
-                kwds['resolution'] = 1
+                resolution = 1
         else:
             resolution = 0
         super(Font, self).__init__(file, size=size, resolution=resolution)
@@ -81,8 +82,10 @@ class Font(_Font):
     def get_bold(self):
         """get_bold() -> bool
            check if text will be rendered bold"""
- 
+
         return self.wide
+
+    bold = property(get_bold, set_bold)
 
     def set_italic(self, value):
         """set_italic(bool) -> None
@@ -95,6 +98,8 @@ class Font(_Font):
            check if the text will be rendered italic"""
 
         return self.oblique
+
+    italic = property(get_italic, set_italic)
 
     def set_underline(self, value):
         """set_underline(bool) -> None
@@ -110,7 +115,7 @@ class Font(_Font):
 
     def metrics(self, text):
         """metrics(text) -> list
-           Gets the metrics for each character in the pased string."""
+           Gets the metrics for each character in the passed string."""
 
         return self.get_metrics(text)
 
@@ -170,7 +175,7 @@ def SysFont(name, size, bold=0, italic=0, constructor=None):
        font you ask for is not available, a reasonable alternative
        may be used.
 
-       if optional contructor is provided, it must be a function with
+       if optional constructor is provided, it must be a function with
        signature constructor(fontpath, size, bold, italic) which returns
        a Font instance. If None, a pygame.ftfont.Font object is created.
     """

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import os
+
 import pygame, pygame.transform
 from pygame.compat import unicode_
 
@@ -371,6 +373,15 @@ class DisplayModuleTest(unittest.TestCase):
             winsize[0] / surf.get_size()[0], winsize[1] / surf.get_size()[1]
         )
 
+    def test_screensaver_support(self):
+        pygame.display.set_allow_screensaver(True)
+        self.assertTrue(pygame.display.get_allow_screensaver())
+        pygame.display.set_allow_screensaver(False)
+        self.assertFalse(pygame.display.get_allow_screensaver())
+        pygame.display.set_allow_screensaver()
+        self.assertTrue(pygame.display.get_allow_screensaver())
+
+
     def todo_test_set_palette(self):
 
         # __doc__ (as of 2008-08-02) for pygame.display.set_palette:
@@ -401,6 +412,30 @@ class DisplayModuleTest(unittest.TestCase):
         #
 
         self.fail()
+
+
+@unittest.skipIf(
+    os.environ.get("SDL_VIDEODRIVER") == "dummy",
+    'OpenGL requires a non-"dummy" SDL_VIDEODRIVER',
+)
+class DisplayOpenGLTest(unittest.TestCase):
+    def test_screen_size_opengl(self):
+        """ returns a surface with the same size requested.
+        |tags:display,slow,opengl|
+        """
+        pygame.display.init()
+        screen = pygame.display.set_mode((640, 480), pygame.OPENGL)
+        self.assertEqual((640, 480), screen.get_size())
+
+
+class X11CrashTest(unittest.TestCase):
+    def test_x11_set_mode_crash_gh1654(self):
+        # Test for https://github.com/pygame/pygame/issues/1654
+        # If unfixed, this will trip a segmentation fault
+        pygame.display.init()
+        pygame.display.quit()
+        screen = pygame.display.set_mode((640, 480), 0)
+        self.assertEqual((640, 480), screen.get_size())
 
 
 if __name__ == "__main__":

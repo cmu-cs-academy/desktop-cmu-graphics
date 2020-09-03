@@ -292,12 +292,12 @@ class FontTypeTest(unittest.TestCase):
         s = f.render("xxx", False, [0, 0, 0])
         s = f.render("   ", False, [0, 0, 0])
         s = f.render("   ", False, [0, 0, 0], [255, 255, 255])
-        # null text should be 1 pixel wide.
+        # null text should be 0 pixel wide.
         s = f.render("", False, [0, 0, 0], [255, 255, 255])
-        self.assertEqual(s.get_size()[0], 1)
-        # None text should be 1 pixel wide.
+        self.assertEqual(s.get_size()[0], 0)
+        # None text should be 0 pixel wide.
         s = f.render(None, False, [0, 0, 0], [255, 255, 255])
-        self.assertEqual(s.get_size()[0], 1)
+        self.assertEqual(s.get_size()[0], 0)
         # Non-text should raise a TypeError.
         self.assertRaises(TypeError, f.render, [], False, [0, 0, 0], [255, 255, 255])
         self.assertRaises(TypeError, f.render, 1, False, [0, 0, 0], [255, 255, 255])
@@ -358,6 +358,30 @@ class FontTypeTest(unittest.TestCase):
         self.assertTrue(f.get_underline())
         f.set_underline(False)
         self.assertFalse(f.get_underline())
+
+    def test_bold_attr(self):
+        f = pygame_font.Font(None, 20)
+        self.assertFalse(f.bold)
+        f.bold = True
+        self.assertTrue(f.bold)
+        f.bold = False
+        self.assertFalse(f.bold)
+
+    def test_set_italic(self):
+        f = pygame_font.Font(None, 20)
+        self.assertFalse(f.italic)
+        f.italic = True
+        self.assertTrue(f.italic)
+        f.italic = False
+        self.assertFalse(f.italic)
+
+    def test_set_underline(self):
+        f = pygame_font.Font(None, 20)
+        self.assertFalse(f.underline)
+        f.underline = True
+        self.assertTrue(f.underline)
+        f.underline = False
+        self.assertFalse(f.underline)
 
     def test_size(self):
         f = pygame_font.Font(None, 20)

@@ -17,6 +17,21 @@ except NameError:
     raw_input_ = input
 
 
+if sys.version_info[0] == 3:
+    def tostring(row):
+        """Convert row of bytes to string.  Expects `row` to be an
+        ``array``.
+        """
+        return row.tobytes()
+
+else:
+    def tostring(row):
+        """Convert row of bytes to string.  Expects `row` to be an
+        ``array``.
+        """
+        return row.tostring()
+
+
 def geterror():
     return sys.exc_info()[1]
 
@@ -179,7 +194,7 @@ def rect_outer_bounds(rect):
    O      O
 
     """
-    return (rect.left is not 0 and [(rect.left - 1, rect.top)] or []) + [
+    return ([(rect.left - 1, rect.top)] if rect.left else []) + [
         rect.topright,
         rect.bottomleft,
         rect.bottomright,

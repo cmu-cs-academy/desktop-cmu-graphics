@@ -10,11 +10,12 @@ if [[ $CI == "true" ]] ; then
 fi
 export identity="$(security find-identity -p codesigning -v $keychain_name | head -n 1 | cut -d'"' -f2)"
 echo "Signing with identity" $identity
-find ../cmu_graphics -type f -iname "*.so" -o -iname "*.dylib" -exec codesign -vfs "$identity" {} +
+find ../cmu_graphics -type f -iname "*.so" -exec codesign -vfs "$identity" {} +
+find ../cmu_graphics -type f -iname "*.dylib" -exec codesign -vfs "$identity" {} +
 
 # notarizing
 cd ../
-zip -r $zipname cmu_graphics sample.py
+zip -r $zipname cmu_graphics
 echo "Uploading zip to the notarization service ..."
 notarization_out=$(\
     xcrun altool --notarize-app \
@@ -59,6 +60,7 @@ do
                 echo "Notarization Status:" ${line_pieces[1]}
             else
                 echo "Notarization failed"
+                rm $zipname
                 exit 1
             fi
         fi

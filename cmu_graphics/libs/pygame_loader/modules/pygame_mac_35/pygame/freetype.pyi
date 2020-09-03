@@ -18,8 +18,8 @@ def set_default_resolution(resolution: int) -> None: ...
 def SysFont(
     name: Union[str, List[str]],
     size: int,
-    bold: Optional[int] = False,
-    italic: Optional[int] = False,
+    bold: Optional[bool] = False,
+    italic: Optional[bool] = False,
 ): ...
 def get_default_font() -> str: ...
 
@@ -53,7 +53,6 @@ class Font:
     vertical: bool
     rotation: int
     fgcolor: Color
-    bgcolor: Color
     origin: bool
     pad: bool
     ucs4: bool

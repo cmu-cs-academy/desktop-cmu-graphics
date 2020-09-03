@@ -24,7 +24,8 @@ import os
 import sys
 from pygame.compat import xrange_, PY_MAJOR_VERSION
 from os.path import basename, dirname, exists, join, splitext
-import xml.etree.ElementTree as ET
+if sys.platform == 'darwin':
+    import xml.etree.ElementTree as ET
 
 
 OpenType_extensions = frozenset(('.ttf', '.ttc', '.otf'))
@@ -107,7 +108,7 @@ def initsysfonts_win32():
                 # MBCS is the windows encoding for unicode file names.
                 try:
                     font = font.encode('MBCS')
-                except:
+                except UnicodeEncodeError:
                     # no success with str or MBCS encoding... skip this font.
                     continue
 
@@ -146,8 +147,9 @@ def _add_font_paths(sub_elements, fonts):
     font_name = font_path = None
     for tag in sub_elements:
         if tag.text == "_name":
-            font_name = next(sub_elements).text
-            if splitext(font_name)[1] not in OpenType_extensions:
+            font_file_name = next(sub_elements).text
+            font_name = splitext(font_file_name)[0]
+            if splitext(font_file_name)[1] not in OpenType_extensions:
                 break
             bold = "bold" in font_name
             italic = "italic" in font_name
@@ -188,7 +190,7 @@ def initsysfonts_darwin():
     elif exists('/usr/sbin/system_profiler'):
         try:
             fonts = _system_profiler_darwin()
-        except:
+        except (OSError, ValueError):
             fonts = {}
     else:
         fonts = {}
@@ -240,16 +242,22 @@ def initsysfonts_unix(path="fc-list"):
 
 
 def create_aliases():
-    """map common fonts that are absent from the system to similar fonts that are installed in the system"""
+    """ Map common fonts that are absent from the system to similar fonts
+        that are installed in the system
+    """
     alias_groups = (
         ('monospace', 'misc-fixed', 'courier', 'couriernew', 'console',
          'fixed', 'mono', 'freemono', 'bitstreamverasansmono',
-         'verasansmono', 'monotype', 'lucidaconsole'),
+         'verasansmono', 'monotype', 'lucidaconsole', 'consolas',
+         'dejavusansmono', 'liberationmono'),
         ('sans', 'arial', 'helvetica', 'swiss', 'freesans',
-         'bitstreamverasans', 'verasans', 'verdana', 'tahoma'),
+         'bitstreamverasans', 'verasans', 'verdana', 'tahoma',
+         'calibri', 'gillsans', 'segoeui', 'trebuchetms', 'ubuntu',
+         'dejavusans', 'liberationsans'),
         ('serif', 'times', 'freeserif', 'bitstreamveraserif', 'roman',
          'timesroman', 'timesnewroman', 'dutch', 'veraserif',
-         'georgia'),
+         'georgia', 'cambria', 'constantia', 'dejavuserif',
+         'liberationserif'),
         ('wingdings', 'wingbats'),
     )
     for alias_set in alias_groups:
@@ -284,9 +292,9 @@ def font_constructor(fontpath, size, bold, italic):
 
     font = pygame.font.Font(fontpath, size)
     if bold:
-        font.set_bold(1)
+        font.set_bold(True)
     if italic:
-        font.set_italic(1)
+        font.set_italic(True)
 
     return font
 
@@ -311,7 +319,7 @@ def SysFont(name, size, bold=False, italic=False, constructor=None):
        font you ask for is not available, a reasonable alternative
        may be used.
 
-       if optional contructor is provided, it must be a function with
+       if optional constructor is provided, it must be a function with
        signature constructor(fontpath, size, bold, italic) which returns
        a Font instance. If None, a pygame.font.Font object is created.
     """

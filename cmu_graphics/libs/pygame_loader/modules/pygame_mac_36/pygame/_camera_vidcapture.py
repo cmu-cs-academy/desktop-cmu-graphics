@@ -15,15 +15,14 @@ def list_cameras():
     return [0]
 
     # this just cycles through all the cameras trying to open them
-    cameras = []
-    for x in range(256):
-        try:
-            c = Camera(x)
-        except:
-            break
-        cameras.append(x)
-
-    return cameras
+    #cameras = []
+    #for x in range(256):
+    #    try:
+    #        c = Camera(x)
+    #    except:
+    #        break
+    #    cameras.append(x)
+    #return cameras
 
 def init():
     global vidcap
@@ -35,8 +34,7 @@ def init():
 
 def quit():
     global vidcap
-    pass
-    del vidcap
+    vidcap = None
 
 
 class Camera:
@@ -107,15 +105,7 @@ class Camera:
         """
         abuffer, width, height = self.get_buffer()
         if abuffer:
-            surf = pygame.image.frombuffer(abuffer, (width, height), "RGB")
-
-            # swap it from a BGR surface to an RGB surface.
-            r,g,b,a = surf.get_masks()
-            surf.set_masks((b,g,r,a))
-
-            r,g,b,a = surf.get_shifts()
-            surf.set_shifts((b,g,r,a))
-
+            surf = pygame.image.frombuffer(abuffer, (width, height), "BGR")
             surf = pygame.transform.flip(surf, 0,1)
 
             # if there is a destination surface given, we blit onto that.

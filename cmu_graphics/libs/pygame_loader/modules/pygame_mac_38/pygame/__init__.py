@@ -77,7 +77,7 @@ class MissingModule:
 
 # first, the "required" modules
 from pygame.base import *
-from pygame.constants import *
+from pygame.constants import *  # now has __all__
 from pygame.version import *
 from pygame.rect import Rect
 from pygame.compat import PY_MAJOR_VERSION
@@ -213,7 +213,7 @@ def warn_unwanted_files():
 
 
 try:
-    from pygame.surface import *
+    from pygame.surface import Surface, SurfaceType
 except (ImportError, IOError):
     Surface = lambda: Missing_Function
 
@@ -225,12 +225,12 @@ except (ImportError, IOError):
     Mask = lambda: Missing_Function
 
 try:
-    from pygame.pixelarray import *
+    from pygame.pixelarray import PixelArray
 except (ImportError, IOError):
     PixelArray = lambda: Missing_Function
 
 try:
-    from pygame.overlay import *
+    from pygame.overlay import Overlay
 except (ImportError, IOError):
     Overlay = lambda: Missing_Function
 

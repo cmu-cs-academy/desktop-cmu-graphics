@@ -52,22 +52,22 @@ if "-layered_dirty" in sys.argv:
 
 flags = 0
 if "-flip" in sys.argv:
-    flags ^= pg.DOUBLEBUF
+    flags ^= DOUBLEBUF
 
 if "-fullscreen" in sys.argv:
-    flags ^= pg.FULLSCREEN
+    flags ^= FULLSCREEN
 
 if "-sw" in sys.argv:
-    flags ^= pg.SWSURFACE
+    flags ^= SWSURFACE
 
 use_rle = True
 
 if "-hw" in sys.argv:
-    flags ^= pg.HWSURFACE
+    flags ^= HWSURFACE
     use_rle = False
 
 if "-scaled" in sys.argv:
-    flags ^= pg.SCALED
+    flags ^= SCALED
 
 screen_dims = [640, 480]
 
@@ -169,7 +169,7 @@ def main(
 
     # if "-fast" in sys.argv:
 
-    screen = pg.display.set_mode(screen_dims, flags, vsync="-vsync" in sys.argv)
+    screen = pg.display.set_mode(screen_dims, flags)
 
     # this is mainly for GP2X, so it can quit.
     pg.joystick.init()

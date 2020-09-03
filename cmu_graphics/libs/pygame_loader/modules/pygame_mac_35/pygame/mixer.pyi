@@ -1,8 +1,7 @@
-from typing import Optional, Union, Tuple, Any, overload, IO
+from typing import Optional, Union, Tuple, Any, overload
 
 from pygame.event import Event
 from . import music as music
-import numpy
 
 def init(
     frequency: Optional[int] = 44100,
@@ -33,12 +32,7 @@ def get_busy() -> bool: ...
 def get_sdl_mixer_version(linked: bool) -> Tuple[int, int, int]: ...
 
 class Sound:
-    @overload
-    def __init__(self, file: IO) -> None: ...
-    @overload
-    def __init__(self, buffer: Any) -> None: ...  # Buffer protocol is still not implemented in typing
-    @overload
-    def __init__(self, array: numpy.ndarray) -> None: ...  # Buffer protocol is still not implemented in typing
+    def __init__(self, name=Any) -> None: ...  # ?What should be here? #
     def play(
         self,
         loops: Optional[int] = 0,

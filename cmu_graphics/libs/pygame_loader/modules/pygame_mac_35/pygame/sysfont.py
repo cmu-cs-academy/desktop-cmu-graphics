@@ -147,9 +147,8 @@ def _add_font_paths(sub_elements, fonts):
     font_name = font_path = None
     for tag in sub_elements:
         if tag.text == "_name":
-            font_file_name = next(sub_elements).text
-            font_name = splitext(font_file_name)[0]
-            if splitext(font_file_name)[1] not in OpenType_extensions:
+            font_name = next(sub_elements).text
+            if splitext(font_name)[1] not in OpenType_extensions:
                 break
             bold = "bold" in font_name
             italic = "italic" in font_name
@@ -242,22 +241,16 @@ def initsysfonts_unix(path="fc-list"):
 
 
 def create_aliases():
-    """ Map common fonts that are absent from the system to similar fonts
-        that are installed in the system
-    """
+    """map common fonts that are absent from the system to similar fonts that are installed in the system"""
     alias_groups = (
         ('monospace', 'misc-fixed', 'courier', 'couriernew', 'console',
          'fixed', 'mono', 'freemono', 'bitstreamverasansmono',
-         'verasansmono', 'monotype', 'lucidaconsole', 'consolas',
-         'dejavusansmono', 'liberationmono'),
+         'verasansmono', 'monotype', 'lucidaconsole'),
         ('sans', 'arial', 'helvetica', 'swiss', 'freesans',
-         'bitstreamverasans', 'verasans', 'verdana', 'tahoma',
-         'calibri', 'gillsans', 'segoeui', 'trebuchetms', 'ubuntu',
-         'dejavusans', 'liberationsans'),
+         'bitstreamverasans', 'verasans', 'verdana', 'tahoma'),
         ('serif', 'times', 'freeserif', 'bitstreamveraserif', 'roman',
          'timesroman', 'timesnewroman', 'dutch', 'veraserif',
-         'georgia', 'cambria', 'constantia', 'dejavuserif',
-         'liberationserif'),
+         'georgia'),
         ('wingdings', 'wingbats'),
     )
     for alias_set in alias_groups:
@@ -292,9 +285,9 @@ def font_constructor(fontpath, size, bold, italic):
 
     font = pygame.font.Font(fontpath, size)
     if bold:
-        font.set_bold(True)
+        font.set_bold(1)
     if italic:
-        font.set_italic(True)
+        font.set_italic(1)
 
     return font
 

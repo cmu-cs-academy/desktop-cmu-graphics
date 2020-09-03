@@ -52,22 +52,22 @@ if "-layered_dirty" in sys.argv:
 
 flags = 0
 if "-flip" in sys.argv:
-    flags ^= DOUBLEBUF
+    flags ^= pg.DOUBLEBUF
 
 if "-fullscreen" in sys.argv:
-    flags ^= FULLSCREEN
+    flags ^= pg.FULLSCREEN
 
 if "-sw" in sys.argv:
-    flags ^= SWSURFACE
+    flags ^= pg.SWSURFACE
 
 use_rle = True
 
 if "-hw" in sys.argv:
-    flags ^= HWSURFACE
+    flags ^= pg.HWSURFACE
     use_rle = False
 
 if "-scaled" in sys.argv:
-    flags ^= SCALED
+    flags ^= pg.SCALED
 
 screen_dims = [640, 480]
 
@@ -157,7 +157,7 @@ def main(
     use_layered_dirty - Use the FastRenderGroup sprite group (default False)
     screen_dims - Pygame window dimensions (default [640, 480])
     use_alpha - use alpha blending (default False)
-    flags - additional display mode flags (default no addiontal flags)
+    flags - additional display mode flags (default no additional flags)
 
     """
 
@@ -169,7 +169,7 @@ def main(
 
     # if "-fast" in sys.argv:
 
-    screen = pg.display.set_mode(screen_dims, flags)
+    screen = pg.display.set_mode(screen_dims, flags, vsync="-vsync" in sys.argv)
 
     # this is mainly for GP2X, so it can quit.
     pg.joystick.init()

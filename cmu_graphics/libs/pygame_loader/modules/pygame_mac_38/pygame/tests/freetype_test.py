@@ -712,7 +712,7 @@ class FreeTypeFontTest(unittest.TestCase):
         # misc parameter test
         self.assertRaises(ValueError, font.render_to, surf, (0, 0), "foobar", color)
         self.assertRaises(
-            TypeError, font.render_to, surf, (0, 0), "foobar", color, "", size=24
+            TypeError, font.render_to, surf, (0, 0), "foobar", color, 2.3, size=24
         )
         self.assertRaises(
             ValueError,
@@ -763,14 +763,14 @@ class FreeTypeFontTest(unittest.TestCase):
         self.assertEqual(rend[0].get_rect().size, rend[1].size)
 
         s, r = font.render("", pygame.Color(0, 0, 0), None, size=24)
-        self.assertEqual(r.width, 1)
+        self.assertEqual(r.width, 0)
         self.assertEqual(r.height, font.get_sized_height(24))
         self.assertEqual(s.get_size(), r.size)
         self.assertEqual(s.get_bitsize(), 32)
 
         # misc parameter test
         self.assertRaises(ValueError, font.render, "foobar", color)
-        self.assertRaises(TypeError, font.render, "foobar", color, "", size=24)
+        self.assertRaises(TypeError, font.render, "foobar", color, 2.3, size=24)
         self.assertRaises(
             ValueError, font.render, "foobar", color, None, style=42, size=24
         )
@@ -1229,6 +1229,39 @@ class FreeTypeFontTest(unittest.TestCase):
 
         self.assertRaises(AttributeError, setattr, f, "fgcolor", None)
 
+    def test_freetype_Font_bgcolor(self):
+        f = ft.Font(None, 32)
+        zero = "0"  # the default font 0 glyph does not have a pixel at (0, 0)
+        f.origin = False
+        f.pad = False
+
+        transparent_black = pygame.Color(0, 0, 0, 0)  # initial color
+        green = pygame.Color("green")
+        alpha128 = pygame.Color(10, 20, 30, 128)
+
+        c = f.bgcolor
+        self.assertIsInstance(c, pygame.Color)
+        self.assertEqual(c, transparent_black)
+
+        s, r = f.render(zero, pygame.Color(255, 255, 255))
+        self.assertEqual(s.get_at((0, 0)), transparent_black)
+
+        f.bgcolor = green
+        self.assertEqual(f.bgcolor, green)
+
+        s, r = f.render(zero)
+        self.assertEqual(s.get_at((0, 0)), green)
+
+        f.bgcolor = alpha128
+        s, r = f.render(zero)
+        self.assertEqual(s.get_at((0, 0)), alpha128)
+
+        surf = pygame.Surface(f.get_rect(zero).size, pygame.SRCALPHA, 32)
+        f.render_to(surf, (0, 0), None)
+        self.assertEqual(surf.get_at((0, 0)), alpha128)
+
+        self.assertRaises(AttributeError, setattr, f, "bgcolor", None)
+
     @unittest.skipIf(not pygame.HAVE_NEWBUF, "newbuf not implemented")
     def test_newbuf(self):
         from pygame.tests.test_utils import buftools
@@ -1290,7 +1323,7 @@ class FreeTypeFontTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             font.style = 112
 
-        # make assure no assignements happened
+        # make assure no assignments happened
         self.assertEqual(ft.STYLE_NORMAL, font.style)
 
         # test assignement

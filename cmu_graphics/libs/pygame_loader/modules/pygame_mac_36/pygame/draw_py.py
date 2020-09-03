@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 '''Pygame Drawing algorithms written in Python. (Work in Progress)
 
 Implement Pygame's Drawing Algorithms in a Python version for testing
 and debugging.
 '''
-from __future__ import division
+from __future__ import absolute_import, division
 import sys
 
 if sys.version_info >= (3, 0, 0):
@@ -244,7 +245,7 @@ def _draw_aaline(surf, color, from_x, from_y, to_x, to_y, blend):
 
     Note that this yields strange results for very short lines, eg
     a line from (0, 0) to (0, 1) will draw 2 pixels, and a line from
-    (0, 0) to (0, 1.1) will blend 10 % on the pixel (0, 2). 
+    (0, 0) to (0, 1.1) will blend 10 % on the pixel (0, 2).
     '''
     # The different requirements that we have on an antialiasing algorithm
     # implies to make some compromises:
@@ -448,7 +449,7 @@ def _multi_lines(surf, color, closed, points, width=1, blend=False, aaline=False
         left = min(left, x)
         right = max(right, x)
         top = min(top, y)
-        bottom = max(right, x)
+        bottom = max(bottom, x)
 
     rect = surf.get_clip()
     for loop in range(1, length):

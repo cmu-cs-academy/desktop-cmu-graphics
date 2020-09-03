@@ -10,7 +10,6 @@ _ColorInput = Union[
 ]
 _RgbaOutput = Tuple[int, int, int, int]
 _RectStyle = Union[
-    Rect,
     Tuple[float, float, float, float],
     Tuple[Tuple[float, float], Tuple[float, float]],
     List[float],
@@ -18,21 +17,23 @@ _RectStyle = Union[
     Tuple[Vector2, Vector2],
     Iterable[Vector2],
 ]
-_Coordinate = Union[Tuple[float, float], List[float], Vector2]
 
 class Surface(object):
     _pixels_address: int
     @overload
     def __init__(
         self,
-        size: _Coordinate,
+        width_height: Tuple[float, float],
         flags: int = ...,
         depth: int = ...,
         masks: Optional[_ColorInput] = ...,
     ) -> None: ...
     @overload
     def __init__(
-        self, size: _Coordinate, flags: int = ..., surface: Surface = ...,
+        self,
+        width_height: Tuple[float, float],
+        flags: int = ...,
+        surface: Surface = ...,
     ) -> None: ...
     def blit(
         self,
