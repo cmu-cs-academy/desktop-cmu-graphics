@@ -19,15 +19,18 @@ def get_modal_pid():
     return None
 
 def wait_for_modal():
-    time.sleep(1)
-    start_time = datetime.now()
-    while True:
-        if datetime.now() - start_time > timedelta(seconds=5):
-            os._exit(1)
-        modal_pid = get_modal_pid()
-        if modal_pid is not None:
-            psutil.Process(modal_pid).terminate()
-            os._exit(0)
+    try:
+        time.sleep(1)
+        start_time = datetime.now()
+        while True:
+            if datetime.now() - start_time > timedelta(seconds=5):
+                os._exit(1)
+            modal_pid = get_modal_pid()
+            if modal_pid is not None:
+                psutil.Process(modal_pid).terminate()
+                os._exit(0)
+    except:
+        os._exit(1)
 
 def onStep():
     Thread(target=wait_for_modal).start()
