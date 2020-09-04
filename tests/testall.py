@@ -35,7 +35,7 @@ def main():
     os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
     for python_path in PYTHON_PATHS[sys.platform]:
-        os.environ['PATH'] += os.pathsep + python_path
+        os.environ['PATH'] =  python_path + os.pathsep + os.environ['PATH']
         log('Running with Python path', python_path)
         run_command('python3 --version')
 
