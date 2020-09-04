@@ -3,6 +3,7 @@ import json
 import math
 import os
 import sys
+import json
 
 CMU_GRAPHICS_NO_UPDATE = True
 FORCE_UPDATE = os.environ.get('CMU_GRAPHICS_AUTO_UPDATE') is not None
@@ -11,25 +12,6 @@ current_directory = os.path.dirname(os.path.realpath(__file__))
 parent_directory = os.path.dirname(current_directory)
 sys.path.insert(0, parent_directory)
 update_config_file_path = os.path.join(current_directory, 'meta/updates.json')
-
-def rmtree_onerror(func, path, exc_info):
-    """
-    Error handler for ``shutil.rmtree``.
-
-    If the error is due to an access error (read only file)
-    it attempts to add write permission and then retries.
-
-    If the error is for another reason it re-raises the error.
-
-    Usage : ``shutil.rmtree(path, onerror=onerror)``
-    """
-    import stat
-    if not os.access(path, os.W_OK):
-        # Is the error an access error ?
-        os.chmod(path, stat.S_IWUSR)
-        func(path)
-    else:
-        raise
 
 def update():
     import shutil
@@ -47,15 +29,11 @@ def update():
 
     installer_dir = os.path.join(parent_directory, 'cmu_graphics_installer')
     if os.path.exists(installer_dir):
-        shutil.rmtree(installer_dir, onerror=rmtree_onerror)
+        shutil.rmtree(installer_dir)
     os.mkdir(installer_dir)
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(parent_directory)
     os.remove(zip_path)
-
-    shutil.rmtree(current_directory, onerror=rmtree_onerror)
-    shutil.move(os.path.join(installer_dir, 'cmu_graphics'), current_directory)
-    shutil.rmtree(installer_dir, onerror=rmtree_onerror)
 
 def get_update_info():
     if os.path.exists(update_config_file_path):
@@ -78,7 +56,10 @@ def updateLater():
     save_update_info(update_info)
 
 def onMouseMove(mouseX, mouseY):
-    for button in [downloadNow, downloadLater, skipThisVersion]:
+    if app.mode != 'selection':
+        return
+
+    for button in [app.downloadNow, app.downloadLater, app.skipThisVersion]:
         if button.hits(mouseX, mouseY):
             button.fill=rgb(128, 179, 191)
         else:
@@ -91,16 +72,18 @@ def startUpdate():
     app.mode = 'update'
 
 def onMousePress(mouseX, mouseY):
-    if app.mode == 'selection':
-        if downloadNow.hits(mouseX, mouseY):
-            startUpdate()
-        elif downloadLater.hits(mouseX, mouseY):
-            # No action here because we "update later" on every run
-            # No matter the outcome, don't check again until tomorrow
-            app.quit()
-        elif skipThisVersion.hits(mouseX, mouseY):
-            skipUpdate()
-            app.quit()
+    if app.mode != 'selection':
+        return
+
+    if app.downloadNow.hits(mouseX, mouseY):
+        startUpdate()
+    elif app.downloadLater.hits(mouseX, mouseY):
+        # No action here because we "update later" on every run
+        # No matter the outcome, don't check again until tomorrow
+        app.quit()
+    elif app.skipThisVersion.hits(mouseX, mouseY):
+        skipUpdate()
+        app.quit()
 
 def makeFirework():
     fireWorkColors = [ 'red', 'lime', 'magenta', 'yellow', 'orangeRed',
@@ -159,25 +142,9 @@ def onStep():
 
     if app.updateIn == 0:
         update()
-        print('update')
-        sys.stdout.flush()
-        app.group.clear()
-        app.group.add(fireworks)
-        app.group.add(streams)
-        Label('Done!', 200, 175, size=30)
-        Label('Rerun your app to continue', 200, 225, size=30)
-        app.totalFireworks = 0
-        if FORCE_UPDATE:
-            os._exit(0)
+        sys.exit()
 
-
-if __name__ == '__main__':
-    most_recent_version = input()
-
-    updateLater()
-
-    from cmu_graphics import *
-
+def drawSelectionScreen(most_recent_version):
     Label(
         "Version %s of CMU Graphics" % most_recent_version,
         200, 25,
@@ -189,21 +156,38 @@ if __name__ == '__main__':
         size = 25
     )
 
-    downloadNow = Rect(50, 90, 300, 75, fill=rgb(90,153,179))
+    app.downloadNow = Rect(50, 90, 300, 75, fill=rgb(90,153,179))
     Label("Update Now", 200, 90 + (75 / 2), align='center', fill='white', size=25)
-    downloadLater = Rect(50, 190, 300, 75, fill=rgb(90,153,179))
+    app.downloadLater = Rect(50, 190, 300, 75, fill=rgb(90,153,179))
     Label("Update Later", 200, 190 + (75 / 2), align='center', fill='white', size=25)
-    skipThisVersion = Rect(50, 290, 300, 75, fill=rgb(90,153,179))
+    app.skipThisVersion = Rect(50, 290, 300, 75, fill=rgb(90,153,179))
     Label("Skip This Version", 200, 290 + (75 / 2), align='center', fill='white', size=25)
+
+def drawCompletionScreen():
+    Label('Done!', 200, 175, size=30)
+    Label('Rerun your app to continue', 200, 225, size=30)
+
+if __name__ == '__main__':
+    command = json.loads(input())
+
+    from cmu_graphics import *
 
     fireworks = Group()
     streams = Group()
     app.totalFireworks = 0
     app.timeToNextFirework = 0
     app.updateIn = math.inf
-    app.mode = 'selection'
 
-    if FORCE_UPDATE:
-        startUpdate()
+    if command['type'] == 'request_update':
+        updateLater()
+        app.mode = 'selection'
+        drawSelectionScreen(command['most_recent_version'])
+        if FORCE_UPDATE:
+            startUpdate()
+    elif command['type'] == 'complete_update':
+        app.mode = 'complete'
+        drawCompletionScreen()
+        if FORCE_UPDATE:
+            sys.exit()
 
     cmu_graphics.loop()

@@ -81,7 +81,7 @@ def cleanup():
             shutil.rmtree(dir)
     for file in ('cmu_graphics_installer.zip', 'version.txt'):
         if os.path.exists(file):
-            os.remove('version.txt')
+            os.remove(file)
 
 def main():
     exit_code = 0

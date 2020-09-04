@@ -1,49 +1,3 @@
-import os
-import sys
-
-import __main__
-if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
-    import platform
-    current_directory = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(current_directory, 'meta/version.txt')) as f:
-        version = f.read().strip()
-    print('='*80)
-    print('CMU Graphics Version:', version)
-    print('Platform:', sys.platform)
-    print('Python Version:', '.'.join(platform.python_version_tuple()))
-    print('Executable Path:', sys.executable)
-    print('Working Directory:', current_directory)
-    print('='*80)
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import math
-from cmu_graphics.libs import cairo_loader as cairo
-from cmu_graphics.libs import webrequest
-from cmu_graphics import shape_logic
-from random import *
-from cmu_graphics.utils import *
-from datetime import datetime
-from datetime import timedelta
-import subprocess
-import json
-import atexit
-from threading import RLock
-
-DRAWING_LOCK = RLock()
-
-pygame = None # defer module load until run
-# pygame takes a few seconds to load. when a getTextInput happens before we
-# get a chance to render the screen, we don't want to wait a few seconds
-# for a pygame load here _and_ a few seconds for a pygame load there
-
-sli = shape_logic.ShapeLogicInterface()
-slInitShape = sli.slInitShape
-slGet = sli.slGet
-slSet = sli.slSet
-rgb = sli.rgb
-gradient = sli.gradient
-slNewSound = sli.newSound
-
 EPSILON = 10e-7
 def almostEqual(x, y, epsilon=EPSILON):
     return abs(x - y) <= epsilon
@@ -389,6 +343,7 @@ class App(object):
 def check_for_update():
     try:
         from .updater import get_update_info
+        import shutil
         update_info = get_update_info()
 
         if 'last_attempt' in update_info:
@@ -406,26 +361,82 @@ def check_for_update():
         if 'skip_past' in update_info and version <= update_info['skip_past']:
             return
 
-        if most_recent_version > version:
+        def call_updater_with_args(args):
             updater_path = os.path.join(current_directory, 'updater.py')
-            p = subprocess.Popen(
-                [sys.executable, updater_path],
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, cwd=current_directory)
-            result, errors = p.communicate(bytes(most_recent_version + '\n', encoding='utf-8'))
-            result = result.decode('utf-8').strip()
-            if result == 'update':
-                os._exit(0)
-            else:
-                print(errors.decode('utf-8').strip())
+            p = subprocess.Popen([sys.executable, updater_path],
+                stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=current_directory
+            )
+            p.communicate(bytes(json.dumps(args) + '\n', encoding='utf-8'))
+            if p.returncode != 0:
                 os._exit(1)
+
+        if most_recent_version > version:
+            call_updater_with_args({'type': 'request_update', 'most_recent_version': most_recent_version})
+
+            parent_directory = os.path.dirname(current_directory)
+            installer_dir = os.path.join(parent_directory, 'cmu_graphics_installer')
+            shutil.rmtree(current_directory)
+            shutil.move(os.path.join(installer_dir, 'cmu_graphics'), current_directory)
+            shutil.rmtree(installer_dir)
+
+            call_updater_with_args({'type': 'complete_update'})
+
+            os._exit(0)
+
     except:
         pass
+
+def loop():
+    app.run()
+
+import os
+import sys
+from datetime import datetime
+from datetime import timedelta
+import json
+import subprocess
+from cmu_graphics.libs import webrequest
+import __main__
 
 if 'CMU_GRAPHICS_NO_UPDATE' not in __main__.__dict__:
     check_for_update()
 
-app = App()
+if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
+    import platform
+    current_directory = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(current_directory, 'meta/version.txt')) as f:
+        version = f.read().strip()
+    print('='*80)
+    print('CMU Graphics Version:', version)
+    print('Platform:', sys.platform)
+    print('Python Version:', '.'.join(platform.python_version_tuple()))
+    print('Executable Path:', sys.executable)
+    print('Working Directory:', current_directory)
+    print('='*80)
 
-def loop():
-    app.run()
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import math
+from cmu_graphics.libs import cairo_loader as cairo
+from cmu_graphics import shape_logic
+from random import *
+from cmu_graphics.utils import *
+import json
+import atexit
+from threading import RLock
+
+DRAWING_LOCK = RLock()
+
+pygame = None # defer module load until run
+# pygame takes a few seconds to load. when a getTextInput happens before we
+# get a chance to render the screen, we don't want to wait a few seconds
+# for a pygame load here _and_ a few seconds for a pygame load there
+
+sli = shape_logic.ShapeLogicInterface()
+slInitShape = sli.slInitShape
+slGet = sli.slGet
+slSet = sli.slSet
+rgb = sli.rgb
+gradient = sli.gradient
+slNewSound = sli.newSound
+
+app = App()
