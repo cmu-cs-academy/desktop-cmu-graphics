@@ -5,6 +5,7 @@ from http.server import HTTPServer, CGIHTTPRequestHandler
 import threading
 import subprocess
 import sys
+import traceback
 
 PORT = 3000
 
@@ -91,6 +92,7 @@ def main():
         run_student_code() # causes an update
         assert_update_succeeded()
     except:
+        traceback.print_exc()
         exit_code = 1
     finally:
         cleanup()

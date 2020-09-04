@@ -4,7 +4,7 @@ import sys
 import __main__
 if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
     import platform
-    current_directory = os.path.dirname(__file__)
+    current_directory = os.path.dirname(os.path.realpath(__file__))
     with open(os.path.join(current_directory, 'meta/version.txt')) as f:
         version = f.read().strip()
     print('='*80)
@@ -250,7 +250,7 @@ class App(object):
         self.userGlobals['app'] = self
         if title is None:
             try:
-                self.title, _ = os.path.splitext(os.path.basename(__main__.__file__))
+                self.title, _ = os.path.splitext(os.path.basename(os.path.realpath(__main__.__file__)))
             except:
                 self.title = "CMU CS Academy"
         else:
@@ -320,7 +320,7 @@ class App(object):
         self.textInputs = list(args)
 
     def spawnModalProcess(self):
-        current_directory = os.path.dirname(__file__)
+        current_directory = os.path.dirname(os.path.realpath(__file__))
         modal_path = os.path.join(current_directory, 'modal.py')
         p = subprocess.Popen(
             [sys.executable, modal_path], stdout=subprocess.PIPE,
@@ -399,7 +399,7 @@ def check_for_update():
         most_recent_version = webrequest.get(
             'https://raw.githubusercontent.com/cmu-cs-academy/cpython-cmu-graphics/master/cmu_graphics/meta/version.txt'
         ).read().decode('ascii').strip()
-        current_directory = os.path.dirname(__file__)
+        current_directory = os.path.dirname(os.path.realpath(__file__))
         with open(os.path.join(current_directory, 'meta/version.txt')) as f:
             version = f.read().strip()
 

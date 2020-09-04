@@ -7,7 +7,7 @@ import sys
 CMU_GRAPHICS_NO_UPDATE = True
 FORCE_UPDATE = os.environ.get('CMU_GRAPHICS_AUTO_UPDATE') is not None
 
-current_directory = os.path.dirname(__file__)
+current_directory = os.path.dirname(os.path.realpath(__file__))
 parent_directory = os.path.dirname(current_directory)
 sys.path.insert(0, parent_directory)
 update_config_file_path = os.path.join(current_directory, 'meta/updates.json')

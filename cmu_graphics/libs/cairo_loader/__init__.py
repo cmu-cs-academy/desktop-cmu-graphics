@@ -2,7 +2,7 @@ import os
 import sys
 from .. import loader_util
 
-current_directory = os.path.dirname(__file__)
+current_directory = os.path.dirname(os.path.realpath(__file__))
 module_directory = os.path.join(current_directory, 'modules')
 platform = loader_util.get_platform_string()
 if 'mac' in platform:
