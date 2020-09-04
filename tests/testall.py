@@ -30,10 +30,10 @@ def main():
     os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
     run_command('python --version')
-    run_command('python test_image_gen.py')
-    run_command('python test_get_text_input.py')
-    run_command('python test_sound.py')
-    run_command('python test_autoupdate.py')
+    # run_command('python test_image_gen.py')
+    # run_command('python test_get_text_input.py')
+    # run_command('python test_sound.py')
+    # run_command('python test_autoupdate.py')
 
 if __name__ == '__main__':
     main()
