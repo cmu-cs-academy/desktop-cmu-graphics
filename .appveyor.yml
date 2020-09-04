@@ -19,4 +19,4 @@ install:
 
 test_script:
   # - python -m tox
-  - C:\Python35\python test_autoupdate.py
+  - cd tests && C:\Python35\python test_autoupdate.py
