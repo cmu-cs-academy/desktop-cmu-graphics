@@ -9,9 +9,9 @@ environment:
   SDL_VIDEODRIVER: dummy
   matrix:
     - TOXENV: py35
-    - TOXENV: py36
-    - TOXENV: py37
-    - TOXENV: py38
+    # - TOXENV: py36
+    # - TOXENV: py37
+    # - TOXENV: py38
 
 build: off
 
@@ -21,5 +21,5 @@ install:
 test_script:
   - python -m tox
 
-# on_finish:
-#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
