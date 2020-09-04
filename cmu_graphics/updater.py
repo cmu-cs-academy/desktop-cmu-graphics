@@ -12,6 +12,24 @@ parent_directory = os.path.dirname(current_directory)
 sys.path.insert(0, parent_directory)
 update_config_file_path = os.path.join(current_directory, 'meta/updates.json')
 
+def rmtree_onerror(func, path, exc_info):
+    """
+    Error handler for ``shutil.rmtree``.
+
+    If the error is due to an access error (read only file)
+    it attempts to add write permission and then retries.
+
+    If the error is for another reason it re-raises the error.
+
+    Usage : ``shutil.rmtree(path, onerror=onerror)``
+    """
+    import stat
+    if not os.access(path, os.W_OK):
+        # Is the error an access error ?
+        os.chmod(path, stat.S_IWUSR)
+        func(path)
+    else:
+        raise
 
 def update():
     import shutil
@@ -29,15 +47,15 @@ def update():
 
     installer_dir = os.path.join(parent_directory, 'cmu_graphics_installer')
     if os.path.exists(installer_dir):
-        shutil.rmtree(installer_dir)
+        shutil.rmtree(installer_dir, onerror=rmtree_onerror)
     os.mkdir(installer_dir)
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(parent_directory)
     os.remove(zip_path)
 
-    shutil.rmtree(current_directory)
+    shutil.rmtree(current_directory, onerror=rmtree_onerror)
     shutil.move(os.path.join(installer_dir, 'cmu_graphics'), current_directory)
-    shutil.rmtree(installer_dir)
+    shutil.rmtree(installer_dir, onerror=rmtree_onerror)
 
 def get_update_info():
     if os.path.exists(update_config_file_path):
