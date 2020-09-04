@@ -5,8 +5,6 @@ image:
 cache: .tox
 
 environment:
-  APPVEYOR_VNC_PASSWORD: test
-  # RDP_PASSWORD: test
   SDL_VIDEODRIVER: dummy
   matrix:
     - TOXENV: py35
