@@ -117,12 +117,12 @@ def screenshotAndExit():
         app.frameworkRedrew = False
     while not app.frameworkRedrew:
         time.sleep(0.01)
-    app.getScreenshot("%s")
+    app.getScreenshot(%s)
     app.quit()
 Thread(target=screenshotAndExit).start()
 
 cmu_graphics.loop()
-''' % os.path.abspath(output_path)
+''' % repr(os.path.abspath(output_path))
 
         with open(TEST_FILE_PATH, 'w') as f:
             f.write(source_code)
