@@ -37,11 +37,6 @@ div.error img {
 '''
 REPORT_FOOTER = '</body></html>'
 
-IS_CI = os.environ.get('CI', 'false') == 'true'
-if IS_CI:
-    S3 = boto3.resource('s3')
-    S3_BUCKET = S3.Bucket('cmu-cs-academy.backend.files.eddie')
-
 def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     image_1 = Image.open(path_1)
     image_1 = image_1.convert("RGB")
@@ -77,13 +72,6 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
                     visual_diff[i][j][3] = 128  # half alpha
 
         imageio.imwrite(diff_image_path, visual_diff)
-        if IS_CI:
-            S3_BUCKET.put_object(
-                Key='test_image_gen/%s' % path_2.replace('/', '_'),
-                Body=open(path_2, 'rb'))
-            S3_BUCKET.put_object(
-                Key='test_image_gen/%s' % diff_image_path.replace('/', '_'),
-                Body=open(diff_image_path, 'rb'))
         print("Part %d MSE %.0f" % (test_piece_i, mean_squared_error))
         REPORT_FILE.write("<div class='error'><p>Part %d MSE %.0f</p>" %
             (test_piece_i, mean_squared_error))
@@ -216,10 +204,6 @@ def main():
             if driver:
                 print('Saving screenshot in final_screenshot.png')
                 driver.save_screenshot('final_screenshot.png')
-                if IS_CI:
-                    print('Saving screenshot in s3://cmu-cs-academy.backend.files.eddie/test_image_gen/final.png')
-                    S3.Bucket('cmu-cs-academy.backend.files.eddie').put_object(
-                        Key='test_image_gen/final.png', Body=open('final_screenshot.png', 'rb'))
         except:
             print('Exception saving screenshot')
             traceback.print_exc()
