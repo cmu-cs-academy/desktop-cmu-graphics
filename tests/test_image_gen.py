@@ -146,8 +146,14 @@ cmu_graphics.loop()
             os.system('cp %s %s' % (download_path, correct_path))
             continue
         else:
+            threshold = 25
+            if 'Label' in source_code:
+                if sys.platform == 'win32':
+                    threshold = 2500
+                else:
+                    threshold = 50
             if not compare_images(correct_path, output_path, test_name, i,
-                    threshold=50 if 'Label' in source_code else 25):
+                    threshold=threshold):
                 if console_output.strip():
                     REPORT_FILE.write(
                         '<p>Console output for part %d:</p><pre>%s</pre>' %
