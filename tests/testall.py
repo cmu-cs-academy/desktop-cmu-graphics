@@ -3,6 +3,11 @@ import datetime
 import sys
 import os
 
+PYTHON_PATHS = {
+    'win32': ['C:\Python35', 'C:\Python36', 'C:\Python37', 'C:\Python38'],
+    'darwin': ['~/venv3.5', '~/venv3.6', '~/venv3.7', '~/venv3.8']
+}
+
 def log(*args):
     new_args = [datetime.datetime.now()] + list(args)
     print(*new_args)
@@ -28,10 +33,16 @@ def run_command(cmd):
 
 def main():
     os.environ['SDL_VIDEODRIVER'] = 'dummy'
-    run_command('python3 test_image_gen.py')
-    run_command('python3 test_get_text_input.py')
-    run_command('python3 test_sound.py')
-    run_command('python3 test_autoupdate.py')
+
+    for python_path in PYTHON_PATHS[sys.platform]:
+        os.environ['PATH'] += os.pathsep + python_path
+        log('Running with Python path', python_path)
+        run_command('python3 --version')
+
+        run_command('python3 test_image_gen.py')
+        run_command('python3 test_get_text_input.py')
+        run_command('python3 test_sound.py')
+        run_command('python3 test_autoupdate.py')
 
 if __name__ == '__main__':
     main()

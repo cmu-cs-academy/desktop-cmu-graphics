@@ -1,0 +1,9 @@
+image:
+  - Visual Studio 2019
+  - macOS
+
+build: Script
+
+test_script:
+  - cd tests
+  - python3 testall.py
