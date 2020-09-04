@@ -1,17 +1,18 @@
 image:
-  - Visual Studio 2019
-  # - macOS
+  # - Visual Studio 2019
+  - macOS
 
 cache: .tox
 
 environment:
+  APPVEYOR_VNC_PASSWORD: test
   # RDP_PASSWORD: test
   SDL_VIDEODRIVER: dummy
   matrix:
     - TOXENV: py35
-    - TOXENV: py36
-    - TOXENV: py37
-    - TOXENV: py38
+    # - TOXENV: py36
+    # - TOXENV: py37
+    # - TOXENV: py38
 
 build: off
 
@@ -23,3 +24,7 @@ test_script:
 
 # on_finish:
 #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+on_finish:
+  - sh: export APPVEYOR_VNC_BLOCK=true
+  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-vnc.sh' | bash -e -
