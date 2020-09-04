@@ -8,9 +8,18 @@ environment:
   SDL_VIDEODRIVER: dummy
   matrix:
     - TOXENV: py35
-    # - TOXENV: py36
-    # - TOXENV: py37
-    # - TOXENV: py38
+    - TOXENV: py36
+    - TOXENV: py37
+    - TOXENV: py38
+
+for:
+-
+  matrix:
+    only:
+      - image: macOS
+
+  environment:
+    - PATH: $PATH:~/venv3.5:~/venv3.6:~/venv3.7:~/venv3.8
 
 build: off
 
@@ -23,6 +32,6 @@ test_script:
 # on_finish:
 #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
-on_finish:
-  - sh: export APPVEYOR_VNC_BLOCK=true
-  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-vnc.sh' | bash -e -
+# on_finish:
+#   - sh: export APPVEYOR_VNC_BLOCK=true
+#   - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-vnc.sh' | bash -e -
