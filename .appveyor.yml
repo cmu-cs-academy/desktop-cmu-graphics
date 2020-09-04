@@ -18,8 +18,8 @@ for:
     only:
       - image: macOS
 
-  environment:
-    - PATH: $PATH:~/venv3.5:~/venv3.6:~/venv3.7:~/venv3.8
+  before_test:
+    - export PATH=$PATH:~/venv3.5:~/venv3.6:~/venv3.7:~/venv3.8
 
 build: off
 
