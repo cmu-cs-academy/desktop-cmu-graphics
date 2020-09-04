@@ -11,29 +11,26 @@ from datetime import datetime, timedelta
 from threading import Thread
 from cmu_graphics import *
 
-def get_modal_pid():
-    for proc in psutil.process_iter([]):
-        if (proc.info['cmdline'] is not None and
-            'modal.py' in ' '.join(proc.info['cmdline'])):
-            return proc.info['pid']
-    return None
+def get_children_pids():
+    return {child.pid for child in psutil.Process().children(recursive=True)}
 
-def wait_for_modal():
+def wait_for_modal(initial_children_pids):
     try:
         time.sleep(1)
         start_time = datetime.now()
         while True:
             if datetime.now() - start_time > timedelta(seconds=5):
                 os._exit(1)
-            modal_pid = get_modal_pid()
-            if modal_pid is not None:
+            current_children_pids = get_children_pids()
+            if len(current_children_pids) > len(initial_children_pids):
+                modal_pid = list(current_children_pids - initial_children_pids)[0]
                 psutil.Process(modal_pid).terminate()
                 os._exit(0)
     except:
         os._exit(1)
 
 def onStep():
-    Thread(target=wait_for_modal).start()
+    Thread(target=wait_for_modal, args=(get_children_pids(),)).start()
     app.getTextInput()
 
 cmu_graphics.loop()
