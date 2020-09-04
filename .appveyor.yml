@@ -5,12 +5,16 @@ image:
 cache: .tox
 
 environment:
+  RDP_PASSWORD: test
   SDL_VIDEODRIVER: dummy
   matrix:
     # - TOXENV: py35
     # - TOXENV: py36
     # - TOXENV: py37
     - TOXENV: py38
+
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 build: off
 
