@@ -5,10 +5,11 @@ image:
 cache: .tox
 
 environment:
+  SDL_VIDEODRIVER: dummy
   matrix:
-    - TOXENV: py35
-    - TOXENV: py36
-    - TOXENV: py37
+    # - TOXENV: py35
+    # - TOXENV: py36
+    # - TOXENV: py37
     - TOXENV: py38
 
 build: off
@@ -17,4 +18,4 @@ install:
   - pip install tox
 
 test_script:
-  - tox
+  - python -m tox
