@@ -19,7 +19,6 @@ for:
       - image: macOS
 
   before_test:
-    - export SDL_VIDEODRIVER=dummy
     - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/
 
 build: off

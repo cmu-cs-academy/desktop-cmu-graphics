@@ -97,6 +97,8 @@ def run_test(driver, test_name, all_source_code):
 
         source_code = ''
         source_code += 'import sys'
+        source_code += 'import os'
+        source_code += 'os.environ["SDL_VIDEODRIVER"] = "dummy"'
         source_code += '\nsys.path.insert(0, "..")'
         source_code += '\nfrom cmu_graphics import *\n'
         source_code += '\n######\n'.join(source_code_pieces[:piece_i])
