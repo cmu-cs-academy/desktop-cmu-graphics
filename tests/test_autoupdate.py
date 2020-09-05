@@ -26,8 +26,11 @@ def create_folder_and_zip():
     shutil.move('cmu_graphics_installer/cmu_graphics', 'cmu_graphics')
     os.rmdir('cmu_graphics_installer')
 
+    os.mkdir('srv')
+    shutil.move('cmu_graphics_installer.zip', 'srv/cmu_graphics_installer.zip')
+
     # server version
-    with open('version.txt', 'w+') as f:
+    with open('srv/version.txt', 'w+') as f:
         f.write('0.0.1')
 
     # local version
@@ -45,13 +48,13 @@ def set_mock_urls():
     replace_in_file(
         'cmu_graphics/updater.py',
         'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/cpython-cmu-graphics-binaries/cmu_graphics_installer.zip',
-        'http://localhost:%d/cmu_graphics_installer.zip' % PORT
+        'http://localhost:%d/srv/cmu_graphics_installer.zip' % PORT
     )
 
     replace_in_file(
         'cmu_graphics/cmu_graphics.py',
         'https://raw.githubusercontent.com/cmu-cs-academy/cpython-cmu-graphics/master/cmu_graphics/meta/version.txt',
-        'http://localhost:%d/version.txt' % PORT
+        'http://localhost:%d/srv/version.txt' % PORT
     )
 
 def run_server():
@@ -76,7 +79,7 @@ def assert_update_succeeded():
     run_student_code()
 
 def cleanup():
-    for dir in ('cmu_graphics', 'cmu_graphics_installer'):
+    for dir in ('cmu_graphics', 'cmu_graphics_installer', 'srv'):
         if os.path.exists(dir):
             shutil.rmtree(dir)
     for file in ('cmu_graphics_installer.zip', 'version.txt'):
