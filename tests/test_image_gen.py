@@ -96,7 +96,7 @@ def run_test(driver, test_name, all_source_code):
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
         source_code = ''
-        source_code += '\nimport sys'
+        source_code += 'import sys'
         source_code += '\nimport os'
         source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
         source_code += '\nsys.path.insert(0, "..")'
