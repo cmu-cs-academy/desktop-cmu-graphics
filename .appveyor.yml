@@ -7,9 +7,9 @@ cache: .tox
 environment:
   SDL_VIDEODRIVER: dummy
   matrix:
-    # - TOXENV: py35
-    # - TOXENV: py36
-    # - TOXENV: py37
+    - TOXENV: py35
+    - TOXENV: py36
+    - TOXENV: py37
     - TOXENV: py38
 
 for:
@@ -28,10 +28,3 @@ install:
 
 test_script:
   - python -m tox
-
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
-# on_finish:
-#   - sh: export APPVEYOR_VNC_BLOCK=true
-#   - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-vnc.sh' | bash -e -
