@@ -18,13 +18,13 @@ environment:
 matrix:
   fast_finish: true
 
+build: off
+
 for:
   -
     matrix:
       only:
         - job_group: Tests
-
-    build: off
 
     install:
       - pip install tox
