@@ -3,13 +3,13 @@ cache: .tox
 environment:
   SDL_VIDEODRIVER: dummy
   matrix:
-    - job_name: Tests Windows
-      job_group: Tests
-      appveyor_build_worker_image: Visual Studio 2019
-
-    - job_name: Tests macOS
-      job_group: Tests
-      appveyor_build_worker_image: macOS
+    # - job_name: Tests Windows
+    #   job_group: Tests
+    #   appveyor_build_worker_image: Visual Studio 2019
+    #
+    # - job_name: Tests macOS
+    #   job_group: Tests
+    #   appveyor_build_worker_image: macOS
 
     - job_name: Deploy
       job_depends_on: Tests
@@ -54,3 +54,13 @@ for:
     before_deploy:
       - cd build
       - ./release.sh
+
+    deploy:
+      provider: S3
+      access_key_id:
+        secure: 3BNx+Qb95vjwu5E6CbX9mrQ8X4EboF4dzt9Ei7Wc4QU=
+      secret_access_key:
+        secure: bkPtYZvL3Asozn/udXEZChW2gqT/GEJ66xdf+OeMtn4faZR36uKoP2x+wgCp0enQ
+      bucket: cmu-cs-academy.lib.prod
+      region: us-east-1
+      folder: desktop-cmu-graphics

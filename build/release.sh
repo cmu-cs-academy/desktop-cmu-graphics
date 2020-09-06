@@ -14,3 +14,7 @@ mkdir deploy
 cp cmu_graphics_installer/$zipname deploy
 cp cmu_graphics/meta/version.txt deploy
 rm -r cmu_graphics_installer
+
+if [[ $APPVEYOR ]]; then
+  appveyor PushArtifact deploy/*
+fi
