@@ -10,17 +10,11 @@ environment:
     secure: bkPtYZvL3Asozn/udXEZChW2gqT/GEJ66xdf+OeMtn4faZR36uKoP2x+wgCp0enQ
 
   matrix:
-    # - job_name: Tests Windows
-    #   job_group: Tests
-    #   appveyor_build_worker_image: Visual Studio 2019
-    #
-    - job_name: Tests macOS
-      job_group: Tests
-      appveyor_build_worker_image: macOS
+    - job_name: Tests Windows
+      appveyor_build_worker_image: Visual Studio 2019
 
-    # - job_name: Deploy
-    #   job_depends_on: Tests
-    #   appveyor_build_worker_image: macOS
+    - job_name: Tests macOS and Deploy
+      appveyor_build_worker_image: macOS
 
 matrix:
   fast_finish: true
@@ -54,20 +48,5 @@ for:
       - python -m tox
 
     after_test:
-      - cd build
-      - ./release.sh
-
-  -
-    matrix:
-      only:
-        - job_name: Deploy
-
-    deploy:
-      - provider: Script
-        on:
-          branch: master
-
-    deploy_script:
-      - export PATH=$PATH:~/venv3.8/bin/
       - cd build
       - ./release.sh

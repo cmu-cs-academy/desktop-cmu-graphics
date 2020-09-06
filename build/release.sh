@@ -15,11 +15,6 @@ cp cmu_graphics_installer/$zipname deploy
 cp cmu_graphics/meta/version.txt deploy
 rm -r cmu_graphics_installer
 
-# python3 -m pip install --upgrade awscli --user
-# python3 -m awscli s3 cp deploy/$zipname $UPLOAD_BUCKET/desktop-cmu-graphics/$zipname
-# python3 -m awscli s3 cp deploy/version.txt $UPLOAD_BUCKET/desktop-cmu-graphics/version.txt
-# rm -r deploy
-
 if [[ $APPVEYOR ]]; then
   appveyor PushArtifact deploy/cmu_graphics_installer.zip
   appveyor PushArtifact deploy/version.txt
