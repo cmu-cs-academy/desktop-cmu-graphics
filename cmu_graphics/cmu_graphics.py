@@ -352,7 +352,7 @@ def check_for_update():
                 return
 
         most_recent_version = webrequest.get(
-            'https://raw.githubusercontent.com/cmu-cs-academy/cpython-cmu-graphics/master/cmu_graphics/meta/version.txt'
+            'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/version.txt'
         ).read().decode('ascii').strip()
         current_directory = os.path.dirname(os.path.realpath(__file__))
         with open(os.path.join(current_directory, 'meta/version.txt')) as f:

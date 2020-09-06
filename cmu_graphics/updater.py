@@ -19,7 +19,7 @@ def update():
     from libs import webrequest
 
     zip_bytes = webrequest.get(
-        'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/cpython-cmu-graphics-binaries/cmu_graphics_installer.zip'
+        'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/cmu_graphics_installer.zip'
     ).read()
     zip_path = os.path.join(parent_directory, 'cmu_graphics_installer.zip')
     if os.path.exists(zip_path):

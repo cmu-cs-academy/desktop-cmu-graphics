@@ -47,13 +47,13 @@ def set_mock_urls():
 
     replace_in_file(
         'cmu_graphics/updater.py',
-        'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/cpython-cmu-graphics-binaries/cmu_graphics_installer.zip',
+        'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/cmu_graphics_installer.zip',
         'http://localhost:%d/srv/cmu_graphics_installer.zip' % PORT
     )
 
     replace_in_file(
         'cmu_graphics/cmu_graphics.py',
-        'https://raw.githubusercontent.com/cmu-cs-academy/cpython-cmu-graphics/master/cmu_graphics/meta/version.txt',
+        'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/version.txt',
         'http://localhost:%d/srv/version.txt' % PORT
     )
 
