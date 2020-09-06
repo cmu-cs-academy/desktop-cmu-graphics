@@ -57,6 +57,7 @@ for:
 
     deploy:
       provider: S3
+      artifact: cmu_graphics_installer.zip,version.txt
       access_key_id:
         secure: 3BNx+Qb95vjwu5E6CbX9mrQ8X4EboF4dzt9Ei7Wc4QU=
       secret_access_key:

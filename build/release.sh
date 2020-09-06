@@ -16,5 +16,6 @@ cp cmu_graphics/meta/version.txt deploy
 rm -r cmu_graphics_installer
 
 if [[ $APPVEYOR ]]; then
-  appveyor PushArtifact deploy/*
+  appveyor PushArtifact deploy/cmu_graphics_installer.zip
+  appveyor PushArtifact deploy/version.txt
 fi
