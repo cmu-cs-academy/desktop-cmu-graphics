@@ -1,30 +1,50 @@
-image:
-  - Visual Studio 2019
-  - macOS
-
 cache: .tox
 
 environment:
   SDL_VIDEODRIVER: dummy
   matrix:
-    - TOXENV: py35
-    - TOXENV: py36
-    - TOXENV: py37
-    - TOXENV: py38
+    - job_name: Tests Windows
+      job_group: Tests
+      appveyor_build_worker_image: Visual Studio 2019
+
+    - job_name: Tests macOS
+      job_group: Tests
+      appveyor_build_worker_image: macOS
+
+    - job_name: Deploy
+      job_depends_on: Tests
+      appveyor_build_worker_image: macOS
+
+matrix:
+  fast_finish: true
 
 for:
--
-  matrix:
-    only:
-      - image: macOS
+  -
+    matrix:
+      only:
+        - job_group: Tests
 
-  before_test:
-    - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/
+    build: off
 
-build: off
+    install:
+      - pip install tox
 
-install:
-  - pip install tox
+    test_script:
+      - python -m tox
 
-test_script:
-  - python -m tox
+  -
+    matrix:
+      only:
+        - job_name: Tests macOS
+
+    before_test:
+      - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/
+
+  -
+    matrix:
+      only:
+        - job_name: Deploy
+
+    before_deploy:
+      - cd build
+      - ./release.sh
