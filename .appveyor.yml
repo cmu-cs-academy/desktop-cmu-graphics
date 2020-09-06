@@ -58,7 +58,12 @@ for:
       only:
         - job_name: Deploy
 
-    install:
+    deploy:
+      - provider: Script
+        on:
+          branch: master
+
+    deploy_script:
       - export PATH=$PATH:~/venv3.8/bin/
       - cd build
       - ./release.sh
