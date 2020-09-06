@@ -2,6 +2,13 @@ cache: .tox
 
 environment:
   SDL_VIDEODRIVER: dummy
+
+  AWS_ACCESS_KEY_ID:
+    secure: 3BNx+Qb95vjwu5E6CbX9mrQ8X4EboF4dzt9Ei7Wc4QU=
+
+  AWS_SECRET_ACCESS_KEY:
+    secure: bkPtYZvL3Asozn/udXEZChW2gqT/GEJ66xdf+OeMtn4faZR36uKoP2x+wgCp0enQ
+
   matrix:
     # - job_name: Tests Windows
     #   job_group: Tests
@@ -51,17 +58,7 @@ for:
       only:
         - job_name: Deploy
 
-    before_deploy:
+    install:
+      - export PATH=$PATH:~/venv3.8/bin/
       - cd build
       - ./release.sh
-
-    deploy:
-      provider: S3
-      artifact: cmu_graphics_installer.zip,version.txt
-      access_key_id:
-        secure: 3BNx+Qb95vjwu5E6CbX9mrQ8X4EboF4dzt9Ei7Wc4QU=
-      secret_access_key:
-        secure: bkPtYZvL3Asozn/udXEZChW2gqT/GEJ66xdf+OeMtn4faZR36uKoP2x+wgCp0enQ
-      bucket: cmu-cs-academy.lib.prod
-      region: us-east-1
-      folder: desktop-cmu-graphics
