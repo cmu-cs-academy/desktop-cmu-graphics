@@ -10,10 +10,10 @@ environment:
     secure: bkPtYZvL3Asozn/udXEZChW2gqT/GEJ66xdf+OeMtn4faZR36uKoP2x+wgCp0enQ
 
   matrix:
-    - job_name: Tests Windows
+    - job_name: Windows Tests
       appveyor_build_worker_image: Visual Studio 2019
 
-    - job_name: Tests macOS and Deploy
+    - job_name: macOS Tests and Load Artifacts
       appveyor_build_worker_image: macOS
 
 matrix:
@@ -25,7 +25,7 @@ for:
   -
     matrix:
       only:
-        - job_name: Tests Windows
+        - job_name: Windows Tests
 
     install:
       - pip install tox
@@ -36,7 +36,7 @@ for:
   -
     matrix:
       only:
-        - job_name: Tests macOS
+        - job_name: macOS Tests and Load Artifacts
 
     install:
       - pip install tox
