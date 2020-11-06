@@ -674,7 +674,7 @@ class Shape(object):
 
     def get_bottom(self): return self.centerY + self.height / 2
     def set_bottom(self, v): self.centerY = v - self.height / 2; return v
-    botom = property(get_bottom, set_bottom)
+    bottom = property(get_bottom, set_bottom)
 
     def addxy(self, varName = None, d = None):
         if (d == 0): return
@@ -826,7 +826,7 @@ class Shape(object):
         return (not self.edgesIntersect(targetShape) and self.contains(x, y))
 
     def getBounds(self):
-        return { left: self.left, top: self.top, width: self.width, height: self.height }
+        return { 'left': self.left, 'top': self.top, 'width': self.width, 'height': self.height }
 
     def boundsIntersect(self, targetShape, margin = None):
         # Symmetric.  Fast pre-test for hitsShape.  If this is False, hitsShape
@@ -834,10 +834,10 @@ class Shape(object):
         if (margin is None): margin = 0
         b1 = self.getBounds()
         b2 = targetShape.getBounds()
-        return ((b1.left + margin <= b2.left + b2.width) and
-                (b2.left + margin <= b1.left + b1.width) and
-                (b1.top  + margin <= b2.top + b2.height) and
-                (b2.top  + margin <= b1.top + b1.height))
+        return ((b1['left'] + margin <= b2['left'] + b2['width']) and
+                (b2['left'] + margin <= b1['left'] + b1['width']) and
+                (b1['top']  + margin <= b2['top'] + b2['height']) and
+                (b2['top']  + margin <= b1['top'] + b1['height']))
 
     def hitsShape(self, *arguments):
         checkArgCount(self.__class__.__name__, 'hitsShape', ['targetShape'], arguments);
@@ -857,9 +857,9 @@ class Shape(object):
             for j in range(len(targetShapes)):
                 shape1 = myShapes[i]
                 shape2 = targetShapes[j]
-                if any((shape2.hits(pt[0], pt[1]) for pt in shape1.pointList)):
+                if any((shape2.hits(pt[0], pt[1]) for pt in shape1.getApproxPoints())):
                     return True
-                if any((shape1.hits(pt[0], pt[1]) for pt in shape2.pointList)):
+                if any((shape1.hits(pt[0], pt[1]) for pt in shape2.getApproxPoints())):
                     return True
                 if myShapes[i].edgesIntersect(targetShapes[j]):
                     return True
