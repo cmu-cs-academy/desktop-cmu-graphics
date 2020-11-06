@@ -18,9 +18,9 @@ tar -xvf binaries.tgz
 rm binaries.tgz
 cd ..
 
-mkdir ../../../cmu_graphics/cairo_loader/modules || true
-rm -rf ../../../cmu_graphics/cairo_loader/modules/cairo_mac/cairo
-mv cairo ../../../cmu_graphics/cairo_loader/modules/cairo_mac/
+mkdir ../../../cmu_graphics/libs/cairo_loader/modules || true
+rm -rf ../../../cmu_graphics/libs/cairo_loader/modules/cairo_mac/cairo
+mv cairo ../../../cmu_graphics/libs/cairo_loader/modules/cairo_mac/
 
 # clean up
 cd ../../

@@ -1,150 +1,349 @@
 import unittest
+import os
+import platform
+import pygame
+
+SDL1 = pygame.get_sdl_version()[0] < 2
+DARWIN = "Darwin" in platform.platform()
 
 
-class MouseModuleTest(unittest.TestCase):
-    def todo_test_get_cursor(self):
+class MouseTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # The display needs to be initialized for mouse functions.
+        pygame.display.init()
 
-        # __doc__ (as of 2008-08-02) for pygame.mouse.get_cursor:
+    @classmethod
+    def tearDownClass(cls):
+        pygame.display.quit()
 
-          # pygame.mouse.get_cursor(): return (size, hotspot, xormasks, andmasks)
-          # get the image for the system mouse cursor
-          #
-          # Get the information about the mouse system cursor. The return value
-          # is the same data as the arguments passed into
-          # pygame.mouse.set_cursor().
-          #
 
-        self.fail()
+class MouseModuleInteractiveTest(MouseTests):
 
-    def todo_test_get_focused(self):
+    __tags__ = ["interactive"]
 
-        # __doc__ (as of 2008-08-02) for pygame.mouse.get_focused:
+    @unittest.skipIf(SDL1 and DARWIN, "Can fails on Mac SDL1, window not focused")
+    def test_set_pos(self):
+        """ Ensures set_pos works correctly.
+            Requires tester to move the mouse to be on the window.
+        """
+        pygame.display.set_mode((500, 500))
+        pygame.event.get()  # Pump event queue to make window get focus on macos.
 
-          # pygame.mouse.get_focused(): return bool
-          # check if the display is receiving mouse input
-          #
-          # Returns true when pygame is receiving mouse input events (or, in
-          # windowing terminology, is "active" or has the "focus").
-          #
-          # This method is most useful when working in a window. By contrast, in
-          # full-screen mode, this method always returns true.
-          #
-          # Note: under MS Windows, the window that has the mouse focus also has
-          # the keyboard focus. But under X-Windows, one window can receive
-          # mouse events and another receive keyboard events.
-          # pygame.mouse.get_focused() indicates whether the pygame window
-          # receives mouse events.
-          #
+        if not pygame.mouse.get_focused():
+            # The window needs to be focused for the mouse.set_pos to work on macos.
+            return
+        clock = pygame.time.Clock()
 
-        self.fail()
+        expected_pos = ((10, 0), (0, 0), (499, 0), (499, 499), (341, 143), (94, 49))
 
-    def todo_test_get_pos(self):
+        for x, y in expected_pos:
+            pygame.mouse.set_pos(x, y)
+            pygame.event.get()
+            found_pos = pygame.mouse.get_pos()
 
-        # __doc__ (as of 2008-08-02) for pygame.mouse.get_pos:
+            clock.tick()
+            time_passed = 0.0
+            ready_to_test = False
 
-          # pygame.mouse.get_pos(): return (x, y)
-          # get the mouse cursor position
-          #
-          # Returns the X and Y position of the mouse cursor. The position is
-          # relative the the top-left corner of the display. The cursor position
-          # can be located outside of the display window, but is always
-          # constrained to the screen.
-          #
+            while not ready_to_test and time_passed <= 1000.0:  # Avoid endless loop
+                time_passed += clock.tick()
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEMOTION:
+                        ready_to_test = True
 
-        self.fail()
+            self.assertEqual(found_pos, (x, y))
 
-    def todo_test_get_pressed(self):
 
-        # __doc__ (as of 2008-08-02) for pygame.mouse.get_pressed:
+class MouseModuleTest(MouseTests):
+    def test_get_cursor(self):
+        """Ensures get_cursor works correctly."""
+        if not SDL1:
+            with self.assertRaises(TypeError):
+                pygame.mouse.get_cursor()
+        else:
+            # error should be raised when the display is unintialized
+            with self.assertRaises(pygame.error):
+                pygame.display.quit()
+                pygame.mouse.get_cursor()
 
-          # pygame.moouse.get_pressed(): return (button1, button2, button3)
-          # get the state of the mouse buttons
-          #
-          # Returns a sequence of booleans representing the state of all the
-          # mouse buttons. A true value means the mouse is currently being
-          # pressed at the time of the call.
-          #
-          # Note, to get all of the mouse events it is better to use either
-          #  pygame.event.wait() or pygame.event.get() and check all of those events
-          # to see if they are MOUSEBUTTONDOWN, MOUSEBUTTONUP, or MOUSEMOTION.
-          # Note, that on X11 some XServers use middle button emulation.  When
-          # you click both buttons 1 and 3 at the same time a 2 button event can
-          # be emitted.
-          #
-          # Note, remember to call pygame.event.get() before this function.
-          # Otherwise it will not work.
-          #
+            pygame.display.init()
 
-        self.fail()
+            size = (8, 8)
+            hotspot = (0, 0)
+            xormask = (0, 96, 120, 126, 112, 96, 0, 0)
+            andmask = (224, 240, 254, 255, 254, 240, 96, 0)
 
-    def todo_test_get_rel(self):
+            expected_length = 4
+            expected_cursor = (size, hotspot, xormask, andmask)
 
-        # __doc__ (as of 2008-08-02) for pygame.mouse.get_rel:
+            try:
+                cursor = pygame.mouse.get_cursor()
 
-          # pygame.mouse.get_rel(): return (x, y)
-          # get the amount of mouse movement
-          #
-          # Returns the amount of movement in X and Y since the previous call to
-          # this function. The relative movement of the mouse cursor is
-          # constrained to the edges of the screen, but see the virtual input
-          # mouse mode for a way around this.  Virtual input mode is described
-          # at the top of the page.
-          #
+                self.assertIsInstance(cursor, tuple)
+                self.assertEqual(len(cursor), expected_length)
 
-        self.fail()
+                for info in cursor:
+                    self.assertIsInstance(info, tuple)
 
-    def todo_test_set_cursor(self):
+                pygame.mouse.set_cursor(size, hotspot, xormask, andmask)
+                self.assertEqual(pygame.mouse.get_cursor(), expected_cursor)
 
-        # __doc__ (as of 2008-08-02) for pygame.mouse.set_cursor:
+            # SDLError should be raised when the mouse cursor is NULL
+            except pygame.error:
+                with self.assertRaises(pygame.error):
+                    pygame.mouse.get_cursor()
 
-          # pygame.mouse.set_cursor(size, hotspot, xormasks, andmasks): return None
-          # set the image for the system mouse cursor
-          #
-          # When the mouse cursor is visible, it will be displayed as a black
-          # and white bitmap using the given bitmask arrays. The size is a
-          # sequence containing the cursor width and height. Hotspot is a
-          # sequence containing the cursor hotspot position. xormasks is a
-          # sequence of bytes containing the cursor xor data masks. Lastly is
-          # andmasks, a sequence of bytes containting the cursor bitmask data.
-          #
-          # Width must be a multiple of 8, and the mask arrays must be the
-          # correct size for the given width and height. Otherwise an exception
-          # is raised.
-          #
-          # See the pygame.cursor module for help creating default and custom
-          # masks for the system cursor.
-          #
+    @unittest.skipIf(
+        os.environ.get("SDL_VIDEODRIVER", "") == "dummy",
+        "mouse.set_sytem_cursor only available in SDL2",
+    )
+    def test_set_system_cursor(self):
+        """Ensures set_system_cursor works correctly."""
 
-        self.fail()
+        # Error should be raised when the display is uninitialized
+        with self.assertRaises(pygame.error):
+            pygame.display.quit()
+            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
 
-    def todo_test_set_pos(self):
+        pygame.display.init()
 
-        # __doc__ (as of 2008-08-02) for pygame.mouse.set_pos:
+        # TypeError raised when PyArg_ParseTuple fails to parse parameters
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_system_cursor("b")
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_system_cursor(None)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_system_cursor((8, 8), (0, 0))
 
-          # pygame.mouse.set_pos([x, y]): return None
-          # set the mouse cursor position
-          #
-          # Set the current mouse position to arguments given. If the mouse
-          # cursor is visible it will jump to the new coordinates. Moving the
-          # mouse will generate a new pygaqme.MOUSEMOTION event.
-          #
+        # Right type, invalid value
+        with self.assertRaises(pygame.error):
+            pygame.mouse.set_system_cursor(2000)
 
-        self.fail()
+        # Working as intended
+        self.assertEqual(
+            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW), None
+        )
 
-    def todo_test_set_visible(self):
+    @unittest.skipIf(not SDL1, "mouse.get_cursor only available in SDL1")
+    def test_set_cursor_sdl1(self):
+        """Ensures set_cursor works correctly."""
+        size = (8, 8)
+        hotspot = (0, 0)
+        xormask = (0, 126, 64, 64, 32, 16, 0, 0)
+        andmask = (254, 255, 254, 112, 56, 28, 12, 0)
+        expected_cursor = (size, hotspot, xormask, andmask)
 
-        # __doc__ (as of 2008-08-02) for pygame.mouse.set_visible:
+        # Error should be raised when the display is uninitialized
+        with self.assertRaises(pygame.error):
+            pygame.display.quit()
+            pygame.mouse.set_cursor(size, hotspot, xormask, andmask)
 
-          # pygame.mouse.set_visible(bool): return bool
-          # hide or show the mouse cursor
-          #
-          # If the bool argument is true, the mouse cursor will be visible. This
-          # will return the previous visible state of the cursor.
-          #
+        pygame.display.init()
 
-        self.fail()
+        # TypeError raised when PyArg_ParseTuple fails to parse parameters
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(("w", "h"), hotspot, xormask, andmask)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, ("0", "0"), xormask, andmask)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, ("x", "y", "z"), xormask, andmask)
+
+        # TypeError raised when either mask is not a sequence
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, hotspot, 12345678, andmask)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, hotspot, xormask, 12345678)
+
+        # TypeError raised when element of mask is not an integer
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, hotspot, "00000000", andmask)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, hotspot, xormask, (2, [0], 4, 0, 0, 8, 0, 1))
+
+        # ValueError raised when width not divisible by 8
+        with self.assertRaises(ValueError):
+            pygame.mouse.set_cursor((3, 8), hotspot, xormask, andmask)
+
+        # ValueError raised when length of either mask != width * height / 8
+        with self.assertRaises(ValueError):
+            pygame.mouse.set_cursor((16, 2), hotspot, (128, 64, 32), andmask)
+        with self.assertRaises(ValueError):
+            pygame.mouse.set_cursor((16, 2), hotspot, xormask, (192, 96, 48, 0, 1))
+
+        # Working as intended
+        try:
+            self.assertEqual(
+                pygame.mouse.set_cursor((16, 1), hotspot, (8, 0), (0, 192)), None
+            )
+            pygame.mouse.set_cursor(size, hotspot, xormask, andmask)
+            self.assertEqual(pygame.mouse.get_cursor(), expected_cursor)
+            pygame.mouse.set_cursor(size, hotspot, list(xormask), list(andmask))
+            self.assertEqual(pygame.mouse.get_cursor(), expected_cursor)
+
+        # SDLError should be raised when mouse cursor is NULL
+        except pygame.error:
+            with self.assertRaises(pygame.error):
+                pygame.mouse.set_cursor(size, hotspot, xormask, andmask)
+
+    @unittest.skipIf(
+        SDL1 or os.environ.get("SDL_VIDEODRIVER", "") == "dummy",
+        "Fails on SDL2 with dummy video driver, unable to use mouse.get_cursor",
+    )
+    def test_set_cursor_sdl2(self):
+        """Ensures set_cursor works correctly."""
+        size = (8, 8)
+        hotspot = (0, 0)
+        xormask = (0, 126, 64, 64, 32, 16, 0, 0)
+        andmask = (254, 255, 254, 112, 56, 28, 12, 0)
+
+        # Error should be raised when the display is uninitialized
+        with self.assertRaises(pygame.error):
+            pygame.display.quit()
+            pygame.mouse.set_cursor(size, hotspot, xormask, andmask)
+
+        pygame.display.init()
+
+        # TypeError raised when PyArg_ParseTuple fails to parse parameters
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(("w", "h"), hotspot, xormask, andmask)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, ("0", "0"), xormask, andmask)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, ("x", "y", "z"), xormask, andmask)
+
+        # TypeError raised when either mask is not a sequence
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, hotspot, 12345678, andmask)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, hotspot, xormask, 12345678)
+
+        # TypeError raised when element of mask is not an integer
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, hotspot, "00000000", andmask)
+        with self.assertRaises(TypeError):
+            pygame.mouse.set_cursor(size, hotspot, xormask, (2, [0], 4, 0, 0, 8, 0, 1))
+
+        # ValueError raised when width not divisible by 8
+        with self.assertRaises(ValueError):
+            pygame.mouse.set_cursor((3, 8), hotspot, xormask, andmask)
+
+        # ValueError raised when length of either mask != width * height / 8
+        with self.assertRaises(ValueError):
+            pygame.mouse.set_cursor((16, 2), hotspot, (128, 64, 32), andmask)
+        with self.assertRaises(ValueError):
+            pygame.mouse.set_cursor((16, 2), hotspot, xormask, (192, 96, 48, 0, 1))
+
+        # Working as intended, no checks for same value as mouse.get_cursor in SDL2
+        try:
+            self.assertEqual(
+                pygame.mouse.set_cursor(size, hotspot, xormask, andmask), None
+            )
+            self.assertEqual(
+                pygame.mouse.set_cursor(size, hotspot, list(xormask), list(andmask)),
+                None,
+            )
+
+        # SDLError should be raised when mouse cursor is NULL
+        except pygame.error:
+            with self.assertRaises(pygame.error):
+                pygame.mouse.set_cursor(size, hotspot, xormask, andmask)
+
+    def test_get_focused(self):
+        """Ensures get_focused returns the correct type."""
+        focused = pygame.mouse.get_focused()
+
+        self.assertIsInstance(focused, int)
+
+    def test_get_pressed(self):
+        """Ensures get_pressed returns the correct types."""
+        expected_length = 3
+        buttons_pressed = pygame.mouse.get_pressed()
+        self.assertIsInstance(buttons_pressed, tuple)
+        self.assertEqual(len(buttons_pressed), expected_length)
+        for value in buttons_pressed:
+            self.assertIsInstance(value, bool)
+
+        expected_length = 5
+        buttons_pressed = pygame.mouse.get_pressed(num_buttons=5)
+        self.assertIsInstance(buttons_pressed, tuple)
+        self.assertEqual(len(buttons_pressed), expected_length)
+        for value in buttons_pressed:
+            self.assertIsInstance(value, bool)
+
+        expected_length = 3
+        buttons_pressed = pygame.mouse.get_pressed(3)
+        self.assertIsInstance(buttons_pressed, tuple)
+        self.assertEqual(len(buttons_pressed), expected_length)
+        for value in buttons_pressed:
+            self.assertIsInstance(value, bool)
+
+        expected_length = 5
+        buttons_pressed = pygame.mouse.get_pressed(5)
+        self.assertIsInstance(buttons_pressed, tuple)
+        self.assertEqual(len(buttons_pressed), expected_length)
+        for value in buttons_pressed:
+            self.assertIsInstance(value, bool)
+
+        with self.assertRaises(ValueError):
+            pygame.mouse.get_pressed(4)
+
+    def test_get_pos(self):
+        """Ensures get_pos returns the correct types."""
+        expected_length = 2
+
+        pos = pygame.mouse.get_pos()
+
+        self.assertIsInstance(pos, tuple)
+        self.assertEqual(len(pos), expected_length)
+        for value in pos:
+            self.assertIsInstance(value, int)
+
+    def test_set_pos__invalid_pos(self):
+        """Ensures set_pos handles invalid positions correctly."""
+        for invalid_pos in ((1,), [1, 2, 3], 1, "1", (1, "1"), []):
+
+            with self.assertRaises(TypeError):
+                pygame.mouse.set_pos(invalid_pos)
+
+    def test_get_rel(self):
+        """Ensures get_rel returns the correct types."""
+        expected_length = 2
+
+        rel = pygame.mouse.get_rel()
+
+        self.assertIsInstance(rel, tuple)
+        self.assertEqual(len(rel), expected_length)
+        for value in rel:
+            self.assertIsInstance(value, int)
+
+    def test_get_visible(self):
+        """Ensures get_visible works correctly."""
+        for expected_value in (False, True):
+            pygame.mouse.set_visible(expected_value)
+
+            visible = pygame.mouse.get_visible()
+
+            self.assertEqual(visible, expected_value)
+
+    def test_set_visible(self):
+        """Ensures set_visible returns the correct values."""
+        # Set to a known state.
+        pygame.mouse.set_visible(True)
+
+        for expected_visible in (False, True):
+            prev_visible = pygame.mouse.set_visible(expected_visible)
+
+            self.assertEqual(prev_visible, not expected_visible)
+
+    def test_set_visible__invalid_value(self):
+        """Ensures set_visible handles invalid positions correctly."""
+        for invalid_value in ((1,), [1, 2, 3], 1.1, "1", (1, "1"), []):
+            with self.assertRaises(TypeError):
+                prev_visible = pygame.mouse.set_visible(invalid_value)
+
 
 ################################################################################
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

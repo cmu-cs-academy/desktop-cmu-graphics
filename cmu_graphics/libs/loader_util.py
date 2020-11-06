@@ -20,19 +20,19 @@ def verify_support():
     if sys.platform not in ["darwin", "win32"]:
         print("""\
 It looks like your computer is using a(n) %(os)s operating system.
-%(os)s is not currently supported by CMU Graphics. We support Python3.5
-through Python3.8 on Windows and MacOS.""" % {'os': sys.platform})
+%(os)s is not currently supported by CMU Graphics. We support Python 3.5
+through Python 3.9 on Windows and MacOS.""" % {'os': sys.platform})
         os._exit(1)
     elif python_major != '3':
         print("""\
 It looks like you're running a version of Python 2. Since Python 2 is no
 longer maintaned as of January 1 2020, CMU Graphics does not support Python 2.
-We recommend installing Python 3.8 from python.org""")
+We recommend installing Python 3.9 from python.org""")
         os._exit(1)
-    elif python_minor < '5' or python_minor > '8':
+    elif python_minor < '5' or python_minor > '9':
         print("""\
 It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
-supported by CMU Graphics. We support Python 3.5 through Python3.8.
-We recommend installing Python 3.8 from python.org""" %
+supported by CMU Graphics. We support Python 3.5 through Python 3.9.
+We recommend installing Python 3.9 from python.org""" %
 {"minor": python_minor})
         os._exit(1)
