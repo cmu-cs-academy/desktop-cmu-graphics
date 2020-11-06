@@ -10,9 +10,18 @@ def centerCrop(frame):
     )
 
 def getCameraFrame():
-    _, frame = app.cam.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame = Image.fromarray(frame)
+    getFrameErrored = False
+
+    try:
+        _, frame = app.cam.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = Image.fromarray(frame)
+    except:
+        getFrameErrored = True
+
+    if getFrameErrored:
+        raise Exception('Unable to capture frame from camera')
+
     return centerCrop(frame)
 
 def drawBlock(frame, row, col, blockSize):
