@@ -59,7 +59,9 @@ class MissingModule:
         raise NotImplementedError(missing_msg)
 
     def __nonzero__(self):
-        return 0
+        return False
+
+    __bool__ = __nonzero__
 
     def warn(self):
         msg_type = 'import' if self.urgent else 'use'
@@ -69,16 +71,16 @@ class MissingModule:
             level = 4 if self.urgent else 3
             warnings.warn(message, RuntimeWarning, level)
         except ImportError:
-            print (message)
+            print(message)
 
 
 # we need to import like this, each at a time. the cleanest way to import
 # our modules is with the import command (not the __import__ function)
 
 # first, the "required" modules
-from pygame.base import *
-from pygame.constants import *  # now has __all__
-from pygame.version import *
+from pygame.base import * # pylint: disable=wildcard-import; lgtm[py/polluting-import]
+from pygame.constants import *  # now has __all__ pylint: disable=wildcard-import; lgtm[py/polluting-import]
+from pygame.version import * # pylint: disable=wildcard-import; lgtm[py/polluting-import]
 from pygame.rect import Rect
 from pygame.compat import PY_MAJOR_VERSION
 from pygame.rwobject import encode_string, encode_file_path
@@ -205,7 +207,7 @@ def warn_unwanted_files():
             level = 4
             warnings.warn(message, RuntimeWarning, level)
         except ImportError:
-            print (message)
+            print(message)
 
 
 # disable, because we hopefully don't need it.
