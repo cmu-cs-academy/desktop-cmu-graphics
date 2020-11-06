@@ -21,18 +21,20 @@ links = {
     'pygame_win_64_39': '',
 }
 
+def run_command(args):
+    subprocess.Popen(args).wait()
+
 def make_module(module_name):
     link = links[module_name]
     filename = link.split('/')[-1]
 
-    subprocess.Popen(['wget', link]).wait()
-    subprocess.Popen(['mv', filename, 'pygame.zip']).wait()
-    subprocess.Popen(['mkdir', 'pygame'])
-    subprocess.Popen(['unzip', 'pygame.zip', '-d', 'pygame']).wait()
-    subprocess.Popen(['mv', 'pygame/pygame', f'modules/{module_name}'])
-    subprocess.Popen(['rm', '-rf', 'pygame'])
-    subprocess.Popen(['rm', 'pygame.zip'])
-
+    run_command(['wget', link])
+    run_command(['mv', filename, 'pygame.zip'])
+    run_command(['mkdir', 'pygame'])
+    run_command(['unzip', 'pygame.zip', '-d', 'pygame'])
+    run_command(['mv', 'pygame/pygame', f'modules/{module_name}'])
+    run_command(['rm', '-rf', 'pygame'])
+    run_command(['rm', 'pygame.zip'])
 
 for module in links:
     make_module(module)
