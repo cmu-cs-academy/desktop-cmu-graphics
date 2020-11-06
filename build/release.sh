@@ -7,6 +7,7 @@ mkdir cmu_graphics_installer
 cp -r cmu_graphics cmu_graphics_installer
 cp samples/* cmu_graphics_installer
 cp LICENSE cmu_graphics_installer
+cp INSTRUCTIONS.pdf cmu_graphics_installer
 cd cmu_graphics_installer
 zip -rq $zipname *
 cd ../
