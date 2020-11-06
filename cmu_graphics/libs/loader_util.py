@@ -29,7 +29,7 @@ It looks like you're running a version of Python 2. Since Python 2 is no
 longer maintaned as of January 1 2020, CMU Graphics does not support Python 2.
 We recommend installing Python 3.8 from python.org""")
         os._exit(1)
-    elif python_minor < '5' or python_minor > '8':
+    elif python_minor < '5' or python_minor > '9':
         print("""\
 It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
 supported by CMU Graphics. We support Python 3.5 through Python3.8.
