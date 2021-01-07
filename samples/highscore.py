@@ -112,5 +112,3 @@ def initStartScreen():
     ])
 
 initStartScreen()
-
-cmu_graphics.loop()

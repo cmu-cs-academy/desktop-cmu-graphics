@@ -201,7 +201,6 @@ class App(object):
 
     def __init__(self, width=400, height=400, title=None):
         self.userGlobals = __main__.__dict__
-        self.userGlobals['app'] = self
         if title is None:
             try:
                 self.title, _ = os.path.splitext(os.path.basename(os.path.realpath(__main__.__file__)))
@@ -298,6 +297,7 @@ class App(object):
         lastTick = 0
         self._running = True
         while self._running:
+            sys.stdout.flush()
             with DRAWING_LOCK:
                 ran_user_code = True # assume we're going to run code
                 for event in pygame.event.get():
@@ -339,6 +339,31 @@ class App(object):
 
         pygame.quit()
         os._exit(0)
+
+class AppWrapper(object):
+    attrs = ['background', 'group', 'stepsPerSecond', 'paused', 'stop',
+             'getTextInput', 'top', 'bottom', 'left', 'right', 'centerX',
+             'centerY', 'width', 'height', 'stepsPerSecond', 'title']
+
+    def __init__(self, app):
+        self._app = app
+
+    def __dir__(self):
+        fields = set(AppWrapper.attrs)
+        for field in self.__dict__:
+            if field not in self._app.__dict__ and field != '_app':
+                fields.add(field)
+        return sorted(fields)
+
+    def __getattribute__(self, attr):
+        if (attr == '_app' or not attr in AppWrapper.attrs):
+            return super().__getattribute__(attr)
+        return self._app.__getattribute__(attr)
+
+    def __setattr__(self, attr, value):
+        if attr in AppWrapper.attrs:
+            return self._app.__setattr__(attr, value)
+        return super().__setattr__(attr, value)
 
 def check_for_update():
     try:
@@ -387,7 +412,83 @@ def check_for_update():
         pass
 
 def loop():
-    app.run()
+    app._app.run()
+
+from code import InteractiveConsole
+class CSAcademyConsole(InteractiveConsole):
+    def __init__(self):
+        self.name = "CS Academy Console"
+        __main__.__dict__['exit'] = lambda: os._exit(0)
+        super().__init__(locals=__main__.__dict__, filename = '<%s>' % self.name)
+
+    # Override the default error handling functions to avoid using our own
+    # excepthook function
+    def showsyntaxerror(self, filename=None):
+        type, value, tb = sys.exc_info()
+        sys.last_type = type
+        sys.last_value = value
+        sys.last_traceback = tb
+        if filename and type is SyntaxError:
+            # Work hard to stuff the correct filename in the exception
+            try:
+                msg, (dummy_filename, lineno, offset, line) = value.args
+            except ValueError:
+                # Not the format we expect; leave it alone
+                pass
+            else:
+                # Stuff in the right filename
+                value = SyntaxError(msg, (filename, lineno, offset, line))
+                sys.last_value = value
+
+        lines = traceback.format_exception_only(type, value)
+        self.write(''.join(lines))
+
+    def showtraceback(self):
+        sys.last_type, sys.last_value, last_tb = ei = sys.exc_info()
+        sys.last_traceback = last_tb
+        try:
+            lines = traceback.format_exception(ei[0], ei[1], last_tb.tb_next)
+            self.write(''.join(lines))
+        finally:
+            last_tb = ei = None
+
+    # Override interact so we can os._exit on EOF
+    def interact(self):
+        try:
+            sys.ps1
+        except AttributeError:
+            sys.ps1 = ">>> "
+        try:
+            sys.ps2
+        except AttributeError:
+            sys.ps2 = "... "
+        cprt = 'Type "help", "copyright", "credits" or "license" for more information.'
+        self.write("Python %s on %s\n%s\n(%s)\n" %
+                   (sys.version, sys.platform, cprt,
+                    self.name))
+        more = 0
+        while 1:
+            try:
+                if more:
+                    prompt = sys.ps2
+                else:
+                    prompt = sys.ps1
+                try:
+                    line = self.raw_input(prompt)
+                except EOFError:
+                    self.write("\n")
+                    break
+                else:
+                    more = self.push(line)
+            except KeyboardInterrupt:
+                self.write("\nKeyboardInterrupt\n")
+                self.resetbuffer()
+                more = 0
+        os._exit(0)
+
+def run():
+    t = threading.Thread(target=CSAcademyConsole().interact).start()
+    app._app.run()
 
 import os
 import sys
@@ -422,9 +523,11 @@ from random import *
 from cmu_graphics.utils import *
 import json
 import atexit
-from threading import RLock
+import threading
+import traceback
+import copy
 
-DRAWING_LOCK = RLock()
+DRAWING_LOCK = threading.RLock()
 
 pygame = None # defer module load until run
 # pygame takes a few seconds to load. when a getTextInput happens before we
@@ -439,4 +542,5 @@ rgb = sli.rgb
 gradient = sli.gradient
 slNewSound = sli.newSound
 
-app = App()
+app = AppWrapper(App())
+atexit.register(run)

@@ -123,5 +123,3 @@ def start():
         app.mode = 'helpText'
 
 start()
-
-cmu_graphics.loop()

@@ -2,7 +2,7 @@ from .libs import loader_util
 loader_util.verify_support()
 
 from cmu_graphics.cmu_graphics import (
-    App,
+    app,
     Arc,
     Circle,
     Group,
@@ -40,4 +40,4 @@ from random import (
     seed,
 )
 
-__all__ = ['cmu_graphics', 'Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Sound', 'Star', 'almostEqual', 'angleTo', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle']
+__all__ = ['cmu_graphics', 'app', 'Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Sound', 'Star', 'almostEqual', 'angleTo', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle']
