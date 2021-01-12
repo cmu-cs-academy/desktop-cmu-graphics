@@ -343,7 +343,7 @@ class App(object):
 class AppWrapper(object):
     attrs = ['background', 'group', 'stepsPerSecond', 'paused', 'stop',
              'getTextInput', 'top', 'bottom', 'left', 'right', 'centerX',
-             'centerY', 'width', 'height', 'stepsPerSecond', 'title']
+             'centerY', 'width', 'height', 'title']
 
     def __init__(self, app):
         self._app = app
