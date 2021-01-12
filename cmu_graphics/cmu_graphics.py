@@ -417,9 +417,9 @@ def loop():
 from code import InteractiveConsole
 class CSAcademyConsole(InteractiveConsole):
     def __init__(self):
-        self.name = "CS Academy Console"
+        self.__class__.__name__ = "CS Academy Console"
         __main__.__dict__['exit'] = lambda: os._exit(0)
-        super().__init__(locals=__main__.__dict__, filename = '<%s>' % self.name)
+        super().__init__(locals=__main__.__dict__, filename = '<%s>' % self.__class__.__name__)
 
     # Override the default error handling functions to avoid using our own
     # excepthook function
@@ -454,41 +454,15 @@ class CSAcademyConsole(InteractiveConsole):
 
     # Override interact so we can os._exit on EOF
     def interact(self):
-        try:
-            sys.ps1
-        except AttributeError:
-            sys.ps1 = ">>> "
-        try:
-            sys.ps2
-        except AttributeError:
-            sys.ps2 = "... "
-        cprt = 'Type "help", "copyright", "credits" or "license" for more information.'
-        self.write("Python %s on %s\n%s\n(%s)\n" %
-                   (sys.version, sys.platform, cprt,
-                    self.name))
-        more = 0
-        while 1:
-            try:
-                if more:
-                    prompt = sys.ps2
-                else:
-                    prompt = sys.ps1
-                try:
-                    line = self.raw_input(prompt)
-                except EOFError:
-                    self.write("\n")
-                    break
-                else:
-                    more = self.push(line)
-            except KeyboardInterrupt:
-                self.write("\nKeyboardInterrupt\n")
-                self.resetbuffer()
-                more = 0
+        super().interact()
         os._exit(0)
 
 def run():
     t = threading.Thread(target=CSAcademyConsole().interact).start()
-    app._app.run()
+    try:
+        app._app.run()
+    except KeyboardInterrupt:
+        os._exit(0)
 
 import os
 import sys
