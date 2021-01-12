@@ -215,12 +215,9 @@ class App(object):
         self.width = self.right = width
         self.height = self.bottom = height
         self._allKeysDown = set()
-        self._runningKeyMap = dict()
         self.background = 'white'
 
-        self._refreshDelay = 60
         self.stepsPerSecond = 30
-        self._msPassed = 0
 
         self._tlg = Group()
         sli.setTopLevelGroup(self._tlg)
