@@ -348,7 +348,7 @@ class AppWrapper(object):
     def __dir__(self):
         fields = set(AppWrapper.attrs)
         for field in self.__dict__:
-            if field not in self._app.__dict__ and field != '_app':
+            if field != '_app':
                 fields.add(field)
         return sorted(fields)
 
