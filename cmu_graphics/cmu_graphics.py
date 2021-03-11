@@ -252,6 +252,19 @@ class App(object):
     def stop(self):
         self._stopped = True
 
+    def readFile(self, path, default):
+        if not os.path.exists(path):
+            return default
+        with open(path, 'rt') as f:
+            return f.read()
+
+    def writeFile(self, path, content):
+        with open(path, 'wt') as f:
+            f.write(str(content))
+
+    def makeWebRequest(self, url):
+        return webrequest.get(url).read().decode('ascii').strip()
+
     def getTextInput(self, prompt='Enter some text'):
         if self.textInputs:
             return self.textInputs.pop(0)
@@ -340,7 +353,8 @@ class App(object):
 class AppWrapper(object):
     attrs = ['background', 'group', 'stepsPerSecond', 'paused', 'stop',
              'getTextInput', 'top', 'bottom', 'left', 'right', 'centerX',
-             'centerY', 'width', 'height', 'title']
+             'centerY', 'width', 'height', 'title', 'readFile', 'writeFile',
+             'makeWebRequest']
 
     def __init__(self, app):
         self._app = app
