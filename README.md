@@ -1,6 +1,6 @@
 ![Desktop CMU Graphics logo](https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/docs-media/pkg-logo.png)
 
-Desktop CMU Graphics is an offline, desktop version of CMU Graphics, a 
+Desktop CMU Graphics is an offline version of CMU Graphics, a 
 persistent-object graphics package geared towards beginner computer science 
 students. CMU Graphics and its desktop version are maintained by 
 [CMU CS Academy](https://academy.cs.cmu.edu/splash), a free-to-use middle and 
@@ -34,9 +34,9 @@ online version of the framework.
 
 ## Teacher Support and Documentation
 
-If you are a teacher and you have questions about CMU Graphics, remember that 
-you can reach out to us through the Support tab on the left side of the screen 
-of your homepage on the CMU CS Academy website:
+If you are a teacher with a CMU CS Academy Account and you have questions about 
+CMU Graphics, remember that you can reach out to us through the Support tab on 
+the left side of the screen of your homepage on the CMU CS Academy website:
 
 ![Highlighted teacher support tab](https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/docs-media/support-tab.png)
 
@@ -59,12 +59,12 @@ the package on the Replit website, follow the instructions on
 
 ## Dependencies
 
-Desktop CMU Graphics is heavily dependent upon the Pygame and 
-Pycairo graphics libraries. Additional functionality like image
-processing and other backend features depend on other smaller 
-libraries. These libraries should be installed automatically when
-you install this package via pip, and they are already included within
-the zipped version of the package. Dependency versions:
+Desktop CMU Graphics depends upon the Pygame and Pycairo libraries for core 
+functionality like event handling and drawing. Additional functionality like 
+image processing and web requests depend on other smaller libraries. These 
+libraries should be installed automatically when you install this package via 
+pip, and they are already included within the zipped version of the package. 
+Dependency versions:
 
 - Pygame >= 2.0.0
 - Pillow >= 7.2.0
