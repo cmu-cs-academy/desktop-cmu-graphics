@@ -1,8 +1,11 @@
+### ZIPFILE VERSION ###
 import sys
-import platform
 import struct
+### END ZIPFILE VERSION ###
+import platform
 import os
 
+### ZIPFILE VERSION ###
 def get_platform_string():
     plat = "unsupported"
     if sys.platform == "darwin":
@@ -14,9 +17,11 @@ def get_platform_string():
     python_major, python_minor, _ = platform.python_version_tuple()
     plat += "_%s%s" % (python_major, python_minor)
     return plat
+### END ZIPFILE VERSION ###
 
 def verify_support():
     python_major, python_minor, _ = platform.python_version_tuple()
+    ### ZIPFILE VERSION ###
     if sys.platform not in ["darwin", "win32"]:
         print("""\
 It looks like your computer is using a(n) %(os)s operating system.
@@ -24,6 +29,10 @@ It looks like your computer is using a(n) %(os)s operating system.
 through Python 3.9 on Windows and MacOS.""" % {'os': sys.platform})
         os._exit(1)
     elif python_major != '3':
+    ### END ZIPFILE VERSION ###
+    ### PYPI VERSION ###
+    if python_major != '3':
+    ### END PYPI VERSION ###
         print("""\
 It looks like you're running a version of Python 2. Since Python 2 is no
 longer maintaned as of January 1 2020, CMU Graphics does not support Python 2.

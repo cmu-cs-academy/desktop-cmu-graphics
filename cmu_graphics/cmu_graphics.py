@@ -279,7 +279,12 @@ class App(object):
         return p
 
     def run(self):
+        ### ZIPFILE VERSION ###
         from cmu_graphics.libs import pygame_loader as pg
+        ### END ZIPFILE VERSION ###
+        ### PYPI VERSION ###
+        import pygame as pg
+        ### END PYPI VERSION ###
         global pygame
         pygame = pg
 
@@ -488,7 +493,12 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import math
+### ZIPFILE VERSION ###
 from cmu_graphics.libs import cairo_loader as cairo
+### END ZIPFILE VERSION ###
+### PYPI VERSION ###
+import cairo
+### END PYPI VERSION ###
 from cmu_graphics import shape_logic
 from random import *
 from cmu_graphics.utils import *

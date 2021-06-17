@@ -1,7 +1,12 @@
 from libs import webrequest
 import json
 import io
+### ZIPFILE VERSION ###
 from libs.pygame_loader import mixer
+### END ZIPFILE VERSION ###
+### PYPI VERSION ###
+from pygame import mixer
+### END PYPI VERSION ###
 from threading import Timer, Lock
 
 class Sound(object):
