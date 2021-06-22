@@ -14,9 +14,50 @@ package, including its documentation, is licensed under the
 
 ## Installation
 
+There are two methods by which Desktop CMU Graphics is installable on a device:
+
+- The [zip file installer](https://academy.cs.cmu.edu/desktop) that is available
+for download on the CMU CS Academy website, and 
+- The version that is available on 
+[PyPI](https://pypi.org/project/cmu-graphics-test/) (Python Package Index) and 
+installable via PIP, Python’s built-in package-managing software. 
+
+Both versions come with their own advantages and limitations.
+
+The zip file available on the website is designed to have a user-friendly 
+installation process for all users, and it should work regardless of most 
+software restrictions in place on school-distributed devices. With this 
+installer, the package can be used in three simple steps of downloading the 
+zipped folder, unzipping it, and moving the cmu_graphics folder to the location 
+of the Python file where you want to use the package. However, due to the method
+by which dependencies are installed by the package, this version is only usable
+on Windows and Mac devices. Additionally, in order to use this package with 
+Python files in multiple locations, the cmu_graphics folder must be either moved
+or copied to each location in which it will be used.
+
+For those using devices with Linux operating systems, or for those who are 
+familiar with the command line/terminal, the PIP installable version of the 
+package offers a larger degree of versatility. This version of the package can 
+be installed with the following command:
+
 ```
 pip install cmu-graphics-test
 ```
+
+The installation process that follows also downloads and installs all package 
+dependencies, so, like the zip file installer, no further installation steps are
+required. This version allows you to install Desktop CMU Graphics directly to 
+your Python installation, meaning it can be used with any Python file you run 
+with the Python version that has the package installed. There is no need to 
+move or copy any files or directories. However, it requires a deeper 
+understanding of advanced tools for computer operation (i.e. the terminal), 
+and on school-provided devices, there may be restrictions in place that prevent 
+students or teachers from accessing the command line or terminal. When in doubt,
+the zip file installer should work in almost all cases.
+
+If neither of these installation approaches work for you, see the “Teacher 
+Support and Documentation” section below for more information about support 
+resources we provide.
 
 
 ## Getting Started
@@ -29,7 +70,8 @@ from cmu_graphics import *
 ```
 
 From there, the syntax for using the graphics package is identical to the 
-online version of the framework.
+online version of the framework.You can find more details about how to use the 
+graphics framework here on our [documentation page](https://academy.cs.cmu.edu/docs).
 
 
 ## Teacher Support and Documentation
@@ -63,7 +105,8 @@ Desktop CMU Graphics depends upon the Pygame and Pycairo libraries for core
 functionality like event handling and drawing. Additional functionality like 
 image processing and web requests depend on other smaller libraries. These 
 libraries should be installed automatically when you install this package via 
-pip, and they are already included within the zipped version of the package. 
+pip, and they are already included within the 
+[zipped version of the package](https://academy.cs.cmu.edu/desktop). 
 Dependency versions:
 
 - Pygame >= 2.0.0
