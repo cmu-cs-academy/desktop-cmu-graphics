@@ -73,13 +73,11 @@ if [[ $APPVEYOR ]]; then
   # TODO: Maybe update the version automatically when running this script or
   #       a related one?
   # TODO: Probably need to get an API key and a token to use for AppVeyor
-  # source venv/Scripts/activate
   # cd pypi_upload
 
   # python -m build
   # python -m twine upload dist/*
 
-  # deactivate
   # cd ..
 fi
 
