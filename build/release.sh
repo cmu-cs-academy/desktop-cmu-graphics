@@ -63,6 +63,13 @@ cp cmu_graphics_installer/$zipname deploy
 cp cmu_graphics/meta/version.txt deploy
 rm -r cmu_graphics_installer
 
+# Update the version inside of setup.py
+# TODO: Re-enable this once it's time to upload the actual version
+# versionregex="[0123456789]+.[0123456789]+.[0123456789]+"
+# match=$(grep -E ${versionregex} cmu_graphics/meta/version.txt)
+# pattern="s/version=\"${versionregex}\"/version=\"${match}\"/"
+# sed -i -E "$pattern" setup.py
+
 if [[ $APPVEYOR ]]; then
   # Push the zip file to AppVeyor
   appveyor PushArtifact deploy/cmu_graphics_installer.zip

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="cmu-graphics-test",
-    version="1.0.8",
+    version="1.0.11",
     author="Austin Schick",
     author_email="aschick@andrew.cmu.edu",
     description="The graphics framework used by CMU CS Academy, geared toward beginner CS students.",
