@@ -65,6 +65,7 @@ rm -r cmu_graphics_installer
 
 # Update the version inside of setup.py
 # TODO: Re-enable this once it's time to upload the actual version
+# TODO: I actually probably need to move this to the beginning of the script
 # versionregex="[0123456789]+.[0123456789]+.[0123456789]+"
 # match=$(grep -E ${versionregex} cmu_graphics/meta/version.txt)
 # pattern="s/version=\"${versionregex}\"/version=\"${match}\"/"
@@ -77,9 +78,7 @@ if [[ $APPVEYOR ]]; then
 
   # Deploy to PyPI 
   # TODO: Might need to use a different deployment-specific script for this
-  # TODO: Maybe update the version automatically when running this script or
-  #       a related one?
-  # TODO: Probably need to get an API key and a token to use for AppVeyor
+  
   # cd pypi_upload
 
   # python -m build

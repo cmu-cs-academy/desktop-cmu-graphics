@@ -13,6 +13,16 @@ environment:
   AWS_SECRET_ACCESS_KEY:
     secure: bkPtYZvL3Asozn/udXEZChW2gqT/GEJ66xdf+OeMtn4faZR36uKoP2x+wgCp0enQ
 
+  PYPI_TEST_USERNAME: __token__
+
+  PYPI_TEST_PASSWORD:
+    secure: > 
+      ES1+Jf/JRtml7urHLDaPvnLhtt+unOq+xGbT7xl53qJ31yq2f/o9bj82eG4WFhDaDq2+dD55t
+      5DW69oklIm2ePcDoMrW61gar5Wbnhe4a+pDAlS1qA0AJQkb2mOqq80Uqfn7fhZn7u0irgzrlq
+      Tj22sBGkbUfzIPsG1HBzPfQof44JVO+mDmWQKEwmw1Wh4rf0ATWeVvIzWZazbjEnhlwbP7Uya
+      2wrcJy8UUiAzatdEjRbLSuLSu52MCL8gS9s785KVF0u+8dH00Gaer1cx2dQnk35WtUmkdkzPO
+      81Vm+q8=
+
   matrix:
     - job_name: Windows Tests
       appveyor_build_worker_image: Visual Studio 2019
