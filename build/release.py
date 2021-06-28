@@ -4,11 +4,14 @@ import os
 import shutil
 import subprocess
 import re
+import zipfile
 
 # Regex used to remove the zip version code from the pip version and vice versa
 ZIP_REGEX=r"### ZIPFILE VERSION ###.*### END ZIPFILE VERSION ###"
 PYPI_REGEX=r"### PYPI VERSION ###.*### END PYPI VERSION ###"
 VERSION_REGEX=r'version="\d+.\d+.\d+"'
+
+ZIPFILE_NAME = "cmu_graphics_installer.zip"
 
 def read_file(path):
     with open(path, "r", encoding="utf-8") as f:
@@ -27,6 +30,22 @@ def replace_file_text(path, regex, repl, flags=0):
 def make_all_dirs(*dirs):
     for dir in dirs:
         os.makedirs(dir)
+
+def add_files_to_zip(path, new_zip):
+    for filename in os.listdir(path):
+        new_path = f"{path}/{filename}"
+        new_zip.write(new_path)
+        if os.path.isdir(new_path):
+            print("here")
+            add_files_to_zip(new_path, new_zip)
+
+def make_zip_file(src, name, dest):
+    new_zip = zipfile.ZipFile(f"{dest}/{name}", "w")
+    add_files_to_zip(src, new_zip)
+    new_zip.close()
+
+def get_filename(path):
+    return path.split("/")[-1]
 
 def main():
     # Update the version inside of setup.py based on version.txt
@@ -50,16 +69,55 @@ def main():
     shutil.copytree("../samples", f"{pypi_dest}/cmu_graphics/samples")
     print("Copying sample files to pypi_upload/src/cmu_graphics ...")
     for sample_path in os.listdir("../samples"):
-        shutil.copy2(sample_path, f"{zip_dest}/cmu_graphics/{sample_path}")
+        shutil.copy2(f"../samples/{sample_path}", f"{zip_dest}/cmu_graphics/{sample_path}")
     # Meta files and docs
     for path in ["../LICENSE", "../INSTRUCTIONS.pdf"]:
-        shutil.copy2(path, f"{zip_dest}/{path}")
+        shutil.copy2(path, f"{zip_dest}/{get_filename(path)}")
     for path in ["../LICENSE", "../README.md", "../setup.py", "../pyproject.toml"]:
-        shutil.copy2(path, f"../pypi_upload/{path}") 
+        shutil.copy2(path, f"../pypi_upload/{get_filename(path)}") 
         # Note that those files are in a different location than src, where the
         # actual package is
 
     # Separate the PyPI and zip versions of cmu_graphics from each other
+    pypi_source_dirs = [
+        "../pypi_upload/src/cmu_graphics",
+        "../pypi_upload/src/cmu_graphics/libs"
+        ]
+    for dir in pypi_source_dirs:
+        for path in os.listdir(dir):
+            replace_file_text(f"{dir}/{path}", ZIP_REGEX, "")
+    zip_source_dirs = [
+        "../cmu_graphics_installer/cmu_graphics",
+        "../cmu_graphics_installer/cmu_graphics/libs"
+        ]
+    for dir in zip_source_dirs:
+        for path in os.listdir(dir):
+            replace_file_text(f"{dir}/{path}", PYPI_REGEX, "")
     
+    make_zip_file(
+        "../cmu_graphics_installer", 
+        ZIPFILE_NAME, 
+        "../cmu_graphics_installer"
+        )
+
+    make_all_dirs("../deploy")
+    for path in [
+        f"../cmu_graphics_installer/{ZIPFILE_NAME}", 
+        "../cmu_graphics/meta/version.txt"
+        ]:
+        shutil.copy2(path, f"../deploy/{get_filename(path)}")
+    os.rmdir("../cmu_graphics_installer")
+    
+    if ("APPVEYOR") in os.environ:
+        # Push the zip file to AppVeyor
+        for path in os.listdir("../deploy"):
+            subprocess.run(["appveyor", "PushArtifact", f"../deploy/{path}"])
+        
+        # Deploy to PyPI 
+        # TODO: Might need to use a different deployment-specific script for this
+        # subprocess.run(["source", "helpers/pypi_push.sh"])
+    
+    os.rmdir("../deploy")
+    os.rmdir("../pypi_upload")
 
 main()
