@@ -31,16 +31,21 @@ def make_all_dirs(*dirs):
     for dir in dirs:
         os.makedirs(dir)
 
-def add_files_to_zip(path, new_zip):
+def add_files_to_zip(path, new_zip, counter=1):
+    print(counter)
     for filename in os.listdir(path):
         new_path = f"{path}/{filename}"
         new_zip.write(new_path)
         if os.path.isdir(new_path):
-            print("here")
-            add_files_to_zip(new_path, new_zip)
+            add_files_to_zip(new_path, new_zip, counter+1)
 
 def make_zip_file(src, name, dest):
-    new_zip = zipfile.ZipFile(f"{dest}/{name}", "w")
+    new_zip = zipfile.ZipFile(
+        f"{dest}/{name}", 
+        "w", 
+        compression=zipfile.ZIP_DEFLATED, 
+        allowZip64=True
+        )
     add_files_to_zip(src, new_zip)
     new_zip.close()
 
@@ -85,20 +90,24 @@ def main():
         ]
     for dir in pypi_source_dirs:
         for path in os.listdir(dir):
-            replace_file_text(f"{dir}/{path}", ZIP_REGEX, "")
+            full_path = f"{dir}/{path}"
+            if os.path.isfile(full_path):
+                replace_file_text(full_path, ZIP_REGEX, "")
     zip_source_dirs = [
         "../cmu_graphics_installer/cmu_graphics",
         "../cmu_graphics_installer/cmu_graphics/libs"
         ]
     for dir in zip_source_dirs:
         for path in os.listdir(dir):
-            replace_file_text(f"{dir}/{path}", PYPI_REGEX, "")
+            full_path = f"{dir}/{path}"
+            if os.path.isfile(full_path):
+                replace_file_text(full_path, PYPI_REGEX, "")
     
-    make_zip_file(
-        "../cmu_graphics_installer", 
-        ZIPFILE_NAME, 
-        "../cmu_graphics_installer"
-        )
+    subprocess.run(["zip", "-rq", ZIPFILE_NAME, "../cmu_graphics_installer/*"])
+
+    # Wait for zip file to be created
+    while not os.path.exists(f"../cmu_graphics_installer/{ZIPFILE_NAME}"):
+        pass
 
     make_all_dirs("../deploy")
     for path in [
@@ -108,7 +117,7 @@ def main():
         shutil.copy2(path, f"../deploy/{get_filename(path)}")
     os.rmdir("../cmu_graphics_installer")
     
-    if ("APPVEYOR") in os.environ:
+    if "APPVEYOR" in os.environ:
         # Push the zip file to AppVeyor
         for path in os.listdir("../deploy"):
             subprocess.run(["appveyor", "PushArtifact", f"../deploy/{path}"])
@@ -117,7 +126,7 @@ def main():
         # TODO: Might need to use a different deployment-specific script for this
         # subprocess.run(["source", "helpers/pypi_push.sh"])
     
-    os.rmdir("../deploy")
-    os.rmdir("../pypi_upload")
+    # os.rmdir("../deploy")
+    # os.rmdir("../pypi_upload")
 
 main()
