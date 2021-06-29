@@ -45,6 +45,7 @@ for:
       - pip install tox
 
     test_script:
+      - pwd
       - python build/splitversion.py --mode split
       - python -m tox
       - python build/splitversion.py --mode clean
@@ -61,7 +62,9 @@ for:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
     test_script:
+      - python build/splitversion.py --mode split
       - python -m tox
+      - python build/splitversion.py --mode clean
 
     after_test:
       - cd build
