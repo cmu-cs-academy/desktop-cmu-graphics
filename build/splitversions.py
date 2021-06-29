@@ -1,6 +1,7 @@
 import shutil
 import os
 import re
+import sys
 from file_io_util import *
 
 # Regex used to remove the zip version code from the pip version and vice versa
@@ -49,3 +50,36 @@ def split_versions(zip_dest, pypi_dest, ignore_fn):
             full_path = f"{dir}/{path}"
             if os.path.isfile(full_path):
                 replace_file_text(full_path, PYPI_REGEX, "", re.DOTALL)
+
+def rm_temp_dirs(zip_dest, pypi_dest, deploy_dest = None):
+    os.rmdir(zip_dest)
+    os.rmdir(pypi_dest)
+    if deploy_dest != None:
+        os.rmdir(deploy_dest)
+
+def main(argv):
+    if "--mode" in argv:
+        mode_idx = argv.index("--mode")
+        mode = argv[mode_idx + 1]
+        zip_dest = "../cmu_graphics_installer"
+        pypi_dest= "../pypi_upload/src"
+        if mode == "split":
+            print("""Manually splitting the zip and pip versions of CMU
+Graphics. Please make sure to re-run this command with the 'clean' flag to 
+remove the temporary files.""")
+            ignore_fn = shutil.ignore_patterns("*loader", "certifi")
+            split_versions(zip_dest, pypi_dest, ignore_fn)
+            os._exit(0)
+        elif mode == "clean":
+            print("Cleaning up temporary zip and pip versions of CMU Graphics...", end="")
+            rm_temp_dirs(zip_dest)
+            print("Done!")
+            os._exit(0)
+        else:
+            print("Invalid mode: choose one of 'split' or 'clean'")
+            os._exit(1)
+    print("Error: please run splitversions.py using a '--mode' flag of 'split' or 'clean'")
+    os._exit(1)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

@@ -9,7 +9,21 @@ import psutil
 import time
 from datetime import datetime, timedelta
 from threading import Thread
-from cmu_graphics import *
+
+def check_version(argv):
+    if "--version" in argv:
+        version_idx = argv.index("--version")
+        version = argv[version_idx + 1]
+        if version == "zip":
+            return "zip"
+        elif version == "pip":
+            return "pip"
+    return None
+
+if check_version(os.argv) == "zip":
+    from cmu_graphics_installer.cmu_graphics import *
+elif check_version(os.argv) == "pip":
+    from pypi_upload.src.cmu_graphics import *
 
 def get_children_pids():
     return {child.pid for child in psutil.Process().children(recursive=True)}

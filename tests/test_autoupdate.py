@@ -86,21 +86,40 @@ def cleanup():
         if os.path.exists(file):
             os.remove(file)
 
-def main():
+def main(argv):
     exit_code = 0
-    try:
-        create_folder_and_zip()
-        set_mock_urls()
-        spawn_server()
-        run_student_code() # causes an update
-        assert_update_succeeded()
-    except:
-        traceback.print_exc()
+    if "--version" in argv:
+        IS_ZIP = None
+        version_idx = argv.index("--version")
+        version = argv[version_idx + 1]
+        if version == "zip":
+            IS_ZIP = True
+            try:
+                if IS_ZIP:
+                    create_folder_and_zip()
+                set_mock_urls()
+                spawn_server()
+                run_student_code() # causes an update
+                assert_update_succeeded()
+            except:
+                traceback.print_exc()
+                exit_code = 1
+            finally:
+                cleanup()
+        # TODO: Finish pip part!
+        elif version == "pip":
+            IS_ZIP = False
+            print("""Pip part of test_autoupdate.py under construction. Please 
+just use the 'zip' version flag for now.""")
+            exit_code = 1
+        else:
+            print("Invalid version. Please provide either 'zip' or 'pip' as the package version")
+            exit_code = 1
+    else:
+        print("Please run test_autoupdate.py with a '--mode' flag of 'zip' or 'pip'.")
         exit_code = 1
-    finally:
-        cleanup()
 
     os._exit(exit_code)
 
 if __name__ == "__main__":
-    main()
+    main(os.argv[1:])

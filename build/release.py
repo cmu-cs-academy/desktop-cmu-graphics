@@ -26,11 +26,6 @@ def make_deploy_dir(deploy_dest, zip_dest):
         ]:
         shutil.copy2(path, f"{deploy_dest}/{get_filename(path)}")
 
-def rm_temp_dirs(zip_dest, pypi_dest, deploy_dest):
-    os.rmdir(zip_dest)
-    os.rmdir(pypi_dest)
-    os.rmdir(deploy_dest)
-
 def main():
     # Update the version inside of setup.py based on version.txt
     version_text = read_file("../cmu_graphics/meta/version.txt").strip()
