@@ -13,20 +13,20 @@ def split_versions(zip_dest, pypi_dest, ignore_fn):
     
     # cmu_graphics package
     print("Copying cmu_graphics package to pypi_upload/src/ ...")
-    shutil.copytree("../cmu_graphics", f"{pypi_dest}/cmu_graphics", ignore=ignore_fn)
+    shutil.copytree("cmu_graphics", f"{pypi_dest}/cmu_graphics", ignore=ignore_fn)
     print("Copying cmu_graphics package to cmu_graphics_installer/ ...")
-    shutil.copytree("../cmu_graphics", f"{zip_dest}/cmu_graphics")
+    shutil.copytree("cmu_graphics", f"{zip_dest}/cmu_graphics")
     # sample files
     print("Copying sample files to pypi_upload/src/cmu_graphics ...")
-    shutil.copytree("../samples", f"{pypi_dest}/cmu_graphics/samples")
+    shutil.copytree("samples", f"{pypi_dest}/cmu_graphics/samples")
     print("Copying sample files to pypi_upload/src/cmu_graphics ...")
-    for sample_path in os.listdir("../samples"):
-        shutil.copy2(f"../samples/{sample_path}", f"{zip_dest}/cmu_graphics/{sample_path}")
+    for sample_path in os.listdir("samples"):
+        shutil.copy2(f"samples/{sample_path}", f"{zip_dest}/cmu_graphics/{sample_path}")
     # Meta files and docs
-    for path in ["../LICENSE", "../INSTRUCTIONS.pdf"]:
+    for path in ["LICENSE", "INSTRUCTIONS.pdf"]:
         shutil.copy2(path, f"{zip_dest}/{get_filename(path)}")
     pypi_parent = "/".join(pypi_dest.split("/")[:-1])
-    for path in ["../LICENSE", "../README.md", "../setup.py", "../pyproject.toml"]:
+    for path in ["LICENSE", "README.md", "setup.py", "pyproject.toml"]:
         shutil.copy2(path, f"{pypi_parent}/{get_filename(path)}") 
         # Note that those files are in a different location than src, where the
         # actual package is
@@ -61,8 +61,8 @@ def main(argv):
     if "--mode" in argv:
         mode_idx = argv.index("--mode")
         mode = argv[mode_idx + 1]
-        zip_dest = "../cmu_graphics_installer"
-        pypi_dest= "../pypi_upload/src"
+        zip_dest = "cmu_graphics_installer"
+        pypi_dest= "pypi_upload/src"
         if mode == "split":
             print("""Manually splitting the zip and pip versions of CMU
 Graphics. Please make sure to re-run this command with the 'clean' flag to 

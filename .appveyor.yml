@@ -70,5 +70,4 @@ for:
       - python3 build/splitversions.py --mode clean
 
     after_test:
-      - cd build
-      - python release.py
+      - python3 build/release.py

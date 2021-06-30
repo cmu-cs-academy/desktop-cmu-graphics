@@ -1,10 +1,8 @@
-# Run me from the build/ directory!
+# Run me from the root of the repo!
 
 import os
 import shutil
 import subprocess
-import re
-import zipfile
 from splitversions import split_versions
 from file_io_util import *
 
@@ -22,27 +20,27 @@ def make_deploy_dir(deploy_dest, zip_dest):
     make_all_dirs(deploy_dest)
     for path in [
         f"{zip_dest}/{ZIPFILE_NAME}", 
-        "../cmu_graphics/meta/version.txt"
+        "cmu_graphics/meta/version.txt"
         ]:
         shutil.copy2(path, f"{deploy_dest}/{get_filename(path)}")
 
 def main():
     # Update the version inside of setup.py based on version.txt
-    version_text = read_file("../cmu_graphics/meta/version.txt").strip()
+    version_text = read_file("cmu_graphics/meta/version.txt").strip()
     # TODO: Re-enable this once it's time to upload the actual version
-    # replace_file_text("../setup.py", VERSION_REGEX, f'version="{version_text}"')
+    # replace_file_text("setup.py", VERSION_REGEX, f'version="{version_text}"')
 
     # Copy all necessary files to zip installer and PyPI installer
-    zip_dest = "../cmu_graphics_installer"
+    zip_dest = "cmu_graphics_installer"
     # Source code for PyPI version must be in a src/ directory
-    pypi_dest= "../pypi_upload/src"
+    pypi_dest= "pypi_upload/src"
     # Files to ignore in the PyPI version (i.e. all the module loaders)
     ignore_fn = shutil.ignore_patterns("*loader", "certifi")
     split_versions(zip_dest, pypi_dest, ignore_fn)
     
     make_zip(zip_dest)
 
-    deploy_dest = "../deploy"
+    deploy_dest = "deploy"
     make_deploy_dir(deploy_dest, zip_dest)
     
     if "APPVEYOR" in os.environ:
