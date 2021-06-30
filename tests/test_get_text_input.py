@@ -20,9 +20,9 @@ def check_version(argv):
             return "pip"
     return None
 
-if check_version(os.argv) == "zip":
+if check_version(sys.argv) == "zip":
     from cmu_graphics_installer.cmu_graphics import *
-elif check_version(os.argv) == "pip":
+elif check_version(sys.argv) == "pip":
     from pypi_upload.src.cmu_graphics import *
 
 def get_children_pids():

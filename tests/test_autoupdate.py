@@ -122,4 +122,4 @@ just use the 'zip' version flag for now.""")
     os._exit(exit_code)
 
 if __name__ == "__main__":
-    main(os.argv[1:])
+    main(sys.argv[1:])
