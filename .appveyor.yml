@@ -35,9 +35,10 @@ matrix:
 
 build: off
 
+# Uncomment me to open a remote desktop connection for debugging
 on_finish:
   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  
+
 for:
   -
     matrix:
@@ -48,10 +49,9 @@ for:
       - pip install tox
 
     test_script:
-      - pwd
-      - python build/splitversion.py --mode split
+      - python build/splitversions.py --mode split
       - python -m tox
-      - python build/splitversion.py --mode clean
+      - python build/splitversions.py --mode clean
 
   -
     matrix:
@@ -65,9 +65,9 @@ for:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
     test_script:
-      - python build/splitversion.py --mode split
+      - python build/splitversions.py --mode split
       - python -m tox
-      - python build/splitversion.py --mode clean
+      - python build/splitversions.py --mode clean
 
     after_test:
       - cd build
