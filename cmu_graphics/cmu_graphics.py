@@ -1,3 +1,7 @@
+# start_translate
+TRANSLATED_KEY_NAMES = {'keys': ['space', 'enter', 'left', 'right', 'up', 'down', 'pageup', 'pagedown', 'escape', 'delete', 'backspace', 'tab'], 'es': {'space': 'espacio', 'enter': 'intro', 'left': 'izquierda', 'right': 'derecha', 'up': 'arriba', 'down': 'abajo', 'pageup': 'repág', 'pagedown': 'avpág', 'escape': 'escape', 'delete': 'suprimir', 'backspace': 'retroceso', 'tab': 'tab'}, 'de': {'space': 'leertaste', 'enter': 'enter', 'left': 'links', 'right': 'rechts', 'up': 'pfeil-hoch', 'down': 'pfeil-runter', 'pageup': 'bild-hoch', 'pagedown': 'bild-runter', 'escape': 'escape', 'delete': 'entfernen', 'backspace': 'löschen', 'tab': 'tab'}}
+# end_translate
+
 EPSILON = 10e-7
 def almostEqual(x, y, epsilon=EPSILON):
     return abs(x - y) <= epsilon
@@ -12,8 +16,33 @@ def rounded(d):
 def round(*args):
     raise Exception(t("Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound"))
 
+def dsin(angle):
+    return math.sin(math.radians(angle))
+
+def dcos(angle):
+    return math.cos(math.radians(angle))
+
+def setLanguage(language):
+    sli.setLanguage(language)
+
+_print = print
+def print(*args, **kwargs):
+    return _print(*args, **kwargs)
+
+def Robot(*args, **kwargs):
+    raise NotImplementedError()
+
+def assertEqual(*args, **kwargs):
+    raise NotImplementedError()
+
 class Shape(object):
     def __init__(self, clsName, argNames, args, kwargs):
+        for attr in list(kwargs.keys()):
+            en_attr = toEnglish(attr, 'shape-attr')
+            if attr != en_attr and en_attr is not None:
+                kwargs[en_attr] = kwargs[attr]
+                del kwargs[attr]
+
         self._shape = slInitShape(clsName, argNames, args, kwargs)
         self._shape.studentShape = self
 
@@ -21,10 +50,12 @@ class Shape(object):
         if (attr[0] == '_'):
             self.__dict__[attr] = val
         else:
+            attr = toEnglish(attr, 'shape-attr')
             slSet(self._shape, attr, val)
         return val
 
     def __getattr__(self, attr):
+        attr = toEnglish(attr, 'shape-attr')
         return slGet(self._shape, attr)
 
     def __repr__(self):
@@ -82,7 +113,18 @@ class Sound(object):
     def __init__(self, url):
         self.sound = slNewSound(url)
 
-    def play(self, loop=False, restart=False):
+    def play(self, **kwargs):
+        default_kwargs = {'loop': False, 'restart': False}
+
+        for keyword in kwargs:
+            english_keyword = toEnglish(keyword, 'shape-attr')
+            if english_keyword not in default_kwargs:
+                raise Exception("TypeError: %s.%s() got an unexpected keyword argument '%s'" % (t('Sound'), t('play'), keyword))
+            default_kwargs[english_keyword] = kwargs[keyword]
+
+        loop = default_kwargs['loop']
+        restart = default_kwargs['restart']
+
         if not isinstance(loop, bool):
             raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
         if not isinstance(restart, bool):
@@ -105,11 +147,21 @@ class App(object):
     def quit(self):
         self._running = False
 
-    def callUserFn(self, fnName, args):
+    def callUserFn(self, fnName, *args):
         if fnName in self.userGlobals:
             (self.userGlobals[fnName])(*args)
-        else:
-            pass
+
+        for language in shape_logic.TRANSLATED_USER_FUNCTION_NAMES:
+            if language == 'keys': continue
+            if fnName in shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language]:
+                fnTranslations = shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language][fnName]
+                for fnTranslation in fnTranslations:
+                    if (fnTranslation in self.userGlobals):
+                        if fnName == 'onKeyHold':
+                            args = ([translateKeyName(x, language) for x in args[0]], )
+                        elif fnName in ['onKeyPress', 'onKeyRelease']:
+                            args = (translateKeyName(args[0], language), )
+                        return self.userGlobals[fnTranslation](*args)
 
     @staticmethod
     def getKey(keyCode, modifier):
@@ -353,14 +405,29 @@ class AppWrapper(object):
         return sorted(fields)
 
     def __getattribute__(self, attr):
+        attr = toEnglish(attr, 'app-attr')
         if (attr == '_app' or not attr in AppWrapper.attrs):
             return super().__getattribute__(attr)
         return self._app.__getattribute__(attr)
 
     def __setattr__(self, attr, value):
+        attr = toEnglish(attr, 'app-attr')
         if attr in AppWrapper.attrs:
             return self._app.__setattr__(attr, value)
         return super().__setattr__(attr, value)
+
+def onSteps(n):
+    for _ in range(n):
+        callUserFn('onStep')
+
+def onKeyHolds(keys, n):
+    assert isinstance(keys, list), t('keys must be a list')
+    for _ in range(n):
+        callUserFn('onKeyHold', keys)
+
+def onKeyPresses(key, n):
+    for _ in range(n):
+        callUserFn('onKeyPress', key)
 
 def check_for_update():
     try:
@@ -512,6 +579,9 @@ slSet = sli.slSet
 rgb = sli.rgb
 gradient = sli.gradient
 slNewSound = sli.newSound
+toEnglish = sli.toEnglish
+accentCombinations = sli.accentCombinations
+t = sli.t
 
 app = AppWrapper(App())
 atexit.register(run)
