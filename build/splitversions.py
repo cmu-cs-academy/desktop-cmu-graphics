@@ -52,10 +52,10 @@ def split_versions(zip_dest, pypi_dest, ignore_fn):
                 replace_file_text(full_path, PYPI_REGEX, "", re.DOTALL)
 
 def rm_temp_dirs(zip_dest, pypi_dest, deploy_dest = None):
-    os.rmdir(zip_dest)
-    os.rmdir(pypi_dest)
+    shutil.rmtree(zip_dest)
+    shutil.rmtree(pypi_dest)
     if deploy_dest != None:
-        os.rmdir(deploy_dest)
+        shutil.rmtree(deploy_dest)
 
 def main(argv):
     if "--mode" in argv:
@@ -71,8 +71,9 @@ remove the temporary files.""")
             split_versions(zip_dest, pypi_dest, ignore_fn)
             os._exit(0)
         elif mode == "clean":
+            pypi_dest = "pypi_upload"
             print("Cleaning up temporary zip and pip versions of CMU Graphics...", end="")
-            rm_temp_dirs(zip_dest)
+            rm_temp_dirs(zip_dest, pypi_dest)
             print("Done!")
             os._exit(0)
         else:
