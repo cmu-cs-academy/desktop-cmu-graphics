@@ -147,7 +147,7 @@ class App(object):
     def quit(self):
         self._running = False
 
-    def callUserFn(self, fnName, *args):
+    def callUserFn(self, fnName, args):
         if fnName in self.userGlobals:
             (self.userGlobals[fnName])(*args)
 

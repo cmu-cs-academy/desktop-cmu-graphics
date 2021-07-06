@@ -132,7 +132,7 @@ def t(key, variables = None, language = None):
 
 def toEnglish(key, context, returnLanguage = False):
     if context == 'color':
-        key = key.toLowerCase()
+        key = key.lower()
 
     searchDict = TRANSLATION_CONTEXT_LOOKUP.get(context, None)
     if searchDict is None:
@@ -182,8 +182,8 @@ def printTraceback(exceptionType, exception, tb):
         print('Exception: ' + str(exception))
 
 import __main__
-# if 'CMU_GRAPHICS_DEBUG' not in __main__.__dict__:
-#     sys.excepthook = printTraceback
+if 'CMU_GRAPHICS_DEBUG' not in __main__.__dict__:
+    sys.excepthook = printTraceback
 
 def printFullTracebacks():
     sys.excepthook = sys.__excepthook__
@@ -261,7 +261,7 @@ def checkColor(obj, attr, value):
     if not isinstance(value, str):
         typeError(obj, attr, value, 'color')
 
-    if any(color.lower() == value.lower() for color in CSS3_COLORS_TO_RGB):
+    if toEnglish(value, 'color').lower() in CSS3_COLORS_TO_RGB:
         return
 
     objName = obj if isinstance(obj, str) else obj.__class__.__name__
@@ -283,7 +283,7 @@ def checkBooleanOrArray(obj, attr, value):
 
 def checkAlign(obj, attr, value):
     if value == None: return # None is a legal align
-    if not value in aligns:
+    if not toEnglish(value, 'align') in aligns:
         pyThrow('Type Error: in {className} {attr}, {value} is not a legal align value'.format(
             className=obj.__class__.__name__,attr=attr,value=value
         ))
@@ -301,7 +301,7 @@ def checkSweepAngle(obj, attr, value):
 
 def toColorObject(v):
     if not v: return 'None'
-    if isinstance(v, str): return CSS3_COLORS_TO_RGB[v.lower()] or v
+    if isinstance(v, str): return CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()] or v
     if isinstance(v, RGB) or isinstance(v, Gradient): return v
     raise Exception('toColorObject: unknown color type: {t}'.format(t=type(v)))
 
@@ -462,6 +462,10 @@ class RGB(object):
     def get_blue(self): return self.get('blue')
     def set_blue(self, v): return self.set('blue', v)
     blue = property(get_blue, set_blue)
+
+    rojo = property(get_red, set_red)
+    verde = property(get_green, set_green)
+    azul = property(get_blue, set_blue)
 
     def darker(self):
         k = 0.85
@@ -649,6 +653,7 @@ alternateGradientStarts = {
 }
 
 def canonicalizeGradientStart(start):
+    start = toEnglish(start, 'gradient-start');
     if start in alternateGradientStarts: return alternateGradientStarts[start]
     return start
 
@@ -663,7 +668,10 @@ class Gradient(object):
             if isinstance(color, Gradient):
                 pyThrow('Type Error: {color} cannot be used inside gradient.colors'.format(color=color))
         checkString(self, 'start', start)
-        if start not in gradientStarts and start not in alternateGradientStarts:
+        if (
+            (toEnglish(start, 'gradient-start') not in gradientStarts) and
+            (toEnglish(start, 'gradient-start') not in alternateGradientStarts)
+        ):
             pyThrow('Illegal gradient start {start}'.format(start=start))
         self.attrs = {'class': self.__class__.__name__, 'colors': colors, 'start': start}
 
@@ -675,7 +683,7 @@ class Gradient(object):
         )
 
     def getRGBColors(self):
-        return list(map(lambda v: v if isinstance(v, RGB) else CSS3_COLORS_TO_RGB[v.lower()]))
+        return list(map(lambda v: v if isinstance(v, RGB) else CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()]))
 
     def toRGBList(self):
         if (self.start == 'center'):
@@ -687,7 +695,7 @@ class Gradient(object):
             return False
         if len(self.colors) != len(other.colors):
             return False
-        if self.start != other.start:
+        if canonicalizeGradientStart(self.start) != canonicalizeGradientStart(other.start):
             return False
         for i in range(len(self.colors)):
             c1 = self.colors[i]
@@ -709,6 +717,12 @@ class Gradient(object):
 
     def get_start(self): return self.attrs['start']
     start = property(get_start)
+
+    colores = property(get_colors)
+
+    def get_inicio(self):
+        return t(self.attrs['start'], {}, 'es');
+    inicio = property(get_inicio)
 
 class Drawing(object):
     def __init__(self):
@@ -878,6 +892,7 @@ class Shape(object):
     visible = property(get_visible, set_visible)
 
     def doAlign(self, x, y, v):
+        v = toEnglish(v, 'align')
         [xattr, yattr] = getAlignAttrs(v)
         setattr(self, xattr, x)
         setattr(self, yattr, y)
@@ -1026,7 +1041,7 @@ class Shape(object):
                 g.add_color_stop_rgba(i/(n-1), *self.getFillOrStrokeStyle(color))
             return g
         if isinstance(fillOrBorder, str):
-            fillOrBorder = CSS3_COLORS_TO_RGB[fillOrBorder.lower()]
+            fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
         # Flips RGBA to BGRA because Cairo is going to flip it back
         rgba = (fillOrBorder.blue/255, fillOrBorder.green/255, fillOrBorder.red/255,  self.opacity / 100)
         return rgba
@@ -1747,7 +1762,7 @@ class Polygon(Shape):
 
     def createBaseGradient(self, fillOrBorder):
         gradient = fillOrBorder
-        start = gradient.start
+        start = canonicalizeGradientStart(gradient.start)
         rotateAnchor = self.getRotateAnchor()
 
         unrotatedPoints = self.pointList
@@ -2309,6 +2324,11 @@ class Circle(Oval):
         args = [self.centerX, self.centerY, self.radius]
         return 'Circle{args}'.format(args=utils.roundedTupleString(args, 2))
 
+    def scalexy(self, varName, k, scaleAnchor = None):
+        super().scalexy(varName, k, scaleAnchor)
+        if (k == 1): return
+        self._exactRadius = None
+
 objConstructors = {
   'Arc': Arc,
   'Circle': Circle,
@@ -2740,9 +2760,14 @@ class ShapeLogicInterface(object):
     def rgb(self, r, g, b):
         return RGB(r, g, b)
 
-    def gradient(self, *colors, start='center'):
-        checkArgCount(None, 'gradient', ['colors', 'start'], (colors, start))
-        return Gradient(list(colors), start)
+    def gradient(self, *colors, start=None, **kwargs):
+        for keyword in kwargs:
+            if toEnglish(keyword, 'shape-attr') == 'start':
+                start = kwargs[keyword]
+            else:
+                raise Exception("TypeError: %s() got an unexpected keyword argument '%s'" % (t('gradient'), keyword))
+
+        return Gradient(list(colors), 'center' if start is None else start)
 
     def newSound(self, url):
         checkArgCount(None, 'Sound', ['url'], (url,))
