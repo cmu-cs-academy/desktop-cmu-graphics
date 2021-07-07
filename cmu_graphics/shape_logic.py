@@ -106,7 +106,7 @@ TRANSLATION_CONTEXT_LOOKUP = {
 }
 
 def getOrDefault(d, key):
-    if key in d:
+    if d is not None and key in d:
         return d[key]
     return key
 
@@ -124,9 +124,11 @@ def t(key, variables = None, language = None):
     if language is None:
         language = cmuGraphicsLanguage
 
-    res = getOrDefault(TRANSLATED_STRINGS[language], key)
-    for v in variables:
-        res = res.replace('{{%s}}' % v, variables[v])
+    res = getOrDefault(TRANSLATED_STRINGS.get(language), key)
+
+    if variables is not None:
+        for v in variables:
+            res = res.replace('{{%s}}' % v, str(variables[v]))
 
     return res
 
@@ -192,12 +194,13 @@ def pyThrow(err): raise CMUException(err)
 
 def typeError(obj, attr, value, typeName):
     if (type(obj) == str):
-        callSpec = '{attr} in {obj}'.format(attr=attr, obj=obj)
+        callSpec = t('{{attr} in {{object}}}', { 'attr': t(attr), 'object': obj })
     else:
-        callSpec = '{className}.{attr}'.format(className=obj.__class__.__name__, attr=attr)
+        callSpec = '{className}.{attr}'.format(className=t(obj.__class__.__name__), attr=t(attr))
     valueType = type(value).__name__
-    err = 'Type Error: {callSpec} should be {typeName} (but {value} is of type {valueType})'.format(
-        callSpec=callSpec, typeName=typeName, value=value, valueType=valueType
+    err = t(
+        'Type Error: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
+        {'callSpec': callSpec, 'typeName': typeName, 'value': value, 'valueType': valueType}
     )
     pyThrow(err)
 
@@ -207,27 +210,33 @@ def checkArgCount(clsName, fnName, argNames, args):
             callSpec = '{clsName}.{fnName}'.format(clsName=clsName, fnName=fnName)
         else:
             callSpec = (clsName or fnName)
-        pyThrow('Arg Count Error: {callSpec}() takes {argNamesLength} arguments ({args}), not {argLength}'.format(
-            callSpec=callSpec, argNamesLength=len(argNames), args=",".join(argNames), argLength=len(args)
+        pyThrow(t(
+            'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}',
+            {
+                'callSpec': callSpec,
+                'argNamesLen': len(argNames),
+                'argNames': ",".join(map(t, argNames)),
+                'argsLen': len(args)
+            }
         ))
 
 def checkInt(obj, attr, value):
-    if type(value) != int: typeError(obj, attr, value, 'integer')
+    if type(value) != int: typeError(obj, attr, value, t('integer'))
 
 def checkNumber(obj, attr, value):
     if type(value) != int and type(value) != float:
-        typeError(obj, attr, value, 'Number')
+        typeError(obj, attr, value, t('Number'))
 
 def checkPositive(obj, attr, value):
     checkNumber(obj, attr, value);
-    if (value <= 0): typeError(obj, attr, value, 'positive-number')
+    if (value <= 0): typeError(obj, attr, value, t('positive-number'))
 
 def checkNonNegative(obj, attr, value):
     checkNumber(obj, attr, value)
-    if (value < 0): typeError(obj, attr, value, 'non-negative number')
+    if (value < 0): typeError(obj, attr, value, t('non-negative number'))
 
 def checkRange(obj, attr, value, lo, hi):
-    if ((value < lo) or (value > hi)): typeError(obj, attr, value, 'number-in-range-{lo}-{hi}'.format(lo=lo,hi=hi))
+    if ((value < lo) or (value > hi)): typeError(obj, attr, value, t('number-in-range-{{lo}}-{{hi}}', {'lo': lo, 'hi': hi}))
 
 def checkValue(obj, attr, value): pass
 
@@ -244,7 +253,7 @@ def checkNumberIn0To100(obj, attr, value):
 
 def checkShape(obj, attr, value):
     if not isinstance(value, Shape):
-        typeError(obj, attr, value, 'Shape')
+        typeError(obj, attr, value, t('Shape'))
 
 def checkWidthHeight(obj, attr, value):
     if (isinstance(obj, Rect)
@@ -259,21 +268,24 @@ def checkColor(obj, attr, value):
     if isinstance(value, RGB): return
     if isinstance(value, Gradient): return
     if not isinstance(value, str):
-        typeError(obj, attr, value, 'color')
+        typeError(obj, attr, value, t('color'))
 
     if toEnglish(value, 'color').lower() in CSS3_COLORS_TO_RGB:
         return
 
     objName = obj if isinstance(obj, str) else obj.__class__.__name__
-    pyThrow('Type Error: {objName} {attr} should be a color, and {value} is not a legal color name'.format(
-        objName=objName, attr=attr, value=value
-    ))
+    pyThrow(
+        t(
+            'Type Error: {{objName}} {{attr}} should be a color, and {{value}} is not a legal color name',
+            {'objName': objName, 'attr': attr, 'value': value}
+        )
+    )
 
 def checkBoolean(obj, attr, value):
     if type(value) != bool: typeError(obj, attr, value, 'bool')
 
 def checkArray(obj, attr, value):
-    if type(value) != list and type(value) != tuple: typeError(obj, attr, value, 'list')
+    if type(value) != list and type(value) != tuple: typeError(obj, attr, value, t('list'))
 
 def checkString(obj, attr, value):
     if type(value) != str: typeError(obj, attr, value, 'string')
@@ -300,7 +312,7 @@ def checkSweepAngle(obj, attr, value):
     checkNumberInRange(obj, attr, value, 0, 360)
 
 def toColorObject(v):
-    if not v: return 'None'
+    if not v: return t('None')
     if isinstance(v, str): return CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()] or v
     if isinstance(v, RGB) or isinstance(v, Gradient): return v
     raise Exception('toColorObject: unknown color type: {t}'.format(t=type(v)))
@@ -375,7 +387,7 @@ def loadImage(path):
             response = webrequest.get(path)
             image = Image.open(response)
         except:
-            pyThrow('Failed to load image data')
+            pyThrow(t('Failed to load image data'))
     else:
         image = Image.open(path)
 
@@ -449,9 +461,11 @@ class RGB(object):
         checkIntInRange(self, attr, value, 0, 255)
         attrs = self.attrs
         attrs[attr] = value
-        attrs['strVal'] = "rgb({red}, {green}, {blue})".format(
-            red = self.get('red'), green = self.get('green'), blue = self.get('blue')
-        )
+        attrs['strVal'] = t('rgb({{r}}, {{g}}, {{b}})', {
+            'r': self.get('red'),
+            'g': self.get('green'),
+            'b': self.get('blue')
+        })
 
     def get_red(self): return self.get('red')
     def set_red(self, v): return self.set('red', v)
@@ -659,27 +673,30 @@ def canonicalizeGradientStart(start):
 
 class Gradient(object):
     def __init__(self, colors, start):
-        checkArray(self, 'colors', colors)
+        checkArray(self, t('colors'), colors)
         if len(colors) < 2:
-            pyThrow('Need to pass at least 2 colors to gradient(); you gave {colorLen}'.format(colorLen=v1[i]))
+            pyThrow(t('Need to pass at least 2 colors to gradient(); you gave {{colorLen}}', {'colorLen': v1[i]}));
         for color in colors:
             if color is None:
-                pyThrow('Type Error: None cannot be used inside gradient.colors')
+                pyThrow(t('Type Error: None cannot be used inside gradient.colors'))
             if isinstance(color, Gradient):
-                pyThrow('Type Error: {color} cannot be used inside gradient.colors'.format(color=color))
-        checkString(self, 'start', start)
+                pyThrow(t('Type Error: {{color}} cannot be used inside gradient.colors', {'color': color}))
+        checkString(self, t('start'), start)
         if (
             (toEnglish(start, 'gradient-start') not in gradientStarts) and
             (toEnglish(start, 'gradient-start') not in alternateGradientStarts)
         ):
-            pyThrow('Illegal gradient start {start}'.format(start=start))
+            pyThrow(t('Illegal gradient start {{start}}', {'start': start}))
         self.attrs = {'class': self.__class__.__name__, 'colors': colors, 'start': start}
 
     def toString(self):
         def quoted(s): return "'{s}'".format(s=s)
-        return "gradient({colors}, start='{start}')".format(
-            colors = '.'.join(v.toString() if isinstance(v, RGB) else quoted(v) for v in self.colors),
-            start = self.start
+        return t(
+            "gradient({{colors}}, start='{{start}}')",
+            {
+                'colors': ', '.join(v.toString() if isinstance(v, RGB) else quoted(v) for v in self.colors),
+                'start': t(self.start)
+            }
         )
 
     def getRGBColors(self):
@@ -766,7 +783,7 @@ class Shape(object):
                 self.defaultAlign = attrs['defaultAlign']
                 del attrs['defaultAlign']
             else:
-                self.defaultAlign = 'center'
+                self.defaultAlign = t('center')
         self.attrDefaults = shapeAttrDefaults
         if (not attrs is None):
             self.set(attrs)
@@ -792,8 +809,8 @@ class Shape(object):
             # TODO: Handle labels
         return result
 
-    def get_align(self): pyThrow("You can't get or set the align property")
-    def set_align(self, v): pyThrow("You can't get or set the align property")
+    def get_align(self): pyThrow(t("You can't get or set the align property"))
+    def set_align(self, v): pyThrow(t("You can't get or set the align property"))
     align = property(get_align, set_align)
 
     def get_doNotInspect(self): return self.attrs.get('doNotInspect', None)
@@ -844,14 +861,14 @@ class Shape(object):
 
     def get_width(self): return self.get('width')
     def set_width(self, v):
-        checkPositive(self, 'width', v)
+        checkPositive(self, t('width'), v)
         self.scalexy('x', v / self.width)
         self.set({'width': v})
     width = property(get_width, set_width)
 
     def get_height(self): return self.get('height')
     def set_height(self, v):
-        checkPositive(self, 'height', v)
+        checkPositive(self, t('height'), v)
         self.scalexy('y', v / self.height)
         self.set({'height': v})
     height = property(get_height, set_height)
@@ -910,30 +927,30 @@ class Shape(object):
     def rotate(self, degrees = None, cx = None, cy = None):
         if (cx is None and cy is None):
             cx, cy = self.getRotateAnchor()
-        checkNumber(self, 'rotate.degrees', degrees)
-        checkNumber(self, 'rotate.cx', cx)
-        checkNumber(self, 'rotate.cy', cy)
+        checkNumber(self, t('rotate.degrees'), degrees)
+        checkNumber(self, t('rotate.cx'), cx)
+        checkNumber(self, t('rotate.cy'), cy)
         self.set({'rotateAngle': self.rotateAngle + degrees})
         self.doRotate(degrees, cx, cy)
 
     def doRotate(self, degrees, cx, cy):
         pyThrow("Must override doRotate method!")
 
-    def toString(self): return 'Shape()'
+    def toString(self): return t('Shape()')
     def _toString(self): return self.toString() # so cmu_graphics can access toString
 
     def contains(self, *arguments): # contains(x,y)
-        checkArgCount(self.__class__.__name__, 'contains', ['x', 'y'], arguments)
+        checkArgCount(self.__class__.__name__, t('contains'), [t('x'), t('y')], arguments)
         x, y = arguments
         checkNumber('contains(x, y)', 'x', x)
         checkNumber('contains(x, y)', 'y', y)
         return utils.polygonContainsPoint(self.pointList, x, y)
 
     def hits(self, *arguments): # hits(x,y)
-        checkArgCount(self.__class__.__name__, 'hits', ['x', 'y'], arguments)
+        checkArgCount(self.__class__.__name__, t('hits'), [t('x'), t('y')], arguments)
         x, y = arguments
-        checkNumber('hits(x, y)', 'x', x)
-        checkNumber('hits(x, y)', 'y', y)
+        checkNumber(t('hits(x, y)'), t('x'), x)
+        checkNumber(t('hits(x, y)'), t('y'), y)
         pts = self.getApproxPoints()
         if (not utils.polygonContainsPoint(pts, x, y)): return False;
         if (self.fill): return True
@@ -961,8 +978,8 @@ class Shape(object):
         return False
 
     def containsShape(self, targetShape):
-        checkArgCount(self.__class__.__name__, 'containsShape', ['targetShape'], arguments);
-        checkShape('containsShape(targetShape)', 'targetShape', targetShape);
+        checkArgCount(self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments);
+        checkShape(t('containsShape(targetShape)'), t('targetShape'), targetShape);
 
         if (isinstance(targetShape, Group)):
             return all([self.containsShape(shape) for shape in targetShape.children])
@@ -989,9 +1006,9 @@ class Shape(object):
                 (b2['top']  + margin <= b1['top'] + b1['height']))
 
     def hitsShape(self, *arguments):
-        checkArgCount(self.__class__.__name__, 'hitsShape', ['targetShape'], arguments);
+        checkArgCount(self.__class__.__name__, t('hitsShape'), [t('targetShape')], arguments);
         (targetShape,) = arguments
-        checkShape('hitsShape(targetShape)', 'targetShape', targetShape);
+        checkShape(t('hitsShape(targetShape)'), t('targetShape'), targetShape);
         # Symmetric.  Two shapes hit each other if any of their
         # vertices hit the other or their edges intersect.
         myShapes = utils.getChildShapes(self);
@@ -1192,7 +1209,7 @@ class Group(Shape):
         self.isGroup = True
         self._shapes = []
 
-    def toString(self): return 'Group()'
+    def toString(self): return t('Group()')
 
     def __iter__(self):
         return iter(self.children)
@@ -1222,13 +1239,16 @@ class Group(Shape):
 
     def add(self, *shapes):
         for i in range(len(shapes)):
-            checkShape('Group.add(shape)', 'shape', shapes[i])
+            checkShape(t('Group.add(shape)'), t('shape'), shapes[i])
             activeDrawing.addCounter += 1
             if activeDrawing.addCounter % 100 == 0:
                 if countShapesInGroup(activeDrawing.tlg) > activeDrawing.appProperties['maxShapeCount']:
-                    pyThrow('Too many shapes: Your code created more than ' + str(activeDrawing.appProperties['maxShapeCount']) +
-                            ' shapes. If you would like to increase this limit even though it may cause' +
-                            ' your code to run slowly, call app.setMaxShapeCount(n).')
+                    pyThrow(
+                      t(
+                        'Too many shapes: Your code created more than {{maxShapeCount}} shapes. If you would like to increase this limit even though it may cause your code to run slowly, call app.setMaxShapeCount(n).',
+                        { 'maxShapeCount': str(activeDrawing.appProperties['maxShapeCount']) }
+                      )
+                    )
             self.insert(shapes[i])
 
     def _toFront(self, shape):
@@ -1242,7 +1262,7 @@ class Group(Shape):
         self.add(shape)
 
     def remove(self, shape):
-        checkShape('Group.remove(shape)', 'shape', shape)
+        checkShape(t('Group.remove(shape)'), t('shape'), shape)
         currentIndex = self._shapes.index(shape) if shape in self._shapes else -1
         shape.shapesToBeInFrontOf = shape.shapesToBeInFrontOf + self._shapes[:currentIndex]
 
@@ -1318,19 +1338,19 @@ class Group(Shape):
 
     def scalexy(self, varName, k, scaleAnchor = None):
         if (k == 1): return
-        checkPositive(self, 'scale{varName}'.format(varName=varName), k)
+        checkPositive(self, t('scale{{xy}}', {'xy': t(varName)}), k)
         if (scaleAnchor is None):
             scaleAnchor = self.centroid
         for s in self._shapes: s.scalexy(varName, k, scaleAnchor)
 
     def get_width(self): return self.right - self.left
     def set_width(self, v):
-        checkPositive(self, 'width', v)
+        checkPositive(self, t('width'), v)
         self.scalexy('x', (v / self.width) if self.width != 0 else math.inf)
     width = property(get_width, set_width)
     def get_height(self): return self.bottom - self.top
     def set_height(self, v):
-        checkPositive(self, 'height', v)
+        checkPositive(self, t('height'), v)
         self.scalexy('y', (v / self.height) if self.height != 0 else math.inf)
     height = property(get_height, set_height)
 
@@ -1372,7 +1392,12 @@ class Group(Shape):
             else:
                 if ((attr == 'fill' and not colorTest(getattr(shape, attr), val, 0.005))
                     or (attr == 'opacity' and not opacityTest(getattr(shape, attr), val))):
-                    pyThrow("Group.{attr} has no value because its children don't all have the same value for {attr}".format(attr=attr))
+                    pyThrow(
+                        t(
+                            "Group.{{attr}} has no value because its children don't all have the same value for {{attr}}",
+                            {'attr': attr}
+                        )
+                    )
         return val
 
     def setPTA(self, attr, v):
@@ -1388,7 +1413,7 @@ class Group(Shape):
     opacity = property(get_opacity, set_opacity)
 
     def noPTA(self, attr):
-        pyThrow('Group.{attr} cannot be read or modified'.format(attr=attr))
+        pyThrow(t('Group.{{attr}} cannot be read or modified', { 'attr': t(attr) }))
 
     def get_border(self): return self.noPTA('border')
     def set_border(self, v): return self.noPTA('border', v)
@@ -1574,10 +1599,10 @@ class Label(Shape):
         return cairo.LinearGradient(x0, y0, x1, y1)
 
     def get_width(self): return self.get('width')
-    def set_width(self, v): pyThrow("Cannot set Label's width")
+    def set_width(self, v): pyThrow(t("Cannot set Label's width"))
     width = property(get_width, set_width)
     def get_height(self): return self.get('height')
-    def set_height(self, v): pyThrow("Cannot set Label's height")
+    def set_height(self, v): pyThrow(t("Cannot set Label's height"))
     height = property(get_height, set_height)
 
     def get_centerX(self): return self.get('centerX')
@@ -1626,19 +1651,20 @@ class Label(Shape):
     italic = property(get_italic, set_italic)
 
     def toString(self):
-        return 'Label({value},{centerX},{centerY})'.format(
-            value=self.value, centerX=self.centerX, centerY = self.centerY
+        return t(
+            'Label({{value}},{{centerX}},{{centerY}})',
+            { 'value': self.value, 'centerX': self.centerX, 'centerY': self.centerY }
         )
 
 class Polygon(Shape):
     def __init__(self, attrs=None):
         if (not attrs is None and 'initialPoints' in attrs):
             if (len(attrs['initialPoints']) % 2 != 0):
-                pyThrow('Must have an even number of x,y values in initialPoints list')
+                pyThrow(t('Must have an even number of x,y values in initialPoints list'))
             for i in range(0, len(attrs['initialPoints']), 2):
                 x, y = attrs['initialPoints'][i], attrs['initialPoints'][i+1]
-                checkNumber('Polygon', 'initialPoints (x value)', x)
-                checkNumber('Polygon', 'initialPoints (y value)', y)
+                checkNumber(t('Polygon'), t('initialPoints (x value)'), x)
+                checkNumber(t('Polygon'), t('initialPoints (y value)'), y)
 
         super().__init__(attrs)
         self._cachedCentroid = self._cachedArea = None
@@ -1670,8 +1696,8 @@ class Polygon(Shape):
     centroid = property(get_centroid)
 
     def addPoint(self, x, y):
-        checkNumber('addPoint', 'x', x)
-        checkNumber('addPoint', 'y', y)
+        checkNumber(t('addPoint'), t('x'), x)
+        checkNumber(t('addPoint'), t('y'), y)
         self.pointList.append([x, y])
         self.pointList = self.pointList # alert to change
 
@@ -1731,7 +1757,7 @@ class Polygon(Shape):
     def addxy(self, varName, d):
         if d == 0: return
         varIndex = 0 if varName == 'x' else 1
-        checkNumber(self, 'add{varName}'.format(varName=varName), d)
+        checkNumber(self, t('add{{xy}}', {'xy': t(varName)}), d)
         pointList = self.pointList
         for i in range(len(pointList)):
             pointList[i][varIndex] += d
@@ -1740,7 +1766,7 @@ class Polygon(Shape):
     def scalexy(self, varName, k, scaleAnchor = None):
         if k == 1: return
         varIndex = 0 if varName == 'x' else 1
-        checkPositive(self, 'scale{varName}'.format(varName=varName), k)
+        checkPositive(self, t('scale{{xy}}', {'xy': t(varName)}), k)
         pointList = self.pointList
         cxy = (scaleAnchor or self.getScaleAnchor())[varIndex]
         for i in range(len(pointList)):
@@ -1758,7 +1784,7 @@ class Polygon(Shape):
 
     def toString(self):
         args = utils.flatten(self.pointList)
-        return 'Polygon{args}'.format(args=utils.roundedTupleString(args, 2))
+        return t('Polygon{{args}}', {'args': utils.roundedTupleString(args, 2)})
 
     def createBaseGradient(self, fillOrBorder):
         gradient = fillOrBorder
@@ -1838,14 +1864,14 @@ class Rect(Polygon):
 
     def toString(self):
         args = [self.left, self.top, self.width, self.height]
-        return 'Rect{args}'.format(args=utils.roundedTupleString(args, 2))
+        return t('Rect{{args}}', {'args': utils.roundedTupleString(args, 2)})
 
 class Line(Polygon):
     def __init__(self, attrs):
-        checkNumber('Line', 'x1', attrs['x1'])
-        checkNumber('Line', 'x2', attrs['x2'])
-        checkNumber('Line', 'y1', attrs['y1'])
-        checkNumber('Line', 'y2', attrs['y2'])
+        checkNumber(t('Line'), t('x1'), attrs['x1'])
+        checkNumber(t('Line'), t('x2'), attrs['x2'])
+        checkNumber(t('Line'), t('y1'), attrs['y1'])
+        checkNumber(t('Line'), t('y2'), attrs['y2'])
         attrs['initialPoints'] = utils.flatten(utils.getLinePoints(attrs['x1'], attrs['y1'], attrs['x2'], attrs['y2'], 2))
         del attrs['x1']
         del attrs['y1']
@@ -1894,10 +1920,10 @@ class Line(Polygon):
         return self.set({'lineWidth': v})
     lineWidth = property(get_lineWidth, set_lineWidth)
     def get_borderWidth(self): return 0
-    def set_borderWidth(self, v): pyThrow("Cannot set Line's borderWidth")
+    def set_borderWidth(self, v): pyThrow(t("Cannot set Line's borderWidth"))
     borderWidth = property(get_borderWidth, set_borderWidth)
     def get_border(self): return None
-    def set_border(self, v): pyThrow("Cannot set Line's border")
+    def set_border(self, v): pyThrow(t("Cannot set Line's border"))
     border = property(get_border, set_border)
 
     def get_area(self): return self.lineWidth * utils.distance(self.x1, self.y1, self.x2, self.y2)
@@ -1946,7 +1972,7 @@ class Line(Polygon):
 
     def toString():
         args = [self.x1, self.y1, self.x2, self.y2]
-        return 'Line{args}'.format(args=utils.roundedTupleString(args, 2))
+        return t('Line{{args}}', {'args': utils.roundedTupleString(args, 2)})
 
 class PolygonInCircle(Polygon):
     def get_radius(self): return self.get('radius')
@@ -1980,7 +2006,7 @@ class RegularPolygon(PolygonInCircle):
 
     def toString(self):
         args = [self.centerX, self.centerY, self.radius, self.points]
-        return 'RegularPolygon{args}'.format(args=utils.roundedTupleString(args, 2))
+        return t('RegularPolygon{{args}}', {'args': utils.roundedTupleString(args, 2)})
 
 class Star(PolygonInCircle):
     def __init__(self, attrs):
@@ -2003,7 +2029,7 @@ class Star(PolygonInCircle):
 
     def toString(self):
         args = [self.centerX, self.centerY, self.radius, self.points]
-        return 'Star{args}'.format(args=utils.roundedTupleString(args, 2))
+        return t('Star{{args}}', {'args': utils.roundedTupleString(args, 2)})
 
 class PolygonWithTransform(Polygon):
     def get_transformMatrix(self): return self.get('transformMatrix')
@@ -2103,7 +2129,7 @@ class CMUImage(PolygonWithTransform):
             self.attrDefaults.update({'fill': None})
 
     def get_url(self): return self.get('url')
-    def set_url(self, v): return self.set({'url': v})
+    def set_url(self, v): pyThrow(t("Cannot set Image's url"))
     url = property(get_url, set_url)
 
     def getScaleAnchor(self): return [self.left, self.top]
@@ -2117,7 +2143,7 @@ class CMUImage(PolygonWithTransform):
 
     def toString(self):
         args = [self.left, self.top, self.width, self.height]
-        return 'Image{args}'.format(args=utils.roundedTupleString(args, 2))
+        return t('Image{{args}}', {'args': utils.roundedTupleString(args, 2)})
 
 class Oval(PolygonWithTransform):
     def __init__(self, attrs):
@@ -2217,7 +2243,7 @@ class Oval(PolygonWithTransform):
 
     def toString(self):
         args = [self.centerX, self.centerY, self.width, self.height]
-        return 'Oval{args}'.format(args=utils.roundedTupleString(args, 2))
+        return t('Oval{{args}}', {'args': utils.roundedTupleString(args, 2)})
 
 class Arc(Oval):
     def __init__(self, attrs):
@@ -2322,7 +2348,7 @@ class Circle(Oval):
 
     def toString(self):
         args = [self.centerX, self.centerY, self.radius]
-        return 'Circle{args}'.format(args=utils.roundedTupleString(args, 2))
+        return t('Circle{{attrs}}', {'attrs': utils.roundedTupleString(args, 2)})
 
     def scalexy(self, varName, k, scaleAnchor = None):
         super().scalexy(varName, k, scaleAnchor)
@@ -2445,9 +2471,9 @@ class Inspector(object):
             if utils.isNumber(value):
                 value = utils.round2(value)
             elif value == True:
-                value = 'True'
+                value = t('True')
             elif value == False:
-                value = 'False'
+                value = t('False')
             attrVals[attr].add(value)
 
         if self.keyPointsToShapes.get(key, None) is None:
@@ -2467,20 +2493,20 @@ class Inspector(object):
         for shape in self.keyPointsToShapes[key]:
             if (shape is BACKGROUND_DUMMY):
                 if isinstance(self.app.background, Gradient):
-                    msgsAdd('background', gradientToString(self.app.background))
+                    msgsAdd(t('background'), gradientToString(self.app.background))
                 else:
-                    msgsAdd('background', self.app.background)
+                    msgsAdd(t('background'), self.app.background)
                 continue
 
             for attr in ['fill', 'border']:
                 color = getattr(shape, attr)
                 if color is not None:
                     if isinstance(color, Gradient):
-                        msgsAdd('gradient', gradientToString(color))
+                        msgsAdd(t('gradient'), gradientToString(color))
                     else:
-                        msgsAdd('color', color)
+                        msgsAdd(t('color'), color)
                 elif attr == 'fill' and not isinstance(shape, CMUImage):
-                    msgsAdd('color', 'None')
+                    msgsAdd(t('color'), t('None'))
 
             def checkAttrDefaults(attrDefaults):
                 for attr, defaultVal in attrDefaults:
@@ -2526,7 +2552,7 @@ class Inspector(object):
                 ])
                 if (shape.ovalWidth != None and shape.ovalHeight != None):
                     msgsAdd(
-                        'oval size',
+                        t('oval size'),
                         '(%d, %d)' % (
                             utils.round2(shape.ovalWidth),
                             utils.round2(shape.ovalHeight)
@@ -2547,7 +2573,7 @@ class Inspector(object):
                 )
                 bounds = utils.getBoxDims(unrotatedPoints)
                 msgsAdd(
-                    'size',
+                    t('size'),
                     '(%d, %d)' % (
                         utils.round2(bounds['width']),
                         utils.round2(bounds['height'])
@@ -2770,8 +2796,8 @@ class ShapeLogicInterface(object):
         return Gradient(list(colors), 'center' if start is None else start)
 
     def newSound(self, url):
-        checkArgCount(None, 'Sound', ['url'], (url,))
-        checkString('Sound', 'url', url)
+        checkArgCount(None, t('Sound'), [t('url')], (url,))
+        checkString(t('Sound'), t('url'), url)
         return CMUSound(url)
 
     def slNew(self, className, args):
@@ -2794,7 +2820,7 @@ class ShapeLogicInterface(object):
 
     def slGet(self, slObj, attr):
         if not hasattr(slObj, attr):
-            pyThrow('No such attribute: {attr}'.format(attr=attr))
+            pyThrow(t('No such attribute: {{attr}}', {'attr': attr}))
         result = getattr(slObj, attr)
         if callable(result):
             result = lambda *args, **kwargs: self.slApply(slObj, attr, args, kwargs)
@@ -2812,7 +2838,7 @@ class ShapeLogicInterface(object):
 
     def slSetAppProperty(app, propName, value):
         if propName == 'maxShapeCount':
-            checkNumber('app.setMaxShapeCount(n)', 'n', value)
+            checkNumber(t('app.setMaxShapeCount(n)'), t('n'), value)
         activeDrawing.appProperties[propName] = value
 
     def slGetAppProperty(app, propName):
@@ -2824,9 +2850,9 @@ class ShapeLogicInterface(object):
         checkArgCount(clsName, None, argNames, args)
         for attr in kwargs:
             if shapeAttrs.get(attr, None) is None:
-                pyThrow('"{attr}" is not a valid shape constructor argument'.format(attr=attr))
+                pyThrow(t('"{{attr}}" is not a valid shape constructor argument', {'attr': attr}))
         if kwargs.get('align', None) is not None and clsName == 'Polygon':
-            pyThrow('"align" is not a valid Polygon constructor argument')
+            pyThrow(t('"{{align}}" is not a valid Polygon constructor argument', {'align': t('align')}))
         constructorArgs = dict()
         for i in range(0, len(argNames)):
             constructorArgs[argNames[i]] = args[i]
@@ -2839,7 +2865,7 @@ class ShapeLogicInterface(object):
             for attr in kwargs:
                 self.slSet(shape, attr, kwargs[attr])
             if align is not None:
-                checkString(shape, 'align', align)
+                checkString(shape, t('align'), align)
                 xPoint = constructorArgs.get('left', None) if constructorArgs.get('centerX', None) is None else constructorArgs['centerX']
                 yPoint = constructorArgs.get('top', None) if constructorArgs.get('centerY', None) is None else constructorArgs['centerY']
                 shape.doAlign(xPoint, yPoint, align)
