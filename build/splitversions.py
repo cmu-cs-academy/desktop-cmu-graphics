@@ -5,8 +5,8 @@ import sys
 from file_io_util import *
 
 # Regex used to remove the zip version code from the pip version and vice versa
-ZIP_REGEX=r"### ZIPFILE VERSION ###.*### END ZIPFILE VERSION ###"
-PYPI_REGEX=r"### PYPI VERSION ###.*### END PYPI VERSION ###"
+ZIP_REGEX=r"### ZIPFILE VERSION ###.*?### END ZIPFILE VERSION ###"
+PYPI_REGEX=r"### PYPI VERSION ###.*?### END PYPI VERSION ###"
 
 def split_versions(zip_dest, pypi_dest, ignore_fn):
     make_all_dirs(zip_dest, pypi_dest)
