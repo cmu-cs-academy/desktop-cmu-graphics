@@ -102,8 +102,8 @@ def run_test(driver, test_name, all_source_code):
         source_code = ''
         source_code += 'import sys'
         source_code += '\nimport os'
-        # if sys.platform == 'darwin':
-        #     source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
+        if sys.platform == 'darwin':
+            source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
         source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
         source_code += '\nfrom cmu_graphics import *\n'
         source_code += "setLanguage('%s')\n" % (

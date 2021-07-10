@@ -1,6 +1,4 @@
-# start_translate
-TRANSLATED_KEY_NAMES = {'keys': ['space', 'enter', 'left', 'right', 'up', 'down', 'pageup', 'pagedown', 'escape', 'delete', 'backspace', 'tab'], 'es': {'space': 'espacio', 'enter': 'intro', 'left': 'izquierda', 'right': 'derecha', 'up': 'arriba', 'down': 'abajo', 'pageup': 'repág', 'pagedown': 'avpág', 'escape': 'escape', 'delete': 'suprimir', 'backspace': 'retroceso', 'tab': 'tab'}, 'de': {'space': 'leertaste', 'enter': 'enter', 'left': 'links', 'right': 'rechts', 'up': 'pfeil-hoch', 'down': 'pfeil-runter', 'pageup': 'bild-hoch', 'pagedown': 'bild-runter', 'escape': 'escape', 'delete': 'entfernen', 'backspace': 'löschen', 'tab': 'tab'}}
-# end_translate
+from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES
 
 EPSILON = 10e-7
 def almostEqual(x, y, epsilon=EPSILON):
@@ -133,6 +131,20 @@ class Sound(object):
 
     def pause(self):
         self.sound.pause()
+
+class KeyName(str):
+    def __init__(self, baseKey):
+        self.__dict__['accentCombinations'] = accentCombinations(str(self))
+
+    def __eq__(self, other):
+        return other in self.accentCombinations
+
+    def __setattr__(self, attr, value):
+        raise AttributeError(f"'str' object has no attribute '{attr}'")
+
+def translateKeyName(keyName, originalLanguage):
+    if originalLanguage not in TRANSLATED_KEY_NAMES: return keyName
+    return KeyName(TRANSLATED_KEY_NAMES[originalLanguage].get(keyName, keyName))
 
 # Based on Lukas Peraza's pygame framework
 # https://github.com/LBPeraza/Pygame-Asteroids
