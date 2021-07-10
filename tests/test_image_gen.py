@@ -157,7 +157,7 @@ cmu_graphics.loop()
             continue
         else:
             threshold = 25
-            if 'Label' in source_code:
+            if 'Label' in source_code or 'Rótulo' in source_code:
                 if sys.platform == 'win32':
                     threshold = 2500
                 else:
