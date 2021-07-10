@@ -197,7 +197,7 @@ def main():
                 continue
             REPORT_FILE.flush()
             print(test_py_name)
-            with open('image_gen/%s' % test_py_name) as f:
+            with open('image_gen/%s' % test_py_name, encoding='utf-8') as f:
                 if not run_test(driver, test_py_name[:-3], f.read()):
                     print('image_gen/%s failed' % test_py_name)
                     REPORT_FILE.write('<p>image_gen/%s failed' % (test_py_name))
