@@ -134,7 +134,7 @@ Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
 ''' % repr(os.path.abspath(output_path))
 
-        with open(TEST_FILE_PATH, 'w') as f:
+        with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
             f.write(source_code)
 
         p = subprocess.Popen(
