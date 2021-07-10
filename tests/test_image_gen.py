@@ -92,7 +92,11 @@ def run_test(driver, test_name, all_source_code):
         if not os.path.exists('image_gen/%s' % test_name):
             os.mkdir('image_gen/%s' % test_name)
 
-        correct_path = 'image_gen/%s/correct_%d.png' % (test_name, i)
+        correct_path_fmt = 'image_gen/%s/correct_%d.png'
+        correct_path = correct_path_fmt % (test_name, i)
+        if (test_name[-3:] in ('_es', '_de')):
+            correct_path = correct_path_fmt % (test_name[:-3], i)
+
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
         source_code = ''
@@ -102,6 +106,9 @@ def run_test(driver, test_name, all_source_code):
             source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
         source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
         source_code += '\nfrom cmu_graphics import *\n'
+        source_code += "setLanguage('%s')\n" % (
+            'es' if test_name.endswith('_es') else 'en'
+        )
         source_code += '\n######\n'.join(source_code_pieces[:piece_i])
         source_code += '\ndef onMousePress(x, y):\n'
         source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
@@ -127,7 +134,7 @@ Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
 ''' % repr(os.path.abspath(output_path))
 
-        with open(TEST_FILE_PATH, 'w') as f:
+        with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
             f.write(source_code)
 
         p = subprocess.Popen(
@@ -150,7 +157,7 @@ cmu_graphics.loop()
             continue
         else:
             threshold = 25
-            if 'Label' in source_code:
+            if 'Label' in source_code or 'Rótulo' in source_code:
                 if sys.platform == 'win32':
                     threshold = 2500
                 else:
@@ -190,7 +197,7 @@ def main():
                 continue
             REPORT_FILE.flush()
             print(test_py_name)
-            with open('image_gen/%s' % test_py_name) as f:
+            with open('image_gen/%s' % test_py_name, encoding='utf-8') as f:
                 if not run_test(driver, test_py_name[:-3], f.read()):
                     print('image_gen/%s failed' % test_py_name)
                     REPORT_FILE.write('<p>image_gen/%s failed' % (test_py_name))
