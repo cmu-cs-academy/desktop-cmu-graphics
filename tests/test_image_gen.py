@@ -95,19 +95,23 @@ def run_test(driver, test_name, all_source_code):
         correct_path = 'image_gen/%s/correct_%d.png' % (test_name, i)
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
-        source_code = ''
-        source_code += 'import sys'
-        source_code += '\nimport os'
-        if sys.platform == 'darwin':
-            source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
-        source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
-        source_code += '\nfrom cmu_graphics import *\n'
-        source_code += '\n######\n'.join(source_code_pieces[:piece_i])
-        source_code += '\ndef onMousePress(x, y):\n'
-        source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
-        source_code += '\n    app.background = "honeydew"'
+        global_pieces = '\n######\n'.join(source_code_pieces[:piece_i])
+        mouse_press_pieces = '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
+        source_code = (
+f'''import sys
+import os
 
-        source_code += '''
+{'os.environ["SDL_VIDEODRIVER"] = "dummy"' if sys.platform == 'darwin' else ''}
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from cmu_graphics import *
+
+{global_pieces}
+
+def onMousePress(x, y):
+{mouse_press_pieces}
+    app.background = "honeydew"
+
 from threading import Thread
 import time
 
@@ -120,12 +124,12 @@ def screenshotAndExit():
         raw_app.frameworkRedrew = False
     while not raw_app.frameworkRedrew:
         time.sleep(0.01)
-    raw_app.getScreenshot(%s)
+    raw_app.getScreenshot({repr(os.path.abspath(output_path))})
     raw_app.quit()
 
 Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
-''' % repr(os.path.abspath(output_path))
+''')
 
         with open(TEST_FILE_PATH, 'w') as f:
             f.write(source_code)
