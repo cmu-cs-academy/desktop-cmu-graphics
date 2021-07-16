@@ -80,7 +80,7 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
 
     return mean_squared_error < threshold
 
-def run_test(driver, test_name, all_source_code):
+def run_test(driver, test_name, all_source_code, pkg_dir):
     source_code_pieces = all_source_code.split('\n# -\n')
     source_code = ''
     i = 0
@@ -102,7 +102,7 @@ f'''import sys
 import os
 
 {'os.environ["SDL_VIDEODRIVER"] = "dummy"' if sys.platform == 'darwin' else ''}
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + '{pkg_dir}')
 
 from cmu_graphics import *
 
@@ -177,8 +177,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('directory', type=str, default='../CMU_CS_Academy_CS_1/', nargs='?')
     parser.add_argument('--only', type=str, help='The name of a single python file to run')
+    parser.add_argument('--version', type=str, help='The specific version of the package (either zip or pip) to test')
 
     args = parser.parse_args()
+    
+    pkg_dir = ''
+    if args.version == "zip":
+        pkg_dir = "/cmu_graphics_installer"
+    elif args.version == "pip":
+        pkg_dir = "/pypi_upload/src"
+    else:
+        print("""Error: Please specify a version of the package to check with a 
+--version flag of zip or pip""")
+        os._exit(1)
 
     num_failures = 0
     num_successes = 0
@@ -195,7 +206,7 @@ def main():
             REPORT_FILE.flush()
             print(test_py_name)
             with open('image_gen/%s' % test_py_name) as f:
-                if not run_test(driver, test_py_name[:-3], f.read()):
+                if not run_test(driver, test_py_name[:-3], f.read(), pkg_dir):
                     print('image_gen/%s failed' % test_py_name)
                     REPORT_FILE.write('<p>image_gen/%s failed' % (test_py_name))
                     REPORT_FILE.write('</div>')
