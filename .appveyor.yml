@@ -36,8 +36,8 @@ matrix:
 build: off
 
 # Uncomment me to open a remote desktop connection for debugging
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+# on_finish:
+#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 for:
   -
@@ -50,7 +50,7 @@ for:
 
     test_script:
       - py build/splitversions.py --mode split
-      - python -m tox
+      - python -m tox --parallel
       - py build/splitversions.py --mode clean
 
   -
