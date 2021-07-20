@@ -50,7 +50,7 @@ for:
 
     test_script:
       - py build/splitversions.py --mode split
-      - python -m tox --parallel
+      - python -m tox
       - py build/splitversions.py --mode clean
 
   -
@@ -60,6 +60,7 @@ for:
 
     install:
       - pip install tox
+      - brew install cairo
 
     before_test:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
