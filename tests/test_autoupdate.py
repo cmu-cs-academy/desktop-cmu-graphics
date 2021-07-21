@@ -6,6 +6,7 @@ import threading
 import subprocess
 import sys
 import traceback
+import argparse
 
 PORT = 3000
 
@@ -86,40 +87,42 @@ def cleanup():
         if os.path.exists(file):
             os.remove(file)
 
-def main(argv):
+def main(args):
     exit_code = 0
-    if "--version" in argv:
-        IS_ZIP = None
-        version_idx = argv.index("--version")
-        version = argv[version_idx + 1]
-        if version == "zip":
-            IS_ZIP = True
-            try:
-                if IS_ZIP:
-                    create_folder_and_zip()
-                set_mock_urls()
-                spawn_server()
-                run_student_code() # causes an update
-                assert_update_succeeded()
-            except:
-                traceback.print_exc()
-                exit_code = 1
-            finally:
-                cleanup()
-        # TODO: Finish pip part!
-        elif version == "pip":
-            IS_ZIP = False
-            print("""Pip part of test_autoupdate.py under construction. Please 
+    IS_ZIP = None
+    if args.pkg_version == "zip":
+        IS_ZIP = True
+        try:
+            if IS_ZIP:
+                create_folder_and_zip()
+            set_mock_urls()
+            spawn_server()
+            run_student_code() # causes an update
+            assert_update_succeeded()
+        except:
+            traceback.print_exc()
+            exit_code = 1
+        finally:
+            cleanup()
+    # TODO: Finish pip part!
+    elif args.pkg_version == "pip":
+        IS_ZIP = False
+        print("""Pip part of test_autoupdate.py under construction. Please 
 just use the 'zip' version flag for now.""")
-            exit_code = 1
-        else:
-            print("Invalid version. Please provide either 'zip' or 'pip' as the package version")
-            exit_code = 1
+        exit_code = 1
     else:
-        print("Please run test_autoupdate.py with a '--mode' flag of 'zip' or 'pip'.")
+        print("Invalid version. Please provide either 'zip' or 'pip' as the package version")
         exit_code = 1
 
     os._exit(exit_code)
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser()
+    # pkg_version must be either zip or pip
+    parser.add_argument(
+        'pkg_version', 
+        type=str, 
+        help='The specific version of the package (either zip or pip) to test'
+    )
+    args = parser.parse_args()
+    main(args)
