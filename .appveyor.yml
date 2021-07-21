@@ -24,8 +24,8 @@ environment:
       81Vm+q8=
 
   matrix:
-    - job_name: Windows Tests
-      appveyor_build_worker_image: Visual Studio 2019
+    # - job_name: Windows Tests
+    #   appveyor_build_worker_image: Visual Studio 2019
 
     - job_name: macOS Tests and Load Artifacts
       appveyor_build_worker_image: macOS
