@@ -60,6 +60,7 @@ for:
 
     install:
       - pip install tox
+      - brew install pkg-config
       - brew install cairo
 
     before_test:
