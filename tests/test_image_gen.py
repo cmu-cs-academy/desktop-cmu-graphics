@@ -175,20 +175,25 @@ def main():
     global REPORT_FILE, WAIT
 
     parser = argparse.ArgumentParser()
+    # pkg_version must be either zip or pip
+    parser.add_argument(
+        'pkg_version', 
+        type=str, 
+        help='The specific version of the package (either zip or pip) to test'
+    )
     parser.add_argument('directory', type=str, default='../CMU_CS_Academy_CS_1/', nargs='?')
     parser.add_argument('--only', type=str, help='The name of a single python file to run')
-    parser.add_argument('--version', type=str, help='The specific version of the package (either zip or pip) to test')
-
+    
     args = parser.parse_args()
     
     pkg_dir = ''
-    if args.version == "zip":
+    if args.pkg_version == "zip":
         pkg_dir = "/cmu_graphics_installer"
-    elif args.version == "pip":
+    elif args.pkg_version == "pip":
         pkg_dir = "/pypi_upload/src"
     else:
-        print("""Error: Please specify a version of the package to check with a 
---version flag of zip or pip""")
+        print(f"""Invalid pkg_version argument: {args.pkg_version}. Please specify 
+a package version of either zip or pip.""")
         os._exit(1)
 
     num_failures = 0
