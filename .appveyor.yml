@@ -23,9 +23,25 @@ environment:
       2wrcJy8UUiAzatdEjRbLSuLSu52MCL8gS9s785KVF0u+8dH00Gaer1cx2dQnk35WtUmkdkzPO
       81Vm+q8=
 
+  # Uncomment and insert your device's public SSH key here to access the 
+  # Mac build image. (Encrypt it and use the "secure" keyword if you like) :)
+  APPVEYOR_SSH_KEY:
+    secure: >
+      zZscbW9+BHJ6EFWDMWD3zvRpFAFmBa+ljHPSHmhPbJxpOTXy2hg2eFqJqCE4J47dAPTKReskP
+      WofZJjrWMGC43W/YCLX/I5zBkzRpvguURoovIMOaD4Vse8V2KfhA59npO1kswXYGDNV+WiJqZ
+      FpZQSCFjUVFuYpe+fhv0qZZpPKNwoEJDfc5Ew8JMH7j7UIK2yNkIGaqSppWN+LTOL23l4kK+b
+      KgBRBKUmJeZk7DjdICZqNSTEQXe+yPercHTHp3s6jLdzhCl2qckOMIuJD7ZY9bPCqcbf2FTcB
+      MABUSGPTw6MMFOSO+NojxLRX4NKObK2jQ+Ar0mRDPjoEb6o1WANrT5kZI4/qvdMfo3kpYY7JT
+      iIi7eqLRpcLHdoEJFqFSFrTbF8HJIGbXH6BPcoQZ4FVQoO+7aQgbjpP7h8tiSGlZqFhYJgFcW
+      Jp/6D2jlYy/VqccYp4wTWToejCDpWCDu4ljfta+FMl5c1CLTXw7WKYiBVcWxLPKY+aZjfJGEN
+      6DTM4+bLnKFXfYzDRkvDvqQuuyRnXitl/cDFJROYxkbXS8CkJ6/9OXFxu4l4iCN+MQCYQXI96
+      dxJ+JBUlqmy9jk1mjHwjGT8KxFzTJDdLF7riYxPZ4Fxd6T+DlavMcB82/Jmlw7tH0fz3UKVwO
+      L1PfEVK6NLoJtfmFZnN+RmFPtOo8SBzsbw/4WTcM56DKQQGnQXcLZtrvtbRFFsVtq7J32ViDN
+      9pz7UqQT1edE+3hcuo0AP+OaftiQ4pYcEsrVs5
+
   matrix:
-    # - job_name: Windows Tests
-    #   appveyor_build_worker_image: Visual Studio 2019
+    - job_name: Windows Tests
+      appveyor_build_worker_image: Visual Studio 2019
 
     - job_name: macOS Tests and Load Artifacts
       appveyor_build_worker_image: macOS
@@ -35,23 +51,30 @@ matrix:
 
 build: off
 
-# Uncomment me to open a remote desktop connection for debugging
+# Uncomment ME to open a remote desktop connection for debugging the 
+# Windows tests
 # on_finish:
-#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+# Uncomment ME to open an SSH connection for debugging the Mac OS tests
+on_finish:
+  - sh: export APPVEYOR_SSH_BLOCK=true
+  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+
 
 for:
-  # -
-  #   matrix:
-  #     only:
-  #       - job_name: Windows Tests
+  -
+    matrix:
+      only:
+        - job_name: Windows Tests
 
-  #   install:
-  #     - pip install tox
+    install:
+      - pip install tox
 
-  #   test_script:
-  #     - py build/splitversions.py --mode split
-  #     - python -m tox
-  #     - py build/splitversions.py --mode clean
+    test_script:
+      - py build/splitversions.py --mode split
+      - python -m tox
+      - py build/splitversions.py --mode clean
 
   -
     matrix:
