@@ -40,8 +40,8 @@ environment:
       9pz7UqQT1edE+3hcuo0AP+OaftiQ4pYcEsrVs5
 
   matrix:
-    - job_name: Windows Tests
-      appveyor_build_worker_image: Visual Studio 2019
+    # - job_name: Windows Tests
+    #   appveyor_build_worker_image: Visual Studio 2019
 
     - job_name: macOS Tests and Load Artifacts
       appveyor_build_worker_image: macOS
@@ -61,20 +61,19 @@ on_finish:
   - sh: export APPVEYOR_SSH_BLOCK=true
   - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
-
 for:
-  -
-    matrix:
-      only:
-        - job_name: Windows Tests
+  # -
+  #   matrix:
+  #     only:
+  #       - job_name: Windows Tests
 
-    install:
-      - pip install tox
+  #   install:
+  #     - pip install tox
 
-    test_script:
-      - py build/splitversions.py --mode split
-      - python -m tox
-      - py build/splitversions.py --mode clean
+  #   test_script:
+  #     - py build/splitversions.py --mode split
+  #     - python -m tox
+  #     - py build/splitversions.py --mode clean
 
   -
     matrix:
@@ -83,10 +82,8 @@ for:
 
     install:
       - pip install tox
-      - brew install cairo pkg-config
-      - brew upgrade cairo
-      - brew info
-      - echo $PATH
+      # - brew install cairo pkg-config
+      # - brew upgrade cairo
 
     before_test:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
