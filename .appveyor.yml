@@ -86,10 +86,16 @@ for:
       - brew install py3cairo
 
     before_test:
-      - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
+      - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
       - export PYCAIROPATH=$( python3 print_cairo_path.py )
 
     test_script:
+      # Copying the library manually to every virtual environment because
+      # Pip can't find the cairo installation from within a virtual environment
+      - cp -r PYCAIROPATH venv3.6/lib/python3.6/site-packages/
+      - cp -r PYCAIROPATH venv3.7/lib/python3.7/site-packages/
+      - cp -r PYCAIROPATH venv3.8/lib/python3.8/site-packages/
+      - cp -r PYCAIROPATH venv3.9/lib/python3.9/site-packages/
       - python3 build/splitversions.py --mode split
       - python -m tox
       - python3 build/splitversions.py --mode clean
