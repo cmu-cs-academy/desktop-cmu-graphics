@@ -83,13 +83,12 @@ for:
     install:
       - pip install tox
       # installing pycairo via brew because pip wants to be difficult
-      - brew install py3cairo
+      # - brew install py3cairo
 
     before_test:
       - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
     test_script:
-      - export PYCAIROPATH=$( python3 build/print_cairo_path.py )
       - python3 build/splitversions.py --mode split
       - python -m tox
       - python3 build/splitversions.py --mode clean
