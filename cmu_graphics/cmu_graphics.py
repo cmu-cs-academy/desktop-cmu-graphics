@@ -404,7 +404,8 @@ class App(object):
 class AppWrapper(object):
     attrs = ['background', 'group', 'stepsPerSecond', 'paused', 'stop',
              'getTextInput', 'top', 'bottom', 'left', 'right', 'centerX',
-             'centerY', 'width', 'height', 'title']
+             'centerY', 'width', 'height', 'title', 'setMaxShapeCount',
+             'printFullTracebacks']
 
     def __init__(self, app):
         self._app = app

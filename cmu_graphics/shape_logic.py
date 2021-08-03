@@ -977,8 +977,9 @@ class Shape(object):
                     return True
         return False
 
-    def containsShape(self, targetShape):
+    def containsShape(self, *arguments):
         checkArgCount(self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments);
+        (targetShape,) = arguments
         checkShape(t('containsShape(targetShape)'), t('targetShape'), targetShape);
 
         if (isinstance(targetShape, Group)):
