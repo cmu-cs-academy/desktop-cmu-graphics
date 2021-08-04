@@ -36,7 +36,7 @@ def main():
     pypi_dest= "pypi_upload/src"
     # Files to ignore in the PyPI version (i.e. all the module loaders)
     ignore_fn = shutil.ignore_patterns("*loader", "certifi")
-    split_versions(zip_dest, pypi_dest, ignore_fn)
+    split_versions(zip_dest, pypi_dest, ignore_fn, "")
     
     make_zip(zip_dest)
 
@@ -53,6 +53,6 @@ def main():
         # TODO: Might need to use a different deployment-specific script for this
         # subprocess.run(["source", "helpers/pypi_push.sh"])
     
-    rm_temp_dirs(zip_dest, pypi_dest, deploy_dest)
+    rm_temp_dirs(zip_dest, pypi_dest, "", deploy_dest)
 
 main()

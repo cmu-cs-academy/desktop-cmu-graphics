@@ -71,9 +71,7 @@ for:
   #     - pip install tox
 
   #   test_script:
-  #     - py build/splitversions.py --mode split
   #     - python -m tox
-  #     - py build/splitversions.py --mode clean
 
   -
     matrix:
