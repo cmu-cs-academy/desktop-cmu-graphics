@@ -57,9 +57,9 @@ build: off
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 # Uncomment ME to open an SSH connection for debugging the Mac OS tests
-on_finish:
-  - sh: export APPVEYOR_SSH_BLOCK=true
-  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+# on_finish:
+#   - sh: export APPVEYOR_SSH_BLOCK=true
+#   - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
 for:
   # -
@@ -82,16 +82,12 @@ for:
 
     install:
       - pip install tox
-      # installing pycairo via brew because pip wants to be difficult
-      # - brew install py3cairo
 
     before_test:
       - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
     test_script:
-      - python3 build/splitversions.py --mode split
       - python -m tox
-      - python3 build/splitversions.py --mode clean
 
     after_test:
       - python3 build/release.py
