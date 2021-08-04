@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import traceback
+import platform
 
 import imageio
 from PIL import Image
