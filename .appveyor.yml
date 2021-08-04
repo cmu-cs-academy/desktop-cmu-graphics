@@ -85,7 +85,7 @@ for:
       - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
     test_script:
-      - python -m tox
+      - python -m tox --parallel
 
     after_test:
       - python3 build/release.py
