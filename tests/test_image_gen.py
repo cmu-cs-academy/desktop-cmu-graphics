@@ -6,6 +6,7 @@ import sys
 import time
 import traceback
 import platform
+import shutil
 
 import imageio
 from PIL import Image
@@ -38,7 +39,7 @@ div.error img {
 '''
 REPORT_FOOTER = '</body></html>'
 
-def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
+def compare_images(path_1, path_2, test_name, test_piece_i, pyversion, threshold=25):
     image_1 = Image.open(path_1)
     image_1 = image_1.convert("RGB")
     image_1.save(path_1)
@@ -57,7 +58,7 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     mean_squared_error = numpy.sum(error_array) / float(SIZE * SIZE)
 
     if mean_squared_error >= threshold:
-        diff_image_path = 'image_gen/%s/diff_%d.png' % (test_name, test_piece_i)
+        diff_image_path = f'image_gen{pyversion}/{test_name}/diff_{test_piece_i}.png'
 
         per_pixel_error = error_array.sum(axis=2)
 
@@ -81,7 +82,7 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
 
     return mean_squared_error < threshold
 
-def run_test(driver, test_name, all_source_code, pkg_dir):
+def run_test(driver, test_name, all_source_code, pkg_dir, pyversion):
     source_code_pieces = all_source_code.split('\n# -\n')
     source_code = ''
     i = 0
@@ -90,11 +91,11 @@ def run_test(driver, test_name, all_source_code, pkg_dir):
     for piece_i in range(len(source_code_pieces)):
         i += 1
 
-        if not os.path.exists('image_gen/%s' % test_name):
-            os.mkdir('image_gen/%s' % test_name)
+        if not os.path.exists(f'image_gen{pyversion}/{test_name}'):
+            os.mkdir(f'image_gen{pyversion}/{test_name}')
 
-        correct_path = 'image_gen/%s/correct_%d.png' % (test_name, i)
-        output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
+        correct_path = f'image_gen{pyversion}/{test_name}/correct_{i}.png'
+        output_path = f'image_gen{pyversion}/{test_name}/output_{i}.png'
 
         global_pieces = '\n######\n'.join(source_code_pieces[:piece_i])
         mouse_press_pieces = '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
@@ -161,7 +162,7 @@ cmu_graphics.loop()
                 else:
                     threshold = 50
             if not compare_images(correct_path, output_path, test_name, i,
-                    threshold=threshold):
+                    pyversion, threshold=threshold):
                 if console_output.strip():
                     REPORT_FILE.write(
                         '<p>Console output for part %d:</p><pre>%s</pre>' %
@@ -174,7 +175,6 @@ cmu_graphics.loop()
 
 def main():
     global REPORT_FILE, WAIT
-
     parser = argparse.ArgumentParser()
     # pkg_version must be either zip or pip
     parser.add_argument(
@@ -204,29 +204,36 @@ a package version of either zip or pip.""")
     start_time = time.time()
     driver = None
 
+    # Have to copy the image_gen directory for each of the tests so that
+    # the parallel Python version tests don't step on each other and cause
+    # errors
+    shutil.copytree('image_gen', f'image_gen{pyversion}')
+
     try:
-        REPORT_FILE = open('report.html', 'w')
+        REPORT_FILE = open(f'report{pyversion}.html', 'w')
         REPORT_FILE.write(REPORT_HEADER)
 
-        for test_py_name in (args.only and [args.only] or os.listdir('image_gen')):
+        for test_py_name in (args.only and [args.only] or os.listdir(f'image_gen{pyversion}')):
             if not test_py_name.endswith('.py'):
                 continue
             REPORT_FILE.flush()
             print(test_py_name)
-            with open('image_gen/%s' % test_py_name) as f:
-                if not run_test(driver, test_py_name[:-3], f.read(), pkg_dir):
-                    print('image_gen/%s failed' % test_py_name)
-                    REPORT_FILE.write('<p>image_gen/%s failed' % (test_py_name))
+            with open(f'image_gen{pyversion}/{test_py_name}') as f:
+                if not run_test(driver, test_py_name[:-3], f.read(), pkg_dir, pyversion):
+                    print(f'image_gen{pyversion}/{test_py_name} failed')
+                    REPORT_FILE.write(f'<p>image_gen{pyversion}/{test_py_name} failed')
                     REPORT_FILE.write('</div>')
                     num_failures += 1
                 else:
                     num_successes += 1
 
         if num_failures > 0:
+            shutil.rmtree(f'image_gen{pyversion}')
             sys.exit(1)
     except KeyboardInterrupt:
         pass
     finally:
+        shutil.rmtree(f'image_gen{pyversion}')
         try:
             REPORT_FILE.write(REPORT_FOOTER)
             REPORT_FILE.close()
