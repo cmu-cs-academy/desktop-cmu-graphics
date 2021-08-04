@@ -186,11 +186,13 @@ def main():
     
     args = parser.parse_args()
     
+    python_major, python_minor, _ = platform.python_version_tuple()
+    pyversion = str(python_major) + str(python_minor)
     pkg_dir = ''
     if args.pkg_version == "zip":
-        pkg_dir = "/cmu_graphics_installer"
+        pkg_dir = f"/cmu_graphics_installer{pyversion}"
     elif args.pkg_version == "pip":
-        pkg_dir = "/pypi_upload/src"
+        pkg_dir = f"/pypi_upload{pyversion}/src"
     else:
         print(f"""Invalid pkg_version argument: {args.pkg_version}. Please specify 
 a package version of either zip or pip.""")

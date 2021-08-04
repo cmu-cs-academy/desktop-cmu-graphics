@@ -6,26 +6,27 @@ import threading
 import subprocess
 import sys
 import traceback
+import platform
 import argparse
 
 PORT = 3000
 
 os.chdir('autoupdate')
 
-def create_folder_and_zip():
+def create_folder_and_zip(pyversion):
     def zipdir(path, ziph):
         for root, dirs, files in os.walk(path):
             for file in files:
                 ziph.write(os.path.join(root, file))
 
-    os.mkdir('cmu_graphics_installer')
-    shutil.copytree('../../cmu_graphics', 'cmu_graphics_installer/cmu_graphics')
+    os.mkdir(f'cmu_graphics_installer{pyversion}')
+    shutil.copytree('../../cmu_graphics', f'cmu_graphics_installer{pyversion}/cmu_graphics')
 
     with zipfile.ZipFile('cmu_graphics_installer.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
-        zipdir('cmu_graphics_installer', zipf)
+        zipdir(f'cmu_graphics_installer{pyversion}', zipf)
 
-    shutil.move('cmu_graphics_installer/cmu_graphics', 'cmu_graphics')
-    os.rmdir('cmu_graphics_installer')
+    shutil.move(f'cmu_graphics_installer{pyversion}/cmu_graphics', 'cmu_graphics')
+    os.rmdir(f'cmu_graphics_installer{pyversion}')
 
     os.mkdir('srv')
     shutil.move('cmu_graphics_installer.zip', 'srv/cmu_graphics_installer.zip')
@@ -79,8 +80,8 @@ def assert_update_succeeded():
         assert f.read() != '0.0.0'
     run_student_code()
 
-def cleanup():
-    for dir in ('cmu_graphics', 'cmu_graphics_installer', 'srv'):
+def cleanup(pyversion):
+    for dir in ('cmu_graphics', f'cmu_graphics_installer{pyversion}', 'srv'):
         if os.path.exists(dir):
             shutil.rmtree(dir)
     for file in ('cmu_graphics_installer.zip', 'version.txt'):
@@ -90,11 +91,13 @@ def cleanup():
 def main(args):
     exit_code = 0
     IS_ZIP = None
+    python_major, python_minor, _ = platform.python_version_tuple()
+    pyversion = str(python_major) + str(python_minor)
     if args.pkg_version == "zip":
         IS_ZIP = True
         try:
             if IS_ZIP:
-                create_folder_and_zip()
+                create_folder_and_zip(pyversion)
             set_mock_urls()
             spawn_server()
             run_student_code() # causes an update
@@ -103,7 +106,7 @@ def main(args):
             traceback.print_exc()
             exit_code = 1
         finally:
-            cleanup()
+            cleanup(pyversion)
     # TODO: Finish pip part!
     elif args.pkg_version == "pip":
         IS_ZIP = False

@@ -1,7 +1,6 @@
 import shutil
 import os
 import re
-import sys
 import platform
 import argparse
 from file_io_util import *
