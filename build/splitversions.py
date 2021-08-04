@@ -2,6 +2,7 @@ import shutil
 import os
 import re
 import sys
+import platform
 from file_io_util import *
 
 # Regex used to remove the zip version code from the pip version and vice versa
@@ -61,8 +62,12 @@ def main(argv):
     if "--mode" in argv:
         mode_idx = argv.index("--mode")
         mode = argv[mode_idx + 1]
-        zip_dest = "cmu_graphics_installer"
-        pypi_dest= "pypi_upload/src"
+
+        python_major, python_minor, _ = platform.python_version_tuple()
+        python_str = f"{python_major}{python_minor}"
+
+        zip_dest = "cmu_graphics_installer" + python_str
+        pypi_dest= f"pypi_upload{python_str}/src"
         if mode == "split":
             print("""Manually splitting the zip and pip versions of CMU
 Graphics. Please make sure to re-run this command with the 'clean' flag to 
@@ -71,7 +76,7 @@ remove the temporary files.""")
             split_versions(zip_dest, pypi_dest, ignore_fn)
             os._exit(0)
         elif mode == "clean":
-            pypi_dest = "pypi_upload"
+            pypi_dest = "pypi_upload" + python_str
             print("Cleaning up temporary zip and pip versions of CMU Graphics...", end="")
             rm_temp_dirs(zip_dest, pypi_dest)
             print("Done!")
