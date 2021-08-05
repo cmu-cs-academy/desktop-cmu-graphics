@@ -207,7 +207,14 @@ a package version of either zip or pip.""")
     # Have to copy the image_gen directory for each of the tests so that
     # the parallel Python version tests don't step on each other and cause
     # errors
-    shutil.copytree('image_gen', f'image_gen{pyversion}')
+    if (not os.path.exists(f'image_gen{pyversion}')):
+        shutil.copytree('image_gen', f'image_gen{pyversion}')
+
+    # TODO: Remove this later; debugging code
+    file_ct = 0
+    for _, _, files in os.walk(f"image_gen{pyversion}"):
+        file_ct += len(files)
+    print("FILE COUNT IS:", file_ct)
 
     try:
         REPORT_FILE = open(f'report{pyversion}.html', 'w')
