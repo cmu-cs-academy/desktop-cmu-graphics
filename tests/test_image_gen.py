@@ -18,8 +18,6 @@ SIZE = 400
 
 REPORT_FILE = None
 
-TEST_FILE_PATH = 'runner.py'
-
 REPORT_HEADER = '''
 <html>
 <head>
@@ -104,7 +102,7 @@ f'''import sys
 import os
 
 {'os.environ["SDL_VIDEODRIVER"] = "dummy"' if sys.platform == 'darwin' else ''}
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + '{pkg_dir}')
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + {repr(pkg_dir)})
 
 from cmu_graphics import *
 
@@ -134,6 +132,7 @@ Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
 ''')
 
+        TEST_FILE_PATH = f'runner.py{pyversion}'
         with open(TEST_FILE_PATH, 'w') as f:
             f.write(source_code)
 
