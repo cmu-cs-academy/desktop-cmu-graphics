@@ -126,6 +126,7 @@ def screenshotAndExit():
         raw_app.frameworkRedrew = False
     while not raw_app.frameworkRedrew:
         time.sleep(0.01)
+    print("HELLO MY NAME IS", {repr(os.path.abspath(output_path))})
     raw_app.getScreenshot({repr(os.path.abspath(output_path))})
     raw_app.quit()
 
