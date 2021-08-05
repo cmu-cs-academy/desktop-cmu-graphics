@@ -124,7 +124,6 @@ def screenshotAndExit():
         raw_app.frameworkRedrew = False
     while not raw_app.frameworkRedrew:
         time.sleep(0.01)
-    print("HELLO MY NAME IS", {repr(os.path.abspath(output_path))})
     raw_app.getScreenshot({repr(os.path.abspath(output_path))})
     raw_app.quit()
 
@@ -175,6 +174,8 @@ cmu_graphics.loop()
 
 def main():
     global REPORT_FILE, WAIT
+    TEST_FILE_PATH = f'runner.py{pyversion}'
+
     parser = argparse.ArgumentParser()
     # pkg_version must be either zip or pip
     parser.add_argument(
@@ -209,12 +210,6 @@ a package version of either zip or pip.""")
     # errors
     if (not os.path.exists(f'image_gen{pyversion}')):
         shutil.copytree('image_gen', f'image_gen{pyversion}')
-
-    # TODO: Remove this later; debugging code
-    file_ct = 0
-    for _, _, files in os.walk(f"image_gen{pyversion}"):
-        file_ct += len(files)
-    print("FILE COUNT IS:", file_ct)
 
     try:
         REPORT_FILE = open(f'report{pyversion}.html', 'w')
@@ -263,7 +258,7 @@ a package version of either zip or pip.""")
             pass
         print('\n\n%d successes and %d failures in %.1fs' % (
             num_successes, num_failures, time.time() - start_time))
-        print('See report.html for details')
+        print(f'See report{pyversion}.html for details')
 
 if __name__ == '__main__':
     main()
