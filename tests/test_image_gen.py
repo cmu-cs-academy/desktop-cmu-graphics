@@ -174,7 +174,6 @@ cmu_graphics.loop()
 
 def main():
     global REPORT_FILE, WAIT
-    TEST_FILE_PATH = f'runner.py{pyversion}'
 
     parser = argparse.ArgumentParser()
     # pkg_version must be either zip or pip
@@ -253,7 +252,7 @@ a package version of either zip or pip.""")
         except:
             pass
         try:
-            os.remove(TEST_FILE_PATH)
+            os.remove(f'runner.py{pyversion}')
         except:
             pass
         print('\n\n%d successes and %d failures in %.1fs' % (
