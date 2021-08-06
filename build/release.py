@@ -3,7 +3,7 @@
 import os
 import shutil
 import subprocess
-from splitversions import split_versions
+from splitversions import split_versions, rm_temp_dirs
 from file_io_util import *
 
 VERSION_REGEX=r'version="\d+.\d+.\d+"'
@@ -11,10 +11,11 @@ VERSION_REGEX=r'version="\d+.\d+.\d+"'
 ZIPFILE_NAME = "cmu_graphics_installer.zip"
 
 def make_zip(zip_dest):
+    print(" ".join(["zip", "-rq", ZIPFILE_NAME, f"{zip_dest}/*"]))
     subprocess.run(["zip", "-rq", ZIPFILE_NAME, f"{zip_dest}/*"])
     # Wait for zip file to be created before exiting function
-    while not os.path.exists(f"{zip_dest}/{ZIPFILE_NAME}"):
-        pass
+    # while not os.path.exists(f"{zip_dest}/{ZIPFILE_NAME}"):
+    #     pass
 
 def make_deploy_dir(deploy_dest, zip_dest):
     make_all_dirs(deploy_dest)
