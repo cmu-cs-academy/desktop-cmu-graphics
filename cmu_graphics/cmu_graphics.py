@@ -34,12 +34,29 @@ def assertEqual(*args, **kwargs):
     raise NotImplementedError()
 
 class Shape(object):
+    # This represents the attributes and methods handled by JS that the user
+    # can call/get/set
+    _js_attrs = {
+        'left', 'right', 'top', 'bottom', 'centerX', 'centerY',
+        'width', 'height', 'fill', 'opacity', 'border', 'borderWidth', 'dashes',
+        'align', 'rotateAngle', 'visible',
+        'group', # Not sure if this should be documented?
+        'toBack', 'toFront', 'contains', 'hits', 'containsShape', 'hitsShape'
+    }
+
+    # This represents the valid keyword arguments passed to the constructor
+    _init_attrs = {'fill', 'border', 'borderWidth', 'opacity', 'rotateAngle', 'dashes', 'align', 'visible', 'db'}
+
     def __init__(self, clsName, argNames, args, kwargs):
         for attr in list(kwargs.keys()):
             en_attr = toEnglish(attr, 'shape-attr')
             if attr != en_attr and en_attr is not None:
                 kwargs[en_attr] = kwargs[attr]
                 del kwargs[attr]
+
+            if not en_attr in self._init_attrs:
+                raise Exception(t("{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'",
+                                { 'error': t('TypeError'), 'callSpec': t(clsName) + '()', 'arg': attr }))
 
         self._shape = slInitShape(clsName, argNames, args, kwargs)
         self._shape.studentShape = self
@@ -48,22 +65,34 @@ class Shape(object):
         if (attr[0] == '_'):
             self.__dict__[attr] = val
         else:
-            attr = toEnglish(attr, 'shape-attr')
-            slSet(self._shape, attr, val)
+            en_attr = toEnglish(attr, 'shape-attr')
+            if en_attr in self._js_attrs:
+                sli.slSetWithTypeCheck(self._shape, en_attr, val)
+            else:
+                self.__dict__[attr] = val
         return val
 
     def __getattr__(self, attr):
-        attr = toEnglish(attr, 'shape-attr')
-        return slGet(self._shape, attr)
+        if (attr[0] == '_'):
+            return self.__dict__[attr]
+            
+        en_attr = toEnglish(attr, 'shape-attr')
+        if en_attr in self._js_attrs:
+            return slGet(self._shape, en_attr)
+        else:
+            return self.__dict__[attr]
 
     def __repr__(self):
-        return self._toString()
+        return self._shape._toString()
 
 class Rect(Shape):
     def __init__(self, *args, **kwargs):
         super().__init__('Rect', ['left', 'top', 'width', 'height'], args, kwargs)
 
 class Image(Shape):
+    _js_attrs = Shape._js_attrs | {'url'}
+    _init_attrs = Shape._init_attrs | {'height', 'width'}
+
     def __init__(self, *args, **kwargs):
         super().__init__('Image', ['url', 'left', 'top'], args, kwargs)
 
@@ -72,40 +101,68 @@ class Oval(Shape):
         super().__init__('Oval', ['centerX', 'centerY', 'width', 'height'], args, kwargs)
 
 class Circle(Shape):
+    _js_attrs = Shape._js_attrs | {'radius'}
+
     def __init__(self, *args, **kwargs):
         super().__init__('Circle', ['centerX', 'centerY', 'radius'], args, kwargs)
 
 class RegularPolygon(Shape):
+    _js_attrs = Shape._js_attrs | {'radius', 'points'}
+
     def __init__(self, *args, **kwargs):
         super().__init__('RegularPolygon', ['centerX', 'centerY', 'radius', 'points'], args, kwargs)
 
 class Star(Shape):
+    _js_attrs = Shape._js_attrs | {'radius', 'points', 'roundness'}
+    _init_attrs = Shape._init_attrs | {'roundness'}
+
     def __init__(self, *args, **kwargs):
         super().__init__('Star', ['centerX', 'centerY', 'radius', 'points'], args, kwargs)
 
 class Line(Shape):
+    _js_attrs = Shape._js_attrs | {
+        'x1', 'y1', 'x2', 'y2', 'lineWidth', 'arrowStart', 'arrowEnd'
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__('Line', ['x1', 'y1', 'x2', 'y2'], args, kwargs)
 
 class Polygon(Shape):
+    _js_attrs = Shape._js_attrs | {'addPoint', 'pointList'}
+
     def __init__(self, *args, **kwargs):
         super().__init__('Polygon', [ 'initialPoints' ], [args], kwargs)
 
 class Arc(Shape):
+    _js_attrs = Shape._js_attrs | {'startAngle', 'sweepAngle'}
+
     def __init__(self, *args, **kwargs):
         super().__init__('Arc', ['centerX', 'centerY', 'width', 'height',
                                  'startAngle', 'sweepAngle'], args, kwargs)
 
 class Label(Shape):
+    _js_attrs = Shape._js_attrs | {'value', 'font', 'size', 'bold', 'italic'}
+    _init_attrs = Shape._init_attrs | {'bold', 'italic', 'size', 'font'}
+
     def __init__(self, *args, **kwargs):
         super().__init__('Label', ['value', 'centerX', 'centerY'], args, kwargs)
 
 class Group(Shape):
+    _js_attrs = Shape._js_attrs | {'children', 'add', 'clear', 'remove', 'hitTest',
+        # these attributes are not pass-through, so will throw an error if used
+        'arrowEnd', 'arrowStart', 'url', 'radius', 'points', 'roundness',
+        'x1', 'y1', 'x2', 'y2', 'lineWidth', 'startAngle', 'sweepAngle',
+        'value', 'font', 'size', 'bold', 'italic'
+    }
+    _init_attrs = {'visible', 'db'}
+
     def __init__(self, *args, **kwargs):
         super().__init__('Group', [ ], [ ], kwargs)
         for shape in args: self.add(shape)
 
     def __iter__(self): return iter(self._shape)
+    
+    def __len__(self): return len(self._shape._shapes)
 
 class Sound(object):
     def __init__(self, url):
@@ -229,12 +286,12 @@ class App(object):
             'width': self.width,
             'height': self.height,
             'fill': self.background,
-        });
+        })
         shape.draw(ctx)
 
         ctx.save()
         try:
-            self._tlg.draw(ctx)
+            self._tlg._shape.draw(ctx)
         finally:
             ctx.restore()
 
@@ -306,6 +363,12 @@ class App(object):
     def set_stopped(self, _):
         raise Exception('App.stopped is readonly')
     stopped = property(get_stopped, set_stopped)
+
+    def getBackground(self):
+        return sli.slGetAppProperty('background')
+    def setBackground(self, value):
+        return sli.slSetAppProperty('background', value)
+    background = property(getBackground, setBackground)
 
     def getMaxShapeCount(self):
         return sli.slGetAppProperty('maxShapeCount')
