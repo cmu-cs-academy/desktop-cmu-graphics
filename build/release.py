@@ -11,11 +11,12 @@ VERSION_REGEX=r'version="\d+.\d+.\d+"'
 ZIPFILE_NAME = "cmu_graphics_installer.zip"
 
 def make_zip(zip_dest):
-    print(" ".join(["zip", "-rq", ZIPFILE_NAME, f"{zip_dest}/*"]))
-    subprocess.run(["zip", "-rq", ZIPFILE_NAME, f"{zip_dest}/*"])
+    cmd = ["zip", "-rq", ZIPFILE_NAME, ".", "-i", f"{zip_dest}/*"]
+    print("Executing command:", " ".join(cmd))
+    subprocess.run(cmd)
     # Wait for zip file to be created before exiting function
-    # while not os.path.exists(f"{zip_dest}/{ZIPFILE_NAME}"):
-    #     pass
+    while not os.path.exists(f"{zip_dest}/{ZIPFILE_NAME}"):
+        pass
 
 def make_deploy_dir(deploy_dest, zip_dest):
     make_all_dirs(deploy_dest)

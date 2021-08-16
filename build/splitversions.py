@@ -21,7 +21,7 @@ def split_versions(zip_dest, pypi_dest, ignore_fn, dots):
     shutil.copytree(dots + "samples", dots + f"{pypi_dest}/cmu_graphics/samples")
     print("Copying sample files to pypi_upload/src/cmu_graphics ...")
     for sample_path in os.listdir(dots + "samples"):
-        shutil.copy2(dots + f"samples/{sample_path}", dots + f"{zip_dest}/cmu_graphics/{sample_path}")
+        shutil.copy2(dots + f"samples/{sample_path}", dots + f"{zip_dest}/samples/{sample_path}")
     # Meta files and docs
     for path in ["LICENSE", "INSTRUCTIONS.pdf"]:
         shutil.copy2(dots + path, dots + f"{zip_dest}/{get_filename(path)}")
