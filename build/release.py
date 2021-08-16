@@ -11,7 +11,7 @@ VERSION_REGEX=r'version="\d+.\d+.\d+"'
 ZIPFILE_NAME = "cmu_graphics_installer.zip"
 
 def make_zip(zip_dest):
-    cmd = ["zip", "-rq", ZIPFILE_NAME, ".", "-i", f"{zip_dest}/*"]
+    cmd = ["zip", "-rq", f"{zip_dest}/{ZIPFILE_NAME}", ".", "-i", f"{zip_dest}/*"]
     print("Executing command:", " ".join(cmd))
     subprocess.run(cmd)
     # Wait for zip file to be created before exiting function
@@ -48,8 +48,10 @@ def main():
     if "APPVEYOR" in os.environ:
         # Push the zip file to AppVeyor
         for path in os.listdir(deploy_dest):
+            artifact_dir = f"deploy/{path}"
             # Path for artifacts is relative to the repo root
-            subprocess.run(["appveyor", "PushArtifact", f"deploy/{path}"])
+            print("Pushing artifact", f"{artifact_dir}...")
+            subprocess.run(["appveyor", "PushArtifact", artifact_dir])
         
         # Deploy to PyPI 
         # TODO: Might need to use a different deployment-specific script for this
