@@ -153,7 +153,7 @@ cmu_graphics.loop()
 
         if not os.path.exists(correct_path):
             print('Generating new %s' % correct_path)
-            os.system('cp %s %s' % (download_path, correct_path))
+            os.system('cp %s %s' % (output_path, correct_path))
             continue
         else:
             threshold = 25
