@@ -54,7 +54,7 @@ def main():
             cmd_list = ["appveyor", "PushArtifact", artifact_dir]
             if artifact_dir == "deploy/cmu_graphics_installer.zip":
                 print("ARTIFACT NAMED")
-                cmd_list += ["-DeploymentName", "ZipInstaller"]
+                cmd_list += ["-DeploymentName", "ZipInstaller.App"]
             subprocess.run(["appveyor", "PushArtifact", artifact_dir])
         
         # Deploy to PyPI 
