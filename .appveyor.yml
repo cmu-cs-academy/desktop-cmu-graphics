@@ -82,10 +82,18 @@ for:
       - pip install tox
 
     before_test:
-      - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
+      - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
     test_script:
       - python -m tox --parallel
 
     after_test:
       - python3 build/release.py
+
+deploy:
+  -
+    provider: Local Build Server
+
+before_deploy:
+  - cd build
+  - source temp.sh
