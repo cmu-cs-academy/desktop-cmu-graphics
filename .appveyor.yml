@@ -89,3 +89,7 @@ for:
 
     after_test:
       - python3 build/release.py
+
+before_deploy:
+  - cd build
+  - source temp.sh
