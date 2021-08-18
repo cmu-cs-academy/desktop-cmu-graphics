@@ -57,6 +57,6 @@ def main():
         # TODO: Might need to use a different deployment-specific script for this
         # subprocess.run(["source", "helpers/pypi_push.sh"])
     
-    rm_temp_dirs(zip_dest, pypi_dest, "", deploy_dest)
+    # rm_temp_dirs(zip_dest, pypi_dest, "", deploy_dest)
 
 main()

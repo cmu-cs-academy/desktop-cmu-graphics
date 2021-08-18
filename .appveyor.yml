@@ -93,7 +93,7 @@ for:
       - python3 build/release.py
 
 artifacts:
-  - path: cmu_graphics_installer.zip
+  - path: cmu_graphics_installer/cmu_graphics_installer.zip
     name: ZipInstaller
 
 before_deploy:
