@@ -2,7 +2,7 @@ branches:
   only:
     - master
 
-cache: .tox
+# cache: .tox
 
 environment:
   SDL_VIDEODRIVER: dummy
