@@ -53,6 +53,7 @@ def main():
             print("Pushing artifact", f"{artifact_dir}...")
             cmd_list = ["appveyor", "PushArtifact", artifact_dir]
             if artifact_dir == "deploy/cmu_graphics_installer.zip":
+                print("ARTIFACT NAMED")
                 cmd_list += ["-DeploymentName", "ZipInstaller"]
             subprocess.run(["appveyor", "PushArtifact", artifact_dir])
         
