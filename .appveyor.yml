@@ -89,11 +89,3 @@ for:
 
     after_test:
       - python3 build/release.py
-
-deploy:
-  -
-    provider: Local Build Server
-
-before_deploy:
-  - cd build
-  - source temp.sh
