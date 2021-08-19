@@ -123,6 +123,7 @@ class Line(Shape):
     _js_attrs = Shape._js_attrs | {
         'x1', 'y1', 'x2', 'y2', 'lineWidth', 'arrowStart', 'arrowEnd'
     }
+    _init_attrs = Shape._init_attrs | {'lineWidth', 'arrowStart', 'arrowEnd'}
 
     def __init__(self, *args, **kwargs):
         super().__init__('Line', ['x1', 'y1', 'x2', 'y2'], args, kwargs)
@@ -467,7 +468,8 @@ class App(object):
 class AppWrapper(object):
     attrs = ['background', 'group', 'stepsPerSecond', 'paused', 'stop',
              'getTextInput', 'top', 'bottom', 'left', 'right', 'centerX',
-             'centerY', 'width', 'height', 'title']
+             'centerY', 'width', 'height', 'title', 'maxShapeCount',
+             'beatsPerMinute']
 
     def __init__(self, app):
         self._app = app
