@@ -94,5 +94,5 @@ for:
 
 artifacts:
   - path: pypi_upload
-    name: PypiUpload
+    name: PypiUpload.App
     type: zip
