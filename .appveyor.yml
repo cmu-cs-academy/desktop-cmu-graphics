@@ -93,10 +93,6 @@ for:
       - python3 build/release.py
 
 artifacts:
-  - path: cmu_graphics_installer/cmu_graphics_installer.zip
-    name: ZipInstaller.App
+  - path: pypi_upload
+    name: PypiUpload
     type: zip
-
-before_deploy:
-  - cd build
-  - source temp.sh

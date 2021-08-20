@@ -52,10 +52,7 @@ def main():
             # Path for artifacts is relative to the repo root
             print("Pushing artifact", f"{artifact_dir}...")
             cmd_list = ["appveyor", "PushArtifact", artifact_dir]
-            if artifact_dir == "deploy/cmu_graphics_installer.zip":
-                print("ARTIFACT NAMED")
-                cmd_list += ["-DeploymentName", "ZipInstaller.App"]
-            subprocess.run(["appveyor", "PushArtifact", artifact_dir])
+            subprocess.run(cmd_list)
         
         # Deploy to PyPI 
         # TODO: Might need to use a different deployment-specific script for this

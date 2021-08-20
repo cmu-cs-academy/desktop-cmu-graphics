@@ -25,7 +25,7 @@ def split_versions(zip_dest, pypi_dest, ignore_fn, dots):
     for path in ["LICENSE", "INSTRUCTIONS.pdf"]:
         shutil.copy2(dots + path, dots + f"{zip_dest}/{get_filename(path)}")
     pypi_parent = "/".join(pypi_dest.split("/")[:-1])
-    for path in ["LICENSE", "README.md", "setup.py", "pyproject.toml"]:
+    for path in ["LICENSE", "README.md", "setup.py", "pyproject.toml", "deploy.ps1"]:
         shutil.copy2(dots + path, dots + f"{pypi_parent}/{get_filename(path)}") 
         # Note that those files are in a different location than src, where the
         # actual package is
