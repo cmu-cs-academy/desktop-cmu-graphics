@@ -80,8 +80,6 @@ for:
 
     install:
       - pip install tox
-      - pip install build
-      - pip install twine
 
     before_test:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
@@ -94,5 +92,5 @@ for:
 
 artifacts:
   - path: pypi_upload
-    name: PypiUpload.App
+    name: PypiUpload
     type: zip

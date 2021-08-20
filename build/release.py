@@ -48,15 +48,11 @@ def main():
     if "APPVEYOR" in os.environ:
         # Push the zip file to AppVeyor
         for path in os.listdir(deploy_dest):
-            artifact_dir = f"deploy/{path}"
+            artifact_path = f"deploy/{path}"
             # Path for artifacts is relative to the repo root
-            print("Pushing artifact", f"{artifact_dir}...")
-            cmd_list = ["appveyor", "PushArtifact", artifact_dir]
+            print("Pushing artifact", f"{artifact_path}...")
+            cmd_list = ["appveyor", "PushArtifact", artifact_path]
             subprocess.run(cmd_list)
-        
-        # Deploy to PyPI 
-        # TODO: Might need to use a different deployment-specific script for this
-        # subprocess.run(["source", "helpers/pypi_push.sh"])
     
     # rm_temp_dirs(zip_dest, pypi_dest, "", deploy_dest)
 
