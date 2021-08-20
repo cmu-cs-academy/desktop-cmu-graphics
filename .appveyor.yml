@@ -97,8 +97,6 @@ artifacts:
     name: ZipInstaller.App
     type: zip
 
-deploy:
-  - provider: Environment
-    name: PyPI Push
-    on:
-      branch: add-docs
+before_deploy:
+  - cd build
+  - source temp.sh
