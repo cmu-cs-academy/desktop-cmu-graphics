@@ -102,7 +102,3 @@ deploy:
     name: PyPI Push
     on:
       branch: add-docs
-
-before_deploy:
-  - cd build
-  - source temp.sh
