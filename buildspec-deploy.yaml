@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - python3 -m pip install awscli build twine
+  build:
+    commands:
+      - python3 build/release.py

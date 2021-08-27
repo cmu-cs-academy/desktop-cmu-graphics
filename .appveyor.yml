@@ -16,14 +16,14 @@ environment:
   APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9Rkdcjvu0MQOMOqlpa5J757pso3iPzMOt6WK3WgJW0kZl/6l/UZfjN9fgJ6PXhtSQkXgyvOrhuyMVdIZIstdbZKnpC6KV274gof44653ildsK3wPSpuF2v9lmPPvfQWyHCfjb19T06p4Rh5idUmZqPXtMFNWL2vSR4IGBE90JlaNOdXDU07KPVkjbb5vsQLh/vl47N2LjU4vDCqHscQ+wVJuExE63vVuv2T3SDYJNpjAuvLZStdIjOjTyRaJHq2uazfajaKK1Ss3IUgvWnfFqg7WD9zASC9VffxZd9mvP1PtAODIPENdZWNFODsdIlSHTwAdO3DhWbwaDS+nfDhgB evan@Evans-MBP.wv.cc.cmu.edu
 
   matrix:
-    # - job_name: Windows Tests
-    #   appveyor_build_worker_image: Visual Studio 2019
+    - job_name: Windows Tests
+      appveyor_build_worker_image: Visual Studio 2019
 
     - job_name: macOS Tests and Deploy
       appveyor_build_worker_image: macOS
 
 matrix:
-  fast_finish: false # true
+  fast_finish: true
 
 build: off
 
@@ -47,24 +47,20 @@ for:
       only:
         - job_name: macOS Tests and Deploy
 
-    # install:
-    #   - python3 -m pip install tox
-    #   - brew install cairo pkg-config
-    #   # Put /usr/local/bin at the front of PATH so that homebrew's pkg-config will
-    #   # be run by pip. On 27 Aug 2021, with
-    #   # the default PATH value, `which pkg-config` returned
-    #   # /Library/Frameworks/Mono.framework/Home/bin/pkg-config
-    #   - export PATH=/usr/local/bin:$PATH
+    install:
+      - python3 -m pip install tox
+      - brew install cairo pkg-config
+      # Put /usr/local/bin at the front of PATH so that homebrew's pkg-config will
+      # be run by pip. On 27 Aug 2021, with
+      # the default PATH value, `which pkg-config` returned
+      # /Library/Frameworks/Mono.framework/Home/bin/pkg-config
+      - export PATH=/usr/local/bin:$PATH
 
-    # before_test:
-    #   - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
+    before_test:
+      - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
-    # test_script:
-    #   - python3 -m tox --parallel
-
-    after_test:
-      - python3 -m pip install awscli build twine
-      - python3 build/release.py
+    test_script:
+      - python3 -m tox --parallel
 
     # on_finish:
     #   - export APPVEYOR_SSH_BLOCK=true
