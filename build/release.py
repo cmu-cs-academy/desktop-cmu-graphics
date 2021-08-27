@@ -26,7 +26,7 @@ def main():
 
     subprocess.run(['python3', '-m', 'build'], cwd=pypi_dest, check=True)
     subprocess.run(['python3', '-m', 'twine', 'upload', '--repository', 'testpypi',
-        'dist/*', '-u', '__token__', '-p', os.environ['PYPI_TOKEN']],
+        'dist/*', '-u', '__token__', '-p', os.environ['PYPI_TEST_TOKEN']],
         cwd=pypi_dest, check=True)
 
     # TODO: Upload Zip and version.txt to S3
