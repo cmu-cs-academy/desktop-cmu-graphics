@@ -3,7 +3,7 @@
 import os
 import shutil
 import subprocess
-from splitversions import split_versions
+from splitversions import split_versions, rm_temp_dirs
 
 ZIPFILE_NAME = "cmu_graphics_installer.zip"
 
@@ -18,7 +18,9 @@ def main():
     zip_dest = "cmu_graphics_installer"
     pypi_dest= "pypi_upload"
 
-    split_versions(zip_dest, pypi_dest, ignore_fn, "")
+    rm_temp_dirs(zip_dest, pypi_dest)
+
+    split_versions(zip_dest, pypi_dest, "")
 
     make_zip(zip_dest)
 

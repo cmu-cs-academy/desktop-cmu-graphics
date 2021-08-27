@@ -180,6 +180,7 @@ def main():
     parser.add_argument(
         'pkg_version',
         type=str,
+        choices=['zip', 'pip'],
         help='The specific version of the package (either zip or pip) to test'
     )
     parser.add_argument('directory', type=str, default='../CMU_CS_Academy_CS_1/', nargs='?')
@@ -193,11 +194,7 @@ def main():
     if args.pkg_version == "zip":
         pkg_dir = f"/cmu_graphics_installer{pyversion}"
     elif args.pkg_version == "pip":
-        pkg_dir = f"/pypi_upload{pyversion}/src"
-    else:
-        print(f"""Invalid pkg_version argument: {args.pkg_version}. Please specify
-a package version of either zip or pip.""")
-        os._exit(1)
+        pkg_dir = f"/pypi_upload{pyversion}"
 
     num_failures = 0
     num_successes = 0

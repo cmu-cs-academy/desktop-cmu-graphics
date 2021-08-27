@@ -127,5 +127,4 @@ if __name__ == "__main__":
         type=str,
         help='The specific version of the package (either zip or pip) to test'
     )
-    args = parser.parse_args()
-    main(args)
+    main(parser.parse_args())

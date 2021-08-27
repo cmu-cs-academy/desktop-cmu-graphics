@@ -1,14 +1,26 @@
-import shutil
-import os
-import re
-import sys
-import platform
 import argparse
-from file_io_util import *
+import os
+import platform
+import re
+import shutil
 
 # Regex used to remove the zip version code from the pip version and vice versa
 ZIP_REGEX=r"### ZIPFILE VERSION ###.*?### END ZIPFILE VERSION ###"
 PYPI_REGEX=r"### PYPI VERSION ###.*?### END PYPI VERSION ###"
+
+def replace_file_text(path, regex, repl, flags=0):
+    old_text = ""
+    with open(path, "r", encoding="utf-8") as f:
+        old_text = f.read()
+
+    new_text = re.sub(regex, repl, old_text, flags=flags)
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(new_text)
+
+def make_all_dirs(*dirs):
+    for dir in dirs:
+        os.makedirs(dir)
 
 def apply_regex_to_dirs(dirs, regex):
     for dir in dirs:
@@ -18,7 +30,7 @@ def apply_regex_to_dirs(dirs, regex):
                 replace_file_text(full_path, regex, "", re.DOTALL)
 
 
-def split_versions(zip_dest, pypi_dest, ignore_fn, dots):
+def split_versions(zip_dest, pypi_dest, dots):
     make_all_dirs(dots + zip_dest, dots + pypi_dest)
 
     print(f"Copying cmu_graphics package to {pypi_dest} ...")
@@ -34,9 +46,9 @@ def split_versions(zip_dest, pypi_dest, ignore_fn, dots):
 
     # Meta files and docs
     for path in ["LICENSE", "INSTRUCTIONS.pdf"]:
-        shutil.copy2(dots + path, dots + f"{zip_dest}/{get_filename(path)}")
+        shutil.copy2(dots + path, dots + f"{zip_dest}/{os.path.basename(path)}")
     for path in ["LICENSE", "README.md", "setup.py", "pyproject.toml"]:
-        shutil.copy2(dots + path, dots + f"{pypi_dest}/{get_filename(path)}")
+        shutil.copy2(dots + path, dots + f"{pypi_dest}/{os.path.basename(path)}")
 
     apply_regex_to_dirs([
         dots + f"{pypi_dest}/cmu_graphics",
@@ -50,40 +62,31 @@ def split_versions(zip_dest, pypi_dest, ignore_fn, dots):
         ], PYPI_REGEX)
 
 
-def rm_temp_dirs(zip_dest, pypi_dest, dots, deploy_dest = None):
-    shutil.rmtree(dots + zip_dest)
-    shutil.rmtree(dots + pypi_dest)
-    if deploy_dest != None:
-        shutil.rmtree(dots + deploy_dest)
+def rm_temp_dirs(zip_dest, pypi_dest, dots=''):
+    for path in [dots + zip_dest, dots + pypi_dest]:
+        if os.path.exists(path):
+            shutil.rmtree(path)
 
 
 def main(args):
-    if args.mode not in ['split', 'clean']:
-        print("Invalid mode: choose one of 'split' or 'clean'")
-        sys.exit(1)
-    if args.location not in ['root', 'tests']:
-        print("Invalid location: choose one of 'root' or 'tests'")
-        sys.exit(1)
-    else:
-        python_str = ""
-        root_dir = ""
-        if args.location == 'tests':
-            python_major, python_minor, _ = platform.python_version_tuple()
-            python_str = f"{python_major}{python_minor}"
-            root_dir = "../"
+    python_str = ""
+    root_dir = ""
+    if args.location == 'tests':
+        python_major, python_minor, _ = platform.python_version_tuple()
+        python_str = f"{python_major}{python_minor}"
+        root_dir = "../"
 
-        zip_dest = "cmu_graphics_installer" + python_str
-        pypi_dest= f"pypi_upload{python_str}/src"
-        if args.mode == "split":
-            print("""Manually splitting the zip and pip versions of CMU
+    zip_dest = "cmu_graphics_installer" + python_str
+    pypi_dest= f"pypi_upload{python_str}"
+    if args.mode == "split":
+        print("""Manually splitting the zip and pip versions of CMU
 Graphics. Please make sure to re-run this command with the 'clean' flag to
 remove the temporary files.""")
-            split_versions(zip_dest, pypi_dest, root_dir)
-        elif args.mode == "clean":
-            pypi_dest = "pypi_upload" + python_str
-            print("Cleaning up temporary zip and pip versions of CMU Graphics...", end="")
-            rm_temp_dirs(zip_dest, pypi_dest, root_dir)
-            print("Done!")
+        split_versions(zip_dest, pypi_dest, root_dir)
+    elif args.mode == "clean":
+        print("Cleaning up temporary zip and pip versions of CMU Graphics...", end="")
+        rm_temp_dirs(zip_dest, pypi_dest, root_dir)
+        print("Done!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -91,12 +94,14 @@ if __name__ == "__main__":
     parser.add_argument(
         'mode',
         type=str,
+        choices=['split', 'clean'],
         help='Specifies whether to create or delete the test files'
     )
     # location must be root or tests
     parser.add_argument(
         'location',
         type=str,
+        choices=['root', 'tests'],
         help='The location in which the file creation/deletion is happening'
     )
     main(parser.parse_args())
