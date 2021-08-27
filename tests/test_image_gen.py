@@ -92,7 +92,11 @@ def run_test(driver, test_name, all_source_code, pkg_dir, pyversion):
         if not os.path.exists(f'image_gen{pyversion}/{test_name}'):
             os.mkdir(f'image_gen{pyversion}/{test_name}')
 
-        correct_path = f'image_gen{pyversion}/{test_name}/correct_{i}.png'
+        correct_path_fmt = f'image_gen{pyversion}/%s/correct_%d.png'
+        correct_path = correct_path_fmt % (test_name, i)
+        if (test_name[-3:] in ('_es', '_de')):
+            correct_path = correct_path_fmt % (test_name[:-3], i)
+
         output_path = f'image_gen{pyversion}/{test_name}/output_{i}.png'
 
         global_pieces = '\n######\n'.join(source_code_pieces[:piece_i])
@@ -105,6 +109,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + {repr(pkg_dir)})
 
 from cmu_graphics import *
+
+setLanguage('{'es' if test_name.endswith('_es') else 'en'}')
 
 {global_pieces}
 
@@ -131,12 +137,12 @@ Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
 ''')
 
-        TEST_FILE_PATH = f'runner.py{pyversion}'
-        with open(TEST_FILE_PATH, 'w') as f:
+        test_file_path = f'runner.py{pyversion}'
+        with open(test_file_path, 'w', encoding='utf-8') as f:
             f.write(source_code)
 
         p = subprocess.Popen(
-            [sys.executable, TEST_FILE_PATH],
+            [sys.executable, test_file_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -155,7 +161,7 @@ cmu_graphics.loop()
             continue
         else:
             threshold = 25
-            if 'Label' in source_code:
+            if 'Label' in source_code or 'Rótulo' in source_code:
                 if sys.platform == 'win32':
                     threshold = 2500
                 else:
@@ -216,10 +222,11 @@ def main():
                 continue
             REPORT_FILE.flush()
             print(test_py_name)
-            with open(f'image_gen{pyversion}/{test_py_name}') as f:
+            with open(f'image_gen{pyversion}/{test_py_name}', encoding='utf-8') as f:
                 if not run_test(driver, test_py_name[:-3], f.read(), pkg_dir, pyversion):
                     print(f'image_gen{pyversion}/{test_py_name} failed')
                     REPORT_FILE.write(f'<p>image_gen{pyversion}/{test_py_name} failed')
+
                     REPORT_FILE.write('</div>')
                     num_failures += 1
                 else:
