@@ -19,8 +19,8 @@ matrix:
   fast_finish: true
 
 image:
-  - macOS
   - Visual Studio 2019
+  # - macOS
 
 build: off
 
@@ -31,7 +31,10 @@ for:
         - image: Visual Studio 2019
 
     install:
-      - python3 -m pip install tox
+      - pip install tox
+
+    test_script:
+      - python -m tox
 
     # on_finish:
     #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
@@ -43,27 +46,22 @@ for:
 
     install:
       - python3 -m pip install tox
-      # Took 7-8 minutes without HOMEBREW_NO_AUTO_UPDATE
-      - HOMEBREW_NO_AUTO_UPDATE=1 brew install cairo pkg-config
-      # Remove all Mono.framework entries from the PATH so that pip will find the right pkg-config
-      # binary, now and later when it is installed by tox. On 27 Aug 2021, with
+      - brew install cairo pkg-config
+      # Put /usr/local/bin at the front of PATH so that homebrew's pkg-config will
+      # be run by pip. On 27 Aug 2021, with
       # the default PATH value, `which pkg-config` returned
       # /Library/Frameworks/Mono.framework/Home/bin/pkg-config
       - export PATH=/usr/local/bin:$PATH
-      # This might be useful -- it removes all Mono.framework entries from the path
-      # - "export PATH=`echo ${PATH} | awk -v RS=: -v ORS=: '/Mono.framework/ {next} {print}'`"
-      # - python3 -m pip install pycairo
 
     before_test:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
-    on_finish:
-      - export APPVEYOR_SSH_BLOCK=true
-      - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+    test_script:
+      - python3 -m tox --parallel
 
+    after_test:
+      - python3 build/release.py
 
-test_script:
-  - python3 -m tox --parallel
-
-after_test:
-  - python3 build/release.py
+    # on_finish:
+    #   - export APPVEYOR_SSH_BLOCK=true
+    #   - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
