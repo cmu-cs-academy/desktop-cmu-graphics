@@ -22,7 +22,7 @@ def verify_os():
     if sys.platform not in ["darwin", "win32"]:
         print("""\
 It looks like your computer is using a(n) %(os)s operating system.
-%(os)s is not currently supported by CMU Graphics. We support Python 3.5
+%(os)s is not currently supported by CMU Graphics. We support Python 3.6
 through Python 3.9 on Windows and MacOS.""" % {'os': sys.platform})
         os._exit(1)
         
