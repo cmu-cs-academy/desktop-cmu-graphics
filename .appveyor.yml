@@ -2,26 +2,14 @@ branches:
   only:
     - master
 
-# cache: .tox
-
 environment:
   SDL_VIDEODRIVER: dummy
 
-  AWS_ACCESS_KEY_ID:
-    secure: 3BNx+Qb95vjwu5E6CbX9mrQ8X4EboF4dzt9Ei7Wc4QU=
-
-  AWS_SECRET_ACCESS_KEY:
-    secure: bkPtYZvL3Asozn/udXEZChW2gqT/GEJ66xdf+OeMtn4faZR36uKoP2x+wgCp0enQ
-
-  PYPI_TEST_USERNAME: __token__
-
-  PYPI_TEST_PASSWORD:
-    secure: > 
-      ES1+Jf/JRtml7urHLDaPvnLhtt+unOq+xGbT7xl53qJ31yq2f/o9bj82eG4WFhDaDq2+dD55t
-      5DW69oklIm2ePcDoMrW61gar5Wbnhe4a+pDAlS1qA0AJQkb2mOqq80Uqfn7fhZn7u0irgzrlq
-      Tj22sBGkbUfzIPsG1HBzPfQof44JVO+mDmWQKEwmw1Wh4rf0ATWeVvIzWZazbjEnhlwbP7Uya
-      2wrcJy8UUiAzatdEjRbLSuLSu52MCL8gS9s785KVF0u+8dH00Gaer1cx2dQnk35WtUmkdkzPO
-      81Vm+q8=
+  # These variables are defined in the web interface:
+  # - PYPI_TEST_TOKEN
+  # - PYPI_TOKEN
+  # - AWS_ACCESS_KEY_ID
+  # - AWS_SECRET_ACCESS_KEY
 
   # Uncomment and insert your device's public SSH key here to access the 
   # Mac build image.
@@ -57,10 +45,10 @@ for:
   #       - job_name: Windows Tests
 
   #   install:
-  #     - pip install tox
+  #     - python3 -m pip install tox
 
   #   test_script:
-  #     - python -m tox
+  #     - python3 -m tox
 
   -
     matrix:
@@ -70,13 +58,15 @@ for:
     install:
       - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
       - python3 -m pip install tox
-      - HOMEBREW_NO_AUTO_UPDATE=1 brew install cairo pkg-config
+      - brew install cairo pkg-config
       # Remove all Mono.framework entries from the PATH so that pip will find the right pkg-config
       # binary, now and later when it is installed by tox. On 27 Aug 2021, with
       # the default PATH value, `which pkg-config` returned
       # /Library/Frameworks/Mono.framework/Home/bin/pkg-config
-      - "export PATH=`echo ${PATH} | awk -v RS=: -v ORS=: '/Mono.framework/ {next} {print}'`"
-      - python3 -m pip install pycairo
+      - export PATH=/usr/local/bin:$PATH
+      # This might be useful -- it removes all Mono.framework entries from the path
+      # - "export PATH=`echo ${PATH} | awk -v RS=: -v ORS=: '/Mono.framework/ {next} {print}'`"
+      # - python3 -m pip install pycairo
 
     before_test:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
@@ -86,8 +76,3 @@ for:
 
     after_test:
       - python3 build/release.py
-
-artifacts:
-  - path: pypi_upload
-    name: PypiUpload
-    type: zip

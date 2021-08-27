@@ -3,9 +3,12 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+with open("cmu_graphics/meta/version.txt", "r", encoding="utf-8") as f:
+    version = f.read().strip()
+
 setuptools.setup(
     name="cmu-graphics-test",
-    version="1.1.3",
+    version=version,
     author="Austin Schick",
     author_email="aschick@andrew.cmu.edu",
     description="The graphics framework used by CMU CS Academy, geared toward beginner CS students.",
@@ -27,7 +30,7 @@ setuptools.setup(
         "certifi>=2020.6.20",
         "pycairo>=1.20"
     ],
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src"),
+    packages=["cmu_graphics", "cmu_graphics.samples"],
+    package_data={"cmu_graphics": ["meta/version.txt"]},
     python_requires=">=3.6, <4",
 )
