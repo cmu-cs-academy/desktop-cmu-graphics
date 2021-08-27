@@ -22,13 +22,14 @@ image:
   - macOS
   - Visual Studio 2019
 
+build: off
+
 for:
   -
     matrix:
       only:
         - image: Visual Studio 2019
 
-    build: off
     install:
       - python3 -m pip install tox
 
@@ -42,7 +43,8 @@ for:
 
     install:
       - python3 -m pip install tox
-      - brew install cairo pkg-config
+      # Took 7-8 minutes without HOMEBREW_NO_AUTO_UPDATE
+      - HOMEBREW_NO_AUTO_UPDATE=1 brew install cairo pkg-config
       # Remove all Mono.framework entries from the PATH so that pip will find the right pkg-config
       # binary, now and later when it is installed by tox. On 27 Aug 2021, with
       # the default PATH value, `which pkg-config` returned
@@ -52,8 +54,8 @@ for:
       # - "export PATH=`echo ${PATH} | awk -v RS=: -v ORS=: '/Mono.framework/ {next} {print}'`"
       # - python3 -m pip install pycairo
 
-    # before_test:
-    #   - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
+    before_test:
+      - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
     on_finish:
       - export APPVEYOR_SSH_BLOCK=true
