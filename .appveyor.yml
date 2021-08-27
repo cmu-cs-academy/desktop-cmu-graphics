@@ -46,9 +46,9 @@ build: off
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 # Uncomment ME to open an SSH connection for debugging the Mac OS tests
-# on_finish:
-#   - sh: export APPVEYOR_SSH_BLOCK=true
-#   - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+on_finish:
+  - sh: export APPVEYOR_SSH_BLOCK=true
+  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
 for:
   # -
@@ -70,6 +70,13 @@ for:
     install:
       - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
       - python3 -m pip install tox
+      - HOMEBREW_NO_AUTO_UPDATE=1 brew install cairo pkg-config
+      # Remove all Mono.framework entries from the PATH so that pip will find the right pkg-config
+      # binary, now and later when it is installed by tox. On 27 Aug 2021, with
+      # the default PATH value, `which pkg-config` returned
+      # /Library/Frameworks/Mono.framework/Home/bin/pkg-config
+      - "export PATH=`echo ${PATH} | awk -v RS=: -v ORS=: '/Mono.framework/ {next} {print}'`"
+      - python3 -m pip install pycairo
 
     before_test:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
