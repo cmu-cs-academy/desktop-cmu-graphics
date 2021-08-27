@@ -29,7 +29,10 @@ def main():
         'dist/*', '-u', '__token__', '-p', os.environ['PYPI_TEST_TOKEN']],
         cwd=pypi_dest, check=True)
 
-    # TODO: Upload Zip and version.txt to S3
-
+    s3_dest = 's3://cmu-cs-academy.lib.prod/desktop-cmu-graphics-test/'
+    subprocess.run(['aws', 's3', 'cp', zip_dest + '/cmu_graphics/meta/version.txt',
+        s3_dest], check=True)
+    subprocess.run(['aws', 's3', 'cp', zip_dest + '/' + ZIPFILE_NAME,
+        s3_dest], check=True)
 
 main()

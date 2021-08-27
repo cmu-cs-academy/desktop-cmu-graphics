@@ -15,12 +15,15 @@ environment:
   # Mac build image.
   APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9Rkdcjvu0MQOMOqlpa5J757pso3iPzMOt6WK3WgJW0kZl/6l/UZfjN9fgJ6PXhtSQkXgyvOrhuyMVdIZIstdbZKnpC6KV274gof44653ildsK3wPSpuF2v9lmPPvfQWyHCfjb19T06p4Rh5idUmZqPXtMFNWL2vSR4IGBE90JlaNOdXDU07KPVkjbb5vsQLh/vl47N2LjU4vDCqHscQ+wVJuExE63vVuv2T3SDYJNpjAuvLZStdIjOjTyRaJHq2uazfajaKK1Ss3IUgvWnfFqg7WD9zASC9VffxZd9mvP1PtAODIPENdZWNFODsdIlSHTwAdO3DhWbwaDS+nfDhgB evan@Evans-MBP.wv.cc.cmu.edu
 
-matrix:
-  fast_finish: true
+  matrix:
+    - job_name: Windows Tests
+      appveyor_build_worker_image: Visual Studio 2019
 
-image:
-  - Visual Studio 2019
-  # - macOS
+    - job_name: macOS Tests and Deploy
+      appveyor_build_worker_image: macOS
+
+matrix:
+  fast_finish: false # true
 
 build: off
 
@@ -28,7 +31,7 @@ for:
   -
     matrix:
       only:
-        - image: Visual Studio 2019
+        - job_name: Windows Tests
 
     install:
       - pip install tox
@@ -42,7 +45,7 @@ for:
   -
     matrix:
       only:
-        - image: macOS
+        - job_name: macOS Tests and Deploy
 
     install:
       - python3 -m pip install tox
@@ -60,6 +63,7 @@ for:
       - python3 -m tox --parallel
 
     after_test:
+      - python3 -m pip install awscli
       - python3 build/release.py
 
     # on_finish:
