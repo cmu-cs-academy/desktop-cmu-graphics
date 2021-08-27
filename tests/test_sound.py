@@ -8,8 +8,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # pkg-version must be either zip or pip
     parser.add_argument(
-        'pkg_version', 
-        type=str, 
+        'pkg_version',
+        type=str,
         help='The specific version of the package (either zip or pip) to test'
     )
     args = parser.parse_args()
@@ -23,7 +23,7 @@ elif args.pkg_version == "pip":
     pip_import_str = f"from pypi_upload{pyversion}.src.cmu_graphics import *"
     exec(pip_import_str)
 else:
-    print(f"""Invalid pkg_version argument: {args.pkg_version}. Please specify 
+    print(f"""Invalid pkg_version argument: {args.pkg_version}. Please specify
 a package version of either zip or pip.""")
     os._exit(1)
 

@@ -178,15 +178,15 @@ def main():
     parser = argparse.ArgumentParser()
     # pkg_version must be either zip or pip
     parser.add_argument(
-        'pkg_version', 
-        type=str, 
+        'pkg_version',
+        type=str,
         help='The specific version of the package (either zip or pip) to test'
     )
     parser.add_argument('directory', type=str, default='../CMU_CS_Academy_CS_1/', nargs='?')
     parser.add_argument('--only', type=str, help='The name of a single python file to run')
-    
+
     args = parser.parse_args()
-    
+
     python_major, python_minor, _ = platform.python_version_tuple()
     pyversion = str(python_major) + str(python_minor)
     pkg_dir = ''
@@ -195,7 +195,7 @@ def main():
     elif args.pkg_version == "pip":
         pkg_dir = f"/pypi_upload{pyversion}/src"
     else:
-        print(f"""Invalid pkg_version argument: {args.pkg_version}. Please specify 
+        print(f"""Invalid pkg_version argument: {args.pkg_version}. Please specify
 a package version of either zip or pip.""")
         os._exit(1)
 

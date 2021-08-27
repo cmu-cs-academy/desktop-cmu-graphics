@@ -76,7 +76,7 @@ def main(args):
         pypi_dest= f"pypi_upload{python_str}/src"
         if args.mode == "split":
             print("""Manually splitting the zip and pip versions of CMU
-Graphics. Please make sure to re-run this command with the 'clean' flag to 
+Graphics. Please make sure to re-run this command with the 'clean' flag to
 remove the temporary files.""")
             split_versions(zip_dest, pypi_dest, root_dir)
         elif args.mode == "clean":
@@ -89,14 +89,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # mode must be split or clean
     parser.add_argument(
-        'mode', 
-        type=str, 
+        'mode',
+        type=str,
         help='Specifies whether to create or delete the test files'
     )
     # location must be root or tests
     parser.add_argument(
-        'location', 
-        type=str, 
+        'location',
+        type=str,
         help='The location in which the file creation/deletion is happening'
     )
     main(parser.parse_args())

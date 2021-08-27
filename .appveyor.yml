@@ -11,7 +11,7 @@ environment:
   # - AWS_ACCESS_KEY_ID
   # - AWS_SECRET_ACCESS_KEY
 
-  # Uncomment and insert your device's public SSH key here to access the 
+  # Uncomment and insert your device's public SSH key here to access the
   # Mac build image.
   APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9Rkdcjvu0MQOMOqlpa5J757pso3iPzMOt6WK3WgJW0kZl/6l/UZfjN9fgJ6PXhtSQkXgyvOrhuyMVdIZIstdbZKnpC6KV274gof44653ildsK3wPSpuF2v9lmPPvfQWyHCfjb19T06p4Rh5idUmZqPXtMFNWL2vSR4IGBE90JlaNOdXDU07KPVkjbb5vsQLh/vl47N2LjU4vDCqHscQ+wVJuExE63vVuv2T3SDYJNpjAuvLZStdIjOjTyRaJHq2uazfajaKK1Ss3IUgvWnfFqg7WD9zASC9VffxZd9mvP1PtAODIPENdZWNFODsdIlSHTwAdO3DhWbwaDS+nfDhgB evan@Evans-MBP.wv.cc.cmu.edu
   APPVEYOR_SSH_BLOCK: true
@@ -28,7 +28,7 @@ matrix:
 
 build: off
 
-# Uncomment ME to open a remote desktop connection for debugging the 
+# Uncomment ME to open a remote desktop connection for debugging the
 # Windows tests
 # on_finish:
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

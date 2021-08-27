@@ -19,7 +19,7 @@ def main():
     pypi_dest= "pypi_upload"
 
     split_versions(zip_dest, pypi_dest, ignore_fn, "")
-    
+
     make_zip(zip_dest)
 
     subprocess.run(['python3', '-m', 'build'], cwd=pypi_dest, check=True)

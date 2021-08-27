@@ -110,7 +110,7 @@ def main(args):
     # TODO: Finish pip part!
     elif args.pkg_version == "pip":
         IS_ZIP = False
-        print("""Pip part of test_autoupdate.py under construction. Please 
+        print("""Pip part of test_autoupdate.py under construction. Please
 just use the 'zip' version flag for now.""")
         exit_code = 1
     else:
@@ -123,8 +123,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # pkg_version must be either zip or pip
     parser.add_argument(
-        'pkg_version', 
-        type=str, 
+        'pkg_version',
+        type=str,
         help='The specific version of the package (either zip or pip) to test'
     )
     args = parser.parse_args()
