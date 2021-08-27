@@ -24,20 +24,9 @@ environment:
       81Vm+q8=
 
   # Uncomment and insert your device's public SSH key here to access the 
-  # Mac build image. (Encrypt it and use the "secure" keyword if you like) :)
-  APPVEYOR_SSH_KEY:
-    secure: >
-      zZscbW9+BHJ6EFWDMWD3zvRpFAFmBa+ljHPSHmhPbJxpOTXy2hg2eFqJqCE4J47dAPTKReskP
-      WofZJjrWMGC43W/YCLX/I5zBkzRpvguURoovIMOaD4Vse8V2KfhA59npO1kswXYGDNV+WiJqZ
-      FpZQSCFjUVFuYpe+fhv0qZZpPKNwoEJDfc5Ew8JMH7j7UIK2yNkIGaqSppWN+LTOL23l4kK+b
-      KgBRBKUmJeZk7DjdICZqNSTEQXe+yPercHTHp3s6jLdzhCl2qckOMIuJD7ZY9bPCqcbf2FTcB
-      MABUSGPTw6MMFOSO+NojxLRX4NKObK2jQ+Ar0mRDPjoEb6o1WANrT5kZI4/qvdMfo3kpYY7JT
-      iIi7eqLRpcLHdoEJFqFSFrTbF8HJIGbXH6BPcoQZ4FVQoO+7aQgbjpP7h8tiSGlZqFhYJgFcW
-      Jp/6D2jlYy/VqccYp4wTWToejCDpWCDu4ljfta+FMl5c1CLTXw7WKYiBVcWxLPKY+aZjfJGEN
-      6DTM4+bLnKFXfYzDRkvDvqQuuyRnXitl/cDFJROYxkbXS8CkJ6/9OXFxu4l4iCN+MQCYQXI96
-      dxJ+JBUlqmy9jk1mjHwjGT8KxFzTJDdLF7riYxPZ4Fxd6T+DlavMcB82/Jmlw7tH0fz3UKVwO
-      L1PfEVK6NLoJtfmFZnN+RmFPtOo8SBzsbw/4WTcM56DKQQGnQXcLZtrvtbRFFsVtq7J32ViDN
-      9pz7UqQT1edE+3hcuo0AP+OaftiQ4pYcEsrVs5
+  # Mac build image.
+  APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9Rkdcjvu0MQOMOqlpa5J757pso3iPzMOt6WK3WgJW0kZl/6l/UZfjN9fgJ6PXhtSQkXgyvOrhuyMVdIZIstdbZKnpC6KV274gof44653ildsK3wPSpuF2v9lmPPvfQWyHCfjb19T06p4Rh5idUmZqPXtMFNWL2vSR4IGBE90JlaNOdXDU07KPVkjbb5vsQLh/vl47N2LjU4vDCqHscQ+wVJuExE63vVuv2T3SDYJNpjAuvLZStdIjOjTyRaJHq2uazfajaKK1Ss3IUgvWnfFqg7WD9zASC9VffxZd9mvP1PtAODIPENdZWNFODsdIlSHTwAdO3DhWbwaDS+nfDhgB evan@Evans-MBP.wv.cc.cmu.edu
+  APPVEYOR_SSH_BLOCK: true
 
   matrix:
     # - job_name: Windows Tests
@@ -79,13 +68,14 @@ for:
         - job_name: macOS Tests and Load Artifacts
 
     install:
-      - pip install tox
+      - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+      - python3 -m pip install tox
 
     before_test:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
 
     test_script:
-      - python -m tox --parallel
+      - python3 -m tox --parallel
 
     after_test:
       - python3 build/release.py
