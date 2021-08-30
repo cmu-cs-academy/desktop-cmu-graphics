@@ -24,7 +24,7 @@ for:
         - job_name: Windows Tests
 
     install:
-      - C:\Python39\python.exe -m pip install tox
+      - C:\Python39\python.exe -m pip install tox twine build
 
     before_test:
       - C:\Python39\python.exe build/build.py
@@ -41,7 +41,7 @@ for:
         - job_name: macOS Tests
 
     install:
-      - python3 -m pip install tox
+      - python3 -m pip install tox twine build
       - brew install cairo pkg-config
       # Put /usr/local/bin at the front of PATH so that homebrew's pkg-config will
       # be run by pip. On 27 Aug 2021, with
