@@ -27,7 +27,7 @@ for:
       - python -m pip install tox
 
     before_test:
-      - python3 build/build.py
+      - python build/build.py
 
     test_script:
       - python -m tox --parallel
