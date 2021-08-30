@@ -24,13 +24,13 @@ for:
         - job_name: Windows Tests
 
     install:
-      - python -m pip install tox
+      - C:\Python39\python.exe -m pip install tox
 
     before_test:
-      - python build/build.py
+      - C:\Python39\python.exe build/build.py
 
     test_script:
-      - python -m tox --parallel
+      - C:\Python39\python.exe -m tox --parallel
 
     # on_finish:
     #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
