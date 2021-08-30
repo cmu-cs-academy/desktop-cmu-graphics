@@ -14,8 +14,8 @@ parser.add_argument("--publish", action="store_true")
 args = parser.parse_args()
 
 def make_zip(zip_dest):
-    cmd = f"{sys.executable} -m zipfile -c {ZIPFILE_NAME} {zip_dest}"
-    subprocess.run(cmd, check=True, shell=True)
+    subprocess.run([sys.executable, '-m', 'zipfile', '-c', ZIPFILE_NAME, zip_dest],
+        check=True)
     # Wait for zip file to be created before exiting function
     while not os.path.exists(ZIPFILE_NAME):
         pass
