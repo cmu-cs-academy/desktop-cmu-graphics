@@ -30,7 +30,7 @@ for:
       - C:\Python39\python.exe build/build.py
 
     test_script:
-      - C:\Python39\python.exe -m tox --parallel
+      - C:\Python39\python.exe -m tox --parallel 4
 
     # on_finish:
     #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
@@ -54,7 +54,7 @@ for:
       - python3 build/build.py
 
     test_script:
-      - python3 -m tox --parallel
+      - python3 -m tox --parallel 4
 
     # on_finish:
     #   - export APPVEYOR_SSH_BLOCK=true
