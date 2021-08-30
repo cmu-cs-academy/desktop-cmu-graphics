@@ -2,11 +2,10 @@
 
 import argparse
 import os
+import shutil
 import sys
 import time
 import traceback
-import platform
-import shutil
 
 import imageio
 from PIL import Image
@@ -17,6 +16,8 @@ import subprocess
 SIZE = 400
 
 REPORT_FILE = None
+
+TEST_FILE_PATH = 'runner.py'
 
 REPORT_HEADER = '''
 <html>
@@ -56,7 +57,7 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     mean_squared_error = numpy.sum(error_array) / float(SIZE * SIZE)
 
     if mean_squared_error >= threshold:
-        diff_image_path = f'image_gen/{test_name}/diff_{test_piece_i}.png'
+        diff_image_path = 'image_gen/%s/diff_%d.png' % (test_name, test_piece_i)
 
         per_pixel_error = error_array.sum(axis=2)
 
@@ -89,33 +90,32 @@ def run_test(driver, test_name, all_source_code):
     for piece_i in range(len(source_code_pieces)):
         i += 1
 
-        if not os.path.exists(f'image_gen/{test_name}'):
-            os.mkdir(f'image_gen/{test_name}')
+        if not os.path.exists('image_gen/%s' % test_name):
+            os.mkdir('image_gen/%s' % test_name)
 
-        correct_path_fmt = f'image_gen/%s/correct_%d.png'
+        correct_path_fmt = 'image_gen/%s/correct_%d.png'
         correct_path = correct_path_fmt % (test_name, i)
         if (test_name[-3:] in ('_es', '_de')):
             correct_path = correct_path_fmt % (test_name[:-3], i)
 
-        output_path = f'image_gen/{test_name}/output_{i}.png'
+        output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
-        global_pieces = '\n######\n'.join(source_code_pieces[:piece_i])
-        mouse_press_pieces = '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
-        source_code = (
-f'''import os
+        source_code = ''
+        source_code += 'import sys'
+        source_code += '\nimport os'
+        if sys.platform == 'darwin':
+            source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
+        source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
+        source_code += '\nfrom cmu_graphics import *\n'
+        source_code += "setLanguage('%s')\n" % (
+            'es' if test_name.endswith('_es') else 'en'
+        )
+        source_code += '\n######\n'.join(source_code_pieces[:piece_i])
+        source_code += '\ndef onMousePress(x, y):\n'
+        source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
+        source_code += '\n    app.background = "honeydew"'
 
-{'os.environ["SDL_VIDEODRIVER"] = "dummy"' if sys.platform == 'darwin' else ''}
-
-from cmu_graphics import *
-
-setLanguage('{'es' if test_name.endswith('_es') else 'en'}')
-
-{global_pieces}
-
-def onMousePress(x, y):
-{mouse_press_pieces}
-    app.background = "honeydew"
-
+        source_code += '''
 from threading import Thread
 import time
 
@@ -128,19 +128,18 @@ def screenshotAndExit():
         raw_app.frameworkRedrew = False
     while not raw_app.frameworkRedrew:
         time.sleep(0.01)
-    raw_app.getScreenshot({repr(os.path.abspath(output_path))})
+    raw_app.getScreenshot(%s)
     raw_app.quit()
 
 Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
-''')
+''' % repr(os.path.abspath(output_path))
 
-        test_file_path = f'runner.py'
-        with open(test_file_path, 'w', encoding='utf-8') as f:
+        with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
             f.write(source_code)
 
         p = subprocess.Popen(
-            [sys.executable, test_file_path],
+            [sys.executable, TEST_FILE_PATH],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -180,6 +179,7 @@ def main():
     global REPORT_FILE, WAIT
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('directory', type=str, default='../CMU_CS_Academy_CS_1/', nargs='?')
     parser.add_argument('--only', type=str, help='The name of a single python file to run')
 
     args = parser.parse_args()
@@ -195,31 +195,28 @@ def main():
     shutil.copytree(os.path.join(os.path.dirname(__file__), 'image_gen'), 'image_gen')
 
     try:
-        REPORT_FILE = open(f'report.html', 'w')
+        REPORT_FILE = open('report.html', 'w')
         REPORT_FILE.write(REPORT_HEADER)
 
-        for test_py_name in (args.only and [args.only] or os.listdir(f'image_gen')):
+        for test_py_name in (args.only and [args.only] or os.listdir('image_gen')):
             if not test_py_name.endswith('.py'):
                 continue
             REPORT_FILE.flush()
             print(test_py_name)
-            with open(f'image_gen/{test_py_name}', encoding='utf-8') as f:
+            with open('image_gen/%s' % test_py_name, encoding='utf-8') as f:
                 if not run_test(driver, test_py_name[:-3], f.read()):
-                    print(f'image_gen/{test_py_name} failed')
-                    REPORT_FILE.write(f'<p>image_gen/{test_py_name} failed')
-
+                    print('image_gen/%s failed' % test_py_name)
+                    REPORT_FILE.write('<p>image_gen/%s failed' % (test_py_name))
                     REPORT_FILE.write('</div>')
                     num_failures += 1
                 else:
                     num_successes += 1
 
         if num_failures > 0:
-            shutil.rmtree(f'image_gen')
             sys.exit(1)
     except KeyboardInterrupt:
         pass
     finally:
-        shutil.rmtree(f'image_gen')
         try:
             REPORT_FILE.write(REPORT_FOOTER)
             REPORT_FILE.close()
@@ -237,12 +234,12 @@ def main():
         except:
             pass
         try:
-            os.remove(f'runner.py')
+            os.remove(TEST_FILE_PATH)
         except:
             pass
         print('\n\n%d successes and %d failures in %.1fs' % (
             num_successes, num_failures, time.time() - start_time))
-        print(f'See report.html for details')
+        print('See report.html for details')
 
 if __name__ == '__main__':
     main()
