@@ -13,10 +13,11 @@ parser.add_argument("--publish", action="store_true")
 args = parser.parse_args()
 
 def make_zip(zip_dest):
-    cmd = ["zip", "-rq", f"{zip_dest}/{ZIPFILE_NAME}", ".", "-i", f"{zip_dest}/*"]
-    subprocess.run(cmd, check=True)
+    file_with_path = os.path.join(zip_dest, ZIPFILE_NAME)
+    cmd = f"zip -rq {file_with_path} . -i {zip_dest}/*"
+    subprocess.run(cmd, check=True, shell=True)
     # Wait for zip file to be created before exiting function
-    while not os.path.exists(f"{zip_dest}/{ZIPFILE_NAME}"):
+    while not os.path.exists(file_with_path):
         pass
 
 def main():
