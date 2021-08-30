@@ -3,6 +3,7 @@
 import argparse
 import os
 import shutil
+import sys
 import subprocess
 from splitversions import split_versions, rm_temp_dirs
 
@@ -13,11 +14,10 @@ parser.add_argument("--publish", action="store_true")
 args = parser.parse_args()
 
 def make_zip(zip_dest):
-    file_with_path = os.path.join(zip_dest, ZIPFILE_NAME)
-    cmd = f"zip -rq {file_with_path} . -i {zip_dest}/*"
+    cmd = f"{sys.executable} -m zipfile -c {ZIPFILE_NAME} {zip_dest}"
     subprocess.run(cmd, check=True, shell=True)
     # Wait for zip file to be created before exiting function
-    while not os.path.exists(file_with_path):
+    while not os.path.exists(ZIPFILE_NAME):
         pass
 
 def main():
@@ -40,7 +40,6 @@ def main():
         s3_dest = 's3://cmu-cs-academy.lib.prod/desktop-cmu-graphics-test/'
         subprocess.run(['aws', 's3', 'cp', zip_dest + '/cmu_graphics/meta/version.txt',
             s3_dest], check=True)
-        subprocess.run(['aws', 's3', 'cp', zip_dest + '/' + ZIPFILE_NAME,
-            s3_dest], check=True)
+        subprocess.run(['aws', 's3', 'cp', ZIPFILE_NAME, s3_dest], check=True)
 
 main()
