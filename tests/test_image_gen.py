@@ -37,7 +37,7 @@ div.error img {
 '''
 REPORT_FOOTER = '</body></html>'
 
-def compare_images(path_1, path_2, test_name, test_piece_i, pyversion, threshold=25):
+def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     image_1 = Image.open(path_1)
     image_1 = image_1.convert("RGB")
     image_1.save(path_1)
@@ -56,7 +56,7 @@ def compare_images(path_1, path_2, test_name, test_piece_i, pyversion, threshold
     mean_squared_error = numpy.sum(error_array) / float(SIZE * SIZE)
 
     if mean_squared_error >= threshold:
-        diff_image_path = f'image_gen{pyversion}/{test_name}/diff_{test_piece_i}.png'
+        diff_image_path = f'image_gen/{test_name}/diff_{test_piece_i}.png'
 
         per_pixel_error = error_array.sum(axis=2)
 
@@ -80,7 +80,7 @@ def compare_images(path_1, path_2, test_name, test_piece_i, pyversion, threshold
 
     return mean_squared_error < threshold
 
-def run_test(driver, test_name, all_source_code, pkg_dir, pyversion):
+def run_test(driver, test_name, all_source_code):
     source_code_pieces = all_source_code.split('\n# -\n')
     source_code = ''
     i = 0
@@ -89,24 +89,22 @@ def run_test(driver, test_name, all_source_code, pkg_dir, pyversion):
     for piece_i in range(len(source_code_pieces)):
         i += 1
 
-        if not os.path.exists(f'image_gen{pyversion}/{test_name}'):
-            os.mkdir(f'image_gen{pyversion}/{test_name}')
+        if not os.path.exists(f'image_gen/{test_name}'):
+            os.mkdir(f'image_gen/{test_name}')
 
-        correct_path_fmt = f'image_gen{pyversion}/%s/correct_%d.png'
+        correct_path_fmt = f'image_gen/%s/correct_%d.png'
         correct_path = correct_path_fmt % (test_name, i)
         if (test_name[-3:] in ('_es', '_de')):
             correct_path = correct_path_fmt % (test_name[:-3], i)
 
-        output_path = f'image_gen{pyversion}/{test_name}/output_{i}.png'
+        output_path = f'image_gen/{test_name}/output_{i}.png'
 
         global_pieces = '\n######\n'.join(source_code_pieces[:piece_i])
         mouse_press_pieces = '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
         source_code = (
-f'''import sys
-import os
+f'''import os
 
 {'os.environ["SDL_VIDEODRIVER"] = "dummy"' if sys.platform == 'darwin' else ''}
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + {repr(pkg_dir)})
 
 from cmu_graphics import *
 
@@ -137,7 +135,7 @@ Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
 ''')
 
-        test_file_path = f'runner.py{pyversion}'
+        test_file_path = f'runner.py'
         with open(test_file_path, 'w', encoding='utf-8') as f:
             f.write(source_code)
 
@@ -167,7 +165,7 @@ cmu_graphics.loop()
                 else:
                     threshold = 50
             if not compare_images(correct_path, output_path, test_name, i,
-                    pyversion, threshold=threshold):
+                    threshold=threshold):
                 if console_output.strip():
                     REPORT_FILE.write(
                         '<p>Console output for part %d:</p><pre>%s</pre>' %
@@ -182,50 +180,33 @@ def main():
     global REPORT_FILE, WAIT
 
     parser = argparse.ArgumentParser()
-    # pkg_version must be either zip or pip
-    parser.add_argument(
-        'pkg_version',
-        type=str,
-        choices=['zip', 'pip'],
-        help='The specific version of the package (either zip or pip) to test'
-    )
-    parser.add_argument('directory', type=str, default='../CMU_CS_Academy_CS_1/', nargs='?')
     parser.add_argument('--only', type=str, help='The name of a single python file to run')
 
     args = parser.parse_args()
-
-    python_major, python_minor, _ = platform.python_version_tuple()
-    pyversion = str(python_major) + str(python_minor)
-    pkg_dir = ''
-    if args.pkg_version == "zip":
-        pkg_dir = f"/cmu_graphics_installer{pyversion}"
-    elif args.pkg_version == "pip":
-        pkg_dir = f"/pypi_upload{pyversion}"
 
     num_failures = 0
     num_successes = 0
     start_time = time.time()
     driver = None
 
-    # Have to copy the image_gen directory for each of the tests so that
+    # Duplicate the image_gen directory into the current working directory so that
     # the parallel Python version tests don't step on each other and cause
-    # errors
-    if (not os.path.exists(f'image_gen{pyversion}')):
-        shutil.copytree('image_gen', f'image_gen{pyversion}')
+    # errors.
+    shutil.copytree(os.path.join(os.path.dirname(__file__), 'image_gen'), 'image_gen')
 
     try:
-        REPORT_FILE = open(f'report{pyversion}.html', 'w')
+        REPORT_FILE = open(f'report.html', 'w')
         REPORT_FILE.write(REPORT_HEADER)
 
-        for test_py_name in (args.only and [args.only] or os.listdir(f'image_gen{pyversion}')):
+        for test_py_name in (args.only and [args.only] or os.listdir(f'image_gen')):
             if not test_py_name.endswith('.py'):
                 continue
             REPORT_FILE.flush()
             print(test_py_name)
-            with open(f'image_gen{pyversion}/{test_py_name}', encoding='utf-8') as f:
-                if not run_test(driver, test_py_name[:-3], f.read(), pkg_dir, pyversion):
-                    print(f'image_gen{pyversion}/{test_py_name} failed')
-                    REPORT_FILE.write(f'<p>image_gen{pyversion}/{test_py_name} failed')
+            with open(f'image_gen/{test_py_name}', encoding='utf-8') as f:
+                if not run_test(driver, test_py_name[:-3], f.read()):
+                    print(f'image_gen/{test_py_name} failed')
+                    REPORT_FILE.write(f'<p>image_gen/{test_py_name} failed')
 
                     REPORT_FILE.write('</div>')
                     num_failures += 1
@@ -233,12 +214,12 @@ def main():
                     num_successes += 1
 
         if num_failures > 0:
-            shutil.rmtree(f'image_gen{pyversion}')
+            shutil.rmtree(f'image_gen')
             sys.exit(1)
     except KeyboardInterrupt:
         pass
     finally:
-        shutil.rmtree(f'image_gen{pyversion}')
+        shutil.rmtree(f'image_gen')
         try:
             REPORT_FILE.write(REPORT_FOOTER)
             REPORT_FILE.close()
@@ -256,12 +237,12 @@ def main():
         except:
             pass
         try:
-            os.remove(f'runner.py{pyversion}')
+            os.remove(f'runner.py')
         except:
             pass
         print('\n\n%d successes and %d failures in %.1fs' % (
             num_successes, num_failures, time.time() - start_time))
-        print(f'See report{pyversion}.html for details')
+        print(f'See report.html for details')
 
 if __name__ == '__main__':
     main()

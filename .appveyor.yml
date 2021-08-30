@@ -1,12 +1,6 @@
 environment:
   SDL_VIDEODRIVER: dummy
 
-  # These variables are defined in the web interface:
-  # - PYPI_TEST_TOKEN
-  # - PYPI_TOKEN
-  # - AWS_ACCESS_KEY_ID
-  # - AWS_SECRET_ACCESS_KEY
-
   # Uncomment and insert your device's public SSH key here to access the
   # Mac build image.
   APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9Rkdcjvu0MQOMOqlpa5J757pso3iPzMOt6WK3WgJW0kZl/6l/UZfjN9fgJ6PXhtSQkXgyvOrhuyMVdIZIstdbZKnpC6KV274gof44653ildsK3wPSpuF2v9lmPPvfQWyHCfjb19T06p4Rh5idUmZqPXtMFNWL2vSR4IGBE90JlaNOdXDU07KPVkjbb5vsQLh/vl47N2LjU4vDCqHscQ+wVJuExE63vVuv2T3SDYJNpjAuvLZStdIjOjTyRaJHq2uazfajaKK1Ss3IUgvWnfFqg7WD9zASC9VffxZd9mvP1PtAODIPENdZWNFODsdIlSHTwAdO3DhWbwaDS+nfDhgB evan@Evans-MBP.wv.cc.cmu.edu
@@ -32,6 +26,9 @@ for:
     install:
       - python -m pip install tox
 
+    before_test:
+      - python3 build/build.py
+
     test_script:
       - python -m tox --parallel
 
@@ -54,6 +51,7 @@ for:
 
     before_test:
       - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
+      - python3 build/build.py
 
     test_script:
       - python3 -m tox --parallel

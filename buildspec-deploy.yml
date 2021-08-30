@@ -6,4 +6,4 @@ phases:
       - python3 -m pip install awscli build twine
   build:
     commands:
-      - python3 build/release.py
+      - python3 build/build.py --publish
