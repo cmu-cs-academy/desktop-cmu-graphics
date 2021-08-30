@@ -30,10 +30,10 @@ def main():
 
     make_zip(zip_dest)
 
-    subprocess.run(['python3', '-m', 'build'], cwd=pypi_dest, check=True)
+    subprocess.run([sys.executable, '-m', 'build'], cwd=pypi_dest, check=True)
 
     if args.publish:
-        subprocess.run(['python3', '-m', 'twine', 'upload', '--repository', 'testpypi',
+        subprocess.run([sys.executable, '-m', 'twine', 'upload', '--repository', 'testpypi',
             'dist/*', '-u', '__token__', '-p', os.environ['PYPI_TEST_TOKEN']],
             cwd=pypi_dest, check=True)
 
