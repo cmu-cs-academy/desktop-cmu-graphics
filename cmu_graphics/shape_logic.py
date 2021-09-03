@@ -229,7 +229,7 @@ def checkInt(obj, attr, value, isFn):
 
 def checkNumber(obj, attr, value, isFn):
     if type(value) != int and type(value) != float:
-        typeError(obj, attr, value, t('Number'), isFn)
+        typeError(obj, attr, value, t('number'), isFn)
 
 def checkPositive(obj, attr, value, isFn):
     checkNumber(obj, attr, value, isFn);
@@ -426,44 +426,44 @@ class ShapeAttr(object):
         shapeAttrDefaults[name] = defaultValue
 
 def initShapeAttrs():
-  ShapeAttr('left', checkNumber, 0)
-  ShapeAttr('top', checkNumber, 0)
-  ShapeAttr('centerX', checkNumber, 0)
-  ShapeAttr('centerY', checkNumber, 0)
-  ShapeAttr('right', checkNumber, 0)
-  ShapeAttr('bottom', checkNumber, 0)
-  ShapeAttr('width', checkWidthHeight, 10)
-  ShapeAttr('height', checkWidthHeight, 10)
-  ShapeAttr('fill', checkColor, 'black')
-  ShapeAttr('border', checkColor, None)
-  ShapeAttr('borderWidth', checkNonNegative, 2)
-  ShapeAttr('dashes', checkBooleanOrArray, False)
-  ShapeAttr('opacity', checkNumberIn0To100, 100)
-  ShapeAttr('align', checkAlign, None)
-  ShapeAttr('rotateAngle', checkNumber, 0)
-  ShapeAttr('radius', checkNonNegative, 5)
-  ShapeAttr('points', checkNumPoints, 5)
-  ShapeAttr('roundness', checkRoundness, 'default')
-  ShapeAttr('x1', checkNumber, 0)
-  ShapeAttr('y1', checkNumber, 0)
-  ShapeAttr('x2', checkNumber, 10)
-  ShapeAttr('y2', checkNumber, 10)
-  ShapeAttr('arrowStart', checkBoolean, False)
-  ShapeAttr('arrowEnd', checkBoolean, False)
-  ShapeAttr('lineWidth', checkPositive, 2)
-  ShapeAttr('initialPoints', checkArray, [])
-  ShapeAttr('pointList', checkPointList, [])
-  ShapeAttr('closed', checkBoolean, True)
-  ShapeAttr('startAngle', checkNumber, 0)
-  ShapeAttr('sweepAngle', checkSweepAngle, 360)
-  ShapeAttr('value', checkValue, '')
-  ShapeAttr('font', checkString, 'arial')
-  ShapeAttr('size', checkNonNegative, 12)
-  ShapeAttr('bold', checkBoolean, False)
-  ShapeAttr('italic', checkBoolean, False)
-  ShapeAttr('visible', checkBoolean, True)
-  ShapeAttr('url', checkString, None)
-  ShapeAttr('db', checkValue, '')
+    ShapeAttr('left', checkNumber, 0)
+    ShapeAttr('top', checkNumber, 0)
+    ShapeAttr('centerX', checkNumber, 0)
+    ShapeAttr('centerY', checkNumber, 0)
+    ShapeAttr('right', checkNumber, 0)
+    ShapeAttr('bottom', checkNumber, 0)
+    ShapeAttr('width', checkWidthHeight, 10)
+    ShapeAttr('height', checkWidthHeight, 10)
+    ShapeAttr('fill', checkColor, 'black')
+    ShapeAttr('border', checkColor, None)
+    ShapeAttr('borderWidth', checkNonNegative, 2)
+    ShapeAttr('dashes', checkBooleanOrArray, False)
+    ShapeAttr('opacity', checkNumberIn0To100, 100)
+    ShapeAttr('align', checkAlign, None)
+    ShapeAttr('rotateAngle', checkNumber, 0)
+    ShapeAttr('radius', checkNonNegative, 5)
+    ShapeAttr('points', checkNumPoints, 5)
+    ShapeAttr('roundness', checkRoundness, 'default')
+    ShapeAttr('x1', checkNumber, 0)
+    ShapeAttr('y1', checkNumber, 0)
+    ShapeAttr('x2', checkNumber, 10)
+    ShapeAttr('y2', checkNumber, 10)
+    ShapeAttr('arrowStart', checkBoolean, False)
+    ShapeAttr('arrowEnd', checkBoolean, False)
+    ShapeAttr('lineWidth', checkPositive, 2)
+    ShapeAttr('initialPoints', checkArray, [])
+    ShapeAttr('pointList', checkPointList, [])
+    ShapeAttr('closed', checkBoolean, True)
+    ShapeAttr('startAngle', checkNumber, 0)
+    ShapeAttr('sweepAngle', checkSweepAngle, 360)
+    ShapeAttr('value', checkValue, '')
+    ShapeAttr('font', checkString, 'arial')
+    ShapeAttr('size', checkNonNegative, 12)
+    ShapeAttr('bold', checkBoolean, False)
+    ShapeAttr('italic', checkBoolean, False)
+    ShapeAttr('visible', checkBoolean, True)
+    ShapeAttr('url', checkString, None)
+    ShapeAttr('db', checkValue, '')
 initShapeAttrs()
 
 class RGB(object):
@@ -481,7 +481,7 @@ class RGB(object):
         elif attr[0] == '_':
             return self.__dict__[attr]
         else:
-            raise AttributeError(t('Cannot get {{attr}} attribute of {{className}} instance', { 'attr': attr, 'className': t('rgb') })) 
+            raise AttributeError(t('Cannot get {{attr}} attribute of {{className}} instance', { 'attr': attr, 'className': t('rgb') }))
 
     def __setattr__(self, attr, value):
         if attr[0] == '_':
@@ -1087,7 +1087,7 @@ class Shape(object):
     def toFront(self):
         if self._group:
             self._group._toFront(self)
-    
+
     def toBack(self):
         if self._group:
             self._group._toBack(self)
@@ -1869,23 +1869,23 @@ class Polygon(Shape):
         centerX = left + dims['width'] / 2
         centerY = top + dims['height'] / 2
         if (start == 'left-top'):
-          x0 = left; x1 = right; y0 = top; y1 = bottom
+            x0 = left; x1 = right; y0 = top; y1 = bottom
         elif (start == 'left'):
-          x0 = left; x1 = right; y0 = y1 = centerY
+            x0 = left; x1 = right; y0 = y1 = centerY
         elif (start == 'left-bottom'):
-          x0 = left; x1 = right; y0 = bottom; y1 = top
+            x0 = left; x1 = right; y0 = bottom; y1 = top
         elif (start == 'top'):
-          x0 = x1 = centerX; y0 = top; y1 = bottom
+            x0 = x1 = centerX; y0 = top; y1 = bottom
         elif (start == 'bottom'):
-          x0 = x1 = centerX; y0 = bottom; y1 = top
+            x0 = x1 = centerX; y0 = bottom; y1 = top
         elif (start == 'right-top'):
-          x0 = right; x1 = left; y0 = top; y1 = bottom
+            x0 = right; x1 = left; y0 = top; y1 = bottom
         elif (start == 'right'):
-          x0 = right; x1 = left; y0 = y1 = centerY
+            x0 = right; x1 = left; y0 = y1 = centerY
         elif (start == 'right-bottom'):
-          x0 = right; x1 = left; y0 = bottom; y1 = top
+            x0 = right; x1 = left; y0 = bottom; y1 = top
         else:
-          pyThrow('Illegal gradient start ({start})'.format(start=start))
+            pyThrow('Illegal gradient start ({start})'.format(start=start))
 
         if self.rotateAngle != 0:
             [[x0, y0], [x1, y1]] = utils.rotatePoints([[x0, y0], [x1, y1]], utils.toRadians(self.rotateAngle),
@@ -2900,22 +2900,14 @@ class ShapeLogicInterface(object):
             result = result.studentShape
         return result
 
-    def slSet(self, obj, attr, val):
-        try:
-            setattr(obj, attr, val)
-        except:
-            # TODO: print console.error(e)
-            raise
-        return val
-    
     def slSetWithTypeCheck(self, obj, attr, val):
+        className = obj.__class__.__name__
         if shapeAttrs.get(attr, None) is not None:
             shapeAttrs[attr].typeCheckFn(obj, attr, val, False)
-        try:
             setattr(obj, attr, val)
-        except:
-            # TODO: print console.error(e)
-            raise
+        else:
+            utils.internalError(
+                f'No type check function found for {className}.{attr}')
         return val
 
     def slSetAppProperty(app, propName, value):

@@ -652,7 +652,6 @@ pygame = None # defer module load until run
 sli = shape_logic.ShapeLogicInterface()
 slInitShape = sli.slInitShape
 slGet = sli.slGet
-slSet = sli.slSet
 rgb = sli.rgb
 gradient = sli.gradient
 slNewSound = sli.newSound
