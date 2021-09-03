@@ -26,6 +26,22 @@ g.foo = r2
 assert g.foo == r2
 
 ###
+# Group length
+g2 = Group()
+assert len(g2) == 0
+g2.add(Rect(50, 50, 50, 50))
+assert len(g2) == 1
+g2.add(Rect(100, 100, 50, 50))
+assert len(g2) == 2
+
+r2 = Rect(200, 200, 50, 50)
+g2.add(r2)
+assert len(g2) == 3
+g2.remove(r2)
+assert len(g2) == 2
+g2.visible = False
+
+###
 # Returning Gradients or RGBs as properties
 r = Rect(100, 100, 200, 200, fill=rgb(100, 200, 212))
 assert r.fill.red == 100
@@ -51,7 +67,6 @@ assert s.roundness == 12, s.roundness
 # Gradient type checking
 assertRaises(lambda: Rect(0, 0, 50, 50, fill=gradient('red', gradient('red', 'blue'))))
 assertRaises(lambda: Rect(0, 0, 50, 50, fill=gradient('red', None)))
-
 
 ###
 # Custom properties can't be used in a shape constructor
@@ -138,3 +153,132 @@ grad = gradient('red', 'black', start='left-top')
 assert grad.start == 'left-top'
 grad2 = gradient('red', 'black', start='top-left')
 assert grad2.start == 'top-left'
+
+r142 = Rect(50, 50, 200, 200)
+g = Group(r142)
+
+# Make sure that r142.group evaluates properly
+count = 0
+for shape in r142.group:
+    count += 1
+assert count == 1
+
+g.clear()
+assert r142.visible == False
+r142.visible = False
+r142.visible = True
+r142.visible = False
+
+g3 = Group()
+g3.add(Group())
+g3.add(Circle(1, 1, 1))
+# Make sure that resizing a group that contains an empty group doesn't crash
+g3.width += 1
+
+###
+# Zero height/width lines
+l = Line(50, 200, 50, 300, fill=gradient('black', 'red'))
+l.y1 = l.y2 = 200
+l.height = 100
+
+l2 = Line(350, 200, 350, 400, fill=gradient('black', 'red'))
+g = Group(l2)
+
+l2.y1 = l2.y2 = 200
+g.height = 100
+
+l3 = Line(50, 200, 100, 200, fill=gradient('black', 'red'))
+l3.x1 = l3.x2 = 50
+l3.width = 100
+
+l4 = Line(350, 200, 350, 200, fill=gradient('black', 'red'))
+g2 = Group(l4)
+g2.width = 100
+
+x = Group()
+y = Group(x)
+z = Group(y)
+add_successful = False
+try:
+    x.add(z)
+    add_successful = True
+except Exception:
+    pass
+assert not add_successful, "Recursive groups should not be allowed"
+
+
+# Make sure that containsShape works for concave shapes
+concave = Polygon(0, 0, 300, 0, 300, 300, 200, 300, 200, 150, 100, 150, 100, 300, 0, 300)
+not_inside = Rect(50, 50, 200, 200, fill='yellow', opacity=50, align='left-top')
+assert not concave.containsShape(not_inside)
+not_inside.height = 50
+not_inside.width = 50
+assert concave.containsShape(not_inside)
+
+concave.visible = False
+not_inside.visible = False
+
+# Check that hitsShape works correctly for images without fill
+url = 'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/default_avatar.png'
+img = Image(url, 100, 100)
+img.width = 200
+img.height = 200
+c1 = Circle(150, 200, 50)
+c2 = Circle(200, 200, 50)
+assert img.hitsShape(c1)
+assert img.hitsShape(c2)
+assert c1.hitsShape(img)
+assert c2.hitsShape(img)
+
+Group(img, c1, c2, visible=False)
+
+# Ensure can have attributes that translate to the same word
+custom = Rect(200, 200, 200, 200, visible=False)
+custom.reiniciar = 'a'
+custom.restart = 'b'
+assert custom.reiniciar == 'a'
+assert custom.restart == 'b'
+
+# Ensures that pointList isn't available for other shapes
+assertRaises(lambda: r1.pointList)
+assertRaises(lambda: c1.pointList)
+
+# Zero-point polygon should not cause hitsShape to crash
+p = Polygon()
+assert not c1.hitsShape(p)
+assert not p.hitsShape(c1)
+
+# Ensure that star borders are closed
+Star(200, 200, 150, 5, fill=None, border='black', borderWidth=20)
+
+# Ensure group attribute works correctly
+c = Circle(200, 20, 5)
+g = Group(c)
+
+def setGroup(shape, val):
+  shape.group = val
+
+# should not be possible to set group
+assertRaises(lambda: setGroup(c, g))
+
+assert app.group.group == None
+
+c.visible = False
+assert c.group == None
+
+g2 = Group(c)
+g2.remove(c)
+
+assert c.group == None
+
+c.visible = True
+assert c.group == g2
+assert len(g2.children) == 1
+
+g.visible = False
+g2.visible = False
+
+# Ensure .toFront() doesn't crash when group is null
+removedRect = Rect(200, 200, 100, 100)
+app.group.remove(removedRect)
+removedRect.toFront()
