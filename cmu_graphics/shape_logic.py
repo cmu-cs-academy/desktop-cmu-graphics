@@ -958,7 +958,7 @@ class Shape(object):
         x, y = arguments
         checkNumber(t('contains(x, y)'), 'x', x, True)
         checkNumber(t('contains(x, y)'), 'y', y, True)
-        return utils.polygonContainsPoint(self.pointList, x, y)
+        return utils.polygonContainsPoint(self.getApproxPoints(), x, y)
 
     def hits(self, *arguments): # hits(x,y)
         checkArgCount(self.__class__.__name__, t('hits'), [t('x'), t('y')], arguments)
