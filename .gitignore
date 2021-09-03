@@ -72,3 +72,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# editors
+.vscode/

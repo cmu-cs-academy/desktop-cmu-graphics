@@ -992,9 +992,9 @@ class Shape(object):
         return False
 
     def containsShape(self, *arguments):
-        checkArgCount(self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments)
-        targetShape = arguments[0]
-        checkShape(t('containsShape(targetShape)'), t('targetShape'), targetShape, True)
+        checkArgCount(self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments);
+        (targetShape,) = arguments
+        checkShape(t('containsShape(targetShape)'), t('targetShape'), targetShape, True);
 
         if (isinstance(targetShape, Group)):
             return all([self.containsShape(shape) for shape in targetShape.children])
