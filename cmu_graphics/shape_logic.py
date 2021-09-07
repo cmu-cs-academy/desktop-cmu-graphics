@@ -25,13 +25,14 @@ import re
 TRANSLATED_COLOR_NAMES = {'keys': ['aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornsilk', 'cornflowerblue', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen'], 'es': {'aliceblue': 'azulalica', 'antiquewhite': 'blancoantiguo', 'aqua': 'agua', 'aquamarine': 'aguamarina', 'azure': 'azur', 'beige': 'beige', 'bisque': 'bisque', 'black': 'negro', 'blanchedalmond': 'almendrablanqueada', 'blue': 'azul', 'blueviolet': 'azulvioleta', 'brown': 'marrón', 'burlywood': 'madera', 'cadetblue': 'azulcadete', 'chartreuse': 'verdeamarillento', 'chocolate': 'chocolate', 'coral': 'coral', 'cornsilk': 'maizseda', 'cornflowerblue': 'azualaciano', 'crimson': 'carmesí', 'cyan': 'cian', 'darkblue': 'azuloscuro', 'darkcyan': 'cianoscuro', 'darkgoldenrod': 'varilladoradaoscura', 'darkgray': 'grisoscuro', 'darkgreen': 'verdeoscuro', 'darkgrey': 'grisoscuro', 'darkkhaki': 'caquioscuro', 'darkmagenta': 'magentaoscuro', 'darkolivegreen': 'verdeolivaoscuro', 'darkorange': 'naranjaoscuro', 'darkorchid': 'orquídeaoscura', 'darkred': 'rojooscuro', 'darksalmon': 'salmónoscuro', 'darkseagreen': 'marverdeoscuro', 'darkslateblue': 'azulpizarraoscuro', 'darkslategray': 'grispizarraoscuro', 'darkslategrey': 'grispizarraoscuro', 'darkturquoise': 'turquesaoscuro', 'darkviolet': 'violetaoscuro', 'deeppink': 'rosadoprofundo', 'deepskyblue': 'azulcieloprofundo', 'dimgray': 'gristurbio', 'dimgrey': 'gristurbio', 'dodgerblue': 'azulgandul', 'firebrick': 'ladrillo', 'floralwhite': 'blancofloral', 'forestgreen': 'verdebosque', 'fuchsia': 'fucsia', 'gainsboro': 'gainsboro', 'ghostwhite': 'blancofantasma', 'gold': 'oro', 'goldenrod': 'varilladorada', 'gray': 'gris', 'green': 'verde', 'greenyellow': 'verdeamarillo', 'grey': 'gris', 'honeydew': 'melón', 'hotpink': 'rosadofuerte', 'indianred': 'rojoindio', 'indigo': 'índigo', 'ivory': 'marfil', 'khaki': 'caqui', 'lavender': 'lavanda', 'lavenderblush': 'ruborlavanda', 'lawngreen': 'cespedverde', 'lemonchiffon': 'limónchifón', 'lightblue': 'azulclaro', 'lightcoral': 'coralclaro', 'lightcyan': 'cianclaro', 'lightgoldenrodyellow': 'varilladoradaclaraamarilla', 'lightgray': 'grisclaro', 'lightgreen': 'verdeclaro', 'lightgrey': 'grisclaro', 'lightpink': 'rosadoclaro', 'lightsalmon': 'salmónclaro', 'lightseagreen': 'marverdeclaro', 'lightskyblue': 'azulcieloclaro', 'lightslategray': 'grispizarraclaro', 'lightslategrey': 'grispizarraclaro', 'lightsteelblue': 'azulaceroclaro', 'lightyellow': 'amarilloclaro', 'lime': 'lima', 'limegreen': 'limaverde', 'linen': 'lino', 'magenta': 'magenta', 'maroon': 'granate', 'mediumaquamarine': 'aguamarinamedio', 'mediumblue': 'azulmedio', 'mediumorchid': 'orquídeamedio', 'mediumpurple': 'púrpuramedio', 'mediumseagreen': 'marverdemedio', 'mediumslateblue': 'pizarraazulmedio', 'mediumspringgreen': 'verdeprimaveramedio', 'mediumturquoise': 'turquesamedio', 'mediumvioletred': 'violetarojomedio', 'midnightblue': 'azulmedianoche', 'mintcream': 'cremamenta', 'mistyrose': 'nebulosarosa', 'moccasin': 'mocasín', 'navajowhite': 'blanconaranja', 'navy': 'azulmarino', 'oldlace': 'cordónviejo', 'olive': 'oliva', 'olivedrab': 'verdemilitar', 'orange': 'naranja', 'orangered': 'rojonaranja', 'orchid': 'orquídea', 'palegoldenrod': 'varilladoradapálida', 'palegreen': 'verdepálido', 'paleturquoise': 'turquesapálido', 'palevioletred': 'rojovioletapálido', 'papayawhip': 'látigodepapaya', 'peachpuff': 'durazno', 'peru': 'naranjamarrón', 'pink': 'rosado', 'plum': 'ciruela', 'powderblue': 'azulpolvo', 'purple': 'púrpura', 'red': 'rojo', 'rosybrown': 'marrónrosado', 'royalblue': 'azulreal', 'saddlebrown': 'marróncuero', 'salmon': 'salmón', 'sandybrown': 'marrónarenoso', 'seagreen': 'marverde', 'seashell': 'caracol', 'sienna': 'tierra', 'silver': 'plateado', 'skyblue': 'azulcielo', 'slateblue': 'azulpizarra', 'slategray': 'grispizarra', 'slategrey': 'grispizarra', 'snow': 'nieve', 'springgreen': 'verdeprimavera', 'steelblue': 'azulacero', 'tan': 'bronceado', 'teal': 'verdeazulado', 'thistle': 'cardo', 'tomato': 'tomate', 'turquoise': 'turquesa', 'violet': 'violeta', 'wheat': 'trigo', 'white': 'blanco', 'whitesmoke': 'humoblanco', 'yellow': 'amarillo', 'yellowgreen': 'amarilloverde'}, 'de': {'aliceblue': 'aliceblau', 'antiquewhite': 'altweiß', 'aqua': 'wasser', 'aquamarine': 'aquamarin', 'azure': 'azurblau', 'beige': 'beige', 'bisque': 'biskuit', 'black': 'schwarz', 'blanchedalmond': 'bleichemandel', 'blue': 'blau', 'blueviolet': 'blauviolett', 'brown': 'braun', 'burlywood': 'wurzelholz', 'cadetblue': 'kadettenblau', 'chartreuse': 'chartreuse', 'chocolate': 'schokolade', 'coral': 'koralle', 'cornsilk': 'maisseide', 'cornflowerblue': 'kornfeldblau', 'crimson': 'purpur', 'cyan': 'cyan', 'darkblue': 'dunkelblau', 'darkcyan': 'dunkelcyan', 'darkgoldenrod': 'dunkelgoldrute', 'darkgray': 'dunkelgrau', 'darkgreen': 'dunkelgrün', 'darkgrey': 'dunkelgrau', 'darkkhaki': 'dunkelkhaki', 'darkmagenta': 'dunkelmagenta', 'darkolivegreen': 'dunkelolivegrün', 'darkorange': 'dunkelorange', 'darkorchid': 'dunkeorchidee', 'darkred': 'dunkelrot', 'darksalmon': 'dunkellachs', 'darkseagreen': 'dunkelseegrün', 'darkslateblue': 'dunkelschieferblau', 'darkslategray': 'dunkelschiefergrau', 'darkslategrey': 'dunkelschiefergraube', 'darkturquoise': 'dunkeltürkis', 'darkviolet': 'dunkelviolett', 'deeppink': 'dunkelrosa', 'deepskyblue': 'dunkelhimmelblau', 'dimgray': 'mittelgrau', 'dimgrey': 'mittelgraube', 'dodgerblue': 'dodgerblau', 'firebrick': 'backstein', 'floralwhite': 'blütenweiß', 'forestgreen': 'waldgrün', 'fuchsia': 'fuchsie', 'gainsboro': 'gainsboro', 'ghostwhite': 'geisterweiß', 'gold': 'gold', 'goldenrod': 'goldrute', 'gray': 'grau', 'green': 'grün', 'greenyellow': 'grüngelb', 'grey': 'graube', 'honeydew': 'honigtau', 'hotpink': 'kräftigpink', 'indianred': 'indischrot', 'indigo': 'indigo', 'ivory': 'eisen', 'khaki': 'khaki', 'lavender': 'lavendel', 'lavenderblush': 'lavendelröte', 'lawngreen': 'rasengrün', 'lemonchiffon': 'zitronenchiffon', 'lightblue': 'hellblau', 'lightcoral': 'hellkoralle', 'lightcyan': 'hellcyan', 'lightgoldenrodyellow': 'leichtgoldrutengelb', 'lightgray': 'hellgrau', 'lightgreen': 'hellgrün', 'lightgrey': 'hellgraube', 'lightpink': 'hellrosa', 'lightsalmon': 'helllachs', 'lightseagreen': 'hellseegrün', 'lightskyblue': 'hellhimmelblau', 'lightslategray': 'hellschiefergrau', 'lightslategrey': 'hellschiefergraube', 'lightsteelblue': 'hellstahlblau', 'lightyellow': 'hellgelb', 'lime': 'limette', 'limegreen': 'limettengrün', 'linen': 'leinen', 'magenta': 'magenta', 'maroon': 'kastanie', 'mediumaquamarine': 'mittelaquamarine', 'mediumblue': 'mittelblau', 'mediumorchid': 'mittelorchidee', 'mediumpurple': 'mittelviolett', 'mediumseagreen': 'mittelseegrün', 'mediumslateblue': 'mittelschieferblau', 'mediumspringgreen': 'mittelfrühlingsgrün', 'mediumturquoise': 'mitteltürkis', 'mediumvioletred': 'mittelviolettrot', 'midnightblue': 'mitternachtsblau', 'mintcream': 'mintcreme', 'mistyrose': 'nebligrose', 'moccasin': 'mokassin', 'navajowhite': 'navajoweiß', 'navy': 'marineblau', 'oldlace': 'altgold', 'olive': 'olive', 'olivedrab': 'trübolive', 'orange': 'orange', 'orangered': 'orangerot', 'orchid': 'orchidee', 'palegoldenrod': 'blassegoldrute', 'palegreen': 'blassgrün', 'paleturquoise': 'blasstürkis', 'palevioletred': 'blasslilarot', 'papayawhip': 'papayafarben', 'peachpuff': 'pfirsich', 'peru': 'peru', 'pink': 'rosa', 'plum': 'pflaume', 'powderblue': 'taubenblau', 'purple': 'lila', 'red': 'rot', 'rosybrown': 'rostbraun', 'royalblue': 'köningsblau', 'saddlebrown': 'sattelbraun', 'salmon': 'lachs', 'sandybrown': 'sandbraun', 'seagreen': 'seegrün', 'seashell': 'muschel', 'sienna': 'sienna', 'silver': 'silber', 'skyblue': 'himmelblau', 'slateblue': 'schieferblau', 'slategray': 'schiefergrau', 'slategrey': 'schiefergraube', 'snow': 'schneeweiß', 'springgreen': 'frühlingsgrün', 'steelblue': 'stahlblau', 'tan': 'gelbbraun', 'teal': 'petrol', 'thistle': 'diestel', 'tomato': 'tomate', 'turquoise': 'türkis', 'violet': 'violett', 'wheat': 'weizen', 'white': 'weiß', 'whitesmoke': 'weißerrauch', 'yellow': 'gelb', 'yellowgreen': 'gelbgrün'}}
 TRANSLATED_GRADIENT_STARTS = {'keys': ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'left-top', 'top', 'right-top', 'left', 'center', 'right', 'left-bottom', 'bottom', 'right-bottom'], 'es': {'top-left': 'superior-izquierda', 'top-right': 'superior-derecha', 'bottom-left': 'inferior-izquierda', 'bottom-right': 'inferior-derecha', 'left-top': 'izquierda-superior', 'top': 'superior', 'right-top': 'derecha-superior', 'left': 'izquierda', 'center': 'centro', 'right': 'derecha', 'left-bottom': 'izquierda-inferior', 'bottom': 'inferior', 'right-bottom': 'derecha-inferior'}, 'de': {'top-left': 'oben-links', 'top-right': 'oben-rechts', 'bottom-left': 'unten-links', 'bottom-right': 'unten-rechts', 'left-top': 'links-oben', 'top': 'oben', 'right-top': 'rechts-oben', 'left': 'links', 'center': 'mitte', 'right': 'rechts', 'left-bottom': 'links-unten', 'bottom': 'unten', 'right-bottom': 'rechts-unten'}}
 TRANSLATED_ALIGNS = {'keys': ['left-top', 'top', 'right-top', 'left', 'center', 'right', 'left-bottom', 'bottom', 'right-bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'], 'es': {'left-top': 'izquierda-superior', 'top': 'superior', 'right-top': 'derecha-superior', 'left': 'izquierda', 'center': 'centro', 'right': 'derecha', 'left-bottom': 'izquierda-inferior', 'bottom': 'inferior', 'right-bottom': 'derecha-inferior', 'top-left': 'superior-izquierda', 'top-right': 'superior-derecha', 'bottom-left': 'inferior-izquierda', 'bottom-right': 'inferior-derecha'}, 'de': {'left-top': 'links-oben', 'top': 'oben', 'right-top': 'rechts-oben', 'left': 'links', 'center': 'mitte', 'right': 'rechts', 'left-bottom': 'links-unten', 'bottom': 'unten', 'right-bottom': 'rechts-unten', 'top-left': 'oben-links', 'top-right': 'oben-rechts', 'bottom-left': 'unten-links', 'bottom-right': 'unten-rechts'}}
-TRANSLATED_SHAPE_ATTRS = {'keys': ['play', 'pause', 'loop', 'restart', 'remove', 'bold', 'opacity', 'centerX', 'hits', 'borderWidth', 'centerY', 'url', 'left', 'add', 'points', 'startAngle', 'toBack', 'x2', 'y1', 'size', 'initialPoints', 'top', 'align', 'dashes', 'right', 'start', 'y2', 'radius', 'border', 'containsShape', 'background', 'height', 'lineWidth', 'toFront', 'roundness', 'arrowEnd', 'x1', 'fill', 'bottom', 'clear', 'sweepAngle', 'value', 'contains', 'italic', 'visible', 'arrowStart', 'hitsShape', 'font', 'children', 'hitTest', 'width', 'rotateAngle'], 'es': {'play': 'tocar', 'pause': 'pausa', 'loop': 'repetir', 'restart': 'reiniciar', 'remove': 'quitar', 'bold': 'negrito', 'opacity': 'opacidad', 'centerX': 'centroX', 'hits': 'toca', 'borderWidth': 'anchuraDeBorde', 'centerY': 'centroY', 'url': 'url', 'left': 'izquierda', 'add': 'agregar', 'points': 'puntos', 'startAngle': 'ánguloInicial', 'toBack': 'alFondo', 'x2': 'x2', 'y1': 'y1', 'size': 'tamaño', 'initialPoints': 'puntosIniciales', 'top': 'superior', 'align': 'alinear', 'dashes': 'guión', 'right': 'derecha', 'start': 'inicio', 'y2': 'y2', 'radius': 'radio', 'border': 'borde', 'containsShape': 'contieneFigura', 'background': 'fondo', 'height': 'altura', 'lineWidth': 'anchuraDeLínea', 'toFront': 'alFrente', 'roundness': 'redondez', 'arrowEnd': 'finalDeFlecha', 'x1': 'x1', 'fill': 'relleno', 'bottom': 'inferior', 'clear': 'vaciar', 'sweepAngle': 'ánguloDeBarrido', 'value': 'valor', 'contains': 'contiene', 'italic': 'itálica', 'visible': 'visible', 'arrowStart': 'inicioDeFlecha', 'hitsShape': 'tocaFigura', 'font': 'fuente', 'children': 'hijos', 'hitTest': 'tocarPrueba', 'width': 'ancho', 'rotateAngle': 'rotarÁngulo'}, 'de': {'play': 'abspielen', 'pause': 'pausieren', 'loop': 'wiederholen', 'restart': 'neustarten', 'remove': 'entferne', 'bold': 'fett', 'opacity': 'deckkraft', 'centerX': 'mitteX', 'hits': 'trifft', 'borderWidth': 'randBreite', 'centerY': 'mitteY', 'url': 'url', 'left': 'links', 'add': 'fügeHinzu', 'points': 'punkte', 'startAngle': 'anfangsWinkel', 'toBack': 'nachHinten', 'x2': 'x2', 'y1': 'y1', 'size': 'größe', 'initialPoints': 'startPunkte', 'top': 'oben', 'align': 'ausrichtung', 'dashes': 'gestrichelt', 'right': 'rechts', 'start': 'start', 'y2': 'y2', 'radius': 'radius', 'border': 'rand', 'containsShape': 'beinhaltetForm', 'background': 'hintergrund', 'height': 'höhe', 'lineWidth': 'linienBreite', 'toFront': 'nachVorn', 'roundness': 'rundung', 'arrowEnd': 'pfeilEnde', 'x1': 'x1', 'fill': 'füllen', 'bottom': 'unten', 'clear': 'leeren', 'sweepAngle': 'krümmungsWinkel', 'value': 'wert', 'contains': 'beinhaltet', 'italic': 'kursiv', 'visible': 'sichtbar', 'arrowStart': 'pfeilStart', 'hitsShape': 'trifftForm', 'font': 'schriftart', 'children': 'kinder', 'hitTest': 'treffenTest', 'width': 'breite', 'rotateAngle': 'drehWinkel'}}
+TRANSLATED_SHAPE_ATTRS = {'keys': ['play', 'pause', 'loop', 'restart', 'remove', 'bold', 'opacity', 'centerX', 'hits', 'borderWidth', 'centerY', 'url', 'left', 'add', 'points', 'startAngle', 'toBack', 'x2', 'y1', 'size', 'initialPoints', 'top', 'align', 'dashes', 'right', 'start', 'y2', 'radius', 'border', 'containsShape', 'background', 'height', 'lineWidth', 'toFront', 'roundness', 'arrowEnd', 'x1', 'fill', 'bottom', 'clear', 'sweepAngle', 'value', 'contains', 'italic', 'visible', 'arrowStart', 'hitsShape', 'font', 'children', 'hitTest', 'width', 'rotateAngle', 'red', 'blue', 'green'], 'es': {'play': 'tocar', 'pause': 'pausa', 'loop': 'repetir', 'restart': 'reiniciar', 'remove': 'quitar', 'bold': 'negrito', 'opacity': 'opacidad', 'centerX': 'centroX', 'hits': 'toca', 'borderWidth': 'anchuraDeBorde', 'centerY': 'centroY', 'url': 'url', 'left': 'izquierda', 'add': 'agregar', 'points': 'puntos', 'startAngle': 'ánguloInicial', 'toBack': 'alFondo', 'x2': 'x2', 'y1': 'y1', 'size': 'tamaño', 'initialPoints': 'puntosIniciales', 'top': 'superior', 'align': 'alinear', 'dashes': 'guión', 'right': 'derecha', 'start': 'inicio', 'y2': 'y2', 'radius': 'radio', 'border': 'borde', 'containsShape': 'contieneFigura', 'background': 'fondo', 'height': 'altura', 'lineWidth': 'anchuraDeLínea', 'toFront': 'alFrente', 'roundness': 'redondez', 'arrowEnd': 'finalDeFlecha', 'x1': 'x1', 'fill': 'relleno', 'bottom': 'inferior', 'clear': 'vaciar', 'sweepAngle': 'ánguloDeBarrido', 'value': 'valor', 'contains': 'contiene', 'italic': 'itálica', 'visible': 'visible', 'arrowStart': 'inicioDeFlecha', 'hitsShape': 'tocaFigura', 'font': 'fuente', 'children': 'hijos', 'hitTest': 'tocarPrueba', 'width': 'ancho', 'rotateAngle': 'rotarÁngulo', 'red': 'rojo', 'blue': 'azul', 'green': 'verde'}, 'de': {'play': 'abspielen', 'pause': 'pausieren', 'loop': 'wiederholen', 'restart': 'neustarten', 'remove': 'entferne', 'bold': 'fett', 'opacity': 'deckkraft', 'centerX': 'mitteX', 'hits': 'trifft', 'borderWidth': 'randBreite', 'centerY': 'mitteY', 'url': 'url', 'left': 'links', 'add': 'fügeHinzu', 'points': 'punkte', 'startAngle': 'anfangsWinkel', 'toBack': 'nachHinten', 'x2': 'x2', 'y1': 'y1', 'size': 'größe', 'initialPoints': 'startPunkte', 'top': 'oben', 'align': 'ausrichtung', 'dashes': 'gestrichelt', 'right': 'rechts', 'start': 'start', 'y2': 'y2', 'radius': 'radius', 'border': 'rand', 'containsShape': 'beinhaltetForm', 'background': 'hintergrund', 'height': 'höhe', 'lineWidth': 'linienBreite', 'toFront': 'nachVorn', 'roundness': 'rundung', 'arrowEnd': 'pfeilEnde', 'x1': 'x1', 'fill': 'füllen', 'bottom': 'unten', 'clear': 'leeren', 'sweepAngle': 'krümmungsWinkel', 'value': 'wert', 'contains': 'beinhaltet', 'italic': 'kursiv', 'visible': 'sichtbar', 'arrowStart': 'pfeilStart', 'hitsShape': 'trifftForm', 'font': 'schriftart', 'children': 'kinder', 'hitTest': 'treffenTest', 'width': 'breite', 'rotateAngle': 'drehWinkel'}}
 TRANSLATED_BOOLEANS = {'keys': ['True', 'False'], 'es': {'True': 'Verdadero', 'False': 'Falso'}, 'de': {'True': 'Wahr', 'False': 'Falsch'}}
 TRANSLATED_GLOBALS = {'keys': ['Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Robot', 'Sound', 'Star', 'almostEqual', 'angleTo', 'app', 'assertEqual', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'onKeyHolds', 'onSteps', 'print', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle', 'onKeyPresses'], 'es': {'Arc': 'Arco', 'Circle': 'Círculo', 'Group': 'Grupo', 'Image': 'Imagen', 'Label': 'Rótulo', 'Line': 'Línea', 'Oval': 'Óvalo', 'Polygon': 'Polígono', 'Rect': 'Rect', 'RegularPolygon': 'PolígonoRegular', 'Robot': 'Robot', 'Sound': 'Sonido', 'Star': 'Estrella', 'almostEqual': 'casiIgualA', 'angleTo': 'ánguloA', 'app': 'app', 'assertEqual': 'afirmarIgualdad', 'choice': 'opción', 'distance': 'distancia', 'fromPythonAngle': 'deÁnguloPython', 'getPointInDir': 'obtenerPuntoEnDir', 'gradient': 'gradiente', 'makeList': 'hacerLista', 'onKeyHolds': 'enTeclasRetenidas', 'onSteps': 'enPasos', 'print': 'imprime', 'pythonRound': 'redondearPython', 'random': 'aleatorio', 'randrange': 'rangoAleatorio', 'rgb': 'rgb', 'round': 'redondear', 'rounded': 'redondeado', 'seed': 'semilla', 'toPythonAngle': 'aÁnguloPython', 'onKeyPresses': 'enTeclaPresionadas'}, 'de': {'Arc': 'Bogen', 'Circle': 'Kreis', 'Group': 'Gruppe', 'Image': 'Bild', 'Label': 'Beschriftung', 'Line': 'Linie', 'Oval': 'Oval', 'Polygon': 'Vieleck', 'Rect': 'Rechteck', 'RegularPolygon': 'RegelmäßigesVieleck', 'Robot': 'Roboter', 'Sound': 'Geräusch', 'Star': 'Stern', 'almostEqual': 'fastGleich', 'angleTo': 'winkelNach', 'app': 'anwendung', 'assertEqual': 'gleichsetzen', 'choice': 'auswahl', 'distance': 'distanz', 'fromPythonAngle': 'vomPythonWinkel', 'getPointInDir': 'erhaltePunktInRichtung', 'gradient': 'farbverlauf', 'makeList': 'macheListe', 'onKeyHolds': 'wennTasteGedrückt', 'onSteps': 'schrittweise', 'print': 'ausgabe', 'pythonRound': 'pythonRunden', 'random': 'zufall', 'randrange': 'zufallsspanne', 'rgb': 'RGB', 'round': 'runden', 'rounded': 'gerundet', 'seed': 'kerne', 'toPythonAngle': 'zumPythonWinkel', 'onKeyPresses': 'wennTasteGedrückt'}}
 TRANSLATED_USER_FUNCTION_NAMES = {'keys': ['onKeyHold', 'onKeyPress', 'onKeyRelease', 'onMouseDrag', 'onMouseMove', 'onMousePress', 'onMouseRelease', 'onStep'], 'es': {'onKeyHold': 'enTeclaRetenida', 'onKeyPress': 'enTeclaPresionada', 'onKeyRelease': 'enTeclaSoltada', 'onMouseDrag': 'enRatónArrastrado', 'onMouseMove': 'enRatónMovido', 'onMousePress': 'enRatónPresionado', 'onMouseRelease': 'enRatónSoltado', 'onStep': 'enPaso'}, 'de': {'onKeyHold': 'beiTasteHalten', 'onKeyPress': 'beiTasteRunter', 'onKeyRelease': 'beiTasteHoch', 'onMouseDrag': 'beiMausMitTasteZiehen', 'onMouseMove': 'beiMausbewegung', 'onMousePress': 'beiMaustasteRunter', 'onMouseRelease': 'beiMaustasteHoch', 'onStep': 'beimSchritt'}}
 TRANSLATED_KEY_NAMES = {'keys': ['space', 'enter', 'left', 'right', 'up', 'down', 'pageup', 'pagedown', 'escape', 'delete', 'backspace', 'tab'], 'es': {'space': 'espacio', 'enter': 'intro', 'left': 'izquierda', 'right': 'derecha', 'up': 'arriba', 'down': 'abajo', 'pageup': 'repág', 'pagedown': 'avpág', 'escape': 'escape', 'delete': 'suprimir', 'backspace': 'retroceso', 'tab': 'tab'}, 'de': {'space': 'leertaste', 'enter': 'enter', 'left': 'links', 'right': 'rechts', 'up': 'pfeil-hoch', 'down': 'pfeil-runter', 'pageup': 'bild-hoch', 'pagedown': 'bild-runter', 'escape': 'escape', 'delete': 'entfernen', 'backspace': 'löschen', 'tab': 'tab'}}
 TRANSLATED_APP_ATTRS = {'keys': ['background', 'getTextInput', 'group', 'maxShapeCount', 'paused', 'setTextInputs', 'stepsPerSecond', 'stop', 'stopped', 'setMaxShapeCount'], 'es': {'background': 'fondo', 'getTextInput': 'obtenerEntradaDeTexto', 'group': 'grupo', 'maxShapeCount': 'maxCuentaDeFiguras', 'paused': 'pausada', 'setTextInputs': 'establecerEntradaDeTexto', 'stepsPerSecond': 'pasosPorSegundo', 'stop': 'detener', 'stopped': 'detenido', 'setMaxShapeCount': 'establecerCuentaFormasMaximas'}, 'de': {'background': 'hintergrund', 'getTextInput': 'holeTextEingabe', 'group': 'gruppe', 'maxShapeCount': 'maximaleFormMenge', 'paused': 'pausiert', 'setTextInputs': 'setzeTextEingaben', 'stepsPerSecond': 'schritteProSekunde', 'stop': 'stop', 'stopped': 'gestoppt', 'setMaxShapeCount': 'setzeMaxFormAnzahl'}}
-TRANSLATED_STRINGS = {'keys': ['Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Robot', 'Sound', 'Star', 'almostEqual', 'angleTo', 'app', 'assertEqual', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'onKeyHolds', 'onSteps', 'print', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle', 'onKeyPresses', 'Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Robot', 'Sound', 'Star', 'almostEqual', 'angleTo', 'app', 'assertEqual', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'onKeyHolds', 'onSteps', 'print', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle', 'onKeyPresses', 'remove', 'bold', 'opacity', 'centerX', 'hits', 'borderWidth', 'centerY', 'url', 'left', 'add', 'points', 'startAngle', 'toBack', 'x2', 'y1', 'size', 'initialPoints', 'top', 'align', 'dashes', 'right', 'start', 'y2', 'radius', 'border', 'containsShape', 'background', 'height', 'lineWidth', 'toFront', 'roundness', 'arrowEnd', 'x1', 'fill', 'bottom', 'clear', 'sweepAngle', 'value', 'contains', 'italic', 'visible', 'arrowStart', 'hitsShape', 'font', 'children', 'hitTest', 'width', 'rotateAngle', '"{{align}}" is not a valid Polygon constructor argument', '"{{attr}}" is not a valid shape constructor argument', '**** Error in onError()!!! ****', 'An assertEqual() statement in a test case failed. See the Console for details.', 'An error occurred. Here is the stack trace:', 'App', 'App.group is readonly', 'App.stopped is readonly', 'Arc', 'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}', 'Arguments to setTextInputs must be strings. %r is not a string.', 'Autograder: error executing solution code!', 'Autograder: error executing user code!', 'Autograding is taking a long time. Your code may have an infinite loop.', 'Both rows and cols must be >= 0', "Cannot set Image's url", "Cannot set Label's height", "Cannot set Label's width", "Cannot set Line's border", "Cannot set Line's borderWidth", 'Circle', 'Circle{{attrs}}', 'Failed to get text input', 'Failed to load image data', 'Font not found: {{baseFontName}}\n', 'Group', 'Group()', 'Group.add(shape)', 'Group.remove(shape)', 'Group.{{attr}} cannot be read or modified', "Group.{{attr}} has no value because its children don't all have the same value for {{attr}}", 'Illegal gradient start ({{start}})', 'Image', 'Image.url must start with http:// or https://', 'Image{{args}}', 'Internal error (no solution shapes!).  Please try again.', 'Label', 'Label({{args}})', 'Line', 'Line{{args}}', 'Must have an even number of x,y values in initialPoints list', 'Need to pass at least 2 colors to gradient(); you gave {{colorsLength}}', 'No activeDrawing for new Shape', 'No such attribute: {{attr}}', 'None', 'Oval', 'Oval{{args}}', 'Polygon', 'Polygon{{args}}', 'Recording Starts In', 'Rect', 'Rect{{args}}', 'RegularPolygon', 'RegularPolygon{{args}}', 'Robot', 'Shape', 'Shape()', 'Shapes drawn in wrong order', "Sorry, you cannot use Python's input function in CMU CS Academy", 'Sound', 'Sound "{{soundSource}}" failed to play. Disabling it.', 'Star', 'Star{{args}}', 'The loop argument to Sound.play must be True or False, got {{loopRepr}}', 'The restart argument to Sound.play must be True or False, got {{restartRepr}}', 'Too many shapes: Your code created more than {{maxShapeCount}} shapes. If you would like to increase this limit even though it may cause your code to run slowly, call app.setMaxShapeCount(n).', 'Traceback (most recent call last):', 'Type Error: None cannot be used inside gradient.colors', 'Type Error: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})', 'Type Error: {{color}} cannot be used inside gradient.colors', 'Type Error: {{objName}} {{attr}} should be a color, and {{value}} is not a legal color name', 'Undefined poster in new _CmuGraphics', 'Unknown message {{cmd}}', "Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound", 'Wait for fonts to load before using them', 'Wrong # of points ({{userPtsLen}} should be {{solnPtsLen}})', 'You are missing {{missingCount}} shape(s)', "You can't change the size of this group because {{shape}} can't be resized", "You can't get or set the align property", 'You have {{extraCount}} extra shape(s)', 'Your code appeared to be in an infinite loop, so it was terminated.', '\nWarning: Your code created labels with more than\n  1,000 total characters of text. This may cause your\n  program to run very slowly.\n', 'addPoint', 'add{{xy}}', 'align', 'app.background should not be {{userBackgroundString}}', 'app.setMaxShapeCount(n)', 'arrowEnd', 'arrowStart', 'at line', 'background', 'black', 'bold', 'border', 'borderWidth', 'bottom', 'bottom-left', 'bottom-right', 'center', 'centerX', 'centerY', 'centroidX', 'centroidY', 'color', 'containsShape(targetShape)', 'dashes', 'fill', 'font', 'gradient({{colors}}, start={{start}})', 'height', 'hits(x, y)', 'hitsShape(targetShape)', 'initialPoints', 'initialPoints (x value)', 'initialPoints (y value)', 'integer', 'italic', 'keys must be a list', 'left', 'left-bottom', 'left-top', 'line', 'lineWidth', 'list', 'n', 'non-negative-number', 'number', 'number-greater-than-2', 'number-in-range-{{lo}}-{{hi}}', 'opacity', 'oval size', 'points', 'positive-number', 'radius', 'rgb({{r}}, {{g}}, {{b}})', 'right', 'right-bottom', 'right-top', 'rotate.cx', 'rotate.cy', 'rotate.degrees', 'rotateAngle', 'roundness', 'scale{{xy}}', 'shape', 'size', 'startAngle', 'string', 'sweepAngle', 'targetShape', 'top', 'top-left', 'top-right', 'url', 'value', 'visible', 'width', 'x', 'x1', 'x2', 'y', 'y1', 'y2', '{{actual}} != {{expected}}', '{{attr}} in {{object}}', '{{attr}} should not be {{value}}', '{{ordinalName}} point mismatch at {{location}}', 'play', 'pause', 'restart', 'loop'], 'es': {'Arc': 'Arco', 'Circle': 'Círculo', 'Group': 'Grupo', 'Image': 'Imagen', 'Label': 'Rótulo', 'Line': 'Línea', 'Oval': 'Óvalo', 'Polygon': 'Polígono', 'Rect': 'Rect', 'RegularPolygon': 'PolígonoRegular', 'Robot': 'Robot', 'Sound': 'Sonido', 'Star': 'Estrella', 'almostEqual': 'casiIgualA', 'angleTo': 'ánguloA', 'app': 'app', 'assertEqual': 'afirmarIgualdad', 'choice': 'opción', 'distance': 'distancia', 'fromPythonAngle': 'deÁnguloPython', 'getPointInDir': 'obtenerPuntoEnDir', 'gradient': 'gradiente', 'makeList': 'hacerLista', 'onKeyHolds': 'enTeclasRetenidas', 'onSteps': 'enPasos', 'print': 'imprime', 'pythonRound': 'redondearPython', 'random': 'aleatorio', 'randrange': 'rangoAleatorio', 'rgb': 'rgb', 'round': 'redondear', 'rounded': 'redondeado', 'seed': 'semilla', 'toPythonAngle': 'aÁnguloPython', 'onKeyPresses': 'enTeclaPresionadas', 'remove': 'quitar', 'bold': 'negrito', 'opacity': 'opacidad', 'centerX': 'centroX', 'hits': 'toca', 'borderWidth': 'anchuraDeBorde', 'centerY': 'centroY', 'url': 'url', 'left': 'izquierda', 'add': 'agregar', 'points': 'puntos', 'startAngle': 'ánguloInicial', 'toBack': 'alFondo', 'x2': 'x2', 'y1': 'y1', 'size': 'tamaño', 'initialPoints': 'puntosIniciales', 'top': 'superior', 'align': 'alinear', 'dashes': 'guión', 'right': 'derecha', 'start': 'inicio', 'y2': 'y2', 'radius': 'radio', 'border': 'borde', 'containsShape': 'contieneFigura', 'background': 'fondo', 'height': 'altura', 'lineWidth': 'anchuraDeLínea', 'toFront': 'alFrente', 'roundness': 'redondez', 'arrowEnd': 'finalDeFlecha', 'x1': 'x1', 'fill': 'relleno', 'bottom': 'inferior', 'clear': 'vaciar', 'sweepAngle': 'ánguloDeBarrido', 'value': 'valor', 'contains': 'contiene', 'italic': 'itálica', 'visible': 'visible', 'arrowStart': 'inicioDeFlecha', 'hitsShape': 'tocaFigura', 'font': 'fuente', 'children': 'hijos', 'hitTest': 'tocarPrueba', 'width': 'ancho', 'rotateAngle': 'rotarÁngulo', '"{{align}}" is not a valid Polygon constructor argument': '"alinear" no es un argumento de constructor de Polígono válido', '"{{attr}}" is not a valid shape constructor argument': '"{{attr}}" no es un argumento de constructor de formas válido', '**** Error in onError()!!! ****': '**** ¡¡¡Error dentro de enError()!!! ****', 'An assertEqual() statement in a test case failed. See the Console for details.': 'Una sentencia assertEqual() dentro de un caso de prueba falló. Mire la consola para detalles.', 'An error occurred. Here is the stack trace:': 'Ocurrió un error. Aquí está el seguimiento de la pila:', 'App': 'App', 'App.group is readonly': 'App.grupo es sólo lectura', 'App.stopped is readonly': 'App.detenido es sólo lectura', 'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}': 'Arg Count Error: {{callSpec}}() toma {{argNamesLen}} argumentos ({{argNames}}), no {{argsLen}}', 'Arguments to setTextInputs must be strings. %r is not a string.': 'Argumentos de establecerEntradasDeTexto deben ser cadenas. %r no es una cadena.', 'Autograder: error executing solution code!': 'Evaluador: ¡error al ejecutar el código de la solución!', 'Autograder: error executing user code!': 'Evaluador: ¡error al ejecutar el código del usuario!', 'Autograding is taking a long time. Your code may have an infinite loop.': 'El evaluador está tardando mucho. Su código puede tener un bucle infinito.', 'Both rows and cols must be >= 0': 'Ambos las filas y las cols deben ser >= 0', "Cannot set Image's url": 'No se puede establecer el url de una Imagen', "Cannot set Label's height": 'No se puede establecer la altura de una Línea', "Cannot set Label's width": 'No se puede establecer la anchura de una Línea', "Cannot set Line's border": 'No se puede establecer el borde de una Línea', "Cannot set Line's borderWidth": 'No se puede establecer la anchura de una Línea', 'Circle{{attrs}}': 'Círculo{{attrs}}', 'Failed to get text input': 'No se pudo obtener entrade de texto', 'Failed to load image data': 'No se puedo cargar los datos de la imagen', 'Font not found: {{baseFontName}}\n': 'Fuente no encontrada: {{baseFontName}}\\n', 'Group()': 'Grupo()', 'Group.add(shape)': 'Grupo.agregar(figura)', 'Group.remove(shape)': 'Grupo.quitar(figura)', 'Group.{{attr}} cannot be read or modified': 'Grupo.{{attr}} no se puede leer ni modificar', "Group.{{attr}} has no value because its children don't all have the same value for {{attr}}": 'Grupo. {{attr}} no tiene valor porque no todos sus elementos secundarios tienen el mismo valor para {{attr}}', 'Illegal gradient start ({{start}})': 'Inicio de gradiente ilegal ({{start}})', 'Image.url must start with http:// or https://': 'Imagen.url debe comenzar con http:// o https://', 'Image{{args}}': 'Imagen{{args}}', 'Internal error (no solution shapes!).  Please try again.': 'Error internal (¡no figuras en su solución!).  Por favor inténtelo otra vez.', 'Label({{args}})': 'Rótulo({{args}})', 'Line{{args}}': 'Línea{{args}}', 'Must have an even number of x,y values in initialPoints list': 'Debe tener un número par de valores x,y dentro de la lista puntosIniciales', 'Need to pass at least 2 colors to gradient(); you gave {{colorsLength}}': 'Necesita dar al menos 2 colores a gradiente(); diste {{colorsLength}}', 'No activeDrawing for new Shape': 'No hay un dibujoActivo para la Figura nueva', 'No such attribute: {{attr}}': 'No existe tal atributo: {{attr}}', 'None': 'None', 'Oval{{args}}': 'Óvalo{{args}}', 'Polygon{{args}}': 'Polígono{{args}}', 'Recording Starts In': 'Grabación comenzando en', 'Rect{{args}}': 'Rect{{args}}', 'RegularPolygon{{args}}': 'PolígonoRegular{{args}}', 'Shape': 'Figura', 'Shape()': 'Figura()', 'Shapes drawn in wrong order': 'Figuras dibujadas en el orden equivocado', "Sorry, you cannot use Python's input function in CMU CS Academy": 'Lo lamento, no puede usar la función de entrada de Python en CMU CS Academy', 'Sound "{{soundSource}}" failed to play. Disabling it.': 'Sonido "{{soundSource}}" no pudo jugar. Desactivando.', 'Star{{args}}': 'Estrella{{args}}', 'The loop argument to Sound.play must be True or False, got {{loopRepr}}': 'El argumento de repetición de Sonido.tocar debe ser Verdadero o Falso, obtuvo {{loopRepr}}', 'The restart argument to Sound.play must be True or False, got {{restartRepr}}': 'El argumento de reinicio de Sonido.tocar debe ser Verdadero o Falso, obtuvo {{reiniciarRepr}}', 'Too many shapes: Your code created more than {{maxShapeCount}} shapes. If you would like to increase this limit even though it may cause your code to run slowly, call app.setMaxShapeCount(n).': 'Demasiadas formas: Su código creó más de {{maxShapeCount}} formas. Si desea aumentar este límite, aunque puede hacer que su código se ejecute lentamente, llame a app.establecerCuentaFormasMaximas(n).', 'Traceback (most recent call last):': 'rastreo (última llamada más reciente):', 'Type Error: None cannot be used inside gradient.colors': 'Error de tipo: None no se puede usar dentro de gradientes.colores', 'Type Error: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})': 'Type Error: {{callSpec}} debe ser {{typeName}} (pero {{value}} es de tipo {{valueType}})', 'Type Error: {{color}} cannot be used inside gradient.colors': 'Type Error: {{color}} no se puede utilizar dentro de gradiente.colores', 'Type Error: {{objName}} {{attr}} should be a color, and {{value}} is not a legal color name': 'Type Error: {{objName}} {{attr}} debe ser un color, y {{value}} no es un nombre de color legal', 'Undefined poster in new _CmuGraphics': 'Posteador indefinido en nuevo _CmuGraphics', 'Unknown message {{cmd}}': 'Mensaje desconocido {{cmd}}', "Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound": 'Use nuestra función redondear(n) en lugar del "round(n)" de Python\\n ¡La función "round(n)" de Python 3 no funciona como uno espera!\\n Si todavía quiere usar el "round" de Python, use "pythonRound"', 'Wait for fonts to load before using them': 'Espere a que se carguen las fuentes antes de usarlas', 'Wrong # of points ({{userPtsLen}} should be {{solnPtsLen}})': '# incorrecto de puntos ({{userPtsLen}} debe ser {{solnPtsLen}})', 'You are missing {{missingCount}} shape(s)': 'Te faltan {{missingCount}} forma(s)', "You can't change the size of this group because {{shape}} can't be resized": 'No puedes cambiar el tamaño de este grupo porque no se puede cambiar el tamaño de {{shape}}', "You can't get or set the align property": 'No puede obtener o establecer la propiedad de alinear', 'You have {{extraCount}} extra shape(s)': 'Tienes {{extraCount}} forma(s) adicionales', 'Your code appeared to be in an infinite loop, so it was terminated.': 'Su código parecía estar en un bucle infinito, entonces los terminamos.', '\nWarning: Your code created labels with more than\n  1,000 total characters of text. This may cause your\n  program to run very slowly.\n': '\\nAdvertencia: Su código creó rótulos con más de\\n  1,000 caracteres de texto en total. Esto puede hacer que su\\n programa se ejecute muy lentamente.\\n', 'addPoint': 'agregarPunto', 'add{{xy}}': 'añadir{{xy}}', 'app.background should not be {{userBackgroundString}}': 'app.fondo no debe ser {{userBackgroundString}}', 'app.setMaxShapeCount(n)': 'app.establecerMáximaCuentaDeFiguras(n)', 'at line': 'en la línea', 'black': 'negro', 'bottom-left': 'inferior-izquierda', 'bottom-right': 'inferior-derecha', 'center': 'centro', 'centroidX': 'centroideX', 'centroidY': 'centroideY', 'color': 'color', 'containsShape(targetShape)': 'contieneFigura(figuraObjetivo)', 'gradient({{colors}}, start={{start}})': 'gradiente({{colors}}, inicio={{start}})', 'hits(x, y)': 'toca(x, y)', 'hitsShape(targetShape)': 'tocaFigura(figuraObjetivo)', 'initialPoints (x value)': 'puntosIniciales (valor x)', 'initialPoints (y value)': 'puntosIniciales (valor y)', 'integer': 'número entero', 'keys must be a list': 'teclas debe ser una lista', 'left-bottom': 'izquierda-inferior', 'left-top': 'izquierda-superior', 'line': 'línea', 'list': 'lista', 'n': 'n', 'non-negative-number': 'número-no-negativo', 'number': 'número', 'number-greater-than-2': 'número-mayor-que-2', 'number-in-range-{{lo}}-{{hi}}': 'número-en-rango-{{lo}}-{{hi}}', 'oval size': 'tamaño de óvalo', 'positive-number': 'número-positivo', 'rgb({{r}}, {{g}}, {{b}})': 'rgb({{r}}, {{g}}, {{b}})', 'right-bottom': 'derecha-inferior', 'right-top': 'derecha-superior', 'rotate.cx': 'rotar.cx', 'rotate.cy': 'rotar.cy', 'rotate.degrees': 'rotar.grados', 'scale{{xy}}': 'escala{{xy}}', 'shape': 'figura', 'string': 'cadena', 'targetShape': 'figuraObjetivo', 'top-left': 'superior-izquierda', 'top-right': 'superior-derecha', 'x': 'x', 'y': 'y', '{{actual}} != {{expected}}': '{{actual}} != {{expected}}', '{{attr}} in {{object}}': '{{attr}} dentro de {{object}}', '{{attr}} should not be {{value}}': '{{attr}} no debe ser {{value}}', '{{ordinalName}} point mismatch at {{location}}': '{{ordinalName}} desajuste de puntos en {{location}}', 'play': 'tocar', 'pause': 'pausa', 'restart': 'reiniciar', 'loop': 'repetir'}, 'de': {'Arc': 'Bogen', 'Circle': 'Kreis', 'Group': 'Gruppe', 'Image': 'Bild', 'Label': 'Beschriftung', 'Line': 'Linie', 'Oval': 'Oval', 'Polygon': 'Vieleck', 'Rect': 'Rechteck', 'RegularPolygon': 'RegelmäßigesVieleck', 'Robot': 'Roboter', 'Sound': 'Geräusch', 'Star': 'Stern', 'almostEqual': 'fastGleich', 'angleTo': 'winkelNach', 'app': 'anwendung', 'assertEqual': 'gleichsetzen', 'choice': 'auswahl', 'distance': 'distanz', 'fromPythonAngle': 'vomPythonWinkel', 'getPointInDir': 'erhaltePunktInRichtung', 'gradient': 'farbverlauf', 'makeList': 'macheListe', 'onKeyHolds': 'wennTasteGedrückt', 'onSteps': 'schrittweise', 'print': 'ausgabe', 'pythonRound': 'pythonRunden', 'random': 'zufall', 'randrange': 'zufallsspanne', 'rgb': 'RGB', 'round': 'runden', 'rounded': 'gerundet', 'seed': 'kerne', 'toPythonAngle': 'zumPythonWinkel', 'onKeyPresses': 'wennTasteGedrückt', 'remove': 'entferne', 'bold': 'fett', 'opacity': 'deckkraft', 'centerX': 'mitteX', 'hits': 'trifft', 'borderWidth': 'randBreite', 'centerY': 'mitteY', 'url': 'url', 'left': 'links', 'add': 'fügeHinzu', 'points': 'punkte', 'startAngle': 'anfangsWinkel', 'toBack': 'nachHinten', 'x2': 'x2', 'y1': 'y1', 'size': 'größe', 'initialPoints': 'startPunkte', 'top': 'oben', 'align': 'ausrichtung', 'dashes': 'gestrichelt', 'right': 'rechts', 'start': 'start', 'y2': 'y2', 'radius': 'radius', 'border': 'rand', 'containsShape': 'beinhaltetForm', 'background': 'hintergrund', 'height': 'höhe', 'lineWidth': 'linienBreite', 'toFront': 'nachVorn', 'roundness': 'rundung', 'arrowEnd': 'pfeilEnde', 'x1': 'x1', 'fill': 'füllen', 'bottom': 'unten', 'clear': 'leeren', 'sweepAngle': 'krümmungsWinkel', 'value': 'wert', 'contains': 'beinhaltet', 'italic': 'kursiv', 'visible': 'sichtbar', 'arrowStart': 'pfeilStart', 'hitsShape': 'trifftForm', 'font': 'schriftart', 'children': 'kinder', 'hitTest': 'treffenTest', 'width': 'breite', 'rotateAngle': 'drehWinkel', '"{{align}}" is not a valid Polygon constructor argument': '"align" ist kein gültiges Polygonkonstruktorargument', '"{{attr}}" is not a valid shape constructor argument': '"{{attr}}" ist kein gültiges Formkonstruktorargument', '**** Error in onError()!!! ****': '**** Fehler in wennFehler()!!! ****', 'An assertEqual() statement in a test case failed. See the Console for details.': 'Eine assertEqual() Anweisung in einem Testfall ist fehlgeschlagen. Schau auf die Konsole um Details zu sehen.', 'An error occurred. Here is the stack trace:': 'Ein unbekannter Fehler ist aufgetreten. Hier ist der Stack Tracke:', 'App': 'Anwendung', 'App.group is readonly': 'App.gruppe nur lesbar', 'App.stopped is readonly': 'App.gestoppt ist nur lesbar', 'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}': 'Fehlerhafte Anzahl der Argumente: {{callSpec}} () akzeptiert {{argNamesLen}} Argumente ({{argNames}}), nicht {{argsLen}}', 'Arguments to setTextInputs must be strings. %r is not a string.': 'Argumente für setTextInputs müssen Zeichenfolgen sein.', 'Autograder: error executing solution code!': 'Autograder: Fehler beim Ausführen des Lösungscodes!', 'Autograder: error executing user code!': 'Autograder: Fehler beim Ausführen des Benutzercodes!', 'Autograding is taking a long time. Your code may have an infinite loop.': 'Autograding dauert lange. Möglicherweise gibt es eine Endlosschleife in deinem Code.', 'Both rows and cols must be >= 0': 'Sowohl Zeilen als auch Spalten müssen >= 0 sein', "Cannot set Image's url": 'Die URL des Bildes kann nicht festgelegt werden', "Cannot set Label's height": 'Die Höhe des Labels kann nicht eingestellt werden', "Cannot set Label's width": 'Breite des Labels kann nicht gesetzt werden', "Cannot set Line's border": 'Der Linienrand kann nicht festgelegt werden', "Cannot set Line's borderWidth": 'Die Rahmenbreite von Line kann nicht festgelegt werden', 'Circle{{attrs}}': 'Kreis{{attrs}}', 'Failed to get text input': 'Fehler bei der Texteingabe', 'Failed to load image data': 'Fehler beim Laden der Bilddaten', 'Font not found: {{baseFontName}}\n': 'Schriftart nicht gefunden: {{baseFontName}}\\n', 'Group()': 'Gruppe()', 'Group.add(shape)': 'Gruppe.fügeHinzu(form)', 'Group.remove(shape)': 'Gruppe.entferne(form)', 'Group.{{attr}} cannot be read or modified': 'Gruppe.{{attr}} kann nicht gelesen oder geändert werden', "Group.{{attr}} has no value because its children don't all have the same value for {{attr}}": 'Gruppe.{{attr}} hat keinen Wert, da die untergeordneten Elemente nicht alle den gleichen Wert für {{attr}} haben', 'Illegal gradient start ({{start}})': 'Illegaler Start des Farbverlaufs ({{start}})', 'Image.url must start with http:// or https://': 'Bild.url muss mit http:// or https:// beginnen', 'Image{{args}}': 'Bild{{args}}', 'Internal error (no solution shapes!).  Please try again.': 'Interner Fehler (keine Lösungsformen!). Bitte versuche es noche einmal.', 'Label({{args}})': 'Beschriftung({{args}})', 'Line{{args}}': 'Linie{{args}}', 'Must have an even number of x,y values in initialPoints list': 'Muss eine gerade Anzahl von x,y Werten in der Liste anfangsPunkte haben', 'Need to pass at least 2 colors to gradient(); you gave {{colorsLength}}': 'Es müssen mindestens 2 Farben an farbverlauf() übergeben werden. Du hast {{farbenLänge}} gegeben', 'No activeDrawing for new Shape': 'Keine aktiveZeichnung für neue Form', 'No such attribute: {{attr}}': 'Kein solches Attribut: {{attr}}', 'None': 'None', 'Oval{{args}}': 'Oval{{args}}', 'Polygon{{args}}': 'Polygon{{args}}', 'Recording Starts In': 'Aufnahme startet in', 'Rect{{args}}': 'Rechteck{{args}}', 'RegularPolygon{{args}}': 'RegularPolygon {{args}}', 'Shape': 'Form', 'Shape()': 'Form()', 'Shapes drawn in wrong order': 'Formen werden in der falschen Reihenfolge gezeichnet', "Sorry, you cannot use Python's input function in CMU CS Academy": "Leider kannst du Python's input Funktion nicht in CMU CS Academy nutzen", 'Sound "{{soundSource}}" failed to play. Disabling it.': 'Klang "{{soundSource}}" konnte nicht abgespielt werden. Wird deaktiviert.', 'Star{{args}}': 'Stern{{args}}', 'The loop argument to Sound.play must be True or False, got {{loopRepr}}': 'Das Schleifenargument für Sound.play muss True oder False sein, {{loopRepr}}', 'The restart argument to Sound.play must be True or False, got {{restartRepr}}': 'Das Argument um Sound.play neuzustarten muss True oder False sein und {{restartRepr}} erhalten haben', 'Too many shapes: Your code created more than {{maxShapeCount}} shapes. If you would like to increase this limit even though it may cause your code to run slowly, call app.setMaxShapeCount(n).': 'Zu viele Formen:  Ihr Code hat mehr als {{maxShapeCount}} Formen erstellt. Wenn Sie dieses Limit erhöhen möchten, obwohl Ihr Code dadurch möglicherweise langsam ausgeführt wird, rufen Sie app.setzeMaxFormAnzahl(n) auf.', 'Traceback (most recent call last):': 'Aufrufliste (jüngster Aufruf zuletzt)', 'Type Error: None cannot be used inside gradient.colors': 'Typfehler: None kann nicht innerhalb von farbverlauf.farben verwendet werden', 'Type Error: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})': 'Typfehler: {{callSpec}} sollte {{typeName}} sein (aber {{value}} ist vom Typ {{valueType}})', 'Type Error: {{color}} cannot be used inside gradient.colors': 'Typfehler: {{color}} kann nicht in gradient.colors verwendet werden', 'Type Error: {{objName}} {{attr}} should be a color, and {{value}} is not a legal color name': 'Typehler: {{objName}} {{attr}} sollte eine Farbe sein, und {{value}} ist kein zulässiger Farbname', 'Undefined poster in new _CmuGraphics': 'Nicht definiertes Poster in neuem _CmuGraphics', 'Unknown message {{cmd}}': 'Unbekannte Nachricht {{cmd}}', "Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound": "Verwenden Sie unsere Funktion rounded(n) anstelle der Python 3 Funktion round(n)\\n Python 3's round(n) funktioniert nicht wie erwartet!\\n Wenn Sie die Funktion round() von Python 3 weiterhin verwenden möchten, dann nutzen Sie pythonRound", 'Wait for fonts to load before using them': 'Warte, bis Zeichensatz geladen ist, bevor du ihn verwendest', 'Wrong # of points ({{userPtsLen}} should be {{solnPtsLen}})': 'Falsche Anzahl von Punkten ({{userPtsLen}} sollte ${{solnPtsLen}} sein)', 'You are missing {{missingCount}} shape(s)': 'Ihnen fehlen {{missingCount}} Form(en)', "You can't change the size of this group because {{shape}} can't be resized": 'Sie können die Größe dieser Gruppe nicht ändern, da die Größe von {{form}} nicht geändert werden kann', "You can't get or set the align property": 'Sie können die Align-Eigenschaft nicht abrufen oder festlegen', 'You have {{extraCount}} extra shape(s)': 'Du hast {{extraCount}} zusätzliche Form(en)', 'Your code appeared to be in an infinite loop, so it was terminated.': 'Dein Code tauchte in einer Endlosschleife auf, aus dem Grund wurde er beendet.', '\nWarning: Your code created labels with more than\n  1,000 total characters of text. This may cause your\n  program to run very slowly.\n': '\\nWarnung: Ihr Code hat Beschriftungen mit insgesamt mehr als\\n 1.000 Textzeichen erstellt. Dies kann dazu führen, dass Ihr\\n Programm sehr langsam ausgeführt wird.\\n', 'addPoint': 'fügePunktHinzu', 'add{{xy}}': 'addiere{{xy}}', 'app.background should not be {{userBackgroundString}}': 'anwendung.hintergrund sollte nicht {{nutzerHintergrundString}} sein', 'app.setMaxShapeCount(n)': 'anwendung.setzeMaxFormAnzahl(n)', 'at line': 'in Zeile', 'black': 'schwarz', 'bottom-left': 'unten-links', 'bottom-right': 'unten-rechts', 'center': 'mitte', 'centroidX': 'mittelpunktX', 'centroidY': 'mittelpunktY', 'color': 'Farbe', 'containsShape(targetShape)': 'beinhaltetForm(zielForm)', 'gradient({{colors}}, start={{start}})': 'farbverlauf({{farben}}, start = {{start}})', 'hits(x, y)': 'trifft(x,y)', 'hitsShape(targetShape)': 'trifftForm(zielForm)', 'initialPoints (x value)': 'anfangsPunkte (x wert)', 'initialPoints (y value)': 'anfangsPunkte (y wert)', 'integer': 'Integer', 'keys must be a list': 'Schlüssel müssen eine Liste sein', 'left-bottom': 'links-unten', 'left-top': 'links-oben', 'line': 'Linie', 'list': 'Liste', 'n': 'n', 'non-negative-number': 'Nicht-negative Zahl', 'number': 'Nummer', 'number-greater-than-2': 'Zahl-größer-als-2', 'number-in-range-{{lo}}-{{hi}}': 'Aufnahme startet in', 'oval size': 'Größe Oval', 'positive-number': 'Positive Zahl', 'rgb({{r}}, {{g}}, {{b}})': 'RGB({{r}}, {{g}}, {{b}})', 'right-bottom': 'rechts-unten', 'right-top': 'rechts-oben', 'rotate.cx': 'drehung.cx', 'rotate.cy': 'drehung.cy', 'rotate.degrees': 'drehung.winkel', 'scale{{xy}}': 'skaliere{{xy}}', 'shape': 'Form', 'string': 'string', 'targetShape': 'zielForm', 'top-left': 'oben-links', 'top-right': 'oben-rechts', 'x': 'x', 'y': 'y', '{{actual}} != {{expected}}': '{{aktuell}}! = {{erwartet}}', '{{attr}} in {{object}}': '{{attr}} in {{object}}', '{{attr}} should not be {{value}}': '{{attr}} sollte nicht {{value}} sein', '{{ordinalName}} point mismatch at {{location}}': '{{ordinalName}} Punkt stimmt nicht mit {{location}} überein', 'play': 'abspielen', 'pause': 'pausieren', 'restart': 'neustarten', 'loop': 'wiederholen'}}
+TRANSLATED_STRINGS = {'keys': ['Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Robot', 'Sound', 'Star', 'almostEqual', 'angleTo', 'app', 'assertEqual', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'onKeyHolds', 'onSteps', 'print', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle', 'onKeyPresses', 'Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Robot', 'Sound', 'Star', 'almostEqual', 'angleTo', 'app', 'assertEqual', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'onKeyHolds', 'onSteps', 'print', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle', 'onKeyPresses', 'remove', 'bold', 'opacity', 'centerX', 'hits', 'borderWidth', 'centerY', 'url', 'left', 'add', 'points', 'startAngle', 'toBack', 'x2', 'y1', 'size', 'initialPoints', 'top', 'align', 'dashes', 'right', 'start', 'y2', 'radius', 'border', 'containsShape', 'background', 'height', 'lineWidth', 'toFront', 'roundness', 'arrowEnd', 'x1', 'fill', 'bottom', 'clear', 'sweepAngle', 'value', 'contains', 'italic', 'visible', 'arrowStart', 'hitsShape', 'font', 'children', 'hitTest', 'width', 'rotateAngle', '"{{align}}" is not a valid Polygon constructor argument', '"{{attr}}" is not a valid shape constructor argument', '**** Error in onError()!!! ****', 'An assertEqual() statement in a test case failed. See the Console for details.', 'An error occurred. Here is the stack trace:', 'App', 'App.group is readonly', 'App.stopped is readonly', 'Arc', 'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}', 'Arguments to setTextInputs must be strings. %r is not a string.', 'Autograder: error executing solution code!', 'Autograder: error executing user code!', 'Autograding is taking a long time. Your code may have an infinite loop.', 'Both rows and cols must be >= 0', "Cannot set Image's url", "Cannot set Label's height", "Cannot set Label's width", "Cannot set Line's border", "Cannot set Line's borderWidth", 'Circle', 'Circle{{attrs}}', 'Failed to get text input', 'Failed to load image data', 'Font not found: {{baseFontName}}\n', 'Group', 'Group()', 'Group.add(shape)', 'Group.remove(shape)', 'Group.{{attr}} cannot be read or modified', "Group.{{attr}} has no value because its children don't all have the same value for {{attr}}", '{{error}}: Illegal gradient start ({{start}})', 'Image', 'Image{{args}}', 'Internal error (no solution shapes!).  Please try again.', 'Label', 'Label({{args}})', 'Line', 'Line{{args}}', 'Must have an even number of x,y values in initialPoints list', 'Need to pass at least 2 colors to gradient(); you gave {{colorsLength}}', 'No activeDrawing for new Shape', 'No such attribute: {{attr}}', 'None', 'Oval', 'Oval{{args}}', 'Polygon', 'Polygon{{args}}', 'Recording Starts In', 'Rect', 'Rect{{args}}', 'RegularPolygon', 'RegularPolygon{{args}}', 'Robot', 'Shape', 'Shape()', 'Shapes drawn in wrong order', "Sorry, you cannot use Python's input function in CMU CS Academy", 'Sound', 'Sound "{{soundSource}}" failed to play. Disabling it.', 'Star', 'Star{{args}}', 'The loop argument to Sound.play must be True or False, got {{loopRepr}}', 'The restart argument to Sound.play must be True or False, got {{restartRepr}}', 'Too many shapes: Your code created more than {{maxShapeCount}} shapes. If you would like to increase this limit even though it may cause your code to run slowly, call app.setMaxShapeCount(n).', 'Traceback (most recent call last):', '{{error}}: None cannot be used inside gradient.colors', '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})', '{{error}}: {{color}} cannot be used inside gradient.colors', '{{error}}: {{callSpec}} should be a color, and {{value}} is not a legal color name', 'Undefined poster in new _CmuGraphics', 'Unknown message {{cmd}}', "Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound", 'Wait for fonts to load before using them', 'Wrong # of points ({{userPtsLen}} should be {{solnPtsLen}})', 'You are missing {{missingCount}} shape(s)', "You can't change the size of this group because {{shape}} can't be resized", "You can't get or set the align property", 'You have {{extraCount}} extra shape(s)', 'Your code appeared to be in an infinite loop, so it was terminated.', '\nWarning: Your code created labels with more than\n  1,000 total characters of text. This may cause your\n  program to run very slowly.\n', 'addPoint', 'add{{xy}}', 'align', 'app.background should not be {{userBackgroundString}}', 'app.setMaxShapeCount(n)', 'arrowEnd', 'arrowStart', 'at line', 'background', 'black', 'bold', 'border', 'borderWidth', 'bottom', 'bottom-left', 'bottom-right', 'center', 'centerX', 'centerY', 'centroidX', 'centroidY', 'color', 'containsShape(targetShape)', 'dashes', 'fill', 'font', 'gradient({{colors}}, start={{start}})', 'height', 'hits(x, y)', 'hitsShape(targetShape)', 'initialPoints', 'initialPoints (x value)', 'initialPoints (y value)', 'integer', 'italic', 'keys must be a list', 'left', 'left-bottom', 'left-top', 'line', 'lineWidth', 'list', 'n', 'non-negative-number', 'number', 'number-greater-than-2', 'number-in-range-{{lo}}-{{hi}}', 'opacity', 'oval size', 'points', 'positive-number', 'radius', 'rgb({{r}}, {{g}}, {{b}})', 'right', 'right-bottom', 'right-top', 'rotate.cx', 'rotate.cy', 'rotate.degrees', 'rotateAngle', 'roundness', 'scale{{xy}}', 'shape', 'size', 'startAngle', 'string', 'sweepAngle', 'targetShape', 'top', 'top-left', 'top-right', 'url', 'value', 'visible', 'width', 'x', 'x1', 'x2', 'y', 'y1', 'y2', '{{actual}} != {{expected}}', '{{attr}} in {{object}}', '{{attr}} should not be {{value}}', '{{ordinalName}} point mismatch at {{location}}', 'play', 'pause', 'restart', 'loop', 'TypeError', '{{error}}: in {{callSpec}}, {{value}} is not a legal align value', "{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'", 'contains(x, y)', 'hitTest(x, y)', 'addPoint(x, y)', 'red', 'green', 'blue', '{{callSpec}} must start with http:// or https://'], 'es': {'Arc': 'Arco', 'Circle': 'Círculo', 'Group': 'Grupo', 'Image': 'Imagen', 'Label': 'Rótulo', 'Line': 'Línea', 'Oval': 'Óvalo', 'Polygon': 'Polígono', 'Rect': 'Rect', 'RegularPolygon': 'PolígonoRegular', 'Robot': 'Robot', 'Sound': 'Sonido', 'Star': 'Estrella', 'almostEqual': 'casiIgualA', 'angleTo': 'ánguloA', 'app': 'app', 'assertEqual': 'afirmarIgualdad', 'choice': 'opción', 'distance': 'distancia', 'fromPythonAngle': 'deÁnguloPython', 'getPointInDir': 'obtenerPuntoEnDir', 'gradient': 'gradiente', 'makeList': 'hacerLista', 'onKeyHolds': 'enTeclasRetenidas', 'onSteps': 'enPasos', 'print': 'imprime', 'pythonRound': 'redondearPython', 'random': 'aleatorio', 'randrange': 'rangoAleatorio', 'rgb': 'rgb', 'round': 'redondear', 'rounded': 'redondeado', 'seed': 'semilla', 'toPythonAngle': 'aÁnguloPython', 'onKeyPresses': 'enTeclaPresionadas', 'remove': 'quitar', 'bold': 'negrito', 'opacity': 'opacidad', 'centerX': 'centroX', 'hits': 'toca', 'borderWidth': 'anchuraDeBorde', 'centerY': 'centroY', 'url': 'url', 'left': 'izquierda', 'add': 'agregar', 'points': 'puntos', 'startAngle': 'ánguloInicial', 'toBack': 'alFondo', 'x2': 'x2', 'y1': 'y1', 'size': 'tamaño', 'initialPoints': 'puntosIniciales', 'top': 'superior', 'align': 'alinear', 'dashes': 'guión', 'right': 'derecha', 'start': 'inicio', 'y2': 'y2', 'radius': 'radio', 'border': 'borde', 'containsShape': 'contieneFigura', 'background': 'fondo', 'height': 'altura', 'lineWidth': 'anchuraDeLínea', 'toFront': 'alFrente', 'roundness': 'redondez', 'arrowEnd': 'finalDeFlecha', 'x1': 'x1', 'fill': 'relleno', 'bottom': 'inferior', 'clear': 'vaciar', 'sweepAngle': 'ánguloDeBarrido', 'value': 'valor', 'contains': 'contiene', 'italic': 'itálica', 'visible': 'visible', 'arrowStart': 'inicioDeFlecha', 'hitsShape': 'tocaFigura', 'font': 'fuente', 'children': 'hijos', 'hitTest': 'tocarPrueba', 'width': 'ancho', 'rotateAngle': 'rotarÁngulo', '"{{align}}" is not a valid Polygon constructor argument': '"alinear" no es un argumento de constructor de Polígono válido', '"{{attr}}" is not a valid shape constructor argument': '"{{attr}}" no es un argumento de constructor de formas válido', '**** Error in onError()!!! ****': '**** ¡¡¡Error dentro de enError()!!! ****', 'An assertEqual() statement in a test case failed. See the Console for details.': 'Una sentencia assertEqual() dentro de un caso de prueba falló. Mire la consola para detalles.', 'An error occurred. Here is the stack trace:': 'Ocurrió un error. Aquí está el seguimiento de la pila:', 'App': 'App', 'App.group is readonly': 'App.grupo es sólo lectura', 'App.stopped is readonly': 'App.detenido es sólo lectura', 'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}': 'Arg Count Error: {{callSpec}}() toma {{argNamesLen}} argumentos ({{argNames}}), no {{argsLen}}', 'Arguments to setTextInputs must be strings. %r is not a string.': 'Argumentos de establecerEntradasDeTexto deben ser cadenas. %r no es una cadena.', 'Autograder: error executing solution code!': 'Evaluador: ¡error al ejecutar el código de la solución!', 'Autograder: error executing user code!': 'Evaluador: ¡error al ejecutar el código del usuario!', 'Autograding is taking a long time. Your code may have an infinite loop.': 'El evaluador está tardando mucho. Su código puede tener un bucle infinito.', 'Both rows and cols must be >= 0': 'Ambos las filas y las cols deben ser >= 0', "Cannot set Image's url": 'No se puede establecer el url de una Imagen', "Cannot set Label's height": 'No se puede establecer la altura de una Línea', "Cannot set Label's width": 'No se puede establecer la anchura de una Línea', "Cannot set Line's border": 'No se puede establecer el borde de una Línea', "Cannot set Line's borderWidth": 'No se puede establecer la anchura de una Línea', 'Circle{{attrs}}': 'Círculo{{attrs}}', 'Failed to get text input': 'No se pudo obtener entrade de texto', 'Failed to load image data': 'No se puedo cargar los datos de la imagen', 'Font not found: {{baseFontName}}\n': 'Fuente no encontrada: {{baseFontName}}\\n', 'Group()': 'Grupo()', 'Group.add(shape)': 'Grupo.agregar(figura)', 'Group.remove(shape)': 'Grupo.quitar(figura)', 'Group.{{attr}} cannot be read or modified': 'Grupo.{{attr}} no se puede leer ni modificar', "Group.{{attr}} has no value because its children don't all have the same value for {{attr}}": 'Grupo. {{attr}} no tiene valor porque no todos sus elementos secundarios tienen el mismo valor para {{attr}}', '{{error}}: Illegal gradient start ({{start}})': '{{error}}: Inicio de gradiente ilegal ({{start}})', 'Image{{args}}': 'Imagen{{args}}', 'Internal error (no solution shapes!).  Please try again.': 'Error internal (¡no figuras en su solución!).  Por favor inténtelo otra vez.', 'Label({{args}})': 'Rótulo({{args}})', 'Line{{args}}': 'Línea{{args}}', 'Must have an even number of x,y values in initialPoints list': 'Debe tener un número par de valores x,y dentro de la lista puntosIniciales', 'Need to pass at least 2 colors to gradient(); you gave {{colorsLength}}': 'Necesita dar al menos 2 colores a gradiente(); diste {{colorsLength}}', 'No activeDrawing for new Shape': 'No hay un dibujoActivo para la Figura nueva', 'No such attribute: {{attr}}': 'No existe tal atributo: {{attr}}', 'None': 'None', 'Oval{{args}}': 'Óvalo{{args}}', 'Polygon{{args}}': 'Polígono{{args}}', 'Recording Starts In': 'Grabación comenzando en', 'Rect{{args}}': 'Rect{{args}}', 'RegularPolygon{{args}}': 'PolígonoRegular{{args}}', 'Shape': 'Figura', 'Shape()': 'Figura()', 'Shapes drawn in wrong order': 'Figuras dibujadas en el orden equivocado', "Sorry, you cannot use Python's input function in CMU CS Academy": 'Lo lamento, no puede usar la función de entrada de Python en CMU CS Academy', 'Sound "{{soundSource}}" failed to play. Disabling it.': 'Sonido "{{soundSource}}" no pudo jugar. Desactivando.', 'Star{{args}}': 'Estrella{{args}}', 'The loop argument to Sound.play must be True or False, got {{loopRepr}}': 'El argumento de repetición de Sonido.tocar debe ser Verdadero o Falso, obtuvo {{loopRepr}}', 'The restart argument to Sound.play must be True or False, got {{restartRepr}}': 'El argumento de reinicio de Sonido.tocar debe ser Verdadero o Falso, obtuvo {{reiniciarRepr}}', 'Too many shapes: Your code created more than {{maxShapeCount}} shapes. If you would like to increase this limit even though it may cause your code to run slowly, call app.setMaxShapeCount(n).': 'Demasiadas formas: Su código creó más de {{maxShapeCount}} formas. Si desea aumentar este límite, aunque puede hacer que su código se ejecute lentamente, llame a app.establecerCuentaFormasMaximas(n).', 'Traceback (most recent call last):': 'rastreo (última llamada más reciente):', '{{error}}: None cannot be used inside gradient.colors': '{{error}}: None no se puede usar dentro de gradientes.colores', '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})': '{{error}}: {{callSpec}} debe ser {{typeName}} (pero {{value}} es de tipo {{valueType}})', '{{error}}: {{color}} cannot be used inside gradient.colors': '{{error}}: {{color}} no se puede utilizar dentro de gradiente.colores', '{{error}}: {{callSpec}} should be a color, and {{value}} is not a legal color name': '{{error}}: {{callSpec}} debe ser un color, y {{value}} no es un nombre de color legal', 'Undefined poster in new _CmuGraphics': 'Posteador indefinido en nuevo _CmuGraphics', 'Unknown message {{cmd}}': 'Mensaje desconocido {{cmd}}', "Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound": 'Use nuestra función redondear(n) en lugar del "round(n)" de Python\\n ¡La función "round(n)" de Python 3 no funciona como uno espera!\\n Si todavía quiere usar el "round" de Python, use "pythonRound"', 'Wait for fonts to load before using them': 'Espere a que se carguen las fuentes antes de usarlas', 'Wrong # of points ({{userPtsLen}} should be {{solnPtsLen}})': '# incorrecto de puntos ({{userPtsLen}} debe ser {{solnPtsLen}})', 'You are missing {{missingCount}} shape(s)': 'Te faltan {{missingCount}} forma(s)', "You can't change the size of this group because {{shape}} can't be resized": 'No puedes cambiar el tamaño de este grupo porque no se puede cambiar el tamaño de {{shape}}', "You can't get or set the align property": 'No puede obtener o establecer la propiedad de alinear', 'You have {{extraCount}} extra shape(s)': 'Tienes {{extraCount}} forma(s) adicionales', 'Your code appeared to be in an infinite loop, so it was terminated.': 'Su código parecía estar en un bucle infinito, entonces los terminamos.', '\nWarning: Your code created labels with more than\n  1,000 total characters of text. This may cause your\n  program to run very slowly.\n': '\\nAdvertencia: Su código creó rótulos con más de\\n  1,000 caracteres de texto en total. Esto puede hacer que su\\n programa se ejecute muy lentamente.\\n', 'addPoint': 'agregarPunto', 'add{{xy}}': 'añadir{{xy}}', 'app.background should not be {{userBackgroundString}}': 'app.fondo no debe ser {{userBackgroundString}}', 'app.setMaxShapeCount(n)': 'app.establecerMáximaCuentaDeFiguras(n)', 'at line': 'en la línea', 'black': 'negro', 'bottom-left': 'inferior-izquierda', 'bottom-right': 'inferior-derecha', 'center': 'centro', 'centroidX': 'centroideX', 'centroidY': 'centroideY', 'color': 'color', 'containsShape(targetShape)': 'contieneFigura(figuraObjetivo)', 'gradient({{colors}}, start={{start}})': 'gradiente({{colors}}, inicio={{start}})', 'hits(x, y)': 'toca(x, y)', 'hitsShape(targetShape)': 'tocaFigura(figuraObjetivo)', 'initialPoints (x value)': 'puntosIniciales (valor x)', 'initialPoints (y value)': 'puntosIniciales (valor y)', 'integer': 'número entero', 'keys must be a list': 'teclas debe ser una lista', 'left-bottom': 'izquierda-inferior', 'left-top': 'izquierda-superior', 'line': 'línea', 'list': 'lista', 'n': 'n', 'non-negative-number': 'número-no-negativo', 'number': 'número', 'number-greater-than-2': 'número-mayor-que-2', 'number-in-range-{{lo}}-{{hi}}': 'número-en-rango-{{lo}}-{{hi}}', 'oval size': 'tamaño de óvalo', 'positive-number': 'número-positivo', 'rgb({{r}}, {{g}}, {{b}})': 'rgb({{r}}, {{g}}, {{b}})', 'right-bottom': 'derecha-inferior', 'right-top': 'derecha-superior', 'rotate.cx': 'rotar.cx', 'rotate.cy': 'rotar.cy', 'rotate.degrees': 'rotar.grados', 'scale{{xy}}': 'escala{{xy}}', 'shape': 'figura', 'string': 'cadena', 'targetShape': 'figuraObjetivo', 'top-left': 'superior-izquierda', 'top-right': 'superior-derecha', 'x': 'x', 'y': 'y', '{{actual}} != {{expected}}': '{{actual}} != {{expected}}', '{{attr}} in {{object}}': '{{attr}} dentro de {{object}}', '{{attr}} should not be {{value}}': '{{attr}} no debe ser {{value}}', '{{ordinalName}} point mismatch at {{location}}': '{{ordinalName}} desajuste de puntos en {{location}}', 'play': 'tocar', 'pause': 'pausa', 'restart': 'reiniciar', 'loop': 'repetir', 'TypeError': 'Error de tipo', '{{error}}: in {{callSpec}}, {{value}} is not a legal align value': '{{error}}: in {{callSpec}}, {{value}} is not a legal align value', "{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'": "{{error}}: {{callSpec}} tiene un argumento de palabra clave inesperado '{{arg}}'", 'contains(x, y)': 'contiene(x, y)', 'hitTest(x, y)': 'tocarPrueba(x, y)', 'addPoint(x, y)': 'agregarPunto(x, y)', 'red': 'rojo', 'green': 'verde', 'blue': 'azul', '{{callSpec}} must start with http:// or https://': '{{callSpec}} debe comenzar con http:// o https://'}, 'de': {'Arc': 'Bogen', 'Circle': 'Kreis', 'Group': 'Gruppe', 'Image': 'Bild', 'Label': 'Beschriftung', 'Line': 'Linie', 'Oval': 'Oval', 'Polygon': 'Vieleck', 'Rect': 'Rechteck', 'RegularPolygon': 'RegelmäßigesVieleck', 'Robot': 'Roboter', 'Sound': 'Geräusch', 'Star': 'Stern', 'almostEqual': 'fastGleich', 'angleTo': 'winkelNach', 'app': 'anwendung', 'assertEqual': 'gleichsetzen', 'choice': 'auswahl', 'distance': 'distanz', 'fromPythonAngle': 'vomPythonWinkel', 'getPointInDir': 'erhaltePunktInRichtung', 'gradient': 'farbverlauf', 'makeList': 'macheListe', 'onKeyHolds': 'wennTasteGedrückt', 'onSteps': 'schrittweise', 'print': 'ausgabe', 'pythonRound': 'pythonRunden', 'random': 'zufall', 'randrange': 'zufallsspanne', 'rgb': 'RGB', 'round': 'runden', 'rounded': 'gerundet', 'seed': 'kerne', 'toPythonAngle': 'zumPythonWinkel', 'onKeyPresses': 'wennTasteGedrückt', 'remove': 'entferne', 'bold': 'fett', 'opacity': 'deckkraft', 'centerX': 'mitteX', 'hits': 'trifft', 'borderWidth': 'randBreite', 'centerY': 'mitteY', 'url': 'url', 'left': 'links', 'add': 'fügeHinzu', 'points': 'punkte', 'startAngle': 'anfangsWinkel', 'toBack': 'nachHinten', 'x2': 'x2', 'y1': 'y1', 'size': 'größe', 'initialPoints': 'startPunkte', 'top': 'oben', 'align': 'ausrichtung', 'dashes': 'gestrichelt', 'right': 'rechts', 'start': 'start', 'y2': 'y2', 'radius': 'radius', 'border': 'rand', 'containsShape': 'beinhaltetForm', 'background': 'hintergrund', 'height': 'höhe', 'lineWidth': 'linienBreite', 'toFront': 'nachVorn', 'roundness': 'rundung', 'arrowEnd': 'pfeilEnde', 'x1': 'x1', 'fill': 'füllen', 'bottom': 'unten', 'clear': 'leeren', 'sweepAngle': 'krümmungsWinkel', 'value': 'wert', 'contains': 'beinhaltet', 'italic': 'kursiv', 'visible': 'sichtbar', 'arrowStart': 'pfeilStart', 'hitsShape': 'trifftForm', 'font': 'schriftart', 'children': 'kinder', 'hitTest': 'treffenTest', 'width': 'breite', 'rotateAngle': 'drehWinkel', '"{{align}}" is not a valid Polygon constructor argument': '"align" ist kein gültiges Polygonkonstruktorargument', '"{{attr}}" is not a valid shape constructor argument': '"{{attr}}" ist kein gültiges Formkonstruktorargument', '**** Error in onError()!!! ****': '**** Fehler in wennFehler()!!! ****', 'An assertEqual() statement in a test case failed. See the Console for details.': 'Eine assertEqual() Anweisung in einem Testfall ist fehlgeschlagen. Schau auf die Konsole um Details zu sehen.', 'An error occurred. Here is the stack trace:': 'Ein unbekannter Fehler ist aufgetreten. Hier ist der Stack Tracke:', 'App': 'Anwendung', 'App.group is readonly': 'App.gruppe nur lesbar', 'App.stopped is readonly': 'App.gestoppt ist nur lesbar', 'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}': 'Fehlerhafte Anzahl der Argumente: {{callSpec}} () akzeptiert {{argNamesLen}} Argumente ({{argNames}}), nicht {{argsLen}}', 'Arguments to setTextInputs must be strings. %r is not a string.': 'Argumente für setTextInputs müssen Zeichenfolgen sein.', 'Autograder: error executing solution code!': 'Autograder: Fehler beim Ausführen des Lösungscodes!', 'Autograder: error executing user code!': 'Autograder: Fehler beim Ausführen des Benutzercodes!', 'Autograding is taking a long time. Your code may have an infinite loop.': 'Autograding dauert lange. Möglicherweise gibt es eine Endlosschleife in deinem Code.', 'Both rows and cols must be >= 0': 'Sowohl Zeilen als auch Spalten müssen >= 0 sein', "Cannot set Image's url": 'Die URL des Bildes kann nicht festgelegt werden', "Cannot set Label's height": 'Die Höhe des Labels kann nicht eingestellt werden', "Cannot set Label's width": 'Breite des Labels kann nicht gesetzt werden', "Cannot set Line's border": 'Der Linienrand kann nicht festgelegt werden', "Cannot set Line's borderWidth": 'Die Rahmenbreite von Line kann nicht festgelegt werden', 'Circle{{attrs}}': 'Kreis{{attrs}}', 'Failed to get text input': 'Fehler bei der Texteingabe', 'Failed to load image data': 'Fehler beim Laden der Bilddaten', 'Font not found: {{baseFontName}}\n': 'Schriftart nicht gefunden: {{baseFontName}}\\n', 'Group()': 'Gruppe()', 'Group.add(shape)': 'Gruppe.fügeHinzu(form)', 'Group.remove(shape)': 'Gruppe.entferne(form)', 'Group.{{attr}} cannot be read or modified': 'Gruppe.{{attr}} kann nicht gelesen oder geändert werden', "Group.{{attr}} has no value because its children don't all have the same value for {{attr}}": 'Gruppe.{{attr}} hat keinen Wert, da die untergeordneten Elemente nicht alle den gleichen Wert für {{attr}} haben', '{{error}}: Illegal gradient start ({{start}})': '{{error}}: Illegaler Start des Farbverlaufs ({{start}})', 'Image{{args}}': 'Bild{{args}}', 'Internal error (no solution shapes!).  Please try again.': 'Interner Fehler (keine Lösungsformen!). Bitte versuche es noche einmal.', 'Label({{args}})': 'Beschriftung({{args}})', 'Line{{args}}': 'Linie{{args}}', 'Must have an even number of x,y values in initialPoints list': 'Muss eine gerade Anzahl von x,y Werten in der Liste anfangsPunkte haben', 'Need to pass at least 2 colors to gradient(); you gave {{colorsLength}}': 'Es müssen mindestens 2 Farben an farbverlauf() übergeben werden. Du hast {{farbenLänge}} gegeben', 'No activeDrawing for new Shape': 'Keine aktiveZeichnung für neue Form', 'No such attribute: {{attr}}': 'Kein solches Attribut: {{attr}}', 'None': 'None', 'Oval{{args}}': 'Oval{{args}}', 'Polygon{{args}}': 'Polygon{{args}}', 'Recording Starts In': 'Aufnahme startet in', 'Rect{{args}}': 'Rechteck{{args}}', 'RegularPolygon{{args}}': 'RegularPolygon {{args}}', 'Shape': 'Form', 'Shape()': 'Form()', 'Shapes drawn in wrong order': 'Formen werden in der falschen Reihenfolge gezeichnet', "Sorry, you cannot use Python's input function in CMU CS Academy": "Leider kannst du Python's input Funktion nicht in CMU CS Academy nutzen", 'Sound "{{soundSource}}" failed to play. Disabling it.': 'Klang "{{soundSource}}" konnte nicht abgespielt werden. Wird deaktiviert.', 'Star{{args}}': 'Stern{{args}}', 'The loop argument to Sound.play must be True or False, got {{loopRepr}}': 'Das Schleifenargument für Sound.play muss True oder False sein, {{loopRepr}}', 'The restart argument to Sound.play must be True or False, got {{restartRepr}}': 'Das Argument um Sound.play neuzustarten muss True oder False sein und {{restartRepr}} erhalten haben', 'Too many shapes: Your code created more than {{maxShapeCount}} shapes. If you would like to increase this limit even though it may cause your code to run slowly, call app.setMaxShapeCount(n).': 'Zu viele Formen:  Ihr Code hat mehr als {{maxShapeCount}} Formen erstellt. Wenn Sie dieses Limit erhöhen möchten, obwohl Ihr Code dadurch möglicherweise langsam ausgeführt wird, rufen Sie app.setzeMaxFormAnzahl(n) auf.', 'Traceback (most recent call last):': 'Aufrufliste (jüngster Aufruf zuletzt)', '{{error}}: None cannot be used inside gradient.colors': '{{error}}: None kann nicht innerhalb von farbverlauf.farben verwendet werden', '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})': '{{error}}: {{callSpec}} sollte {{typeName}} sein (aber {{value}} ist vom Typ {{valueType}})', '{{error}}: {{color}} cannot be used inside gradient.colors': '{{error}}: {{color}} kann nicht in gradient.colors verwendet werden', '{{error}}: {{callSpec}} should be a color, and {{value}} is not a legal color name': '{{error}}: {{callSpec}} sollte eine Farbe sein, und {{value}} ist kein zulässiger Farbname', 'Undefined poster in new _CmuGraphics': 'Nicht definiertes Poster in neuem _CmuGraphics', 'Unknown message {{cmd}}': 'Unbekannte Nachricht {{cmd}}', "Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound": "Verwenden Sie unsere Funktion rounded(n) anstelle der Python 3 Funktion round(n)\\n Python 3's round(n) funktioniert nicht wie erwartet!\\n Wenn Sie die Funktion round() von Python 3 weiterhin verwenden möchten, dann nutzen Sie pythonRound", 'Wait for fonts to load before using them': 'Warte, bis Zeichensatz geladen ist, bevor du ihn verwendest', 'Wrong # of points ({{userPtsLen}} should be {{solnPtsLen}})': 'Falsche Anzahl von Punkten ({{userPtsLen}} sollte ${{solnPtsLen}} sein)', 'You are missing {{missingCount}} shape(s)': 'Ihnen fehlen {{missingCount}} Form(en)', "You can't change the size of this group because {{shape}} can't be resized": 'Sie können die Größe dieser Gruppe nicht ändern, da die Größe von {{form}} nicht geändert werden kann', "You can't get or set the align property": 'Sie können die Align-Eigenschaft nicht abrufen oder festlegen', 'You have {{extraCount}} extra shape(s)': 'Du hast {{extraCount}} zusätzliche Form(en)', 'Your code appeared to be in an infinite loop, so it was terminated.': 'Dein Code tauchte in einer Endlosschleife auf, aus dem Grund wurde er beendet.', '\nWarning: Your code created labels with more than\n  1,000 total characters of text. This may cause your\n  program to run very slowly.\n': '\\nWarnung: Ihr Code hat Beschriftungen mit insgesamt mehr als\\n 1.000 Textzeichen erstellt. Dies kann dazu führen, dass Ihr\\n Programm sehr langsam ausgeführt wird.\\n', 'addPoint': 'fügePunktHinzu', 'add{{xy}}': 'addiere{{xy}}', 'app.background should not be {{userBackgroundString}}': 'anwendung.hintergrund sollte nicht {{nutzerHintergrundString}} sein', 'app.setMaxShapeCount(n)': 'anwendung.setzeMaxFormAnzahl(n)', 'at line': 'in Zeile', 'black': 'schwarz', 'bottom-left': 'unten-links', 'bottom-right': 'unten-rechts', 'center': 'mitte', 'centroidX': 'mittelpunktX', 'centroidY': 'mittelpunktY', 'color': 'Farbe', 'containsShape(targetShape)': 'beinhaltetForm(zielForm)', 'gradient({{colors}}, start={{start}})': 'farbverlauf({{farben}}, start = {{start}})', 'hits(x, y)': 'trifft(x,y)', 'hitsShape(targetShape)': 'trifftForm(zielForm)', 'initialPoints (x value)': 'anfangsPunkte (x wert)', 'initialPoints (y value)': 'anfangsPunkte (y wert)', 'integer': 'Integer', 'keys must be a list': 'Schlüssel müssen eine Liste sein', 'left-bottom': 'links-unten', 'left-top': 'links-oben', 'line': 'Linie', 'list': 'Liste', 'n': 'n', 'non-negative-number': 'Nicht-negative Zahl', 'number': 'Nummer', 'number-greater-than-2': 'Zahl-größer-als-2', 'number-in-range-{{lo}}-{{hi}}': 'Aufnahme startet in', 'oval size': 'Größe Oval', 'positive-number': 'Positive Zahl', 'rgb({{r}}, {{g}}, {{b}})': 'RGB({{r}}, {{g}}, {{b}})', 'right-bottom': 'rechts-unten', 'right-top': 'rechts-oben', 'rotate.cx': 'drehung.cx', 'rotate.cy': 'drehung.cy', 'rotate.degrees': 'drehung.winkel', 'scale{{xy}}': 'skaliere{{xy}}', 'shape': 'Form', 'string': 'string', 'targetShape': 'zielForm', 'top-left': 'oben-links', 'top-right': 'oben-rechts', 'x': 'x', 'y': 'y', '{{actual}} != {{expected}}': '{{aktuell}}! = {{erwartet}}', '{{attr}} in {{object}}': '{{attr}} in {{object}}', '{{attr}} should not be {{value}}': '{{attr}} sollte nicht {{value}} sein', '{{ordinalName}} point mismatch at {{location}}': '{{ordinalName}} Punkt stimmt nicht mit {{location}} überein', 'play': 'abspielen', 'pause': 'pausieren', 'restart': 'neustarten', 'loop': 'wiederholen', 'TypeError': 'Typfehler', '{{error}}: in {{callSpec}}, {{value}} is not a legal align value': '{{error}}: in {{callSpec}}, {{value}} is not a legal align value', "{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'": '', 'contains(x, y)': 'beinhaltet(x, y)', 'hitTest(x, y)': 'treffenTest(x, y)', 'addPoint(x, y)': 'fügePunktHinzu(x, y)', 'red': 'rot', 'green': 'grün', 'blue': 'blau', '{{callSpec}} must start with http:// or https://': '{{callSpec}} muss mit http:// or https:// beginnen'}}
+
 # end_translate
 
 cmuGraphicsLanguage = 'en'
@@ -198,15 +199,18 @@ def printFullTracebacks():
 
 def pyThrow(err): raise CMUException(err)
 
-def typeError(obj, attr, value, typeName):
-    if (type(obj) == str):
-        callSpec = t('{{attr} in {{object}}}', { 'attr': t(attr), 'object': obj })
+def typeError(obj, attr, value, typeName, isFn):
+    if isFn:
+        callSpec = t('{{attr}} in {{object}}', { 'attr': t(attr), 'object': t(obj) })
     else:
-        callSpec = '{className}.{attr}'.format(className=t(obj.__class__.__name__), attr=t(attr))
+        if isinstance(obj, str):
+            callSpec = '{className}.{attr}'.format(className=t(obj), attr=t(attr))
+        else:
+            callSpec = '{className}.{attr}'.format(className=t(obj.__class__.__name__), attr=t(attr))
     valueType = type(value).__name__
     err = t(
-        'Type Error: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
-        {'callSpec': callSpec, 'typeName': typeName, 'value': value, 'valueType': valueType}
+        '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
+        {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': typeName, 'value': value, 'valueType': valueType}
     )
     pyThrow(err)
 
@@ -226,55 +230,55 @@ def checkArgCount(clsName, fnName, argNames, args):
             }
         ))
 
-def checkInt(obj, attr, value):
-    if type(value) != int: typeError(obj, attr, value, t('integer'))
+def checkInt(obj, attr, value, isFn):
+    if type(value) != int: typeError(obj, attr, value, t('integer'), isFn)
 
-def checkNumber(obj, attr, value):
+def checkNumber(obj, attr, value, isFn):
     if type(value) != int and type(value) != float:
-        typeError(obj, attr, value, t('Number'))
+        typeError(obj, attr, value, t('number'), isFn)
 
-def checkPositive(obj, attr, value):
-    checkNumber(obj, attr, value);
-    if (value <= 0): typeError(obj, attr, value, t('positive-number'))
+def checkPositive(obj, attr, value, isFn):
+    checkNumber(obj, attr, value, isFn);
+    if (value <= 0): typeError(obj, attr, value, t('positive-number'), isFn)
 
-def checkNonNegative(obj, attr, value):
-    checkNumber(obj, attr, value)
-    if (value < 0): typeError(obj, attr, value, t('non-negative number'))
+def checkNonNegative(obj, attr, value, isFn):
+    checkNumber(obj, attr, value, isFn)
+    if (value < 0): typeError(obj, attr, value, t('non-negative number'), isFn)
 
-def checkRange(obj, attr, value, lo, hi):
-    if ((value < lo) or (value > hi)): typeError(obj, attr, value, t('number-in-range-{{lo}}-{{hi}}', {'lo': lo, 'hi': hi}))
+def checkRange(obj, attr, value, lo, hi, isFn):
+    if ((value < lo) or (value > hi)): typeError(obj, attr, value, t('number-in-range-{{lo}}-{{hi}}', {'lo': lo, 'hi': hi}), isFn)
 
-def checkValue(obj, attr, value): pass
+def checkValue(obj, attr, value, isFn): pass
 
-def checkIntInRange(obj, attr, value, lo, hi):
-    checkInt(obj, attr, value)
-    checkRange(obj, attr, value, lo, hi)
+def checkIntInRange(obj, attr, value, lo, hi, isFn):
+    checkInt(obj, attr, value, isFn)
+    checkRange(obj, attr, value, lo, hi, isFn)
 
-def checkNumberInRange(obj, attr, value, lo, hi):
-    checkNumber(obj, attr, value)
-    checkRange(obj, attr, value, lo, hi)
+def checkNumberInRange(obj, attr, value, lo, hi, isFn):
+    checkNumber(obj, attr, value, isFn)
+    checkRange(obj, attr, value, lo, hi, isFn)
 
-def checkNumberIn0To100(obj, attr, value):
-    checkNumberInRange(obj, attr, value, 0, 100)
+def checkNumberIn0To100(obj, attr, value, isFn):
+    checkNumberInRange(obj, attr, value, 0, 100, isFn)
 
-def checkShape(obj, attr, value):
+def checkShape(obj, attr, value, isFn):
     if not isinstance(value, Shape):
-        typeError(obj, attr, value, t('Shape'))
+        typeError(obj, attr, value, t('Shape'), isFn)
 
-def checkWidthHeight(obj, attr, value):
+def checkWidthHeight(obj, attr, value, isFn):
     if (isinstance(obj, Rect)
         or isinstance(obj, Oval)
         or isinstance(obj, PolygonInCircle)):
 
-        return checkPositive(obj, attr, value)
-    return checkNonNegative(obj, attr, value)
+        return checkPositive(obj, attr, value, isFn)
+    return checkNonNegative(obj, attr, value, isFn)
 
-def checkColor(obj, attr, value):
+def checkColor(obj, attr, value, isFn):
     if value == None: return
     if isinstance(value, RGB): return
     if isinstance(value, Gradient): return
     if not isinstance(value, str):
-        typeError(obj, attr, value, t('color'))
+        typeError(obj, attr, value, t('color'), isFn)
 
     if toEnglish(value, 'color').lower() in CSS3_COLORS_TO_RGB:
         return
@@ -282,40 +286,53 @@ def checkColor(obj, attr, value):
     objName = obj if isinstance(obj, str) else obj.__class__.__name__
     pyThrow(
         t(
-            'Type Error: {{objName}} {{attr}} should be a color, and {{value}} is not a legal color name',
-            {'objName': objName, 'attr': attr, 'value': value}
+            '{{error}}: {{callSpec}} should be a color, and {{value}} is not a legal color name',
+            {'error': t('TypeError'), 'callSpec': f'{t(objName)}.{t(attr)}', 'value': value}
         )
     )
 
-def checkBoolean(obj, attr, value):
-    if type(value) != bool: typeError(obj, attr, value, 'bool')
+def checkBoolean(obj, attr, value, isFn):
+    if type(value) != bool: typeError(obj, attr, value, 'bool', isFn)
 
-def checkArray(obj, attr, value):
-    if type(value) != list and type(value) != tuple: typeError(obj, attr, value, t('list'))
+def checkArray(obj, attr, value, isFn):
+    if type(value) != list and type(value) != tuple: typeError(obj, attr, value, t('list'), isFn)
 
-def checkString(obj, attr, value):
-    if type(value) != str: typeError(obj, attr, value, 'string')
+def checkString(obj, attr, value, isFn):
+    if type(value) != str: typeError(obj, attr, value, 'string', isFn)
 
-def checkBooleanOrArray(obj, attr, value):
-    if type(value) != list and type(value) != tuple: checkBoolean(obj, attr, value)
+def checkBooleanOrArray(obj, attr, value, isFn):
+    if type(value) != list and type(value) != tuple: checkBoolean(obj, attr, value, isFn)
 
-def checkAlign(obj, attr, value):
+def checkAlign(obj, attr, value, isFn):
     if value == None: return # None is a legal align
     if not toEnglish(value, 'align') in aligns:
-        pyThrow('Type Error: in {className} {attr}, {value} is not a legal align value'.format(
-            className=obj.__class__.__name__,attr=attr,value=value
-        ))
+        pyThrow(t('{{error}}: in {{callSpec}}, {{value}} is not a legal align value', {
+            'error': t("TypeError"),
+            'callSpec': f'{t(obj.__class__.__name__)}.{t(attr)}',
+            'value': value
+        }))
 
-def checkNumPoints(obj, attr, value):
-    checkInt(obj, attr, value)
-    if (value < 3): typeError(obj, attr, value, 'number-greater-than-2')
+def checkNumPoints(obj, attr, value, isFn):
+    checkInt(obj, attr, value, isFn)
+    if (value < 3): typeError(obj, attr, value, 'number-greater-than-2', isFn)
 
-def checkRoundness(obj, attr, value):
+def checkRoundness(obj, attr, value, isFn):
     if (value is None): return # None is a legal roundness
-    checkNumberIn0To100(obj, attr, value)
+    checkNumberIn0To100(obj, attr, value, isFn)
 
-def checkSweepAngle(obj, attr, value):
-    checkNumberInRange(obj, attr, value, 0, 360)
+def checkSweepAngle(obj, attr, value, isFn):
+    checkNumberInRange(obj, attr, value, 0, 360, isFn)
+
+def checkPoint(obj, attr, value, isFn):
+    if not isinstance(value, list): typeError(obj, attr, value, 'list', isFn)
+    if len(value) != 2: typeError(obj, attr, value, 'point (list of length 2)', isFn)
+    checkNumber(obj, attr, value[0], isFn)
+    checkNumber(obj, attr, value[1], isFn)
+
+def checkPointList(obj, attr, value, isFn):
+    if not isinstance(value, list): typeError(obj, attr, value, 'list', isFn)
+    for point in value:
+        checkPoint(obj, attr, point, isFn)
 
 def toColorObject(v):
     if not v: return t('None')
@@ -415,77 +432,73 @@ class ShapeAttr(object):
         shapeAttrDefaults[name] = defaultValue
 
 def initShapeAttrs():
-  ShapeAttr('left', checkNumber, 0)
-  ShapeAttr('top', checkNumber, 0)
-  ShapeAttr('centerX', checkNumber, 0)
-  ShapeAttr('centerY', checkNumber, 0)
-  ShapeAttr('right', checkNumber, 0)
-  ShapeAttr('bottom', checkNumber, 0)
-  ShapeAttr('width', checkWidthHeight, 10)
-  ShapeAttr('height', checkWidthHeight, 10)
-  ShapeAttr('fill', checkColor, 'black')
-  ShapeAttr('border', checkColor, None)
-  ShapeAttr('borderWidth', checkNonNegative, 2)
-  ShapeAttr('dashes', checkBooleanOrArray, False)
-  ShapeAttr('opacity', checkNumberIn0To100, 100)
-  ShapeAttr('align', checkAlign, None)
-  ShapeAttr('rotateAngle', checkNumber, 0)
-  ShapeAttr('radius', checkNonNegative, 5)
-  ShapeAttr('points', checkNumPoints, 5)
-  ShapeAttr('roundness', checkRoundness, 'default')
-  ShapeAttr('x1', checkNumber, 0)
-  ShapeAttr('y1', checkNumber, 0)
-  ShapeAttr('x2', checkNumber, 10)
-  ShapeAttr('y2', checkNumber, 10)
-  ShapeAttr('arrowStart', checkBoolean, False)
-  ShapeAttr('arrowEnd', checkBoolean, False)
-  ShapeAttr('lineWidth', checkPositive, 2)
-  ShapeAttr('initialPoints', checkArray, [])
-  ShapeAttr('closed', checkBoolean, True)
-  ShapeAttr('startAngle', checkNumber, 0)
-  ShapeAttr('sweepAngle', checkSweepAngle, 360)
-  ShapeAttr('value', checkValue, '')
-  ShapeAttr('font', checkString, 'arial')
-  ShapeAttr('size', checkNonNegative, 12)
-  ShapeAttr('bold', checkBoolean, False)
-  ShapeAttr('italic', checkBoolean, False)
-  ShapeAttr('visible', checkBoolean, True)
-  ShapeAttr('url', checkString, None)
-  ShapeAttr('db', checkValue, '')
+    ShapeAttr('left', checkNumber, 0)
+    ShapeAttr('top', checkNumber, 0)
+    ShapeAttr('centerX', checkNumber, 0)
+    ShapeAttr('centerY', checkNumber, 0)
+    ShapeAttr('right', checkNumber, 0)
+    ShapeAttr('bottom', checkNumber, 0)
+    ShapeAttr('width', checkWidthHeight, 10)
+    ShapeAttr('height', checkWidthHeight, 10)
+    ShapeAttr('fill', checkColor, 'black')
+    ShapeAttr('border', checkColor, None)
+    ShapeAttr('borderWidth', checkNonNegative, 2)
+    ShapeAttr('dashes', checkBooleanOrArray, False)
+    ShapeAttr('opacity', checkNumberIn0To100, 100)
+    ShapeAttr('align', checkAlign, None)
+    ShapeAttr('rotateAngle', checkNumber, 0)
+    ShapeAttr('radius', checkNonNegative, 5)
+    ShapeAttr('points', checkNumPoints, 5)
+    ShapeAttr('roundness', checkRoundness, 'default')
+    ShapeAttr('x1', checkNumber, 0)
+    ShapeAttr('y1', checkNumber, 0)
+    ShapeAttr('x2', checkNumber, 10)
+    ShapeAttr('y2', checkNumber, 10)
+    ShapeAttr('arrowStart', checkBoolean, False)
+    ShapeAttr('arrowEnd', checkBoolean, False)
+    ShapeAttr('lineWidth', checkPositive, 2)
+    ShapeAttr('initialPoints', checkArray, [])
+    ShapeAttr('pointList', checkPointList, [])
+    ShapeAttr('closed', checkBoolean, True)
+    ShapeAttr('startAngle', checkNumber, 0)
+    ShapeAttr('sweepAngle', checkSweepAngle, 360)
+    ShapeAttr('value', checkValue, '')
+    ShapeAttr('font', checkString, 'arial')
+    ShapeAttr('size', checkNonNegative, 12)
+    ShapeAttr('bold', checkBoolean, False)
+    ShapeAttr('italic', checkBoolean, False)
+    ShapeAttr('visible', checkBoolean, True)
+    ShapeAttr('url', checkString, None)
+    ShapeAttr('db', checkValue, '')
 initShapeAttrs()
 
 class RGB(object):
     def __init__(self, red, green, blue):
-        self.attrs = {'class': self.__class__.__name__}
-        self.red = red
-        self.green = green
-        self.blue = blue
+        self._attrs = {'class': self.__class__.__name__}
+        self._red = red
+        self._green = green
+        self._blue = blue
+        self._strVal = f'rgb({self._red}, {self._green}, {self._blue})'
 
-    def get(self, attr): return self.attrs.get(attr, None)
+    def __getattr__(self, attr):
+        en_attr = toEnglish(attr, 'shape-attr')
+        if en_attr in ['red', 'green', 'blue']:
+            return self.__dict__['_' + en_attr]
+        elif attr[0] == '_':
+            return self.__dict__[attr]
+        else:
+            raise AttributeError(t('Cannot get {{attr}} attribute of {{className}} instance', { 'attr': attr, 'className': t('rgb') }))
 
-    def set(self, attr, value):
-        checkIntInRange(self, attr, value, 0, 255)
-        attrs = self.attrs
-        attrs[attr] = value
-        attrs['strVal'] = t('rgb({{r}}, {{g}}, {{b}})', {
-            'r': self.get('red'),
-            'g': self.get('green'),
-            'b': self.get('blue')
-        })
-
-    def get_red(self): return self.get('red')
-    def set_red(self, v): return self.set('red', v)
-    red = property(get_red, set_red)
-    def get_green(self): return self.get('green')
-    def set_green(self, v): return self.set('green', v)
-    green = property(get_green, set_green)
-    def get_blue(self): return self.get('blue')
-    def set_blue(self, v): return self.set('blue', v)
-    blue = property(get_blue, set_blue)
-
-    rojo = property(get_red, set_red)
-    verde = property(get_green, set_green)
-    azul = property(get_blue, set_blue)
+    def __setattr__(self, attr, value):
+        if attr[0] == '_':
+            if attr[1:] in ['red', 'green', 'blue']:
+                checkNumberInRange(self, attr[1:], value, 0, 255, False)
+            self.__dict__[attr] = value
+        else:
+            raise Exception(t("Cannot modify {{attr}} attribute of {{className}} instance", {
+                'attr': attr,
+                'className': t('rgb')
+            }))
 
     def darker(self):
         k = 0.85
@@ -503,13 +516,15 @@ class RGB(object):
             round(255 - k * (255 - self.blue))
         )
 
-    def toString(self): return self.attrs['strVal']
+    def toString(self): return self._strVal
+
+    def __str__(self): return self._strVal
+
+    def __repr__(self): return self._strVal
 
     def __eq__(self, other):
         if not isinstance(other, RGB): return False
         return self.red == other.red and self.green == other.green and self.blue == other.blue
-
-class Gradient(object): pass
 
 CSS3_COLORS_TO_RGB = {
     "aliceblue": RGB(240, 248, 255),
@@ -679,34 +694,29 @@ def canonicalizeGradientStart(start):
 
 class Gradient(object):
     def __init__(self, colors, start):
-        checkArray(self, t('colors'), colors)
+        checkArray(self, t('colors'), colors, False)
         if len(colors) < 2:
             pyThrow(t('Need to pass at least 2 colors to gradient(); you gave {{colorLen}}', {'colorLen': v1[i]}));
         for color in colors:
             if color is None:
-                pyThrow(t('Type Error: None cannot be used inside gradient.colors'))
+                pyThrow(t('{{error}}: None cannot be used inside gradient.colors', {'error': t('TypeError')}))
             if isinstance(color, Gradient):
-                pyThrow(t('Type Error: {{color}} cannot be used inside gradient.colors', {'color': color}))
-        checkString(self, t('start'), start)
+                pyThrow(t('{{error}}: {{color}} cannot be used inside gradient.colors', {'color': color, 'error': t('TypeError')}))
+            checkColor(self, 'colors', color, False)
+        checkString(self, t('start'), start, False)
         if (
             (toEnglish(start, 'gradient-start') not in gradientStarts) and
             (toEnglish(start, 'gradient-start') not in alternateGradientStarts)
         ):
-            pyThrow(t('Illegal gradient start {{start}}', {'start': start}))
+            pyThrow(t('{{error}}: Illegal gradient start ({{start}})', {'error': t('TypeError'), 'start': start}))
         self.attrs = {'class': self.__class__.__name__, 'colors': colors, 'start': start}
 
     def toString(self):
-        def quoted(s): return "'{s}'".format(s=s)
-        return t(
-            "gradient({{colors}}, start='{{start}}')",
-            {
-                'colors': ', '.join(v.toString() if isinstance(v, RGB) else quoted(v) for v in self.colors),
-                'start': t(self.start)
-            }
-        )
+        colors = ', '.join([repr(c) for c in self.colors])
+        return f"{t('gradient')}({colors}, {t('start')}='{t(self.start)}')"
 
     def getRGBColors(self):
-        return list(map(lambda v: v if isinstance(v, RGB) else CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()]))
+        return list(map(lambda v: v if isinstance(v, RGB) else CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()], self.colors))
 
     def toRGBList(self):
         if (self.start == 'center'):
@@ -755,6 +765,7 @@ class Drawing(object):
         self.appProperties = {
             'maxShapeCount': 2000
         }
+        self.nextShapeId = 0
 
 activeDrawing = Drawing()
 
@@ -777,9 +788,13 @@ activeDrawing = Drawing()
 
 class Shape(object):
     def __init__(self, attrs = None):
-        self.group = self.oldGroup = None
+        self.id = activeDrawing.nextShapeId
+        activeDrawing.nextShapeId += 1
+
+        self._group = self.oldGroup = None
         # A list of shapes that this shape was in front of its current/previous group
         self.shapesToBeInFrontOf = []
+        self.shapesInOldGroup = {}
         self.isGroup = False
         # zIndex is global across all groups
         self.zindex = -1
@@ -810,10 +825,14 @@ class Shape(object):
             value = attrs[attr]
             attrSpec = shapeAttrs.get(attr, None)
             if attrSpec is not None:
-                attrSpec.typeCheckFn(self, attr, value)
+                attrSpec.typeCheckFn(self, attr, value, False)
             result = self.setAttr(attr, value)
             # TODO: Handle labels
         return result
+
+    def get_group(self): return self._group
+    def set_group(self, v): pyThrow(t("You can't set the group property"))
+    group = property(get_group, set_group)
 
     def get_align(self): pyThrow(t("You can't get or set the align property"))
     def set_align(self, v): pyThrow(t("You can't get or set the align property"))
@@ -867,14 +886,12 @@ class Shape(object):
 
     def get_width(self): return self.get('width')
     def set_width(self, v):
-        checkPositive(self, t('width'), v)
         self.scalexy('x', v / self.width)
         self.set({'width': v})
     width = property(get_width, set_width)
 
     def get_height(self): return self.get('height')
     def set_height(self, v):
-        checkPositive(self, t('height'), v)
         self.scalexy('y', v / self.height)
         self.set({'height': v})
     height = property(get_height, set_height)
@@ -901,17 +918,17 @@ class Shape(object):
     def set_db(self, v): return self.set({'db': v})
     db = property(get_db, set_db)
 
-    def get_visible(self): return self.get('visible')
+    def get_visible(self):
+        return (self._group != None) and (self._group.visible or self._group == activeDrawing.tlg._shape)
     def set_visible(self, v):
         if v == self.visible: return
-        self.set({'visible': v})
-        if (v):
-            if (self.oldGroup):
+        if v:
+            if self.oldGroup:
                 self.oldGroup.insert(self)
             else:
-                activeDrawing.tlg.add(this)
+                activeDrawing.tlg.add(self)
         else:
-            self.group.remove(self)
+            self._group.remove(self)
     visible = property(get_visible, set_visible)
 
     def doAlign(self, x, y, v):
@@ -933,9 +950,6 @@ class Shape(object):
     def rotate(self, degrees = None, cx = None, cy = None):
         if (cx is None and cy is None):
             cx, cy = self.getRotateAnchor()
-        checkNumber(self, t('rotate.degrees'), degrees)
-        checkNumber(self, t('rotate.cx'), cx)
-        checkNumber(self, t('rotate.cy'), cy)
         self.set({'rotateAngle': self.rotateAngle + degrees})
         self.doRotate(degrees, cx, cy)
 
@@ -948,18 +962,18 @@ class Shape(object):
     def contains(self, *arguments): # contains(x,y)
         checkArgCount(self.__class__.__name__, t('contains'), [t('x'), t('y')], arguments)
         x, y = arguments
-        checkNumber('contains(x, y)', 'x', x)
-        checkNumber('contains(x, y)', 'y', y)
-        return utils.polygonContainsPoint(self.pointList, x, y)
+        checkNumber(t('contains(x, y)'), 'x', x, True)
+        checkNumber(t('contains(x, y)'), 'y', y, True)
+        return utils.polygonContainsPoint(self.getApproxPoints(), x, y)
 
     def hits(self, *arguments): # hits(x,y)
         checkArgCount(self.__class__.__name__, t('hits'), [t('x'), t('y')], arguments)
         x, y = arguments
-        checkNumber(t('hits(x, y)'), t('x'), x)
-        checkNumber(t('hits(x, y)'), t('y'), y)
+        checkNumber(t('hits(x, y)'), t('x'), x, True)
+        checkNumber(t('hits(x, y)'), t('y'), y, True)
         pts = self.getApproxPoints()
-        if (not utils.polygonContainsPoint(pts, x, y)): return False;
-        if (self.fill): return True
+        if (not utils.polygonContainsPoint(pts, x, y)): return False
+        if (self.fill or isinstance(self, CMUImage)): return True
         border = self.border
         if (not border): return False;
         # ok, so we have a border, but no fill, so we 'hit' if we
@@ -983,9 +997,10 @@ class Shape(object):
                     return True
         return False
 
-    def containsShape(self, targetShape):
+    def containsShape(self, *arguments):
         checkArgCount(self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments);
-        checkShape(t('containsShape(targetShape)'), t('targetShape'), targetShape);
+        (targetShape,) = arguments
+        checkShape(t('containsShape(targetShape)'), t('targetShape'), targetShape, True);
 
         if (isinstance(targetShape, Group)):
             return all([self.containsShape(shape) for shape in targetShape.children])
@@ -1012,13 +1027,13 @@ class Shape(object):
                 (b2['top']  + margin <= b1['top'] + b1['height']))
 
     def hitsShape(self, *arguments):
-        checkArgCount(self.__class__.__name__, t('hitsShape'), [t('targetShape')], arguments);
+        checkArgCount(self.__class__.__name__, t('hitsShape'), [t('targetShape')], arguments)
         (targetShape,) = arguments
-        checkShape(t('hitsShape(targetShape)'), t('targetShape'), targetShape);
+        checkShape(t('hitsShape(targetShape)'), t('targetShape'), targetShape, True)
         # Symmetric.  Two shapes hit each other if any of their
         # vertices hit the other or their edges intersect.
-        myShapes = utils.getChildShapes(self);
-        targetShapes = utils.getChildShapes(targetShape);
+        myShapes = utils.getChildShapes(self)
+        targetShapes = utils.getChildShapes(targetShape)
 
         for i in range(len(myShapes)):
             for j in range(len(targetShapes)):
@@ -1074,6 +1089,14 @@ class Shape(object):
             ctx.set_dash([5,5] if self.dashes else [])
         else:
             ctx.set_dash(self.dashes)
+
+    def toFront(self):
+        if self._group:
+            self._group._toFront(self)
+
+    def toBack(self):
+        if self._group:
+            self._group._toBack(self)
 
     def drawDbPoint(self, ctx, x, y, color):
         ctx.save()
@@ -1139,6 +1162,9 @@ class Shape(object):
         else:
             bw = self.borderWidth if self.border else 0
             if isinstance(self, Label):
+                if str(self.value) != self.valueStr:
+                    self.valueStr = str(self.value)
+                    self.setDims()
                 [targetX, targetY] = self.getApproxPoints()[6] # target start,top of text
                 # rotate around targetX, targetY
                 if self.rotateAngle != 0:
@@ -1209,6 +1235,13 @@ def countShapesInGroup(shape):
         return 1
     return sum(map(countShapesInGroup, shape))
 
+def checkRecursiveGroupAddition(group, shape):
+    if shape.isGroup:
+        if group.id == shape.id:
+            pyThrow(t('Group.add failed: a Group cannot contain itself.'))
+        for subshape in shape._shapes:
+            checkRecursiveGroupAddition(group, subshape)
+
 class Group(Shape):
     def __init__(self, attrs):
         super().__init__(attrs)
@@ -1224,28 +1257,36 @@ class Group(Shape):
         return list(map(lambda s: s.studentShape, self._shapes))
     children = property(get_children)
 
-    def insert(self, shape):
-        if shape.group:
-            shape.group.remove(shape)
+    def insert(self, shape, newIndex=None):
+        if shape._group:
+            shape._group.remove(shape)
         # By default, put this shape at the top of the group
-        newIndex = len(self._shapes)
-        # But if it was in this group before, put it back in front of all the
-        # shapes that it was in front of before
-        if (shape.oldGroup == self):
-            newIndex = 0
-            for s2 in shape.shapesToBeInFrontOf:
-                s2Index = self._shapes.index(s2) if s2 in self._shapes else -1
-                if (s2Index >= 0):
-                    newIndex = max(newIndex, s2Index + 1)
+        if newIndex == None:
+            newIndex = len(self._shapes)
+            # But if it was in this group before, put it back in front of all the
+            # shapes that it was in front of before
+            if (shape.oldGroup == self):
+                newIndex = 0
+                for s2 in shape.shapesToBeInFrontOf:
+                    s2Index = self._shapes.index(s2) if s2 in self._shapes else -1
+                    if (s2Index >= 0):
+                        newIndex = max(newIndex, s2Index + 1)
+
+                for (i, s2) in enumerate(self._shapes):
+                    if s2.id not in shape.shapesInOldGroup and shape.id > s2.id:
+                        newIndex = max(newIndex, i + 1)
+
         self._shapes.insert(newIndex, shape)
-        shape.group = self
+        shape._group = self
         shape.zindex = -1
         shape.oldGroup = None
         shape.shapesToBeInFrontOf = []
+        shape.shapesInOldGroup = {}
 
     def add(self, *shapes):
         for i in range(len(shapes)):
-            checkShape(t('Group.add(shape)'), t('shape'), shapes[i])
+            checkShape(t('Group.add(shape)'), t('shape'), shapes[i], True)
+            checkRecursiveGroupAddition(self, shapes[i])
             activeDrawing.addCounter += 1
             if activeDrawing.addCounter % 100 == 0:
                 if countShapesInGroup(activeDrawing.tlg) > activeDrawing.appProperties['maxShapeCount']:
@@ -1259,25 +1300,27 @@ class Group(Shape):
 
     def _toFront(self, shape):
         self.remove(shape)
-        shape.oldGroup = None
-        self.add(shape)
+        self.insert(shape, len(self._shapes))
 
     def _toBack(self, shape):
         self.remove(shape)
-        shape.shapesToBeInFrontOf = []
-        self.add(shape)
+        self.insert(shape, 0)
 
     def remove(self, shape):
-        checkShape(t('Group.remove(shape)'), t('shape'), shape)
+        checkShape(t('Group.remove(shape)'), t('shape'), shape, True)
         currentIndex = self._shapes.index(shape) if shape in self._shapes else -1
-        shape.shapesToBeInFrontOf = shape.shapesToBeInFrontOf + self._shapes[:currentIndex]
+        shape.shapesToBeInFrontOf = self._shapes[:currentIndex]
+        shape.shapesInOldGroup = {}
+
+        for s in self._shapes:
+            shape.shapesInOldGroup[s.id] = s
 
         for i in range(currentIndex + 1, len(self._shapes)):
             self._shapes[i].shapesToBeInFrontOf.append(shape)
 
         if shape in self._shapes: self._shapes.remove(shape)
         shape.oldGroup = self
-        shape.group = None
+        shape._group = None
         shape.zindex = -1
 
         def f(shape):
@@ -1344,20 +1387,23 @@ class Group(Shape):
 
     def scalexy(self, varName, k, scaleAnchor = None):
         if (k == 1): return
-        checkPositive(self, t('scale{{xy}}', {'xy': t(varName)}), k)
         if (scaleAnchor is None):
             scaleAnchor = self.centroid
         for s in self._shapes: s.scalexy(varName, k, scaleAnchor)
 
     def get_width(self): return self.right - self.left
     def set_width(self, v):
-        checkPositive(self, t('width'), v)
-        self.scalexy('x', (v / self.width) if self.width != 0 else math.inf)
+        if self.width == 0:
+            self.scaleToTarget('x', v)
+        else:
+            self.scalexy('x', (v / self.width))
     width = property(get_width, set_width)
     def get_height(self): return self.bottom - self.top
     def set_height(self, v):
-        checkPositive(self, t('height'), v)
-        self.scalexy('y', (v / self.height) if self.height != 0 else math.inf)
+        if self.height == 0:
+            self.scaleToTarget('y', v)
+        else:
+            self.scalexy('y', (v / self.height))
     height = property(get_height, set_height)
 
     def rotate(self, degrees = None, cx = None, cy = None):
@@ -1385,7 +1431,7 @@ class Group(Shape):
             x += a * cx
             y += a * cy
             A += a
-        return [math.inf, math.inf] if A == 0 else [x / A, y / A]
+        return [x, y] if A == 0 else [x / A, y / A]
     centroid = property(get_centroid)
 
     # pass-through attrs (PTA's)
@@ -1488,6 +1534,11 @@ class Group(Shape):
     def set_italic(self, v): return self.noPTA('italic', v)
     italic = property(get_italic, set_italic)
 
+    def scaleToTarget(self, varName, target):
+        for shape in self._shapes:
+            if getattr(shape, 'scaleToTarget'):
+                shape.scaleToTarget(varName, target)
+
 fontCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
 
 def getFont(baseFontName, isBold=False, isItalic=False):
@@ -1507,6 +1558,7 @@ def getFont(baseFontName, isBold=False, isItalic=False):
 class Label(Shape):
     def __init__(self, attrs):
         super().__init__(attrs)
+        self.valueStr = None
         if attrs is not None:
             self.setDims()
 
@@ -1628,6 +1680,7 @@ class Label(Shape):
     def get_value(self): return self.get('value')
     def set_value(self, v):
         self.set({'value': v})
+        self.valueStr = str(v)
         self.setDims()
         return v
     value = property(get_value, set_value)
@@ -1657,10 +1710,7 @@ class Label(Shape):
     italic = property(get_italic, set_italic)
 
     def toString(self):
-        return t(
-            'Label({{value}},{{centerX}},{{centerY}})',
-            { 'value': self.value, 'centerX': self.centerX, 'centerY': self.centerY }
-        )
+        return f"{t('Label')}({self.value}, {self.centerX}, {self.centerY})"
 
 class Polygon(Shape):
     def __init__(self, attrs=None):
@@ -1669,8 +1719,8 @@ class Polygon(Shape):
                 pyThrow(t('Must have an even number of x,y values in initialPoints list'))
             for i in range(0, len(attrs['initialPoints']), 2):
                 x, y = attrs['initialPoints'][i], attrs['initialPoints'][i+1]
-                checkNumber(t('Polygon'), t('initialPoints (x value)'), x)
-                checkNumber(t('Polygon'), t('initialPoints (y value)'), y)
+                checkNumber(t('Polygon'), t('initialPoints (x value)'), x, False)
+                checkNumber(t('Polygon'), t('initialPoints (y value)'), y, False)
 
         super().__init__(attrs)
         self._cachedCentroid = self._cachedArea = None
@@ -1702,8 +1752,8 @@ class Polygon(Shape):
     centroid = property(get_centroid)
 
     def addPoint(self, x, y):
-        checkNumber(t('addPoint'), t('x'), x)
-        checkNumber(t('addPoint'), t('y'), y)
+        checkNumber(t('addPoint'), t('x'), x, False)
+        checkNumber(t('addPoint'), t('y'), y, False)
         self.pointList.append([x, y])
         self.pointList = self.pointList # alert to change
 
@@ -1763,7 +1813,6 @@ class Polygon(Shape):
     def addxy(self, varName, d):
         if d == 0: return
         varIndex = 0 if varName == 'x' else 1
-        checkNumber(self, t('add{{xy}}', {'xy': t(varName)}), d)
         pointList = self.pointList
         for i in range(len(pointList)):
             pointList[i][varIndex] += d
@@ -1772,7 +1821,6 @@ class Polygon(Shape):
     def scalexy(self, varName, k, scaleAnchor = None):
         if k == 1: return
         varIndex = 0 if varName == 'x' else 1
-        checkPositive(self, t('scale{{xy}}', {'xy': t(varName)}), k)
         pointList = self.pointList
         cxy = (scaleAnchor or self.getScaleAnchor())[varIndex]
         for i in range(len(pointList)):
@@ -1827,23 +1875,23 @@ class Polygon(Shape):
         centerX = left + dims['width'] / 2
         centerY = top + dims['height'] / 2
         if (start == 'left-top'):
-          x0 = left; x1 = right; y0 = top; y1 = bottom
+            x0 = left; x1 = right; y0 = top; y1 = bottom
         elif (start == 'left'):
-          x0 = left; x1 = right; y0 = y1 = centerY
+            x0 = left; x1 = right; y0 = y1 = centerY
         elif (start == 'left-bottom'):
-          x0 = left; x1 = right; y0 = bottom; y1 = top
+            x0 = left; x1 = right; y0 = bottom; y1 = top
         elif (start == 'top'):
-          x0 = x1 = centerX; y0 = top; y1 = bottom
+            x0 = x1 = centerX; y0 = top; y1 = bottom
         elif (start == 'bottom'):
-          x0 = x1 = centerX; y0 = bottom; y1 = top
+            x0 = x1 = centerX; y0 = bottom; y1 = top
         elif (start == 'right-top'):
-          x0 = right; x1 = left; y0 = top; y1 = bottom
+            x0 = right; x1 = left; y0 = top; y1 = bottom
         elif (start == 'right'):
-          x0 = right; x1 = left; y0 = y1 = centerY
+            x0 = right; x1 = left; y0 = y1 = centerY
         elif (start == 'right-bottom'):
-          x0 = right; x1 = left; y0 = bottom; y1 = top
+            x0 = right; x1 = left; y0 = bottom; y1 = top
         else:
-          pyThrow('Illegal gradient start ({start})'.format(start=start))
+            pyThrow('Illegal gradient start ({start})'.format(start=start))
 
         if self.rotateAngle != 0:
             [[x0, y0], [x1, y1]] = utils.rotatePoints([[x0, y0], [x1, y1]], utils.toRadians(self.rotateAngle),
@@ -1874,10 +1922,6 @@ class Rect(Polygon):
 
 class Line(Polygon):
     def __init__(self, attrs):
-        checkNumber(t('Line'), t('x1'), attrs['x1'])
-        checkNumber(t('Line'), t('x2'), attrs['x2'])
-        checkNumber(t('Line'), t('y1'), attrs['y1'])
-        checkNumber(t('Line'), t('y2'), attrs['y2'])
         attrs['initialPoints'] = utils.flatten(utils.getLinePoints(attrs['x1'], attrs['y1'], attrs['x2'], attrs['y2'], 2))
         del attrs['x1']
         del attrs['y1']
@@ -1890,7 +1934,6 @@ class Line(Polygon):
         return (p[i0][j] + p[i1][j]) / 2
 
     def setXY(self, i0, i1, j, v, name):
-        checkNumber(self, name, v)
         p = self.pointList
         oldv = (p[i0][j] + p[i1][j]) / 2
         dv = v - oldv
@@ -1976,7 +2019,36 @@ class Line(Polygon):
         if self.arrowStart:
             drawArrow(self.x1, self.y1, 1)
 
-    def toString():
+    def isPoint(self):
+        return self.x1 == self.x2 and self.y1 == self.y2
+
+    def scaleToTarget(self, varName, target):
+        if self.isPoint():
+            if varName == 'x':
+                self.x1 -= target / 2
+                self.x2 += target / 2
+            elif varName == 'y':
+                self.y1 -= target / 2
+                self.y2 += target / 2
+        self.lineWidth = self.lineWidth
+
+    def get_height(self): return super().get_height()
+    def set_height(self, v):
+        if self.height == 0:
+            self.scaleToTarget('y', v)
+        else:
+            super().height = 0
+    height = property(get_height, set_height)
+
+    def get_width(self): return super().get_width()
+    def set_width(self, v):
+        if self.width == 0:
+            self.scaleToTarget('x', v)
+        else:
+            super().height = 0
+    width = property(get_width, set_width)
+
+    def toString(self):
         args = [self.x1, self.y1, self.x2, self.y2]
         return t('Line{{args}}', {'args': utils.roundedTupleString(args, 2)})
 
@@ -2803,7 +2875,7 @@ class ShapeLogicInterface(object):
 
     def newSound(self, url):
         checkArgCount(None, t('Sound'), [t('url')], (url,))
-        checkString(t('Sound'), t('url'), url)
+        checkString(t('Sound'), t('url'), url, False)
         return CMUSound(url)
 
     def slNew(self, className, args):
@@ -2830,21 +2902,27 @@ class ShapeLogicInterface(object):
         result = getattr(slObj, attr)
         if callable(result):
             result = lambda *args, **kwargs: self.slApply(slObj, attr, args, kwargs)
+        elif hasattr(result, 'studentShape'):
+            result = result.studentShape
         return result
 
-    def slSet(self, obj, attr, val):
+    def slSetWithTypeCheck(self, obj, attr, val):
+        className = obj.__class__.__name__
         if shapeAttrs.get(attr, None) is not None:
-            shapeAttrs[attr].typeCheckFn(obj, attr, val)
-        try:
+            shapeAttrs[attr].typeCheckFn(obj, attr, val, False)
             setattr(obj, attr, val)
-        except:
-            # TODO: print console.error(e)
-            raise
+        else:
+            utils.internalError(
+                f'No type check function found for {className}.{attr}')
         return val
 
     def slSetAppProperty(app, propName, value):
         if propName == 'maxShapeCount':
-            checkNumber(t('app.setMaxShapeCount(n)'), t('n'), value)
+            checkNonNegative(t('app'), propName, value, False)
+        elif propName == 'beatsPerMinute':
+            checkNumber(t('app'), propName, value, False)
+        elif propName == 'background':
+            checkColor(t('app'), propName, value, False)
         activeDrawing.appProperties[propName] = value
 
     def slGetAppProperty(app, propName):
@@ -2861,6 +2939,8 @@ class ShapeLogicInterface(object):
             pyThrow(t('"{{align}}" is not a valid Polygon constructor argument', {'align': t('align')}))
         constructorArgs = dict()
         for i in range(0, len(argNames)):
+            attr = argNames[i]
+            shapeAttrs[attr].typeCheckFn(clsName, attr, args[i], False)
             constructorArgs[argNames[i]] = args[i]
         shape = self.slNew(clsName, constructorArgs)
         try:
@@ -2869,15 +2949,15 @@ class ShapeLogicInterface(object):
                 align = kwargs['align']
                 del kwargs['align']
             for attr in kwargs:
-                self.slSet(shape, attr, kwargs[attr])
+                self.slSetWithTypeCheck(shape, attr, kwargs[attr])
             if align is not None:
-                checkString(shape, t('align'), align)
+                checkAlign(shape, t('align'), align, False)
                 xPoint = constructorArgs.get('left', None) if constructorArgs.get('centerX', None) is None else constructorArgs['centerX']
                 yPoint = constructorArgs.get('top', None) if constructorArgs.get('centerY', None) is None else constructorArgs['centerY']
                 shape.doAlign(xPoint, yPoint, align)
-        except:
+        except Exception as e:
             activeDrawing.tlg.remove(shape)
-            raise
+            raise e
         return shape
 
     def setTopLevelGroup(self, tlg):
