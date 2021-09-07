@@ -75,7 +75,7 @@ class Shape(object):
     def __getattr__(self, attr):
         if (attr[0] == '_'):
             return self.__dict__[attr]
-            
+
         en_attr = toEnglish(attr, 'shape-attr')
         if en_attr in self._js_attrs:
             return slGet(self._shape, en_attr)
@@ -162,7 +162,7 @@ class Group(Shape):
         for shape in args: self.add(shape)
 
     def __iter__(self): return iter(self._shape)
-    
+
     def __len__(self): return len(self._shape._shapes)
 
 class Sound(object):
@@ -473,7 +473,7 @@ class App(object):
 class AppWrapper(object):
     attrs = ['background', 'group', 'stepsPerSecond', 'paused', 'stop',
              'getTextInput', 'top', 'bottom', 'left', 'right', 'centerX',
-             'centerY', 'width', 'height', 'title', 'maxShapeCount', 
+             'centerY', 'width', 'height', 'title', 'maxShapeCount',
              'setMaxShapeCount', 'beatsPerMinute', 'printFullTracebacks']
 
     def __init__(self, app):
@@ -510,52 +510,6 @@ def onKeyHolds(keys, n):
 def onKeyPresses(key, n):
     for _ in range(n):
         callUserFn('onKeyPress', key)
-
-def check_for_update():
-    try:
-        from .updater import get_update_info
-        import shutil
-        update_info = get_update_info()
-
-        if 'last_attempt' in update_info:
-            last_attempt = datetime.fromtimestamp(update_info['last_attempt'])
-            if datetime.now() - last_attempt < timedelta(days=1):
-                return
-
-        most_recent_version = webrequest.get(
-            'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/version.txt'
-        ).read().decode('ascii').strip()
-        current_directory = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(current_directory, 'meta/version.txt')) as f:
-            version = f.read().strip()
-
-        if 'skip_past' in update_info and version <= update_info['skip_past']:
-            return
-
-        def call_updater_with_args(args):
-            updater_path = os.path.join(current_directory, 'updater.py')
-            p = subprocess.Popen([sys.executable, updater_path],
-                stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=current_directory
-            )
-            p.communicate(bytes(json.dumps(args) + '\n', encoding='utf-8'))
-            if p.returncode != 0:
-                os._exit(1)
-
-        if most_recent_version > version:
-            call_updater_with_args({'type': 'request_update', 'most_recent_version': most_recent_version})
-
-            parent_directory = os.path.dirname(current_directory)
-            installer_dir = os.path.join(parent_directory, 'cmu_graphics_installer')
-            shutil.rmtree(current_directory)
-            shutil.move(os.path.join(installer_dir, 'cmu_graphics'), current_directory)
-            shutil.rmtree(installer_dir)
-
-            call_updater_with_args({'type': 'complete_update'})
-
-            os._exit(0)
-
-    except:
-        pass
 
 def loop():
     app._app.run()
@@ -619,13 +573,65 @@ import subprocess
 from cmu_graphics.libs import webrequest
 import __main__
 
+
+UPDATE_CONFIG_FILE_PATH = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    'meta',
+    'updates.json',
+)
+
+def get_update_info():
+    if os.path.exists(UPDATE_CONFIG_FILE_PATH):
+        with open(UPDATE_CONFIG_FILE_PATH, 'r') as f:
+            return json.loads(f.read())
+    return {}
+
+def save_update_info(update_info):
+    with open(UPDATE_CONFIG_FILE_PATH, 'w') as f:
+        f.write(json.dumps(update_info))
+
+def check_for_update():
+    try:
+        update_info = get_update_info()
+
+        current_directory = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(current_directory, 'meta', 'version.txt')) as f:
+            version = f.read().strip()
+
+        last_attempt = None
+        if 'last_attempt' in update_info:
+            last_attempt = datetime.fromtimestamp(update_info['last_attempt'])
+
+        if last_attempt is None or (datetime.now() - last_attempt > timedelta(days=1)):
+            most_recent_version = webrequest.get(
+                'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/version.txt'
+            ).read().decode('ascii').strip()
+
+            update_info['last_attempt'] = datetime.now().timestamp()
+            update_info['most_recent_version'] = most_recent_version
+            save_update_info(update_info)
+        else:
+            most_recent_version = update_info.get('most_recent_version', version)
+
+        if most_recent_version > version:
+            print(f'\n\nYou are running cmu-graphics-test version {version}, but a newer version {most_recent_version} is available.')
+            ### ZIPFILE VERSION ###
+            print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
+            ### END ZIPFILE VERSION ###
+            ### PYPI VERSION ###
+            print('Run "pip install cmu-graphics-test" to upgrade.')
+            ### END PYPI VERSION ###
+            print('\n\n')
+    except:
+        pass
+
 if 'CMU_GRAPHICS_NO_UPDATE' not in __main__.__dict__:
     check_for_update()
 
-if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
+def print_debug_info():
     import platform
     current_directory = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(current_directory, 'meta/version.txt')) as f:
+    with open(os.path.join(current_directory, 'meta', 'version.txt')) as f:
         version = f.read().strip()
     print('='*80)
     print('CMU Graphics Version:', version)
@@ -634,6 +640,9 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
     print('Executable Path:', sys.executable)
     print('Working Directory:', current_directory)
     print('='*80)
+
+if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
+    print_debug_info()
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import math
