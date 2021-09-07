@@ -12,6 +12,9 @@ if mode == 'zip':
     shutil.move(os.path.join('cmu_graphics_installer', 'cmu_graphics'), '.')
     shutil.rmtree('cmu_graphics_installer')
 else:
+    # Remove any old version installed
+    subprocess.run(['pip', 'uninstall', '-y', 'cmu-graphics-test'], check=True)
+
     dist_dir = os.path.join(base_path, 'pypi_upload', 'dist')
     for path in os.listdir(dist_dir):
         if path.endswith('.whl'):

@@ -118,18 +118,23 @@ def run_test(driver, test_name, all_source_code):
         source_code += '''
 from threading import Thread
 import time
+import traceback
 
 def screenshotAndExit():
-    raw_app = app._app
-    while not getattr(raw_app, '_running', False):
-        time.sleep(0.01)
-    with cmu_graphics.DRAWING_LOCK:
-        raw_app.callUserFn("onMousePress", (200,200))
-        raw_app.frameworkRedrew = False
-    while not raw_app.frameworkRedrew:
-        time.sleep(0.01)
-    raw_app.getScreenshot(%s)
-    raw_app.quit()
+    try:
+        raw_app = app._app
+        while not getattr(raw_app, '_running', False):
+            time.sleep(0.01)
+        with cmu_graphics.DRAWING_LOCK:
+            raw_app.callUserFn("onMousePress", (200,200))
+            raw_app.frameworkRedrew = False
+        while not raw_app.frameworkRedrew:
+            time.sleep(0.01)
+        raw_app.getScreenshot(%s)
+        raw_app.quit()
+    except:
+        traceback.print_exc()
+        os._exit(1)
 
 Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
