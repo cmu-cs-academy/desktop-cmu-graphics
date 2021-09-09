@@ -16,8 +16,8 @@ package, including its documentation, is licensed under the
 
 There are two different ways to install Desktop CMU Graphics on a device:
 
-1. (Mac and Windows only) The [zip file installer](https://academy.cs.cmu.edu/desktop) that is available
-for download on the CMU CS Academy website
+1. (Mac and Windows only) Use the [zip file installer](https://academy.cs.cmu.edu/desktop) that is available
+for download on the CMU CS Academy website.
 1. (Mac, Windows, and Linux) Use pip, Python’s built-in package-managing software.
 
 Both methods come with their own advantages and limitations. If you're in doubt
