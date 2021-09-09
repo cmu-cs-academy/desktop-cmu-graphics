@@ -429,8 +429,9 @@ class App(object):
         while self._running:
             sys.stdout.flush()
             with DRAWING_LOCK:
-                ran_user_code = True # assume we're going to run code
+                had_event = False
                 for event in pygame.event.get():
+                    had_event = True
                     if not self.stopped:
                         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                             self.callUserFn('onMousePress', event.pos)
@@ -446,10 +447,10 @@ class App(object):
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
                             self.handleKeyRelease(event.key, event.mod)
-                        else:
-                            ran_user_code = False
                     if event.type == pygame.QUIT:
                         self._running = False
+
+                ran_user_code = had_event
 
                 msPassed = pygame.time.get_ticks() - lastTick
                 if (math.floor(1000 / self.stepsPerSecond) - msPassed < 10):
