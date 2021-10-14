@@ -1,4 +1,9 @@
+### ZIPFILE VERSION ###
 from . import certifi
+### END ZIPFILE VERSION ###
+### PYPI VERSION ###
+import certifi
+### END PYPI VERSION ###
 
 import urllib.request
 

@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import shutil
 import sys
 import time
 import traceback
@@ -117,18 +118,23 @@ def run_test(driver, test_name, all_source_code):
         source_code += '''
 from threading import Thread
 import time
+import traceback
 
 def screenshotAndExit():
-    raw_app = app._app
-    while not getattr(raw_app, '_running', False):
-        time.sleep(0.01)
-    with cmu_graphics.DRAWING_LOCK:
-        raw_app.callUserFn("onMousePress", (200,200))
-        raw_app.frameworkRedrew = False
-    while not raw_app.frameworkRedrew:
-        time.sleep(0.01)
-    raw_app.getScreenshot(%s)
-    raw_app.quit()
+    try:
+        raw_app = app._app
+        while not getattr(raw_app, '_running', False):
+            time.sleep(0.01)
+        with cmu_graphics.DRAWING_LOCK:
+            raw_app.callUserFn("onMousePress", (200,200))
+            raw_app.frameworkRedrew = False
+        while not raw_app.frameworkRedrew:
+            time.sleep(0.01)
+        raw_app.getScreenshot(%s)
+        raw_app.quit()
+    except:
+        traceback.print_exc()
+        os._exit(1)
 
 Thread(target=screenshotAndExit).start()
 cmu_graphics.loop()
@@ -187,6 +193,11 @@ def main():
     num_successes = 0
     start_time = time.time()
     driver = None
+
+    # Duplicate the image_gen directory into the current working directory so that
+    # the parallel Python version tests don't step on each other and cause
+    # errors.
+    shutil.copytree(os.path.join(os.path.dirname(__file__), 'image_gen'), 'image_gen')
 
     try:
         REPORT_FILE = open('report.html', 'w')
