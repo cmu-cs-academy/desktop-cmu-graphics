@@ -51,7 +51,7 @@ for:
       - export PATH=/usr/local/bin:$PATH
 
     before_test:
-      - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:/usr/local/opt/python@3.10/bin
+      - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:/usr/local/opt/python@3.10/bin
       - python3 build/build.py
 
     test_script:
