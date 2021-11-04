@@ -30,8 +30,8 @@ def main():
             'dist/*', '-u', '__token__', '-p', os.environ['PYPI_TOKEN' if args.prod else 'PYPI_TEST_TOKEN']] + pypi_repo_args,
             cwd=pypi_dest, check=True)
 
-        s3_dest = ('s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics-test/' if args.test else
-            's3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/')
+        s3_dest = ('s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/' if args.prod else 's3://cmu-cs-academy.lib.prod/desktop-cmu-graphics-test/'
+            )
         subprocess.run(['aws', 's3', 'cp', zip_dest + '/cmu_graphics/meta/version.txt',
             s3_dest], check=True)
         subprocess.run(['aws', 's3', 'cp', zipfile_name, s3_dest], check=True)

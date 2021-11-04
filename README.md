@@ -6,7 +6,7 @@ students. CMU Graphics and its desktop version are maintained by
 [CMU CS Academy](https://academy.cs.cmu.edu/), a free-to-use middle and
 high school computer science curriculum developed by Carnegie Mellon University.
 
-Desktop CMU Graphics works with **Python 3.6-3.9** and is compatible with
+Desktop CMU Graphics works with **Python 3.6-3.10** and is compatible with
 [Replit](https://replit.com/) (see "Replit" section below). This
 package, including its documentation, is licensed under the
 [BSD 3-Clause license](https://github.com/cmu-cs-academy/desktop-cmu-graphics/blob/master/LICENSE).
@@ -27,7 +27,7 @@ about which to choose, the zip file installer is the most likely to succeed. It
 should work regardless of most restrictions in place on school-distributed devices.
 
 For those using devices with Linux operating systems, or for those who are
-familiar with the command line/terminal, the pip-installable version of the
+familiar with the command line/terminal, the pip version of the
 package offers a larger degree of versatility.
 
 The remainder of these installation instructions are only for the pip version.

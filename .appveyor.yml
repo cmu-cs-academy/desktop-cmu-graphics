@@ -1,8 +1,7 @@
 environment:
   SDL_VIDEODRIVER: dummy
 
-  # Uncomment and insert your device's public SSH key here to access the
-  # Mac build image.
+  # Insert your device's public SSH key here to access the Mac build image.
   APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9Rkdcjvu0MQOMOqlpa5J757pso3iPzMOt6WK3WgJW0kZl/6l/UZfjN9fgJ6PXhtSQkXgyvOrhuyMVdIZIstdbZKnpC6KV274gof44653ildsK3wPSpuF2v9lmPPvfQWyHCfjb19T06p4Rh5idUmZqPXtMFNWL2vSR4IGBE90JlaNOdXDU07KPVkjbb5vsQLh/vl47N2LjU4vDCqHscQ+wVJuExE63vVuv2T3SDYJNpjAuvLZStdIjOjTyRaJHq2uazfajaKK1Ss3IUgvWnfFqg7WD9zASC9VffxZd9mvP1PtAODIPENdZWNFODsdIlSHTwAdO3DhWbwaDS+nfDhgB evan@Evans-MBP.wv.cc.cmu.edu
 
   matrix:
@@ -24,13 +23,13 @@ for:
         - job_name: Windows Tests
 
     install:
-      - C:\Python39\python.exe -m pip install tox twine build
+      - C:\Python310\python.exe -m pip install tox twine build
 
     before_test:
-      - C:\Python39\python.exe build/build.py
+      - C:\Python310\python.exe build/build.py
 
     test_script:
-      - C:\Python39\python.exe -m tox --parallel 4
+      - C:\Python310\python.exe -m tox --parallel 4
 
     # on_finish:
     #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
@@ -42,7 +41,7 @@ for:
 
     install:
       - python3 -m pip install tox twine build
-      - brew install cairo pkg-config
+      - brew install cairo pkg-config python@3.10
       # Put /usr/local/bin at the front of PATH so that homebrew's pkg-config will
       # be run by pip. On 27 Aug 2021, with
       # the default PATH value, `which pkg-config` returned
@@ -50,12 +49,12 @@ for:
       - export PATH=/usr/local/bin:$PATH
 
     before_test:
-      - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/
+      - export PATH=$PATH:~/venv3.5/bin/:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:/usr/local/opt/python@3.10/bin
       - python3 build/build.py
 
     test_script:
       - python3 -m tox --parallel 4
 
-    # on_finish:
-    #   - export APPVEYOR_SSH_BLOCK=true
-    #   - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+    on_finish:
+      - export APPVEYOR_SSH_BLOCK=true
+      - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
