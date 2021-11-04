@@ -12,7 +12,7 @@ environment:
       appveyor_build_worker_image: macOS
 
 matrix:
-  fast_finish: true
+  fast_finish: false
 
 build: off
 
