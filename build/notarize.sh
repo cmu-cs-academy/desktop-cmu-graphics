@@ -5,13 +5,10 @@ source env.sh
 export zipname=cmu_graphics_installer.zip
 
 # signing
-if [[ $CI == "true" ]] ; then
-    ./helpers/setup_keychain.sh
-fi
 export identity="$(security find-identity -p codesigning -v $keychain_name | head -n 1 | cut -d'"' -f2)"
 echo "Signing with identity" $identity
-find ../cmu_graphics -type f -iname "*.so" -exec codesign -vfs "$identity" {} +
-find ../cmu_graphics -type f -iname "*.dylib" -exec codesign -vfs "$identity" {} +
+find ../cmu_graphics -type f -iname "*.so" -exec codesign --timestamp -vfs "$identity" {} +
+find ../cmu_graphics -type f -iname "*.dylib" -exec codesign --timestamp -vfs "$identity" {} +
 
 # notarizing
 cd ../
@@ -60,6 +57,7 @@ do
                 echo "Notarization Status:" ${line_pieces[1]}
             else
                 echo "Notarization failed"
+                echo $status
                 rm $zipname
                 exit 1
             fi

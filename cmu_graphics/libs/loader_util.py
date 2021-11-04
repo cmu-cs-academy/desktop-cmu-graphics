@@ -33,13 +33,25 @@ def verify_support():
     ### ZIPFILE VERSION ###
     verify_os()
     ### END ZIPFILE VERSION ###
+
     if python_major != '3':
         print("""\
 It looks like you're running a version of Python 2. Since Python 2 is no
 longer maintaned as of January 1 2020, CMU Graphics does not support Python 2.
 We recommend installing Python 3.10 from python.org""")
         os._exit(1)
-    elif python_minor < '6':
+
+    ### ZIPFILE VERSION ###
+    if int(python_minor) > 10:
+        print("""\
+It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
+supported by CMU Graphics. We support Python 3.6-3.10. We recommend
+installing Python 3.10 from python.org""" %
+{"minor": python_minor})
+        os._exit(1)
+    ### END ZIPFILE VERSION ###
+
+    if int(python_minor) < 6:
         print("""\
 It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
 supported by CMU Graphics. We support Python 3.6 and higher. We recommend 
