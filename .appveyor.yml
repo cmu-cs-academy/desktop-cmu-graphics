@@ -30,8 +30,9 @@ for:
 
     test_script:
       # The pip version fails because of an issue with the Windows binaries for pycairo,
-      # so skip it here.
-      - C:\Python310\python.exe -m tox -e "py{36,37,38,39,310}-zip" --parallel 4
+      # so skip it here. We also have to skip py310-zip because its version of pycairo
+      # has the same bug.
+      - C:\Python310\python.exe -m tox -e "py{36,37,38,39}-zip" --parallel 2
 
     # on_finish:
     #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
@@ -55,8 +56,8 @@ for:
       - python3 build/build.py
 
     test_script:
-      - python3 -m tox --parallel 4
+      - python3 -m tox --parallel 2
 
-    on_finish:
-      - export APPVEYOR_SSH_BLOCK=true
-      - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+    # on_finish:
+    #   - export APPVEYOR_SSH_BLOCK=true
+    #   - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
