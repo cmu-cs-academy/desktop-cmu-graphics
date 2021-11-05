@@ -3,9 +3,10 @@
 This folder contains scripts for
 
 * Building binaries `binaries.sh`
+* Run `python3 ../../../build/helpers/build_pygame_modules.py` from `cmu_graphics/libs/pygame_loader`
+* Manually download Pillow wheels for any new platforms, and copy the PIL folder out of them to cmu_graphics/libs/pil_loader
 * Setting up modules `modules.sh`
 * Signing and notarizing binaries `notarize.sh`
-* Creating and uploading a release zip `release.sh`
 
 These scripts use a variety of passwords, certificates, and keys. For notarization and deployment, use the following environment variables
 

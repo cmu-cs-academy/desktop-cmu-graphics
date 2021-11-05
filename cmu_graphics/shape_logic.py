@@ -2,8 +2,14 @@ import math
 import copy
 import os
 from cmu_graphics import utils
+### ZIPFILE VERSION ###
 from cmu_graphics.libs import cairo_loader as cairo
 from cmu_graphics.libs import pil_image_loader as Image
+### END ZIPFILE VERSION ###
+### PYPI VERSION ###
+import cairo
+from PIL import Image
+### END PYPI VERSION ###
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array

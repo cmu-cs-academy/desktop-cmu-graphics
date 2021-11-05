@@ -1,6 +1,12 @@
-import libs.cairo_loader as cairo
 import math
+### ZIPFILE VERSION ###
+import libs.cairo_loader as cairo
 import libs.pygame_loader as pygame
+### END ZIPFILE VERSION ###
+### PYPI VERSION ###
+import cairo
+import pygame
+### END PYPI VERSION ###
 import sys
 import json
 import os
