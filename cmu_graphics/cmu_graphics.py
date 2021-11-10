@@ -48,6 +48,9 @@ class Shape(object):
     _init_attrs = {'fill', 'border', 'borderWidth', 'opacity', 'rotateAngle', 'dashes', 'align', 'visible', 'db'}
 
     def __init__(self, clsName, argNames, args, kwargs):
+        global SHAPES_CREATED
+        SHAPES_CREATED += 1
+
         for attr in list(kwargs.keys()):
             en_attr = toEnglish(attr, 'shape-attr')
             if attr != en_attr and en_attr is not None:
@@ -513,7 +516,17 @@ def onKeyPresses(key, n):
         callUserFn('onKeyPress', key)
 
 def loop():
-    app._app.run()
+    run()
+
+def run():
+    global MAINLOOP_RUN
+    MAINLOOP_RUN = True
+
+    t = threading.Thread(target=CSAcademyConsole().interact).start()
+    try:
+        app._app.run()
+    except KeyboardInterrupt:
+        os._exit(0)
 
 from code import InteractiveConsole
 class CSAcademyConsole(InteractiveConsole):
@@ -556,13 +569,6 @@ class CSAcademyConsole(InteractiveConsole):
     # Override interact so we can os._exit on EOF
     def interact(self):
         super().interact()
-        os._exit(0)
-
-def run():
-    t = threading.Thread(target=CSAcademyConsole().interact).start()
-    try:
-        app._app.run()
-    except KeyboardInterrupt:
         os._exit(0)
 
 import os
@@ -679,5 +685,18 @@ toEnglish = sli.toEnglish
 accentCombinations = sli.accentCombinations
 t = sli.t
 
+SHAPES_CREATED = 0
+MAINLOOP_RUN = False
+
+# Checks to see if a user created shapes but did not call
+# cmu_graphics.run()
+def check_for_exit_without_run():
+    global SHAPES_CREATED, MAINLOOP_RUN
+
+    # The app's top level group is created even if the user creates no
+    # shapes on their own
+    if SHAPES_CREATED > 1 and not MAINLOOP_RUN:
+        print("To run your animation, add cmu_graphics.run() to the bottom of your file")
+
 app = AppWrapper(App())
-atexit.register(run)
+atexit.register(check_for_exit_without_run)
