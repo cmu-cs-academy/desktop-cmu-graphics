@@ -696,7 +696,30 @@ def check_for_exit_without_run():
     # The app's top level group is created even if the user creates no
     # shapes on their own
     if SHAPES_CREATED > 1 and not MAINLOOP_RUN:
-        print("To run your animation, add cmu_graphics.run() to the bottom of your file")
+        print("""                                           
+                         (                                              
+                    (    (                                              
+                    ((  (*(                                             
+                    (*( (*/                                             
+                    (**.***,                                            
+                    (***************((((((((((((((((                    
+                    (********************************                   
+                    (*******************************(                   
+                    (*******************************(                   
+                    (*******************************(                   
+                    /*******************************(                   
+                    (/******************(((((((     ((                   
+                (*****(****************,                                
+                /**********(************(                                 
+            ((***************(*********                                  
+                (*****(/*********(*****(                                  
+                    (**********/(/***(*/                                   
+                    (****************(                                  
+                        (/***********(                                    
+                            (*******(                                      
+                            (**(                                                                                                          
+""")
+        print(" ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n")
 
 app = AppWrapper(App())
 atexit.register(check_for_exit_without_run)
