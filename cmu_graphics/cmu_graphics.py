@@ -522,7 +522,9 @@ def run():
     global MAINLOOP_RUN
     MAINLOOP_RUN = True
 
-    t = threading.Thread(target=CSAcademyConsole().interact).start()
+    if not os.environ.get('CI', False):
+        t = threading.Thread(target=CSAcademyConsole().interact).start()
+
     try:
         app._app.run()
     except KeyboardInterrupt:
