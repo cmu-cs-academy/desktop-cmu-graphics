@@ -1,6 +1,7 @@
 import math
 import copy
 import os
+from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import cairo_loader as cairo
@@ -159,6 +160,8 @@ supportedLanguages = ['en', 'es', 'de']
 class CMUException(Exception): pass
 
 def printTraceback(exceptionType, exception, tb):
+    atexit.unregister(cmu_graphics.check_for_exit_without_run)
+
     stack = traceback.extract_tb(tb)
     lines = (''.join(traceback.format_list(stack))).splitlines()
 
