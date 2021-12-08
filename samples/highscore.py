@@ -1,5 +1,5 @@
-import os
 from cmu_graphics import *
+import os
 
 # Set up or reset the game
 # Here we clear labels from the screen, create our game objects,
@@ -112,3 +112,5 @@ def initStartScreen():
     ])
 
 initStartScreen()
+
+cmu_graphics.run()
