@@ -1,5 +1,5 @@
-import sys
 from cmu_graphics import *
+import sys
 
 # This function takes in a frame (a PIL image) and crops it so the center
 # of the cropped 400 by 400 image is the center of the orginal image
@@ -95,12 +95,10 @@ def onStep():
 
 # This function loads the third party libraries OpenCV and Pillow, and adds
 # them to the global namespace so we can use them in other functions.
-# We do this in a function so we can handle missing libraries nicely
 def loadModules():
+    global cv2, Image
     import cv2
     from PIL import Image
-    globals()['cv2'] = cv2
-    globals()['Image'] = Image
 
 # Try to load the necessary third party libraries and start the application
 # If loading the libraries fails, print a message about installation
@@ -124,3 +122,5 @@ def start():
         app.mode = 'helpText'
 
 start()
+
+cmu_graphics.run()

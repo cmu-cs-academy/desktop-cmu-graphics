@@ -44,3 +44,5 @@ def onMousePress(mouseX, mouseY):
     else:
         leftWingDown.visible = True
         leftWingUp.visible = False
+
+cmu_graphics.run()
