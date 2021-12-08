@@ -52,8 +52,7 @@ def drawWeather(city):
     Label('Wind: ' + weatherData['wind_direction_compass'],
           375, 350, align='right', size=30)
 
-    # Create a back button so we can return to the search page
-    # app.backButton = Line(80, 30, 20, 30, arrowEnd=True, lineWidth=5)
+    # Make the back button visible so we can return to the search page
     app.backButton.visible = True
 
 def onMousePress(mouseX, mouseY):
@@ -89,12 +88,11 @@ def drawText(linesList):
         Label(line, 200, lineY, align='center', size=20)
         lineY += lineHeight
 
-# This function loads the third party libraries OpenCV and Pillow, and adds
-# them to the global namespace so we can use them in other functions.
-# We do this in a function so we can handle missing libraries nicely
+# This function loads the third party library requests, and adds
+# it to the global namespace so we can use it in other functions.
 def loadModules():
+    global requests
     import requests
-    globals()['requests'] = requests
 
 # Try to load the necessary third party libraries, create our back button, and
 # start the application. If loading the libraries fails, print a message about
@@ -105,8 +103,11 @@ def start():
         # The visibility of the back button changes when we draw the weather,
         # and it is accessed in the mouse press handler, so it needs to be
         # part of the app
-        app.backButton = Line(80, 30, 20, 30, arrowEnd=True,
-                              lineWidth=5, visible=False)
+        app.backButton = Group(
+            Line(30, 30, 80, 30, lineWidth=10),
+            RegularPolygon(30, 30, 15, 3, rotateAngle=-90),
+            visible=False
+        )
         drawSearchPage()
     except:
         drawText([
@@ -123,3 +124,5 @@ def start():
         app.mode = 'helpText'
 
 start()
+
+cmu_graphics.run()
