@@ -529,6 +529,9 @@ class RGB(object):
         if not isinstance(other, RGB): return False
         return self.red == other.red and self.green == other.green and self.blue == other.blue
 
+    def __hash__(self):
+        return hash((self.red, self.green, self.blue))
+
 CSS3_COLORS_TO_RGB = {
     "aliceblue": RGB(240, 248, 255),
     "antiquewhite": RGB(250, 235, 215),
@@ -2538,7 +2541,7 @@ class Inspector(object):
 
             list(map(addKeyPointTo(shape), self.getKeyPoints(shape)))
 
-        processShape(self.app._tlg)
+        processShape(self.app._tlg._shape)
         if self.app.background is not None:
             list(map(addKeyPointTo(BACKGROUND_DUMMY), BACKGROUND_POINTS))
 
