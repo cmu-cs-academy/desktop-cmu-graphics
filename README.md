@@ -3,8 +3,9 @@
 Desktop CMU Graphics is an offline version of CMU Graphics, a
 persistent-object graphics package geared towards beginner computer science
 students. CMU Graphics and its desktop version are maintained by
-[CMU CS Academy](https://academy.cs.cmu.edu/), a free-to-use middle and
-high school computer science curriculum developed by Carnegie Mellon University.
+[CMU CS Academy](https://academy.cs.cmu.edu/), a Carnegie Mellon University
+project which develops free-to-use middle and high school computer science
+curriculum.
 
 Desktop CMU Graphics works with **Python 3.6-3.10** and is compatible with
 [Replit](https://replit.com/) (see "Replit" section below). This
@@ -60,7 +61,7 @@ from cmu_graphics import *
 At the end of your Python file, add this line:
 
 ```
-cmu_graphics.loop()
+cmu_graphics.run()
 ```
 
 From there, the syntax for using the graphics package is identical to the
