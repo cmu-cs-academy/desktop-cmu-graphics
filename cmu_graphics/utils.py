@@ -113,6 +113,8 @@ def isGroup(shape):
 
 def getChildShapes(shape):
     result = []
+    if hasattr(shape, '_shape'):
+        shape = shape._shape
     if isGroup(shape):
         for s in shape.children:
             result += getChildShapes(s)
