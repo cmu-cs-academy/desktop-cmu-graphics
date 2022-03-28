@@ -1,13 +1,3 @@
-def assertRaises(fn):
-    raised = True
-    try:
-        fn()
-        raised = False
-    except:
-        pass
-    if not raised:
-        raise Exception('fn failed to raise an exception')
-
 ###
 # Basic group children behavior
 r1 = Rect(10, 20, 30, 40)
@@ -75,27 +65,26 @@ assertRaises(lambda: Circle(40, 40, 40, foo='bar'))
 
 ###
 # Can't set width or height of shape to 0
+def setZeroShapeAttr(shape, attr):
+    setattr(shape, attr, 0)
+
 assertRaises(lambda: Rect(200, 200, 100, 0))
 assertRaises(lambda: Rect(200, 200, 0, 100))
 s = Rect(200, 200, 100, 100)
-def f():
-    s.width = 0
-assertRaises(f)
+assertRaises(lambda: setZeroShapeAttr(s, 'width'))
 s.visible = False
 
 assertRaises(lambda: Oval(200, 200, 100, 0))
 assertRaises(lambda: Oval(200, 200, 0, 100))
 s = Oval(200, 200, 100, 100)
-def f():
-    s.width = 0
-assertRaises(f)
+assertRaises(lambda: setZeroShapeAttr(s, 'width'))
 s.visible = False
 
 assertRaises(lambda: Circle(200, 200, 0))
 s = Circle(200, 200, 100)
-def f():
-    s.radius = 0
-assertRaises(f)
+assertRaises(lambda: setZeroShapeAttr(s, 'radius'))
+assertRaises(lambda: setZeroShapeAttr(s, 'width'))
+assertRaises(lambda: setZeroShapeAttr(s, 'height'))
 s.visible = False
 
 assertRaises(lambda: Line(200, 200, 0, 0, lineWidth=0))
@@ -206,6 +195,12 @@ except Exception:
     pass
 assert not add_successful, "Recursive groups should not be allowed"
 
+gg = Group()
+gg2 = Group()
+gg3 = Group()
+gg3.add(gg2)
+gg2.add(gg)
+assertRaises(lambda: gg.add(gg3))
 
 # Make sure that containsShape works for concave shapes
 concave = Polygon(0, 0, 300, 0, 300, 300, 200, 300, 200, 150, 100, 150, 100, 300, 0, 300)
@@ -251,6 +246,22 @@ assert not p.hitsShape(c1)
 # Ensure that star borders are closed
 Star(200, 200, 150, 5, fill=None, border='black', borderWidth=20)
 
+# Shape should hit if point on border
+l = Line(100,100,300,100,fill='black')
+assert not l.hits(99.9,99.9)
+assert l.hits(99.99,99.99)
+assert l.hits(100,100)
+assert l.hits(200,100)
+assert l.hits(300.01,100)
+assert not l.hits(300.1,100)
+l.visible = False
+l = Rect(100, 99, 300, 2)
+assert l.hits(100,100)
+assert l.hits(200,100)
+assert l.hits(400,98.99)
+assert not l.hits(300,98.9)
+l.visible = False
+
 # Ensure group attribute works correctly
 c = Circle(200, 20, 5)
 g = Group(c)
@@ -282,3 +293,54 @@ g2.visible = False
 removedRect = Rect(200, 200, 100, 100)
 app.group.remove(removedRect)
 removedRect.toFront()
+
+###########
+# Ensure hitsShape works with non-filled shapes
+emptyCircle = Circle(200, 200, 200, fill=None, border='black', borderWidth=50)
+c2 = Circle(70, 200, 50)
+assert emptyCircle.hitsShape(c2)
+assert c2.hitsShape(emptyCircle)
+
+c2.centerX = 120
+c2.centerY = 300
+assert emptyCircle.hitsShape(c2)
+assert c2.hitsShape(emptyCircle)
+
+c2.centerX = 270
+c2.centerY = 100
+assert emptyCircle.hitsShape(c2)
+assert c2.hitsShape(emptyCircle)
+
+
+c2.centerX = 260
+c2.centerY = 121
+assert not emptyCircle.hitsShape(c2)
+assert not c2.hitsShape(emptyCircle)
+
+g = Group(Circle(70, 200, 50), Circle(280, 200, 50))
+
+g.centerX = 350
+g.centerY = 250
+assert g.hitsShape(emptyCircle) == emptyCircle.hitsShape(g)
+assert not g.hitsShape(emptyCircle)
+
+g.centerX = 50
+g.centerY = 300
+assert g.hitsShape(emptyCircle) == emptyCircle.hitsShape(g)
+assert g.hitsShape(emptyCircle)
+
+g.visible = False
+emptyCircle.visible = False
+c2.visible = False
+###########
+
+assertRaises(lambda: setattr(app, 'stepsPerSecond', [1]))
+
+assert app.background is None
+app.background = 'red'
+assert app.background == 'red'
+app.background = None
+assert app.background is None
+
+assert app.paused is False
+assert app.paused == False

@@ -110,6 +110,18 @@ def run_test(driver, test_name, all_source_code):
         source_code += "setLanguage('%s')\n" % (
             'es' if test_name.endswith('_es') else 'en'
         )
+        source_code += '''def assertRaises(fn, message_substring=None):
+    raised = True
+    try:
+        fn()
+        raised = False
+    except Exception as e:
+        actual_message = str(e)
+        if message_substring is not None and message_substring not in actual_message:
+            raise Exception(f'fn raised exception, but message "{actual_message}" does not contain "{message_substring}"')
+    if not raised:
+        raise Exception('fn failed to raise an exception')
+'''
         source_code += '\n######\n'.join(source_code_pieces[:piece_i])
         source_code += '\ndef onMousePress(x, y):\n'
         source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
