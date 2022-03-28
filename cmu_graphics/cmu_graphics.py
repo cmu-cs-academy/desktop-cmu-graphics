@@ -1,4 +1,5 @@
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES
+from cmu_graphics import shape_logic
 
 EPSILON = 10e-7
 def almostEqual(x, y, epsilon=EPSILON):
@@ -340,9 +341,9 @@ class App(object):
         self.width = self.right = width
         self.height = self.bottom = height
         self._allKeysDown = set()
-        self.background = 'white'
+        self.background = None
 
-        self.stepsPerSecond = 30
+        self._stepsPerSecond = 30
 
         self._tlg = Group()
         sli.setTopLevelGroup(self._tlg)
@@ -367,6 +368,13 @@ class App(object):
     def set_stopped(self, _):
         raise Exception('App.stopped is readonly')
     stopped = property(get_stopped, set_stopped)
+
+    def getStepsPerSecond(self):
+        return self._stepsPerSecond
+    def setStepsPerSecond(self, value):
+        shape_logic.checkNumber(sli.t('app'), 'stepsPerSecond', value, False)
+        self._stepsPerSecond = value
+    stepsPerSecond = property(getStepsPerSecond, setStepsPerSecond)
 
     def getBackground(self):
         return sli.slGetAppProperty('background')
@@ -698,28 +706,28 @@ def check_for_exit_without_run():
     # The app's top level group is created even if the user creates no
     # shapes on their own
     if SHAPES_CREATED > 1 and not MAINLOOP_RUN:
-        print("""                                           
-                         (                                              
-                    (    (                                              
-                    ((  (*(                                             
-                    (*( (*/                                             
-                    (**.***,                                            
-                    (***************((((((((((((((((                    
-                    (********************************                   
-                    (*******************************(                   
-                    (*******************************(                   
-                    (*******************************(                   
-                    /*******************************(                   
-                    (/******************(((((((     ((                   
-                (*****(****************,                                
-                /**********(************(                                 
-            ((***************(*********                                  
-                (*****(/*********(*****(                                  
-                    (**********/(/***(*/                                   
-                    (****************(                                  
-                        (/***********(                                    
-                            (*******(                                      
-                            (**(                                                                                                          
+        print("""
+                         (
+                    (    (
+                    ((  (*(
+                    (*( (*/
+                    (**.***,
+                    (***************((((((((((((((((
+                    (********************************
+                    (*******************************(
+                    (*******************************(
+                    (*******************************(
+                    /*******************************(
+                    (/******************(((((((     ((
+                (*****(****************,
+                /**********(************(
+            ((***************(*********
+                (*****(/*********(*****(
+                    (**********/(/***(*/
+                    (****************(
+                        (/***********(
+                            (*******(
+                            (**(
 """)
         print(" ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n")
 

@@ -269,6 +269,8 @@ emptyCircle.visible = Falso
 c2.visible = Falso
 ###
 
+assertRaises(lambda: setattr(app, 'pasosPorSegundo', [1]))
+
 assert app.fondo is None
 app.fondo = 'rojo'
 assert app.fondo == 'rojo'

@@ -163,7 +163,7 @@ cmu_graphics.loop()
         stdout, stderr = p.communicate()
         console_output = stdout + stderr
 
-        if p.returncode != 0 or stderr != b'':
+        if p.returncode != 0:
             print('Return code', p.returncode)
             print(stdout.decode('utf-8'))
             print(stderr.decode('utf-8'))
