@@ -1,13 +1,3 @@
-def assertRaises(fn):
-    levantado = Verdadero
-    try:
-        fn()
-        levantado = Falso
-    except:
-        pass
-    if not levantado:
-        raise Exception('fn falló en levantar una excepción')
-
 ###
 # Comportamiento básico de hijos de grupo
 r1 = Rect(10, 20, 30, 40)
@@ -43,9 +33,9 @@ g2.visible = Falso
 ###
 # Devolviendo gradientes o valores RGB como propiedades
 r = Rect(100, 100, 200, 200, relleno=rgb(100, 200, 212))
-assert r.relleno.rojo == 100
-assert r.relleno.verde == 200
-assert r.relleno.azul == 212
+assert r.relleno.red == 100
+assert r.relleno.green == 200
+assert r.relleno.blue == 212
 
 r = Rect(100, 100, 200, 200, relleno=gradiente('rojo', 'azul'))
 assert r.relleno.inicio == 'centro'
@@ -74,28 +64,27 @@ assertRaises(lambda: Círculo(40, 40, 40, foo='bar'))
 
 ###
 # No se puede establecer el ancho o la altura de una figura a 0
+def setZeroShapeAttr(shape, attr):
+    setattr(shape, attr, 0)
+
 assertRaises(lambda: Rect(200, 200, 100, 0))
 assertRaises(lambda: Rect(200, 200, 0, 100))
 s = Rect(200, 200, 100, 100)
-def f():
-    s.ancho = 0
-assertRaises(f)
+assertRaises(lambda: setZeroShapeAttr(s, 'ancho'))
 s.visible = Falso
 
 assertRaises(lambda: Óvalo(200, 200, 100, 0))
 assertRaises(lambda: Óvalo(200, 200, 0, 100))
 s = Óvalo(200, 200, 100, 100)
-def f():
-    s.ancho = 0
-assertRaises(f)
+assertRaises(lambda: setZeroShapeAttr(s, 'ancho'))
 s.visible = Falso
 
 assertRaises(lambda: Círculo(200, 200, 0))
 s = Círculo(200, 200, 100)
-def f():
-    s.radio = 0
-assertRaises(f)
-s.visible = Falso
+assertRaises(lambda: setZeroShapeAttr(s, 'radio'))
+assertRaises(lambda: setZeroShapeAttr(s, 'ancho'))
+assertRaises(lambda: setZeroShapeAttr(s, 'altura'))
+s.visible = False
 
 assertRaises(lambda: Línea(200, 200, 0, 0, anchuraDeLínea=0))
 
@@ -207,3 +196,86 @@ assert custom.restart == 'b'
 
 # Ensure that star borders are closed
 Estrella(200, 200, 150, 5, relleno=None, borde='negro', anchuraDeBorde=20)
+
+# Ensure group attribute works correctly
+c = Circulo(200, 20, 5)
+g = Grupo(c)
+
+def setGroup(shape, val):
+  shape.grupo = val
+
+# should not be possible to set group
+assertRaises(lambda: setGroup(c, g))
+
+assert app.grupo.grupo == None
+
+c.visible = Falso
+assert c.grupo == None
+
+g2 = Grupo(c)
+g2.quitar(c)
+
+assert c.grupo == None
+
+c.visible = True
+assert c.grupo == g2
+assert len(g2.hijos) == 1
+
+g.visible = Falso
+g2.visible = Falso
+
+# Ensure .toFront() doesn't crash when group is null
+removedRect = Rect(200, 200, 100, 100)
+app.grupo.quitar(removedRect)
+removedRect.alFrente()
+
+###########
+# Ensure hitsShape works with non-filled shapes
+emptyCircle = Círculo(200, 200, 200, relleno=None, borde='negro', anchuraDeBorde=50)
+c2 = Círculo(70, 200, 50)
+assert emptyCircle.tocaFigura(c2)
+assert c2.tocaFigura(emptyCircle)
+
+c2.centroX = 120
+c2.centroY = 300
+assert emptyCircle.tocaFigura(c2)
+assert c2.tocaFigura(emptyCircle)
+
+c2.centroX = 270
+c2.centroY = 100
+assert emptyCircle.tocaFigura(c2)
+assert c2.tocaFigura(emptyCircle)
+
+
+c2.centroX = 260
+c2.centroY = 121
+assert not emptyCircle.tocaFigura(c2)
+assert not c2.tocaFigura(emptyCircle)
+
+g = Grupo(Círculo(70, 200, 50), Círculo(280, 200, 50))
+
+g.centroX = 350
+g.centroY = 250
+assert g.tocaFigura(emptyCircle) == emptyCircle.tocaFigura(g)
+assert not g.tocaFigura(emptyCircle)
+
+g.centroX = 50
+g.centroY = 300
+assert g.tocaFigura(emptyCircle) == emptyCircle.tocaFigura(g)
+assert g.tocaFigura(emptyCircle)
+
+g.visible = Falso
+emptyCircle.visible = Falso
+c2.visible = Falso
+###
+
+assertRaises(lambda: setattr(app, 'pasosPorSegundo', [1]))
+
+assert app.fondo is None
+app.fondo = 'rojo'
+assert app.fondo == 'rojo'
+app.fondo = None
+assert app.fondo is None
+
+assert app.pausada is False
+assert app.pausada == False

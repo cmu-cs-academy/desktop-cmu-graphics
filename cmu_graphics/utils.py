@@ -46,7 +46,7 @@ def roundHalfUp(d):
     return int(decimal.Decimal(d).to_integral_value(rounding=rounding))
 
 def internalError(err):
-    raise Exception('Internlal Error: {err}'.format(err=err))
+    raise Exception('Internal Error: {err}'.format(err=err))
 
 def polygonContainsPoint(pts, px, py):
     # based on: https://github.com/mathigon/fermat.js/blob/master/src/geometry.js
@@ -59,6 +59,8 @@ def polygonContainsPoint(pts, px, py):
         q1y = q1[1]
         q2x = q2[0]
         q2y = q2[1]
+        if distanceToLineSegment2(px, py, q1x, q1y, q2x, q2y) < 0.0002:
+            return True
         x = (q1y > py) != (q2y > py)
         if (q2y - q1y == 0):
             y = True
@@ -113,6 +115,8 @@ def isGroup(shape):
 
 def getChildShapes(shape):
     result = []
+    if hasattr(shape, '_shape'):
+        shape = shape._shape
     if isGroup(shape):
         for s in shape.children:
             result += getChildShapes(s)

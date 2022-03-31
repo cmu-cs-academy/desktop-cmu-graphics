@@ -43,8 +43,13 @@ for:
         - job_name: macOS Tests
 
     install:
-      - python3 -m pip install tox twine build
-      - brew install cairo pkg-config python@3.10
+      # Force install xorgproto, which is a dependency of cairo but can't be linked by
+      # homebrew because of a conflicting file.
+      - brew install -f --overwrite xorgproto
+      - brew install cairo pkg-config
+      - export PYBIN=~/venv3.10/bin/python
+      - $PYBIN -m pip install -U pip
+      - $PYBIN -m pip install tox twine build
       # Put /usr/local/bin at the front of PATH so that homebrew's pkg-config will
       # be run by pip. On 27 Aug 2021, with
       # the default PATH value, `which pkg-config` returned
@@ -52,11 +57,11 @@ for:
       - export PATH=/usr/local/bin:$PATH
 
     before_test:
-      - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:/usr/local/opt/python@3.10/bin
-      - python3 build/build.py
+      - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:~/venv3.10/bin/
+      - $PYBIN build/build.py
 
     test_script:
-      - python3 -m tox --parallel 2
+      - $PYBIN -m tox --parallel 2
 
     # on_finish:
     #   - export APPVEYOR_SSH_BLOCK=true
