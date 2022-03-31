@@ -290,7 +290,7 @@ class App(object):
             'left': 0,
             'width': self.width,
             'height': self.height,
-            'fill': self.background,
+            'fill': self.background or 'white',
         })
         shape.draw(ctx)
 
