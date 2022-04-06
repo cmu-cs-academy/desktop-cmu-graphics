@@ -8,7 +8,8 @@ project which develops free-to-use middle and high school computer science
 curriculum.
 
 Desktop CMU Graphics works with **Python 3.6-3.10** and is compatible with
-[Replit](https://replit.com/) (see "Replit" section below). This
+[Replit](https://replit.com/) and [Coding Rooms](https://www.codingrooms.com/) 
+(see the "Replit" and "Coding Rooms" sections below). This
 package, including its documentation, is licensed under the
 [BSD 3-Clause license](https://github.com/cmu-cs-academy/desktop-cmu-graphics/blob/master/LICENSE).
 
@@ -95,4 +96,14 @@ the package on the Replit website:
 1. Create a new repl. Choose "Pygame" as the language.
 1. Click on the cube menu icon "Packages".
 1. Type "cmu-graphics" into the search bar, click on the package, and then click "Add".
+1. Run your code!
+
+## Coding Rooms
+
+Desktop CMU Graphics is compatible with [Coding Rooms](https://www.codingrooms.com/). To use the package on the
+Coding Rooms website:
+
+1. Visit [this link](https://www.codingrooms.com/compiler/python3) to create a workspace
+1. Click "Start Coding Python for Free Now"
+1. Click the blue "View Desktop" button above the shell
 1. Run your code!
