@@ -208,6 +208,10 @@ def translateKeyName(keyName, originalLanguage):
     if originalLanguage not in TRANSLATED_KEY_NAMES: return keyName
     return KeyName(TRANSLATED_KEY_NAMES[originalLanguage].get(keyName, keyName))
 
+def cleanAndClose():
+    shape_logic.cleanSoundProcesses()
+    os._exit(0)
+
 # Based on Lukas Peraza's pygame framework
 # https://github.com/LBPeraza/Pygame-Asteroids
 class App(object):
@@ -480,7 +484,7 @@ class App(object):
                 pygame.time.wait(1)
 
         pygame.quit()
-        os._exit(0)
+        cleanAndClose()
 
 class AppWrapper(object):
     attrs = ['background', 'group', 'stepsPerSecond', 'paused', 'stop',
@@ -536,13 +540,13 @@ def run():
     try:
         app._app.run()
     except KeyboardInterrupt:
-        os._exit(0)
+        cleanAndClose()
 
 from code import InteractiveConsole
 class CSAcademyConsole(InteractiveConsole):
     def __init__(self):
         self.__class__.__name__ = "CS Academy Console"
-        __main__.__dict__['exit'] = lambda: os._exit(0)
+        __main__.__dict__['exit'] = lambda: cleanAndClose()
         super().__init__(locals=__main__.__dict__, filename = '<%s>' % self.__class__.__name__)
 
     # Override the default error handling functions to avoid using our own
@@ -576,10 +580,10 @@ class CSAcademyConsole(InteractiveConsole):
         finally:
             last_tb = ei = None
 
-    # Override interact so we can os._exit on EOF
+    # Override interact so we can exit on EOF
     def interact(self):
         super().interact()
-        os._exit(0)
+        cleanAndClose()
 
 import os
 import sys

@@ -2184,6 +2184,9 @@ class CMUSound(object):
             'kwargs': {}
         })
 
+    def __del__(self):
+        self.soundProcess.kill()
+
 def cleanSoundProcesses():
     for p in CMUSound.processes: p.kill()
 
