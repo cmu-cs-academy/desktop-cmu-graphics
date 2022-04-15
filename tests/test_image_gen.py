@@ -156,9 +156,10 @@ cmu_graphics.loop()
             f.write(source_code)
 
         p = subprocess.Popen(
-            [sys.executable, TEST_FILE_PATH],
+            [sys.executable, f'../{TEST_FILE_PATH}'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            cwd='image_gen'
         )
         stdout, stderr = p.communicate()
         console_output = stdout + stderr
