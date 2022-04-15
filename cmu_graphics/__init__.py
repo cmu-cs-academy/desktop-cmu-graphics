@@ -52,6 +52,7 @@ from cmu_graphics.shape_logic import (
     TRANSLATED_BOOLEANS,
     TRANSLATED_KEY_NAMES,
     accentCombinations,
+    PILWrapper as CMUImage
 )
 
 __all__ = TRANSLATED_GLOBALS['keys']

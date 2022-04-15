@@ -20,6 +20,7 @@ import atexit
 import subprocess
 import json
 import unicodedata
+import uuid
 import re
 
 # start_translate
@@ -28,7 +29,7 @@ TRANSLATED_GRADIENT_STARTS = {'keys': ['top-left', 'top-right', 'bottom-left', '
 TRANSLATED_ALIGNS = {'keys': ['left-top', 'top', 'right-top', 'left', 'center', 'right', 'left-bottom', 'bottom', 'right-bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'], 'es': {'left-top': 'izquierda-superior', 'top': 'superior', 'right-top': 'derecha-superior', 'left': 'izquierda', 'center': 'centro', 'right': 'derecha', 'left-bottom': 'izquierda-inferior', 'bottom': 'inferior', 'right-bottom': 'derecha-inferior', 'top-left': 'superior-izquierda', 'top-right': 'superior-derecha', 'bottom-left': 'inferior-izquierda', 'bottom-right': 'inferior-derecha'}, 'de': {'left-top': 'links-oben', 'top': 'oben', 'right-top': 'rechts-oben', 'left': 'links', 'center': 'mitte', 'right': 'rechts', 'left-bottom': 'links-unten', 'bottom': 'unten', 'right-bottom': 'rechts-unten', 'top-left': 'oben-links', 'top-right': 'oben-rechts', 'bottom-left': 'unten-links', 'bottom-right': 'unten-rechts'}}
 TRANSLATED_SHAPE_ATTRS = {'keys': ['group', 'play', 'pause', 'loop', 'restart', 'remove', 'bold', 'opacity', 'centerX', 'hits', 'borderWidth', 'centerY', 'url', 'left', 'add', 'points', 'startAngle', 'toBack', 'x2', 'y1', 'size', 'initialPoints', 'top', 'align', 'dashes', 'right', 'start', 'y2', 'radius', 'border', 'containsShape', 'background', 'height', 'lineWidth', 'toFront', 'roundness', 'arrowEnd', 'x1', 'fill', 'bottom', 'clear', 'sweepAngle', 'value', 'contains', 'italic', 'visible', 'arrowStart', 'hitsShape', 'font', 'children', 'hitTest', 'width', 'rotateAngle', 'red', 'blue', 'green'], 'es': {'group': 'grupo', 'play': 'toca', 'pause': 'pausa', 'loop': 'repetir', 'restart': 'reiniciar', 'remove': 'quitar', 'bold': 'negrito', 'opacity': 'opacidad', 'centerX': 'centroX', 'hits': 'toca', 'borderWidth': 'anchuraDeBorde', 'centerY': 'centroY', 'url': 'url', 'left': 'izquierda', 'add': 'agregar', 'points': 'puntos', 'startAngle': 'ánguloInicial', 'toBack': 'alFondo', 'x2': 'x2', 'y1': 'y1', 'size': 'tamaño', 'initialPoints': 'puntosIniciales', 'top': 'superior', 'align': 'alinear', 'dashes': 'guión', 'right': 'derecha', 'start': 'inicio', 'y2': 'y2', 'radius': 'radio', 'border': 'borde', 'containsShape': 'contieneFigura', 'background': 'fondo', 'height': 'altura', 'lineWidth': 'anchuraDeLínea', 'toFront': 'alFrente', 'roundness': 'redondez', 'arrowEnd': 'finalDeFlecha', 'x1': 'x1', 'fill': 'relleno', 'bottom': 'inferior', 'clear': 'vaciar', 'sweepAngle': 'ánguloDeBarrido', 'value': 'valor', 'contains': 'contiene', 'italic': 'itálica', 'visible': 'visible', 'arrowStart': 'inicioDeFlecha', 'hitsShape': 'tocaFigura', 'font': 'fuente', 'children': 'hijos', 'hitTest': 'tocarPrueba', 'width': 'ancho', 'rotateAngle': 'rotarÁngulo', 'red': 'red', 'blue': 'blue', 'green': 'green'}, 'de': {'group': 'gruppe', 'play': 'abspielen', 'pause': 'pausieren', 'loop': 'wiederholen', 'restart': 'neustarten', 'remove': 'entferne', 'bold': 'fett', 'opacity': 'deckkraft', 'centerX': 'mitteX', 'hits': 'trifft', 'borderWidth': 'randBreite', 'centerY': 'mitteY', 'url': 'url', 'left': 'links', 'add': 'fügeHinzu', 'points': 'punkte', 'startAngle': 'anfangsWinkel', 'toBack': 'nachHinten', 'x2': 'x2', 'y1': 'y1', 'size': 'größe', 'initialPoints': 'startPunkte', 'top': 'oben', 'align': 'ausrichtung', 'dashes': 'gestrichelt', 'right': 'rechts', 'start': 'start', 'y2': 'y2', 'radius': 'radius', 'border': 'rand', 'containsShape': 'beinhaltetForm', 'background': 'hintergrund', 'height': 'höhe', 'lineWidth': 'linienBreite', 'toFront': 'nachVorn', 'roundness': 'rundung', 'arrowEnd': 'pfeilEnde', 'x1': 'x1', 'fill': 'füllen', 'bottom': 'unten', 'clear': 'leeren', 'sweepAngle': 'krümmungsWinkel', 'value': 'wert', 'contains': 'beinhaltet', 'italic': 'kursiv', 'visible': 'sichtbar', 'arrowStart': 'pfeilStart', 'hitsShape': 'trifftForm', 'font': 'schriftart', 'children': 'kinder', 'hitTest': 'treffenTest', 'width': 'breite', 'rotateAngle': 'drehWinkel', 'red': 'red', 'blue': 'blue', 'green': 'green'}}
 TRANSLATED_BOOLEANS = {'keys': ['True', 'False'], 'es': {'True': 'Verdadero', 'False': 'Falso'}, 'de': {'True': 'Wahr', 'False': 'Falsch'}}
-TRANSLATED_GLOBALS = {'keys': ['Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Robot', 'Sound', 'Star', 'almostEqual', 'angleTo', 'app', 'assertEqual', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'onKeyHolds', 'onSteps', 'print', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle', 'onKeyPresses'], 'es': {'Arc': 'Arco', 'Circle': 'Círculo', 'Group': 'Grupo', 'Image': 'Imagen', 'Label': 'Rótulo', 'Line': 'Línea', 'Oval': 'Óvalo', 'Polygon': 'Polígono', 'Rect': 'Rect', 'RegularPolygon': 'PolígonoRegular', 'Robot': 'Robot', 'Sound': 'Sonido', 'Star': 'Estrella', 'almostEqual': 'casiIgualA', 'angleTo': 'ánguloA', 'app': 'app', 'assertEqual': 'afirmarIgualdad', 'choice': 'opción', 'distance': 'distancia', 'fromPythonAngle': 'deÁnguloPython', 'getPointInDir': 'obtenerPuntoEnDir', 'gradient': 'gradiente', 'makeList': 'hacerLista', 'onKeyHolds': 'enTeclasRetenidas', 'onSteps': 'enPasos', 'print': 'imprime', 'pythonRound': 'redondearPython', 'random': 'aleatorio', 'randrange': 'rangoAleatorio', 'rgb': 'rgb', 'round': 'redondear', 'rounded': 'redondeado', 'seed': 'semilla', 'toPythonAngle': 'aÁnguloPython', 'onKeyPresses': 'enTeclaPresionadas'}, 'de': {'Arc': 'Bogen', 'Circle': 'Kreis', 'Group': 'Gruppe', 'Image': 'Bild', 'Label': 'Beschriftung', 'Line': 'Linie', 'Oval': 'Oval', 'Polygon': 'Vieleck', 'Rect': 'Rechteck', 'RegularPolygon': 'RegelmäßigesVieleck', 'Robot': 'Roboter', 'Sound': 'Geräusch', 'Star': 'Stern', 'almostEqual': 'fastGleich', 'angleTo': 'winkelNach', 'app': 'anwendung', 'assertEqual': 'gleichsetzen', 'choice': 'auswahl', 'distance': 'distanz', 'fromPythonAngle': 'vomPythonWinkel', 'getPointInDir': 'erhaltePunktInRichtung', 'gradient': 'farbverlauf', 'makeList': 'macheListe', 'onKeyHolds': 'wennTasteGedrückt', 'onSteps': 'schrittweise', 'print': 'ausgabe', 'pythonRound': 'pythonRunden', 'random': 'zufall', 'randrange': 'zufallsspanne', 'rgb': 'RGB', 'round': 'runden', 'rounded': 'gerundet', 'seed': 'kerne', 'toPythonAngle': 'zumPythonWinkel', 'onKeyPresses': 'wennTasteGedrückt'}}
+TRANSLATED_GLOBALS = {'keys': ['Arc', 'Circle', 'Group', 'Image', 'Label', 'Line', 'Oval', 'Polygon', 'Rect', 'RegularPolygon', 'Robot', 'Sound', 'Star', 'almostEqual', 'angleTo', 'app', 'assertEqual', 'choice', 'distance', 'fromPythonAngle', 'getPointInDir', 'gradient', 'makeList', 'onKeyHolds', 'onSteps', 'print', 'pythonRound', 'random', 'randrange', 'rgb', 'round', 'rounded', 'seed', 'toPythonAngle', 'onKeyPresses', 'CMUImage'], 'es': {'Arc': 'Arco', 'Circle': 'Círculo', 'Group': 'Grupo', 'Image': 'Imagen', 'Label': 'Rótulo', 'Line': 'Línea', 'Oval': 'Óvalo', 'Polygon': 'Polígono', 'Rect': 'Rect', 'RegularPolygon': 'PolígonoRegular', 'Robot': 'Robot', 'Sound': 'Sonido', 'Star': 'Estrella', 'almostEqual': 'casiIgualA', 'angleTo': 'ánguloA', 'app': 'app', 'assertEqual': 'afirmarIgualdad', 'choice': 'opción', 'distance': 'distancia', 'fromPythonAngle': 'deÁnguloPython', 'getPointInDir': 'obtenerPuntoEnDir', 'gradient': 'gradiente', 'makeList': 'hacerLista', 'onKeyHolds': 'enTeclasRetenidas', 'onSteps': 'enPasos', 'print': 'imprime', 'pythonRound': 'redondearPython', 'random': 'aleatorio', 'randrange': 'rangoAleatorio', 'rgb': 'rgb', 'round': 'redondear', 'rounded': 'redondeado', 'seed': 'semilla', 'toPythonAngle': 'aÁnguloPython', 'onKeyPresses': 'enTeclaPresionadas', 'CMUImage': 'CMUImage'}, 'de': {'Arc': 'Bogen', 'Circle': 'Kreis', 'Group': 'Gruppe', 'Image': 'Bild', 'Label': 'Beschriftung', 'Line': 'Linie', 'Oval': 'Oval', 'Polygon': 'Vieleck', 'Rect': 'Rechteck', 'RegularPolygon': 'RegelmäßigesVieleck', 'Robot': 'Roboter', 'Sound': 'Geräusch', 'Star': 'Stern', 'almostEqual': 'fastGleich', 'angleTo': 'winkelNach', 'app': 'anwendung', 'assertEqual': 'gleichsetzen', 'choice': 'auswahl', 'distance': 'distanz', 'fromPythonAngle': 'vomPythonWinkel', 'getPointInDir': 'erhaltePunktInRichtung', 'gradient': 'farbverlauf', 'makeList': 'macheListe', 'onKeyHolds': 'wennTasteGedrückt', 'onSteps': 'schrittweise', 'print': 'ausgabe', 'pythonRound': 'pythonRunden', 'random': 'zufall', 'randrange': 'zufallsspanne', 'rgb': 'RGB', 'round': 'runden', 'rounded': 'gerundet', 'seed': 'kerne', 'toPythonAngle': 'zumPythonWinkel', 'onKeyPresses': 'wennTasteGedrückt', 'CMUImage': 'CMUImage'}}
 TRANSLATED_USER_FUNCTION_NAMES = {'keys': ['onKeyHold', 'onKeyPress', 'onKeyRelease', 'onMouseDrag', 'onMouseMove', 'onMousePress', 'onMouseRelease', 'onStep'], 'es': {'onKeyHold': 'enTeclaRetenida', 'onKeyPress': 'enTeclaPresionada', 'onKeyRelease': 'enTeclaSoltada', 'onMouseDrag': 'enRatónArrastrado', 'onMouseMove': 'enRatónMovido', 'onMousePress': 'enRatónPresionado', 'onMouseRelease': 'enRatónSoltado', 'onStep': 'enPaso'}, 'de': {'onKeyHold': 'beiTasteHalten', 'onKeyPress': 'beiTasteRunter', 'onKeyRelease': 'beiTasteHoch', 'onMouseDrag': 'beiMausMitTasteZiehen', 'onMouseMove': 'beiMausbewegung', 'onMousePress': 'beiMaustasteRunter', 'onMouseRelease': 'beiMaustasteHoch', 'onStep': 'beimSchritt'}}
 TRANSLATED_KEY_NAMES = {'keys': ['space', 'enter', 'left', 'right', 'up', 'down', 'pageup', 'pagedown', 'escape', 'delete', 'backspace', 'tab'], 'es': {'space': 'espacio', 'enter': 'intro', 'left': 'izquierda', 'right': 'derecha', 'up': 'arriba', 'down': 'abajo', 'pageup': 'repág', 'pagedown': 'avpág', 'escape': 'escapar', 'delete': 'suprimir', 'backspace': 'retroceso', 'tab': 'pestaña'}, 'de': {'space': 'leertaste', 'enter': 'enter', 'left': 'links', 'right': 'rechts', 'up': 'pfeil-hoch', 'down': 'pfeil-runter', 'pageup': 'bild-hoch', 'pagedown': 'bild-runter', 'escape': 'escape', 'delete': 'entfernen', 'backspace': 'löschen', 'tab': 'tab'}}
 TRANSLATED_APP_ATTRS = {'keys': ['background', 'getTextInput', 'group', 'maxShapeCount', 'paused', 'setTextInputs', 'stepsPerSecond', 'stop', 'stopped', 'setMaxShapeCount'], 'es': {'background': 'fondo', 'getTextInput': 'obtenerEntradaDeTexto', 'group': 'grupo', 'maxShapeCount': 'maxCuentaDeFiguras', 'paused': 'pausada', 'setTextInputs': 'establecerEntradaDeTexto', 'stepsPerSecond': 'pasosPorSegundo', 'stop': 'detener', 'stopped': 'detenido', 'setMaxShapeCount': 'establecerCuentaFormasMaximas'}, 'de': {'background': 'hintergrund', 'getTextInput': 'holeTextEingabe', 'group': 'gruppe', 'maxShapeCount': 'maximaleFormMenge', 'paused': 'pausiert', 'setTextInputs': 'setzeTextEingaben', 'stepsPerSecond': 'schritteProSekunde', 'stop': 'stop', 'stopped': 'gestoppt', 'setMaxShapeCount': 'setzeMaxFormAnzahl'}}
@@ -181,7 +182,8 @@ def printTraceback(exceptionType, exception, tb):
 
             if not (('loop()' in codeLine)
                 or ('cmu_graphics.py' in module)
-                or ('shape_logic.py' in module)):
+                or ('shape_logic.py' in module)
+                or ('cmu_cs3_graphics.py' in module)):
 
                 print('  %s line %d:\n    %s' % (module, lineNumber, codeLine))
         except:
@@ -303,6 +305,10 @@ def checkArray(obj, attr, value, isFn):
 def checkString(obj, attr, value, isFn):
     if type(value) != str: typeError(obj, attr, value, 'string', isFn)
 
+def checkUrl(obj, attr, value, isFn):
+    if type(value) != str and not isinstance(value, PILWrapper):
+        typeError(obj, attr, value, 'string-or-CMUImage', isFn)
+
 def checkBooleanOrArray(obj, attr, value, isFn):
     if type(value) != list and type(value) != tuple: checkBoolean(obj, attr, value, isFn)
 
@@ -407,20 +413,52 @@ def getAlignAttrs(align):
     else: yattr = 'centerY'
     return [xattr, yattr]
 
-def loadImage(path):
-    if (path.startswith('http')):
+def surfaceFromImage(image):
+    image = image.convert('RGBA') # ensure we have the correct number of channels
+    a = array.array('B', image.tobytes('raw', 'RGBA'))
+    surface = cairo.ImageSurface.create_for_data(a, cairo.FORMAT_ARGB32, image.size[0], image.size[1])
+    return surface
+
+class PILWrapper(object):
+    def __init__(self, image):
+        self.image = image
+        self._surface = None
+        self.uuid = str(uuid.uuid4())
+
+    def get_surface(self):
+        if self._surface is None:
+            self._surface = surfaceFromImage(self.image)
+        return self._surface
+
+    surface = property(get_surface, None)
+
+def hashReference(reference):
+    if isinstance(reference, PILWrapper):
+        return reference.uuid
+    return hash(reference)
+
+def loadImageFromStringReference(reference):
+    if (reference.startswith('http')):
+        # reference is a url
         try:
-            response = webrequest.get(path)
+            response = webrequest.get(reference)
             image = Image.open(response)
         except:
             pyThrow(t('Failed to load image data'))
     else:
-        image = Image.open(path)
+        # reference is a path
+        image = Image.open(reference)
+    return PILWrapper(image)
 
-    image = image.convert('RGBA') # ensure we have the correct number of channels
-    a = array.array('B', image.tobytes('raw', 'RGBA'))
-    surface = cairo.ImageSurface.create_for_data(a, cairo.FORMAT_ARGB32, image.size[0], image.size[1])
-    activeDrawing.images[path] = surface
+def loadImage(reference):
+    if isinstance(reference, PILWrapper):
+        image = reference
+    else:
+        image = loadImageFromStringReference(reference)
+
+    surface = image.surface
+    activeDrawing.images[hashReference(reference)] = surface
+
     return {'width': surface.get_width(), 'height': surface.get_height()}
 
 shapeAttrs = dict()
@@ -471,7 +509,7 @@ def initShapeAttrs():
     ShapeAttr('bold', checkBoolean, False)
     ShapeAttr('italic', checkBoolean, False)
     ShapeAttr('visible', checkBoolean, True)
-    ShapeAttr('url', checkString, None)
+    ShapeAttr('url', checkUrl, None)
     ShapeAttr('db', checkValue, '')
     ShapeAttr('group', checkValue, None)
 initShapeAttrs()
@@ -2184,6 +2222,9 @@ class CMUSound(object):
             'kwargs': {}
         })
 
+    def __del__(self):
+        self.soundProcess.kill()
+
 def cleanSoundProcesses():
     for p in CMUSound.processes: p.kill()
 
@@ -2223,7 +2264,7 @@ class CMUImage(PolygonWithTransform):
         mat = self.transformMatrix
         ctx.translate(self.pointList[0][0], self.pointList[0][1])
         ctx.transform(cairo.Matrix(mat[0][0], mat[1][0], mat[0][1], mat[1][1], 0, 0))
-        ctx.set_source_surface(activeDrawing.images[self.url], 0, 0)
+        ctx.set_source_surface(activeDrawing.images[hashReference(self.url)], 0, 0)
         ctx.paint_with_alpha(self.opacity / 100)
 
     def toString(self):
