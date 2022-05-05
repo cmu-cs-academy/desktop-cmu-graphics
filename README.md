@@ -93,9 +93,7 @@ framework is available on our [documentation page](https://academy.cs.cmu.edu/do
 Desktop CMU Graphics is compatible with [Replit](https://replit.com/). To use
 the package on the Replit website:
 
-1. Create a new repl. Choose "Pygame" as the language.
-1. Click on the cube menu icon "Packages".
-1. Type "cmu-graphics" into the search bar, click on the package, and then click "Add".
+1. Create a new repl. Choose "Python-CMUGraphics" as the language.
 1. Run your code!
 
 ## Coding Rooms
