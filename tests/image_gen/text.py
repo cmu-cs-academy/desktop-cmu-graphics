@@ -23,7 +23,7 @@ l.value = d
 d['a'] = 10
 
 # Ensure __repr__ for labels is correct
-assert str(l) == "Label({'a': 10}, 200, 200)"
+assert str(l) == "Label({'a': 10}, 200, 200)", str(l)
 
 # -
 # Change l.value and ensure label dimensions are updated

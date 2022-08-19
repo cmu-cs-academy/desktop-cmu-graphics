@@ -344,3 +344,6 @@ assert app.background is None
 
 assert app.paused is False
 assert app.paused == False
+
+x = random()
+assert isinstance(x, float) and x >= 0 and x < 1, x
