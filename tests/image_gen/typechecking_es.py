@@ -77,7 +77,3 @@ assertError(lambda: rgb([2, 3], 2, 3), ['RGB.red', 'list'])
 assertError(lambda: gradiente(None, None), ['colores', 'None'])
 assertError(lambda: gradiente('hi', 'rojo'), ['hi'])
 assertError(lambda: rgb(300, 100, 100), ['RGB.red', '300'])
-
-# Calling class methods with too few arguments
-assertError(lambda: g.toca(), ['Falta un argumento requerido'])
-assertError(lambda: g.quitar(), ['Falta un argumento requerido'])

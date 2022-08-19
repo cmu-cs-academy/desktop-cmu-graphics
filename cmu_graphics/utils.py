@@ -194,8 +194,14 @@ def utilsRounded(n, precision = 0):
 def tupleString(a):
     return "({s})".format(s=', '.join(map(str, a)))
 
+def stripZeroDecimal(n):
+    s = str(n)
+    if s.endswith('.0'):
+        s = s[:-2]
+    return s
+
 def roundedTupleString(a, precision = 0):
-    return tupleString(utilsRounded(a, precision))
+    return tupleString(map(stripZeroDecimal, utilsRounded(a, precision)))
 
 def getArcPoints(cx, cy, width, height, startAngle = None, sweepAngle = None, sizeForN = None):
     # get points that approximate an oval

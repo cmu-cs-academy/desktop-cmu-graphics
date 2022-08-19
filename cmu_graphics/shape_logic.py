@@ -514,7 +514,16 @@ def initShapeAttrs():
     ShapeAttr('group', checkValue, None)
 initShapeAttrs()
 
-class RGB(object):
+# This metaclass prevents 'cmu_graphics_bry.' from being included in the name
+# of the type, when type() is called on a Shape/rgb/gradient instance
+class _ShapeMetaclass(type):
+    def __repr__(cls):
+        return "<class '" + t(cls.__name__) + "'>"
+
+    def __str__(cls):
+        return "<class '" + t(cls.__name__) + "'>"
+
+class RGB(object, metaclass=_ShapeMetaclass):
     def __init__(self, red, green, blue):
         self._attrs = {'class': self.__class__.__name__}
         self._red = red
@@ -737,7 +746,7 @@ def canonicalizeGradientStart(start):
     if start in alternateGradientStarts: return alternateGradientStarts[start]
     return start
 
-class Gradient(object):
+class Gradient(object, metaclass=_ShapeMetaclass):
     def __init__(self, colors, start):
         checkArray(self, t('colors'), colors, False)
         if len(colors) < 2:
@@ -2959,6 +2968,12 @@ class ShapeLogicInterface(object):
         if shapeAttrs.get(attr, None) is not None:
             shapeAttrs[attr].typeCheckFn(obj, attr, val, False)
             setattr(obj, attr, val)
+        elif hasattr(obj, attr) and callable(getattr(obj, attr)):
+            pyThrow(
+              t("{{methodName}} is a function. You can't assign to it.", {
+                'methodName': f'{className}.{attr}',
+              })
+            );
         else:
             utils.internalError(
                 f'No type check function found for {className}.{attr}')

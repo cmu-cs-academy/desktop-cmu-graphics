@@ -94,13 +94,11 @@ app.maxShapeCount = 100
 
 # Images should typecheck
 assertError(lambda: Image(''), ['Arg Count'])
-assertError(lambda: Image('test', 20, 20), ['Image.url', 'http://'])
 assertError(lambda: Image(None, 20, 20), ['Image.url', 'None', 'NoneType'])
 assertError(lambda: Image('https://s3.amazonaws.com/cmu-cs-academy.lib.prod/default_avatar.png', None, 20), ['Image.left', 'None', 'NoneType'])
 
 # Sounds should typecheck
 assertError(lambda: Sound(None), ['Sound.url', 'None', 'NoneType'])
-assertError(lambda: Sound('test'), ['Sound.url', 'http://'])
 
 # Fix kwarg typechecking
 assertError(lambda: Rect(200, 200, 200, 200, fill={1:2}), ['{1: 2}', 'Rect.fill', 'dict'])
@@ -109,10 +107,6 @@ assertError(lambda: Line(5, 5, 20, 20, align='center'), ['unexpected keyword', '
 assertError(lambda: Arc(0, 0, 20, 20, 0, 180, align='center'), ['unexpected keyword', 'align'])
 assertError(lambda: Polygon(0, 0, 20, 20, 0, 180, align='center'), ['unexpected keyword', 'align'])
 assertError(lambda: Label('Hello', 20, 20, dashes=True), ['unexpected keyword', 'dashes'])
-
-# Calling class methods with too few arguments
-assertError(lambda: g.hits(), ['Missing a required argument'])
-assertError(lambda: g.remove(), ['Missing a required argument'])
 
 def assignToMethod(obj, attr):
     setattr(obj, attr, 0)
