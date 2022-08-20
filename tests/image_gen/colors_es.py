@@ -8,9 +8,6 @@ assert str(type(gradiente('rojo', 'amarillo'))) == "<class 'gradiente'>"
 
 assertRaises(lambda: rgb('x', 2, 3), "rgb.red debe ser número (pero 'x' es de tipo str)")
 assertRaises(lambda: rgb(['x'], 2, 3), "rgb.red debe ser número (pero ['x'] es de tipo list)")
-class A:
-    pass
-assertRaises(lambda: rgb(A(), 2, 3), "rgb.red debe ser número (pero <__main__.A object> es de tipo A)")
 
 # These strings are translated at a higher level, before they are printed to the console
 assertRaises(lambda: rgb(1, 2, 3).x, "'rgb' object has no attribute 'x'")
