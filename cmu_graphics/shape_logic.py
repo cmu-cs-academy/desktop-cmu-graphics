@@ -215,7 +215,7 @@ def typeError(obj, attr, value, typeName, isFn):
     valueType = type(value).__name__
     err = t(
         '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
-        {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': typeName, 'value': value, 'valueType': valueType}
+        {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': typeName, 'value': repr(value), 'valueType': valueType}
     )
     pyThrow(err)
 
@@ -514,7 +514,7 @@ def initShapeAttrs():
     ShapeAttr('group', checkValue, None)
 initShapeAttrs()
 
-# This metaclass prevents 'cmu_graphics_bry.' from being included in the name
+# This metaclass prevents 'cmu_graphics.' from being included in the name
 # of the type, when type() is called on a Shape/rgb/gradient instance
 class _ShapeMetaclass(type):
     def __repr__(cls):
@@ -538,7 +538,7 @@ class RGB(object, metaclass=_ShapeMetaclass):
         elif attr[0] == '_':
             return self.__dict__[attr]
         else:
-            raise AttributeError(t('Cannot get {{attr}} attribute of {{className}} instance', { 'attr': attr, 'className': t('rgb') }))
+            raise AttributeError(f"'{t('rgb')}' object has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
         if attr[0] == '_':
@@ -546,7 +546,7 @@ class RGB(object, metaclass=_ShapeMetaclass):
                 checkNumberInRange(self, attr[1:], value, 0, 255, False)
             self.__dict__[attr] = value
         else:
-            raise Exception(t("Cannot modify {{attr}} attribute of {{className}} instance", {
+            raise Exception(t("Cannot modify attribute '{{attr}}' of '{{className}}' object", {
                 'attr': attr,
                 'className': t('rgb')
             }))
@@ -579,6 +579,8 @@ class RGB(object, metaclass=_ShapeMetaclass):
 
     def __hash__(self):
         return hash((self.red, self.green, self.blue))
+
+RGB.__name__ = 'rgb'
 
 CSS3_COLORS_TO_RGB = {
     "aliceblue": RGB(240, 248, 255),
@@ -810,6 +812,8 @@ class Gradient(object, metaclass=_ShapeMetaclass):
     def get_inicio(self):
         return t(self.attrs['start'], {}, 'es');
     inicio = property(get_inicio)
+
+Gradient.__name__ = 'gradient'
 
 class Drawing(object):
     def __init__(self):

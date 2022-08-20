@@ -9,7 +9,8 @@ assertRaises(lambda: rgb('x', 2, 3), "rgb.red should be number (but 'x' is of ty
 assertRaises(lambda: rgb(['x'], 2, 3), "rgb.red should be number (but ['x'] is of type list)")
 class A:
     pass
-assertRaises(lambda: rgb(A(), 2, 3), "rgb.red should be number (but <__main__.A object> is of type A)")
+assertRaises(lambda: rgb(A(), 2, 3), "rgb.red should be number (but <__main__.A object")
+assertRaises(lambda: rgb(A(), 2, 3), "> is of type A)")
 
 assertRaises(lambda: rgb(1, 2, 3).x, "'rgb' object has no attribute 'x'")
 assertRaises(lambda: gradient('red', 'blue').x, "'gradient' object has no attribute 'x'")
