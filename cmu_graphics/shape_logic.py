@@ -1986,17 +1986,50 @@ class Rect(Polygon):
 class Line(Polygon):
     def __init__(self, attrs):
         attrs['initialPoints'] = utils.flatten(utils.getLinePoints(attrs['x1'], attrs['y1'], attrs['x2'], attrs['y2'], 2))
+        
+        exactValues = {
+            'x1': attrs['x1'],
+            'x2': attrs['x2'],
+            'y1': attrs['y1'],
+            'y2': attrs['y2'],
+        }
+        
         del attrs['x1']
         del attrs['y1']
         del attrs['x2']
         del attrs['y2']
         super().__init__(attrs)
+        self.exactValues = exactValues;
 
-    def getXY(self, i0, i1, j):
-        p = self.pointList
-        return (p[i0][j] + p[i1][j]) / 2
+    def addxy(self, varName, d):
+        super().addxy(varName, d)
+        attrs = []
+        if (varName == 'x'):
+            attrs = ['x1', 'x2']
+        else:
+            attrs = ['y1', 'y2']
+
+        for attr in attrs:
+            if (attr in self.exactValues):
+                self.exactValues[attr] += d
+
+    def scalexy(self, varName, k, scaleAnchor):
+        super().scalexy(varName, k, scaleAnchor)
+        self.exactValues = {}
+
+    def rotate(self, degrees = None, cx = None, cy = None):
+        super().rotate(degrees, cx, cy)
+        self.exactValues = {}
+
+    def getXY(self, i0, i1, j, name):
+        if (name in self.exactValues):
+            return self.exactValues[name]
+    
+        points = self.pointList
+        return (points[i0][j] + points[i1][j]) / 2
 
     def setXY(self, i0, i1, j, v, name):
+        self.exactValues[name] = v;
         p = self.pointList
         oldv = (p[i0][j] + p[i1][j]) / 2
         dv = v - oldv
@@ -2005,16 +2038,16 @@ class Line(Polygon):
         self.pointList = self.pointList; # alert to change
         return v
 
-    def get_x1(self): return self.getXY(0, 3, 0) # x1,y1 at points 0 and 3, 0=x
+    def get_x1(self): return self.getXY(0, 3, 0, 'x1') # x1,y1 at points 0 and 3, 0=x
     def set_x1(self, v): return self.setXY(0, 3, 0, v, 'x1') # x1,y1 at points 0 and 3, 0=x
     x1 = property(get_x1, set_x1)
-    def get_y1(self): return self.getXY(0, 3, 1)  # x1,y1 at points 0 and 3, 1=y
+    def get_y1(self): return self.getXY(0, 3, 1, 'y1')  # x1,y1 at points 0 and 3, 1=y
     def set_y1(self, v): return self.setXY(0, 3, 1, v, 'y1') # x1,y1 at points 0 and 3, 1=y
     y1 = property(get_y1, set_y1)
-    def get_x2(self): return self.getXY(1, 2, 0) # x2,y2 at points 1 and 2, 0=x
+    def get_x2(self): return self.getXY(1, 2, 0, 'x2') # x2,y2 at points 1 and 2, 0=x
     def set_x2(self, v): return self.setXY(1, 2, 0, v, 'x2') # x2,y2 at points 1 and 2, 0=x
     x2 = property(get_x2, set_x2)
-    def get_y2(self): return self.getXY(1, 2, 1) # x2,y2 at points 1 and 2, 1=y
+    def get_y2(self): return self.getXY(1, 2, 1, 'y2') # x2,y2 at points 1 and 2, 1=y
     def set_y2(self, v): return self.setXY(1, 2, 1, v, 'y2') # x2,y2 at points 1 and 2, 1=y
     y2 = property(get_y2, set_y2)
 
@@ -2040,13 +2073,6 @@ class Line(Polygon):
 
     def get_area(self): return self.lineWidth * utils.distance(self.x1, self.y1, self.x2, self.y2)
     area = property(get_area)
-
-    def get(self, attr):
-        if (attr == 'x1'): return self.x1
-        elif (attr == 'y1'): return self.y1
-        elif (attr == 'x2'): return self.x2
-        elif (attr == 'y2'): return self.y2
-        else: return super().get(attr)
 
     def drawArrows(self, ctx):
         if (not self.arrowEnd and not self.arrowStart): return
