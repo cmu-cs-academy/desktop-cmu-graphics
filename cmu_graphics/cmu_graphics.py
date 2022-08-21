@@ -1,4 +1,4 @@
-from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
+from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES
 from cmu_graphics import shape_logic
 
 EPSILON = 10e-7
@@ -33,6 +33,106 @@ def Robot(*args, **kwargs):
 
 def assertEqual(*args, **kwargs):
     raise NotImplementedError()
+
+# This metaclass prevents 'cmu_graphics.' from being included in the name
+# of the type, when type() is called on a Shape/rgb/gradient instance
+class _ShapeMetaclass(type):
+    def __repr__(cls):
+        return "<class '" + t(cls.__name__) + "'>"
+
+    def __str__(cls):
+        return "<class '" + t(cls.__name__) + "'>"
+
+class rgb(object, metaclass=_ShapeMetaclass):
+    _js_attrs = { 'red', 'green', 'blue' }
+
+    def __init__(self, red, green, blue):
+        self._sl = slRgb(red, green, blue)
+
+    def __getattr__(self, attr):
+        attr = toEnglish(attr, 'shape-attr')
+        if attr in self._js_attrs:
+            return slGet(self._sl, attr)
+        raise AttributeError(f"'{t('rgb')}' object has no attribute '{attr}'")
+
+    def __setattr__(self, attr, val):
+        if attr[0] == '_':
+            self.__dict__[attr] = val
+            return val
+        else:
+            raise Exception(t("Cannot modify attribute '{{attr}}' of '{{className}}' object", {
+                'attr': attr,
+                'className': t('rgb')
+            }))
+
+    def __eq__(self, other):
+        if not isinstance(other, rgb):
+            return False
+        return self._sl == other._sl
+
+    def __str__(self):
+        return self._sl.toString()
+
+    def __repr__(self):
+        return self._sl.toString()
+
+    def darker(self, k=0.85):
+        return rgb(
+            pythonRound(k * self.red),
+            pythonRound(k * self.green),
+            pythonRound(k * self.blue)
+        )
+
+    def lighter(self, k=0.85):
+        return rgb(
+            pythonRound(255 - k * (255 - self.red)),
+            pythonRound(255 - k * (255 - self.green)),
+            pythonRound(255 - k * (255 - self.blue))
+        )
+
+class gradient(object, metaclass=_ShapeMetaclass):
+    def __init__(self, *colors, **kwargs):
+        en_start = None
+        for keyword in kwargs:
+            if toEnglish(keyword, 'shape-attr') == 'start':
+                self._start = kwargs[keyword]
+                en_start = toEnglish(kwargs[keyword], 'gradient-start')
+            else:
+                # This will be translated by the Brython error regexes
+                raise TypeError("%s() got an unexpected keyword argument '%s'" % (t('gradient'), keyword))
+
+        if en_start is None:
+            en_start = 'center'
+            self._start = t(en_start)
+        self._colors = list(colors)
+        self._sl = slGradient(colors, en_start)
+
+    def __getattr__(self, attr):
+        en_attr = toEnglish(attr, 'shape-attr')
+        if en_attr == 'start':
+            return self._start
+        elif en_attr == 'colors':
+            return self._colors
+        raise AttributeError(f"'{t('gradient')}' object has no attribute '{attr}'")
+
+    def __setattr__(self, attr, val):
+        if attr[0] == '_':
+            self.__dict__[attr] = val
+            return val
+        else:
+            raise Exception(t("Cannot modify attribute '{{attr}}' of '{{className}}' object", {
+                            'attr': attr, 'className': t('gradient')}))
+
+    def __repr__(self):
+        return self._sl.toString()
+
+    def __str__(self):
+        return self._sl.toString()
+
+    def __eq__(self, other):
+        if not isinstance(other, gradient):
+            return False
+        return self._sl.__eq__(other._sl)
 
 class Shape(object, metaclass=_ShapeMetaclass):
     # This represents the attributes and methods handled by JS that the user
@@ -694,8 +794,8 @@ pygame = None # defer module load until run
 sli = shape_logic.ShapeLogicInterface()
 slInitShape = sli.slInitShape
 slGet = sli.slGet
-rgb = sli.rgb
-gradient = sli.gradient
+slRgb = sli.rgb
+slGradient = sli.gradient
 slNewSound = sli.newSound
 toEnglish = sli.toEnglish
 accentCombinations = sli.accentCombinations
