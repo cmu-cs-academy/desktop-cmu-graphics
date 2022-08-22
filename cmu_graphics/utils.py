@@ -18,7 +18,7 @@ def intSin(degrees):
         elif degrees == 90:
             return 1
         elif degrees == 270:
-            return 1
+            return -1
     return math.sin(toRadians(degrees))
 
 def intCos(degrees):
