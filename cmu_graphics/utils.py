@@ -219,7 +219,7 @@ def utilsRounded(n, precision = 0):
     if isinstance(n, list) or isinstance(n, tuple): return list(map(lambda v: utilsRounded(v, precision), n))
     elif not (isinstance(n, int) or isinstance(n, float)): return n
     elif n < 0: return -utilsRounded(-n, precision)
-    return roundHalfUp(n * 10 ** precision) / 10 ** precision
+    return truncateIntegerFloats(roundHalfUp(n * 10 ** precision) / 10 ** precision)
 
 def tupleString(a):
     return "({s})".format(s=', '.join(map(str, a)))

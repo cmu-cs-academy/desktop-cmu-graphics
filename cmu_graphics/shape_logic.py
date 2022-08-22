@@ -850,10 +850,10 @@ activeDrawing = Drawing()
         └ Circle
 '''
 
-# def shape_property(getter, setter):
-#     def shape_getter(self):
-#         return utils.truncateIntegerFloats(getter(self))
-#     return property(getter, setter)
+def shape_property(getter, setter=None):
+    def shape_getter(self):
+        return utils.truncateIntegerFloats(getter(self))
+    return property(shape_getter, setter)
 
 class Shape(object):
     def __init__(self, attrs = None):
@@ -902,39 +902,39 @@ class Shape(object):
 
     def get_group(self): return self._group
     def set_group(self, v): pyThrow(t("You can't set the group property"))
-    group = property(get_group, set_group)
+    group = shape_property(get_group, set_group)
 
     def get_align(self): pyThrow(t("You can't get or set the align property"))
     def set_align(self, v): pyThrow(t("You can't get or set the align property"))
-    align = property(get_align, set_align)
+    align = shape_property(get_align, set_align)
 
     def get_doNotInspect(self): return self.attrs.get('doNotInspect', None)
     def set_doNotInspect(self, v): self.attrs['doNotInspect'] = v; return v
-    doNotInspect = property(get_doNotInspect, set_doNotInspect)
+    doNotInspect = shape_property(get_doNotInspect, set_doNotInspect)
 
     def get_centerX(self): return self.get('centerX', None)
     def set_centerX(self, v): self.set({'centerX', v}); return v
-    centerX = property(get_centerX, set_centerX)
+    centerX = shape_property(get_centerX, set_centerX)
 
     def get_centerY(self): return self.get('centerY', None)
     def set_centerY(self, v): self.set({'centerY', v}); return v
-    centerY = property(get_centerY, set_centerY)
+    centerY = shape_property(get_centerY, set_centerY)
 
     def get_left(self): return self.centerX - self.width / 2
     def set_left(self, v): self.addx(v - self.left); return v
-    left = property(get_left, set_left)
+    left = shape_property(get_left, set_left)
 
     def get_top(self): return self.centerY - self.height / 2
     def set_top(self, v): self.centerY = v + self.height / 2; return v
-    top = property(get_top, set_top)
+    top = shape_property(get_top, set_top)
 
     def get_right(self): return self.centerX + self.width / 2
     def set_right(self, v): self.centerX = v - self.width / 2; return v
-    right = property(get_right, set_right)
+    right = shape_property(get_right, set_right)
 
     def get_bottom(self): return self.centerY + self.height / 2
     def set_bottom(self, v): self.centerY = v - self.height / 2; return v
-    bottom = property(get_bottom, set_bottom)
+    bottom = shape_property(get_bottom, set_bottom)
 
     def addxy(self, varName = None, d = None):
         if (d == 0): return
@@ -947,46 +947,46 @@ class Shape(object):
     def get_centroidX(self): return self.centroid[0]
     def set_centroidX(self, v):
         self.addx(v - self.centroidX)
-    centroidX = property(get_centroidX, set_centroidX)
+    centroidX = shape_property(get_centroidX, set_centroidX)
 
     def get_centroidY(self): return self.centroid[1]
     def set_centroidY(self, v):
         self.addy(v - self.centroidY)
-    centroidY = property(get_centroidY, set_centroidY)
+    centroidY = shape_property(get_centroidY, set_centroidY)
 
     def get_width(self): return self.get('width')
     def set_width(self, v):
         self.scalexy('x', v / self.width)
         self.set({'width': v})
-    width = property(get_width, set_width)
+    width = shape_property(get_width, set_width)
 
     def get_height(self): return self.get('height')
     def set_height(self, v):
         self.scalexy('y', v / self.height)
         self.set({'height': v})
-    height = property(get_height, set_height)
+    height = shape_property(get_height, set_height)
 
     def get_fill(self): return self.get('fill')
     def set_fill(self, v): return self.set({'fill': v})
-    fill = property(get_fill, set_fill)
+    fill = shape_property(get_fill, set_fill)
     def get_border(self): return self.get('border')
     def set_border(self, v): return self.set({'border': v})
-    border = property(get_border, set_border)
+    border = shape_property(get_border, set_border)
     def get_borderWidth(self): return self.get('borderWidth')
     def set_borderWidth(self, v): return self.set({'borderWidth': v})
-    borderWidth = property(get_borderWidth, set_borderWidth)
+    borderWidth = shape_property(get_borderWidth, set_borderWidth)
     def get_dashes(self): return self.get('dashes')
     def set_dashes(self, v): return self.set({'dashes': v})
-    dashes = property(get_dashes, set_dashes)
+    dashes = shape_property(get_dashes, set_dashes)
     def get_opacity(self): return self.get('opacity')
     def set_opacity(self, v): return self.set({'opacity': v})
-    opacity = property(get_opacity, set_opacity)
+    opacity = shape_property(get_opacity, set_opacity)
     def get_closed(self): return self.get('closed')
     def set_closed(self, v): return self.set({'closed': v})
-    closed = property(get_closed, set_closed)
+    closed = shape_property(get_closed, set_closed)
     def get_db(self): return self.get('db')
     def set_db(self, v): return self.set({'db': v})
-    db = property(get_db, set_db)
+    db = shape_property(get_db, set_db)
 
     def get_visible(self):
         return (self._group != None) and (self._group.visible or self._group == activeDrawing.tlg._shape)
@@ -999,7 +999,7 @@ class Shape(object):
                 activeDrawing.tlg.add(self)
         else:
             self._group.remove(self)
-    visible = property(get_visible, set_visible)
+    visible = shape_property(get_visible, set_visible)
 
     def doAlign(self, x, y, v):
         v = toEnglish(v, 'align')
@@ -1009,13 +1009,13 @@ class Shape(object):
 
     def get_centroid(self): return [self.centerX, self.centerY]
     def set_centroid(self, v): pyThrow("Centroid cannot be set")
-    centroid = property(get_centroid, set_centroid)
+    centroid = shape_property(get_centroid, set_centroid)
 
     def getRotateAnchor(self): return self.centroid
 
     def get_rotateAngle(self): return self.get('rotateAngle')
     def set_rotateAngle(self, v): self.rotate(v - self.rotateAngle)
-    rotateAngle = property(get_rotateAngle, set_rotateAngle)
+    rotateAngle = shape_property(get_rotateAngle, set_rotateAngle)
 
     def rotate(self, degrees = None, cx = None, cy = None):
         if (cx is None and cy is None):
@@ -1327,7 +1327,7 @@ class Group(Shape):
 
     def get_children(self):
         return list(map(lambda s: s.studentShape, self._shapes))
-    children = property(get_children)
+    children = shape_property(get_children)
 
     def insert(self, shape, newIndex=None):
         if shape._group:
@@ -1430,15 +1430,15 @@ class Group(Shape):
         if len(self._shapes) == 0: return 0
         return min(map(lambda s: s.left, self._shapes))
     def set_left(self, v): self.addx(v - self.left)
-    left = property(get_left, set_left)
+    left = shape_property(get_left, set_left)
     def get_right(self):
         if len(self._shapes) == 0: return 0
         return max(map(lambda s: s.right, self._shapes))
     def set_right(self, v): self.addx(v - self.right)
-    right = property(get_right, set_right)
+    right = shape_property(get_right, set_right)
     def get_centerX(self): return (self.left + self.right) / 2
     def set_centerX(self, v): self.addx(v - self.centerX)
-    centerX = property(get_centerX, set_centerX)
+    centerX = shape_property(get_centerX, set_centerX)
 
     def addy(self, dy):
         for shape in self._shapes: shape.top += dy
@@ -1447,15 +1447,15 @@ class Group(Shape):
             return 0
         return min(map(lambda s: s.top, self._shapes))
     def set_top(self, v): self.addy(v - self.top)
-    top = property(get_top, set_top)
+    top = shape_property(get_top, set_top)
     def get_bottom(self):
         if len(self._shapes) == 0: return 0
         return max(map(lambda s: s.bottom, self._shapes))
     def set_bottom(self, v): self.addy(v - self.bottom)
-    bottom = property(get_bottom, set_bottom)
+    bottom = shape_property(get_bottom, set_bottom)
     def get_centerY(self): return (self.top + self.bottom) / 2
     def set_centerY(self, v): self.addy(v - self.centerY)
-    centerY = property(get_centerY, set_centerY)
+    centerY = shape_property(get_centerY, set_centerY)
 
     def scalexy(self, varName, k, scaleAnchor = None):
         if (k == 1): return
@@ -1469,14 +1469,14 @@ class Group(Shape):
             self.scaleToTarget('x', v)
         else:
             self.scalexy('x', (v / self.width))
-    width = property(get_width, set_width)
+    width = shape_property(get_width, set_width)
     def get_height(self): return self.bottom - self.top
     def set_height(self, v):
         if self.height == 0:
             self.scaleToTarget('y', v)
         else:
             self.scalexy('y', (v / self.height))
-    height = property(get_height, set_height)
+    height = shape_property(get_height, set_height)
 
     def rotate(self, degrees = None, cx = None, cy = None):
         if (len(self._shapes) == 0):
@@ -1492,7 +1492,7 @@ class Group(Shape):
         result = 0
         for s in self._shapes: result += s.area
         return result
-    area = property(get_area)
+    area = shape_property(get_area)
 
     def get_centroid(self):
         x, y, A = 0, 0, 0
@@ -1504,7 +1504,7 @@ class Group(Shape):
             y += a * cy
             A += a
         return [x, y] if A == 0 else [x / A, y / A]
-    centroid = property(get_centroid)
+    centroid = shape_property(get_centroid)
 
     # pass-through attrs (PTA's)
 
@@ -1531,80 +1531,80 @@ class Group(Shape):
 
     def get_fill(self): return self.getPTA('fill')
     def set_fill(self, v): return self.setPTA('fill', v)
-    fill = property(get_fill, set_fill)
+    fill = shape_property(get_fill, set_fill)
     def get_opacity(self): return self.getPTA('opacity')
     def set_opacity(self, v): return self.setPTA('opacity', v)
-    opacity = property(get_opacity, set_opacity)
+    opacity = shape_property(get_opacity, set_opacity)
 
     def noPTA(self, attr):
         pyThrow(t('Group.{{attr}} cannot be read or modified', { 'attr': t(attr) }))
 
     def get_border(self): return self.noPTA('border')
     def set_border(self, v): return self.noPTA('border', v)
-    border = property(get_border, set_border)
+    border = shape_property(get_border, set_border)
     def get_borderWidth(self): return self.noPTA('borderWidth')
     def set_borderWidth(self, v): return self.noPTA('borderWidth', v)
-    borderWidth = property(get_borderWidth, set_borderWidth)
+    borderWidth = shape_property(get_borderWidth, set_borderWidth)
     def get_dashes(self): return self.noPTA('dashes')
     def set_dashes(self, v): return self.noPTA('dashes', v)
-    dashes = property(get_dashes, set_dashes)
+    dashes = shape_property(get_dashes, set_dashes)
     def get_arrowEnd(self): return self.noPTA('arrowEnd')
     def set_arrowEnd(self, v): return self.noPTA('arrowEnd', v)
-    arrowEnd = property(get_arrowEnd, set_arrowEnd)
+    arrowEnd = shape_property(get_arrowEnd, set_arrowEnd)
     def get_arrowStart(self): return self.noPTA('arrowStart')
     def set_arrowStart(self, v): return self.noPTA('arrowStart', v)
-    arrowStart = property(get_arrowStart, set_arrowStart)
+    arrowStart = shape_property(get_arrowStart, set_arrowStart)
     def get_url(self): return self.noPTA('url')
     def set_url(self, v): return self.noPTA('url', v)
-    url = property(get_url, set_url)
+    url = shape_property(get_url, set_url)
     def get_radius(self): return self.noPTA('radius')
     def set_radius(self, v): return self.noPTA('radius', v)
-    radius = property(get_radius, set_radius)
+    radius = shape_property(get_radius, set_radius)
     def get_points(self): return self.noPTA('points')
     def set_points(self, v): return self.noPTA('points', v)
-    points = property(get_points, set_points)
+    points = shape_property(get_points, set_points)
     def get_roundness(self): return self.noPTA('roundness')
     def set_roundness(self, v): return self.noPTA('roundness', v)
-    roundness = property(get_roundness, set_roundness)
+    roundness = shape_property(get_roundness, set_roundness)
     def get_x1(self): return self.noPTA('x1')
     def set_x1(self, v): return self.noPTA('x1', v)
-    x1 = property(get_x1, set_x1)
+    x1 = shape_property(get_x1, set_x1)
     def get_y1(self): return self.noPTA('y1')
     def set_y1(self, v): return self.noPTA('y1', v)
-    y1 = property(get_y1, set_y1)
+    y1 = shape_property(get_y1, set_y1)
     def get_x2(self): return self.noPTA('x2')
     def set_x2(self, v): return self.noPTA('x2', v)
-    x2 = property(get_x2, set_x2)
+    x2 = shape_property(get_x2, set_x2)
     def get_y2(self): return self.noPTA('y2')
     def set_y2(self, v): return self.noPTA('y2', v)
-    y2 = property(get_y2, set_y2)
+    y2 = shape_property(get_y2, set_y2)
     def get_lineWidth(self): return self.noPTA('lineWidth')
     def set_lineWidth(self, v): return self.noPTA('lineWidth', v)
-    lineWidth = property(get_lineWidth, set_lineWidth)
+    lineWidth = shape_property(get_lineWidth, set_lineWidth)
     def get_closed(self): return self.noPTA('closed')
     def set_closed(self, v): return self.noPTA('closed', v)
-    closed = property(get_closed, set_closed)
+    closed = shape_property(get_closed, set_closed)
     def get_startAngle(self): return self.noPTA('startAngle')
     def set_startAngle(self, v): return self.noPTA('startAngle', v)
-    startAngle = property(get_startAngle, set_startAngle)
+    startAngle = shape_property(get_startAngle, set_startAngle)
     def get_sweepAngle(self): return self.noPTA('sweepAngle')
     def set_sweepAngle(self, v): return self.noPTA('sweepAngle', v)
-    sweepAngle = property(get_sweepAngle, set_sweepAngle)
+    sweepAngle = shape_property(get_sweepAngle, set_sweepAngle)
     def get_value(self): return self.noPTA('value')
     def set_value(self, v): return self.noPTA('value', v)
-    value = property(get_value, set_value)
+    value = shape_property(get_value, set_value)
     def get_font(self): return self.noPTA('font')
     def set_font(self, v): return self.noPTA('font', v)
-    font = property(get_font, set_font)
+    font = shape_property(get_font, set_font)
     def get_size(self): return self.noPTA('size')
     def set_size(self, v): return self.noPTA('size', v)
-    size = property(get_size, set_size)
+    size = shape_property(get_size, set_size)
     def get_bold(self): return self.noPTA('bold')
     def set_bold(self, v): return self.noPTA('bold', v)
-    bold = property(get_bold, set_bold)
+    bold = shape_property(get_bold, set_bold)
     def get_italic(self): return self.noPTA('italic')
     def set_italic(self, v): return self.noPTA('italic', v)
-    italic = property(get_italic, set_italic)
+    italic = shape_property(get_italic, set_italic)
 
     def scaleToTarget(self, varName, target):
         for shape in self._shapes:
@@ -1682,7 +1682,7 @@ class Label(Shape):
         fontCtx.restore()
 
     def get_area(self): return self.width * self.height
-    area = property(get_area)
+    area = shape_property(get_area)
 
     def createBaseGradient(self, gradient):
         # The approxPoints of a Label are positioned correctly (self.rotateAngle has
@@ -1730,24 +1730,24 @@ class Label(Shape):
 
     def get_width(self): return self.get('width')
     def set_width(self, v): pyThrow(t("Cannot set Label's width"))
-    width = property(get_width, set_width)
+    width = shape_property(get_width, set_width)
     def get_height(self): return self.get('height')
     def set_height(self, v): pyThrow(t("Cannot set Label's height"))
-    height = property(get_height, set_height)
+    height = shape_property(get_height, set_height)
 
     def get_centerX(self): return self.get('centerX')
     def set_centerX(self, v):
         self.set({'centerX': v})
         self.setDims()
         return v
-    centerX = property(get_centerX, set_centerX)
+    centerX = shape_property(get_centerX, set_centerX)
 
     def get_centerY(self): return self.get('centerY')
     def set_centerY(self, v):
         self.set({'centerY': v})
         self.setDims()
         return v
-    centerY = property(get_centerY, set_centerY)
+    centerY = shape_property(get_centerY, set_centerY)
 
     def get_value(self): return self.get('value')
     def set_value(self, v):
@@ -1755,31 +1755,31 @@ class Label(Shape):
         self.valueStr = str(v)
         self.setDims()
         return v
-    value = property(get_value, set_value)
+    value = shape_property(get_value, set_value)
     def get_font(self): return self.get('font')
     def set_font(self, v):
         self.set({'font': v})
         self.setDims()
         return v
-    font = property(get_font, set_font)
+    font = shape_property(get_font, set_font)
     def get_size(self): return self.get('size')
     def set_size(self, v):
         self.set({'size': v})
         self.setDims()
         return v
-    size = property(get_size, set_size)
+    size = shape_property(get_size, set_size)
     def get_bold(self): return self.get('bold')
     def set_bold(self, v):
         self.set({'bold': v})
         self.setDims()
         return v
-    bold = property(get_bold, set_bold)
+    bold = shape_property(get_bold, set_bold)
     def get_italic(self): return self.get('italic')
     def set_italic(self, v):
         self.set({'italic': v})
         self.setDims()
         return v
-    italic = property(get_italic, set_italic)
+    italic = shape_property(get_italic, set_italic)
 
     def toString(self):
         return f"{t('Label')}({self.value}, {self.centerX}, {self.centerY})"
@@ -1809,19 +1809,19 @@ class Polygon(Shape):
     def set_pointList(self, pl):
         self.set({'pointList': pl})
         self.setDims()
-    pointList = property(get_pointList, set_pointList)
+    pointList = shape_property(get_pointList, set_pointList)
 
     def get_area(self):
         if (self._cachedArea is None):
             self._cachedArea = abs(utils.getPolygonArea(self.pointList))
         return self._cachedArea
-    area = property(get_area)
+    area = shape_property(get_area)
 
     def get_centroid(self):
         if self._cachedCentroid is None:
             self._cachedCentroid = utils.getPolygonCentroid(self.pointList)
         return self._cachedCentroid
-    centroid = property(get_centroid)
+    centroid = shape_property(get_centroid)
 
     def addPoint(self, x, y):
         checkNumber(t('addPoint'), t('x'), x, False)
@@ -1856,7 +1856,7 @@ class Polygon(Shape):
         # centerX will get set by setDims(), but we overwrite the value
         # with what the user gave so that there are no rounding errors.
         self.set({'centerX': v})
-    centerX = property(get_centerX, set_centerX)
+    centerX = shape_property(get_centerX, set_centerX)
 
     def get_centerY(self): return self.get('centerY')
     def set_centerY(self, v):
@@ -1864,23 +1864,23 @@ class Polygon(Shape):
         # centerY will get set by setDims(), but we overwrite the value
         # with what the user gave so that there are no rounding errors.
         self.set({'centerY': v})
-    centerY = property(get_centerY, set_centerY)
+    centerY = shape_property(get_centerY, set_centerY)
 
     def get_left(self): return min(map(lambda point: point[0], self.pointList))
     def set_left(self, v): self.addx(v - self.left); return v
-    left = property(get_left, set_left)
+    left = shape_property(get_left, set_left)
 
     def get_top(self): return min(map(lambda point: point[1], self.pointList))
     def set_top(self, v): self.addy(v - self.top); return v
-    top = property(get_top, set_top)
+    top = shape_property(get_top, set_top)
 
     def get_right(self): return max(map(lambda point: point[0], self.pointList))
     def set_right(self, v): self.addx(v - self.right); return v
-    right = property(get_right, set_right)
+    right = shape_property(get_right, set_right)
 
     def get_bottom(self): return max(map(lambda point: point[1], self.pointList))
     def set_bottom(self, v): self.addy(v - self.bottom); return v
-    bottom = property(get_bottom, set_bottom)
+    bottom = shape_property(get_bottom, set_bottom)
 
     def addxy(self, varName, d):
         if d == 0: return
@@ -2049,39 +2049,39 @@ class Line(Polygon):
 
     def get_x1(self): return self.getXY(0, 3, 0, 'x1') # x1,y1 at points 0 and 3, 0=x
     def set_x1(self, v): return self.setXY(0, 3, 0, v, 'x1') # x1,y1 at points 0 and 3, 0=x
-    x1 = property(get_x1, set_x1)
+    x1 = shape_property(get_x1, set_x1)
     def get_y1(self): return self.getXY(0, 3, 1, 'y1')  # x1,y1 at points 0 and 3, 1=y
     def set_y1(self, v): return self.setXY(0, 3, 1, v, 'y1') # x1,y1 at points 0 and 3, 1=y
-    y1 = property(get_y1, set_y1)
+    y1 = shape_property(get_y1, set_y1)
     def get_x2(self): return self.getXY(1, 2, 0, 'x2') # x2,y2 at points 1 and 2, 0=x
     def set_x2(self, v): return self.setXY(1, 2, 0, v, 'x2') # x2,y2 at points 1 and 2, 0=x
-    x2 = property(get_x2, set_x2)
+    x2 = shape_property(get_x2, set_x2)
     def get_y2(self): return self.getXY(1, 2, 1, 'y2') # x2,y2 at points 1 and 2, 1=y
     def set_y2(self, v): return self.setXY(1, 2, 1, v, 'y2') # x2,y2 at points 1 and 2, 1=y
-    y2 = property(get_y2, set_y2)
+    y2 = shape_property(get_y2, set_y2)
 
     def get_arrowStart(self): return self.get('arrowStart')
     def set_arrowStart(self, v): return self.set({'arrowStart': v})
-    arrowStart = property(get_arrowStart, set_arrowStart)
+    arrowStart = shape_property(get_arrowStart, set_arrowStart)
     def get_arrowEnd(self): return self.get('arrowEnd')
     def set_arrowEnd(self, v): return self.set({'arrowEnd': v})
-    arrowEnd = property(get_arrowEnd, set_arrowEnd)
+    arrowEnd = shape_property(get_arrowEnd, set_arrowEnd)
     def get_lineWidth(self):
         pts = self.pointList
         return utils.distance(pts[0][0], pts[0][1], pts[3][0], pts[3][1])
     def set_lineWidth(self, v):
         self.pointList = utils.getLinePoints(self.x1, self.y1, self.x2, self.y2, v)
         return self.set({'lineWidth': v})
-    lineWidth = property(get_lineWidth, set_lineWidth)
+    lineWidth = shape_property(get_lineWidth, set_lineWidth)
     def get_borderWidth(self): return 0
     def set_borderWidth(self, v): pyThrow(t("Cannot set Line's borderWidth"))
-    borderWidth = property(get_borderWidth, set_borderWidth)
+    borderWidth = shape_property(get_borderWidth, set_borderWidth)
     def get_border(self): return None
     def set_border(self, v): pyThrow(t("Cannot set Line's border"))
-    border = property(get_border, set_border)
+    border = shape_property(get_border, set_border)
 
     def get_area(self): return self.lineWidth * utils.distance(self.x1, self.y1, self.x2, self.y2)
-    area = property(get_area)
+    area = shape_property(get_area)
 
     def drawArrows(self, ctx):
         if (not self.arrowEnd and not self.arrowStart): return
@@ -2136,7 +2136,7 @@ class Line(Polygon):
             self.scaleToTarget('y', v)
         else:
             super().height = 0
-    height = property(get_height, set_height)
+    height = shape_property(get_height, set_height)
 
     def get_width(self): return super().get_width()
     def set_width(self, v):
@@ -2144,7 +2144,7 @@ class Line(Polygon):
             self.scaleToTarget('x', v)
         else:
             super().height = 0
-    width = property(get_width, set_width)
+    width = shape_property(get_width, set_width)
 
     def toString(self):
         args = [self.x1, self.y1, self.x2, self.y2]
@@ -2156,21 +2156,21 @@ class PolygonInCircle(Polygon):
         self.set({'radius': v})
         self.updatePointList()
         return v
-    radius = property(get_radius, set_radius)
+    radius = shape_property(get_radius, set_radius)
 
     def get_points(self): return self.get('points')
     def set_points(self, v):
         self.set({'points': v})
         self.updatePointList()
         return v
-    points = property(get_points, set_points)
+    points = shape_property(get_points, set_points)
 
     def get_centerX(self): return utils.round2(self.centroid[0])
     def set_centerX(self, v): self.addx(v - self.centerX)
-    centerX = property(get_centerX, set_centerX)
+    centerX = shape_property(get_centerX, set_centerX)
     def get_centerY(self): return utils.round2(self.centroid[1])
     def set_centerY(self, v): self.addy(v - self.centerY)
-    centerY = property(get_centerY, set_centerY)
+    centerY = shape_property(get_centerY, set_centerY)
 
 class RegularPolygon(PolygonInCircle):
     def __init__(self, attrs):
@@ -2198,7 +2198,7 @@ class Star(PolygonInCircle):
         self.set({'roundness': v})
         self.updatePointList()
         return v
-    roundness = property(get_roundness, set_roundness)
+    roundness = shape_property(get_roundness, set_roundness)
 
     def updatePointList(self):
         self.pointList = utils.getStarPoints(self.centerX, self.centerY, self.radius, self.points, self.roundness, self.rotateAngle)
@@ -2210,7 +2210,7 @@ class Star(PolygonInCircle):
 class PolygonWithTransform(Polygon):
     def get_transformMatrix(self): return self.get('transformMatrix')
     def set_transformMatrix(self, v): return self.set({'transformMatrix': v})
-    transformMatrix = property(get_transformMatrix, set_transformMatrix)
+    transformMatrix = shape_property(get_transformMatrix, set_transformMatrix)
 
     def multMat(self, trans):
         newTrans = [[0,0], [0,0]]
@@ -2310,7 +2310,7 @@ class CMUImage(PolygonWithTransform):
 
     def get_url(self): return self.get('url')
     def set_url(self, v): pyThrow(t("Cannot set Image's url"))
-    url = property(get_url, set_url)
+    url = shape_property(get_url, set_url)
 
     def getScaleAnchor(self): return [self.left, self.top]
 
@@ -2378,11 +2378,11 @@ class Oval(PolygonWithTransform):
 
     def get_bezierPoints(self): return self.get('bezierPoints')
     def set_bezierPoints(self, v): return self.set({'bezierPoints': v})
-    bezierPoints = property(get_bezierPoints, set_bezierPoints)
+    bezierPoints = shape_property(get_bezierPoints, set_bezierPoints)
 
     def get_translation(self): return self.get('translation')
     def set_translation(self, v): return self.set({'translation': v})
-    translation = property(get_translation, set_translation)
+    translation = shape_property(get_translation, set_translation)
 
     def makePath(self, ctx):
         ctx.save()
@@ -2422,7 +2422,6 @@ class Oval(PolygonWithTransform):
         self.translation = self.translation
 
     def doRotate(self, degrees, cx, cy):
-        print(degrees, cx, cy)
         super().doRotate(degrees, cx, cy)
         self.translation = utils.rotatePoint(self.translation, degrees, cx, cy)
 
@@ -2438,11 +2437,11 @@ class Arc(Oval):
 
     def get_ovalWidth(self): return self.get('ovalWidth')
     def set_ovalWidth(self, v): return self.set({'ovalWidth': v})
-    ovalWidth = property(get_ovalWidth, set_ovalWidth)
+    ovalWidth = shape_property(get_ovalWidth, set_ovalWidth)
 
     def get_ovalHeight(self): return self.get('ovalHeight')
     def set_ovalHeight(self, v): return self.set({'ovalHeight': v})
-    ovalHeight = property(get_ovalHeight, set_ovalHeight)
+    ovalHeight = shape_property(get_ovalHeight, set_ovalHeight)
 
     def doRotate(self, degrees, cx, cy):
         super().doRotate(degrees, cx, cy)
@@ -2467,14 +2466,14 @@ class Arc(Oval):
         self.set({'startAngle': v})
         self.regeneratePoints()
         return v
-    startAngle = property(get_startAngle, set_startAngle)
+    startAngle = shape_property(get_startAngle, set_startAngle)
 
     def get_sweepAngle(self): return self.get('sweepAngle')
     def set_sweepAngle(self, v):
         self.set({'sweepAngle': v})
         self.regeneratePoints()
         return v
-    sweepAngle = property(get_sweepAngle, set_sweepAngle)
+    sweepAngle = shape_property(get_sweepAngle, set_sweepAngle)
 
     def regeneratePoints(self):
         self.pointList = utils.getArcPoints(
@@ -2496,11 +2495,11 @@ class Arc(Oval):
 
     def get_centerX(self): return utils.round2(self.pointList[0][0])
     def set_centerX(self, v): self.addx(v - self.centerX)
-    centerX = property(get_centerX, set_centerX)
+    centerX = shape_property(get_centerX, set_centerX)
 
     def get_centerY(self): return utils.round2(self.pointList[0][1])
     def set_centerY(self, v): self.addy(v - self.centerY)
-    centerY = property(get_centerY, set_centerY)
+    centerY = shape_property(get_centerY, set_centerY)
 
 class Circle(Oval):
     def __init__(self, attrs):
@@ -2517,19 +2516,19 @@ class Circle(Oval):
         super().set_height(2 * v)
         self._exactRadius = v
         return v
-    radius = property(get_radius, set_radius)
+    radius = shape_property(get_radius, set_radius)
 
     def get__exactRadius(self): return self.get('_exactRadius')
     def set__exactRadius(self, v): return self.set({'_exactRadius': v})
-    _exactRadius = property(get__exactRadius, set__exactRadius)
+    _exactRadius = shape_property(get__exactRadius, set__exactRadius)
 
     def get_width(self): return super().get_width()
     def set_width(self, v): self._exactRadius = None; super().set_width(v); return v
-    width = property(get_width, set_width)
+    width = shape_property(get_width, set_width)
 
     def get_height(self): return super().get_height()
     def set_height(self, v): self._exactRadius = None; super().set_height(v); return v
-    height = property(get_height, set_height)
+    height = shape_property(get_height, set_height)
 
     def toString(self):
         args = [self.centerX, self.centerY, self.radius]
