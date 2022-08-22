@@ -4,17 +4,6 @@ rp =  PolígonoRegular(100, 100, 50, 3, relleno='verde')
 
 centro = Círculo(0, 0, 2, relleno='azul')
 
-def almostEqual(a, b):
-    return abs(a-b) < 1*10**-10
-
-def tuplesAlmostEqual(t1, t2):
-    if len(t1) != len(t2):
-        return False
-    for a, b in zip(t1, t2):
-        if not almostEqual(a, b):
-            return False
-    return True
-
 def mover():
     for s in [r, rp, o]:
         s.izquierda += 10
@@ -57,9 +46,9 @@ def probarRotar(ángulos):
         luna.centroY += 13
         luna.rotarÁngulo = ángulo
 
-        assert tuplesAlmostEqual((luna.izquierda, luna.centroX, luna.derecha), (baseX-50, baseX, baseX+50)), (
+        assert (pythonRound(luna.izquierda), pythonRound(luna.centroX), pythonRound(luna.derecha)) == (baseX-50, baseX, baseX+50), (
             ángulo, baseX, (luna.izquierda, luna.centroX, luna.derecha))
-        assert tuplesAlmostEqual((luna.superior, luna.centroY, luna.inferior), (baseY-50, baseY, baseY+50)), (
+        assert (pythonRound(luna.superior), pythonRound(luna.centroY), pythonRound(luna.inferior)) == (baseY-50, baseY, baseY+50), (
             ángulo, baseY, (luna.superior, luna.centroY, luna.inferior))
     luna.visible = Falso
     print(ángulos, 'pasado')

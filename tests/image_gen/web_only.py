@@ -28,8 +28,8 @@ assertError(lambda: Image('test', 20, 20), ['Image.url', 'http://'])
 ############
 # Calling class methods with too few arguments
 # On Desktop, Python handles missing arguments on its own
-assertError(lambda: g.hits(), ['Missing a required argument'])
-assertError(lambda: g.remove(), ['Missing a required argument'])
+assertError(lambda: Group().hits(), ['Missing a required argument'])
+assertError(lambda: Group().remove(), ['Missing a required argument'])
 
 
 ############

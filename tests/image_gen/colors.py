@@ -7,8 +7,6 @@ assert str(type(gradient('red', 'yellow'))) == "<class 'gradient'>"
 
 assertRaises(lambda: rgb('x', 2, 3), "rgb.red should be number (but 'x' is of type str)")
 assertRaises(lambda: rgb(['x'], 2, 3), "rgb.red should be number (but ['x'] is of type list)")
-class A:
-    pass
 
 assertRaises(lambda: rgb(1, 2, 3).x, "'rgb' object has no attribute 'x'")
 assertRaises(lambda: gradient('red', 'blue').x, "'gradient' object has no attribute 'x'")
