@@ -46,9 +46,9 @@ def testRotate(angles):
         moon.centerY += 13
         moon.rotateAngle = angle
 
-        assert (pythonRound(moon.left), pythonRound(moon.centerX), pythonRound(moon.right)) == (baseX-50, baseX, baseX+50), (
+        assert (moon.left, moon.centerX, moon.right) == (baseX-50, baseX, baseX+50), (
             angle, baseX, (moon.left, moon.centerX, moon.right))
-        assert (pythonRound(moon.top), pythonRound(moon.centerY), pythonRound(moon.bottom)) == (baseY-50, baseY, baseY+50), (
+        assert (moon.top, moon.centerY, moon.bottom) == (baseY-50, baseY, baseY+50), (
             angle, baseY, (moon.top, moon.centerY, moon.bottom))
     moon.visible = False
     print(angles, 'passed')

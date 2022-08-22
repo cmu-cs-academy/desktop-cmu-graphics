@@ -46,9 +46,9 @@ def probarRotar(ángulos):
         luna.centroY += 13
         luna.rotarÁngulo = ángulo
 
-        assert (pythonRound(luna.izquierda), pythonRound(luna.centroX), pythonRound(luna.derecha)) == (baseX-50, baseX, baseX+50), (
+        assert (luna.izquierda, luna.centroX, luna.derecha) == (baseX-50, baseX, baseX+50), (
             ángulo, baseX, (luna.izquierda, luna.centroX, luna.derecha))
-        assert (pythonRound(luna.superior), pythonRound(luna.centroY), pythonRound(luna.inferior)) == (baseY-50, baseY, baseY+50), (
+        assert (luna.superior, luna.centroY, luna.inferior) == (baseY-50, baseY, baseY+50), (
             ángulo, baseY, (luna.superior, luna.centroY, luna.inferior))
     luna.visible = Falso
     print(ángulos, 'pasado')

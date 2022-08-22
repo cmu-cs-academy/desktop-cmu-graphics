@@ -850,6 +850,11 @@ activeDrawing = Drawing()
         └ Circle
 '''
 
+# def shape_property(getter, setter):
+#     def shape_getter(self):
+#         return utils.truncateIntegerFloats(getter(self))
+#     return property(getter, setter)
+
 class Shape(object):
     def __init__(self, attrs = None):
         self.id = activeDrawing.nextShapeId
@@ -1015,6 +1020,8 @@ class Shape(object):
     def rotate(self, degrees = None, cx = None, cy = None):
         if (cx is None and cy is None):
             cx, cy = self.getRotateAnchor()
+            cx = utils.round6(cx)
+            cy = utils.round6(cy)
         self.set({'rotateAngle': self.rotateAngle + degrees})
         self.doRotate(degrees, cx, cy)
 
@@ -1630,7 +1637,7 @@ class Label(Shape):
     def getApproxPoints(self): return self.attrs['approxPoints']
 
     def doRotate(self, degrees, cx, cy):
-        newCenter = utils.rotatePoint([self.centerX, self.centerY], utils.toRadians(degrees), cx, cy)
+        newCenter = utils.rotatePoint([self.centerX, self.centerY], degrees, cx, cy)
         self.set({
             'centerX': newCenter[0],
             'centerY': newCenter[1]
@@ -1662,7 +1669,7 @@ class Label(Shape):
                [x1, y1], [(x0 + x1) / 2, y1], [x0, y1],
                [x0, (y0 + y1) / 2]]
         a = self.rotateAngle
-        if a: pts = utils.rotatePoints(pts, utils.toRadians(a), self.centerX, self.centerY)
+        if a: pts = utils.rotatePoints(pts, a, self.centerX, self.centerY)
         self.set({
             'approxPoints': pts,
             'xAdjust': 0 if hasOuterSpaces else xBearing
@@ -1689,7 +1696,7 @@ class Label(Shape):
             cx = self.centerX;
             cy = self.centerY;
             r = utils.distance(cx, cy, self.right, self.top);
-            [[cx, cy]] = utils.rotatePoints([[cx, cy]], utils.toRadians(-self.rotateAngle), targetX, targetY);
+            [[cx, cy]] = utils.rotatePoints([[cx, cy]], -self.rotateAngle, targetX, targetY);
             return cairo.RadialGradient(cx, cy, 0, cx, cy, r);
 
 
@@ -1714,7 +1721,7 @@ class Label(Shape):
         if (self.rotateAngle != 0):
             [[x0, y0], [x1, y1]] = utils.rotatePoints(
                 [[x0, y0], [x1, y1]],
-                utils.toRadians(-self.rotateAngle),
+                -self.rotateAngle,
                 targetX,
                 targetY
             )
@@ -1896,7 +1903,7 @@ class Polygon(Shape):
     def getScaleAnchor(self): return [self.centerX, self.centerY]
 
     def doRotate(self, degrees, cx, cy):
-        self.pointList = utils.rotatePoints(self.pointList, utils.toRadians(degrees), cx, cy)
+        self.pointList = utils.rotatePoints(self.pointList, degrees, cx, cy)
 
     def getApproxPoints(self):
         return self.pointList
@@ -1913,7 +1920,7 @@ class Polygon(Shape):
         unrotatedPoints = self.pointList
         if self.rotateAngle != 0:
             unrotatedPoints = utils.rotatePoints(
-                self.pointList, utils.toRadians(-self.rotateAngle), rotateAnchor[0], rotateAnchor[1]
+                self.pointList, -self.rotateAngle, rotateAnchor[0], rotateAnchor[1]
             )
         dims = utils.getBoxDims(unrotatedPoints)
 
@@ -1959,7 +1966,7 @@ class Polygon(Shape):
             pyThrow('Illegal gradient start ({start})'.format(start=start))
 
         if self.rotateAngle != 0:
-            [[x0, y0], [x1, y1]] = utils.rotatePoints([[x0, y0], [x1, y1]], utils.toRadians(self.rotateAngle),
+            [[x0, y0], [x1, y1]] = utils.rotatePoints([[x0, y0], [x1, y1]], self.rotateAngle,
                 rotateAnchor[0], rotateAnchor[1]
             )
 
@@ -2215,10 +2222,11 @@ class PolygonWithTransform(Polygon):
 
     def doRotate(self, degrees, cx, cy):
         super().doRotate(degrees, cx, cy)
-        radians = -utils.toRadians(degrees)
+        cos = utils.intCos(-degrees)
+        sin = utils.intSin(-degrees)
         rotateTrans = [
-            [math.cos(radians), math.sin(radians)],
-            [-math.sin(radians), math.cos(radians)]
+            [cos, sin],
+            [-sin, cos],
         ]
         self.multMat(rotateTrans)
 
@@ -2360,7 +2368,12 @@ class Oval(PolygonWithTransform):
         result[1][0] = result[2][0]
         result[1][1] = -result[2][1]
 
-        result = utils.rotatePoints(result, (sweepAngle / 2) + offsetAngle - (math.pi / 2), 0, 0)
+        result = utils.rotatePoints(
+            result, 
+            utils.toDegrees((sweepAngle / 2) + offsetAngle - (math.pi / 2)),
+            0, 
+            0
+        )
         return result
 
     def get_bezierPoints(self): return self.get('bezierPoints')
@@ -2409,9 +2422,9 @@ class Oval(PolygonWithTransform):
         self.translation = self.translation
 
     def doRotate(self, degrees, cx, cy):
+        print(degrees, cx, cy)
         super().doRotate(degrees, cx, cy)
-        radians = -utils.toRadians(degrees)
-        self.translation = utils.rotatePoint(self.translation, -radians, cx, cy)
+        self.translation = utils.rotatePoint(self.translation, degrees, cx, cy)
 
     def toString(self):
         args = [self.centerX, self.centerY, self.width, self.height]
