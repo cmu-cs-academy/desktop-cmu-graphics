@@ -10,6 +10,8 @@ def get_platform_string():
     plat = "unsupported"
     if sys.platform == "darwin":
         plat = "mac"
+        if platform.machine() == 'arm64':
+            plat += '_arm'
     elif sys.platform == "win32":
         plat = "win"
         n_bits = struct.calcsize("P") * 8
