@@ -269,8 +269,6 @@ emptyCircle.visible = Falso
 c2.visible = Falso
 ###
 
-assertRaises(lambda: setattr(app, 'pasosPorSegundo', [1]))
-
 assert app.fondo is None
 app.fondo = 'rojo'
 assert app.fondo == 'rojo'
@@ -279,3 +277,6 @@ assert app.fondo is None
 
 assert app.pausada is False
 assert app.pausada == False
+
+x = aleatorio()
+assert isinstance(x, float) and x >= 0 and x < 1, x

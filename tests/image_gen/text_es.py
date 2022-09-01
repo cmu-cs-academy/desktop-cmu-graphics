@@ -22,7 +22,7 @@ l.valor = d
 d['a'] = 10
 
 # Ensure __repr__ for labels is correct
-assert str(l) == "Rótulo({'a': 10}, 200, 200)"
+assert str(l) == "Rótulo({'a': 10}, 200, 200)", str(l)
 
 # -
 l.valor = ""
