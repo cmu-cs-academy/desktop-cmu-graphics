@@ -1,4 +1,4 @@
-from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES
+from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
 
 EPSILON = 10e-7
@@ -34,7 +34,7 @@ def Robot(*args, **kwargs):
 def assertEqual(*args, **kwargs):
     raise NotImplementedError()
 
-class Shape(object):
+class Shape(object, metaclass=_ShapeMetaclass):
     # This represents the attributes and methods handled by JS that the user
     # can call/get/set
     _js_attrs = {
@@ -127,19 +127,21 @@ class Line(Shape):
     _js_attrs = Shape._js_attrs | {
         'x1', 'y1', 'x2', 'y2', 'lineWidth', 'arrowStart', 'arrowEnd'
     }
-    _init_attrs = Shape._init_attrs | {'lineWidth', 'arrowStart', 'arrowEnd'}
+    _init_attrs = (Shape._init_attrs | {'lineWidth', 'arrowStart', 'arrowEnd'}) - {'align', 'border', 'borderWidth'}
 
     def __init__(self, *args, **kwargs):
         super().__init__('Line', ['x1', 'y1', 'x2', 'y2'], args, kwargs)
 
 class Polygon(Shape):
     _js_attrs = Shape._js_attrs | {'addPoint', 'pointList'}
+    _init_attrs = Shape._init_attrs - {'align'}
 
     def __init__(self, *args, **kwargs):
         super().__init__('Polygon', [ 'initialPoints' ], [args], kwargs)
 
 class Arc(Shape):
     _js_attrs = Shape._js_attrs | {'startAngle', 'sweepAngle'}
+    _init_attrs = Shape._init_attrs - {'align'}
 
     def __init__(self, *args, **kwargs):
         super().__init__('Arc', ['centerX', 'centerY', 'width', 'height',
@@ -147,7 +149,7 @@ class Arc(Shape):
 
 class Label(Shape):
     _js_attrs = Shape._js_attrs | {'value', 'font', 'size', 'bold', 'italic'}
-    _init_attrs = Shape._init_attrs | {'bold', 'italic', 'size', 'font'}
+    _init_attrs = (Shape._init_attrs | {'bold', 'italic', 'size', 'font'}) - {'dashes'}
 
     def __init__(self, *args, **kwargs):
         super().__init__('Label', ['value', 'centerX', 'centerY'], args, kwargs)

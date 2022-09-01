@@ -4,17 +4,6 @@ rp =  RegularPolygon(100, 100, 50, 3, fill='green')
 
 center = Circle(0, 0, 2, fill='blue')
 
-def almostEqual(a, b):
-    return abs(a-b) < 1*10**-10
-
-def tuplesAlmostEqual(t1, t2):
-    if len(t1) != len(t2):
-        return False
-    for a, b in zip(t1, t2):
-        if not almostEqual(a, b):
-            return False
-    return True
-
 def move():
     for s in [r, rp, o]:
         s.left += 10
@@ -57,9 +46,9 @@ def testRotate(angles):
         moon.centerY += 13
         moon.rotateAngle = angle
 
-        assert tuplesAlmostEqual((moon.left, moon.centerX, moon.right), (baseX-50, baseX, baseX+50)), (
+        assert (moon.left, moon.centerX, moon.right) == (baseX-50, baseX, baseX+50), (
             angle, baseX, (moon.left, moon.centerX, moon.right))
-        assert tuplesAlmostEqual((moon.top, moon.centerY, moon.bottom), (baseY-50, baseY, baseY+50)), (
+        assert (moon.top, moon.centerY, moon.bottom) == (baseY-50, baseY, baseY+50), (
             angle, baseY, (moon.top, moon.centerY, moon.bottom))
     moon.visible = False
     print(angles, 'passed')

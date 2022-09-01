@@ -8,6 +8,32 @@ def toRadians(degrees): return degrees * math.pi / 180
 def fromPythonAngle(radians): return (90 - toDegrees(radians)) % 360
 def toPythonAngle(degrees): return (toRadians(90 - degrees)) % (2 * math.pi)
 
+def intSin(degrees):
+    if isinstance(degrees, float) and degrees.is_integer():
+        degrees = int(degrees)
+    if isinstance(degrees, int):
+        degrees = degrees % 360
+        if (degrees == 0 or degrees == 180):
+            return 0
+        elif degrees == 90:
+            return 1
+        elif degrees == 270:
+            return -1
+    return math.sin(toRadians(degrees))
+
+def intCos(degrees):
+    if isinstance(degrees, float) and degrees.is_integer():
+        degrees = int(degrees)
+    if isinstance(degrees, int):
+        degrees = degrees % 360
+        if (degrees == 90 or degrees == 270):
+            return 0
+        elif degrees == 0:
+            return 1
+        elif degrees == 180:
+            return -1
+    return math.cos(toRadians(degrees))
+
 pythonRound = round
 
 def round(*args):
@@ -150,16 +176,15 @@ def getPolygonCentroid(pts):
         cy += (pts[i][1] + pts[j][1]) * term
     return [cx / (6 * A), cy / (6 * A)]
 
-def rotatePoint(pt, radians, cx, cy):
+def rotatePoint(pt, degrees, cx, cy):
     [x, y] = pt
-    theta = radians
-    cos = math.cos(theta)
-    sin = math.sin(theta)
+    cos = intCos(degrees)
+    sin = intSin(degrees)
     return [cx + ((x - cx) * cos - (y - cy) * sin),
             cy + ((x - cx) * sin + (y - cy) * cos)]
 
-def rotatePoints(pts, radians, cx, cy):
-    return list(map(lambda pt: rotatePoint(pt, radians, cx, cy), pts))
+def rotatePoints(pts, degrees, cx, cy):
+    return list(map(lambda pt: rotatePoint(pt, degrees, cx, cy), pts))
 
 
 def getBoxDims(pts):
@@ -185,11 +210,16 @@ def flatten(a):
             out.append(elem)
     return out
 
+def truncateIntegerFloats(n):
+    if isinstance(n, float) and n.is_integer():
+        return int(n)
+    return n
+
 def utilsRounded(n, precision = 0):
     if isinstance(n, list) or isinstance(n, tuple): return list(map(lambda v: utilsRounded(v, precision), n))
     elif not (isinstance(n, int) or isinstance(n, float)): return n
     elif n < 0: return -utilsRounded(-n, precision)
-    return roundHalfUp(n * 10 ** precision) / 10 ** precision
+    return truncateIntegerFloats(roundHalfUp(n * 10 ** precision) / 10 ** precision)
 
 def tupleString(a):
     return "({s})".format(s=', '.join(map(str, a)))
@@ -224,6 +254,9 @@ def getArcPoints(cx, cy, width, height, startAngle = None, sweepAngle = None, si
 def isNumber(value):
     return isinstance(value, int) or isinstance(value, float)
 
+def round6(value):
+    return pythonRound((value + 0.00000001) * 1000000) / 1000000
+
 def round2(value):
     return pythonRound((value + 0.001) * 100) / 100
 
@@ -239,7 +272,7 @@ def getLinePoints(x1, y1, x2, y2, lineWidth):
     # 0. get angle of rotation clockwise past horizontal
     cx = (x1 + x2) / 2
     cy = (y1 + y2) / 2
-    a = toRadians(angleTo(x1, y1, x2, y2) - 90) # -90 so we're off the horizontal
+    a = angleTo(x1, y1, x2, y2) - 90 # -90 so we're off the horizontal
 
     # 1. unrotate to horizontal, with p3 n the left, p4 on the right
     pts = [[x1, y1], [x2, y2]]
@@ -261,7 +294,7 @@ def getRegularPolygonPoints(cx, cy, r, points, rotateAngle):
     for i in range(1, points):
         [x, y] = getPointInDir(cx, cy, i * dtheta, r)
         pts.append([x, y])
-    if rotateAngle: pts = rotatePoints(pts, toRadians(rotateAngle), cx, cy)
+    if rotateAngle: pts = rotatePoints(pts, rotateAngle, cx, cy)
     return pts
 
 def getDefaultRoundness(points):
@@ -279,7 +312,7 @@ def getStarPoints(cx, cy, r, points, roundness, rotateAngle):
             pts.append([x, y])
         [x, y] = getPointInDir(cx, cy, i * dtheta + dtheta / 2, innerR)
         pts.append([x, y])
-    if rotateAngle: pts = rotatePoints(pts, toRadians(rotateAngle), cx, cy)
+    if rotateAngle: pts = rotatePoints(pts, rotateAngle, cx, cy)
     return pts
 
 def convertLabelValue(value):

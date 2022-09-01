@@ -219,6 +219,10 @@ def main():
         for test_py_name in (args.only and [args.only] or os.listdir('image_gen')):
             if not test_py_name.endswith('.py'):
                 continue
+
+            if test_py_name.startswith('web_only'):
+                continue
+
             REPORT_FILE.flush()
             print(test_py_name)
             with open('image_gen/%s' % test_py_name, encoding='utf-8') as f:
