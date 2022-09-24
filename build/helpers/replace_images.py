@@ -4,7 +4,7 @@ import shutil
 pygame_loader_path = '../cmu_graphics/libs/pygame_loader'
 our_images_path = 'helpers/images'
 
-pygame_images = ['pygame_icon.bmp', 'pygame_icon.icns', 'pygame_icon.svg', 'pygame_icon.tiff', 'pygame.ico']
+pygame_images = ['pygame_icon.bmp', 'pygame_icon_mac.bmp', 'pygame_icon.icns', 'pygame_icon.svg', 'pygame_icon.tiff', 'pygame.ico']
 extension_to_image = dict()
 for file in os.listdir(our_images_path):
     extension = file.split('.')[-1]
