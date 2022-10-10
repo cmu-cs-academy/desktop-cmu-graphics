@@ -228,6 +228,13 @@ class App(object):
         self._running = False
 
     def callUserFn(self, fnName, args):
+        try:
+            self._callUserFn(fnName, args)
+        except BaseException as e:
+            sys.excepthook(*sys.exc_info())
+            cleanAndClose()
+
+    def _callUserFn(self, fnName, args):
         if fnName in self.userGlobals:
             (self.userGlobals[fnName])(*args)
 
