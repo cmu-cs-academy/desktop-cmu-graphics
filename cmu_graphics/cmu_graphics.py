@@ -221,7 +221,7 @@ def _safeMethod(appMethod):
             return appMethod(*args, **kwargs)
         except Exception as e:
             sys.excepthook(*sys.exc_info())
-            app._errored = True
+            app.stop()
             app.drawErrorScreen()
     return m
 
@@ -402,8 +402,6 @@ class App(object):
         self.alwaysShowInspector = False
         self.isCtrlKeyDown = False
 
-        self._errored = False
-
     def get_group(self):
         return self._tlg
     def set_group(self, _):
@@ -491,7 +489,7 @@ class App(object):
                 had_event = False
                 for event in pygame.event.get():
                     had_event = True
-                    if not self.stopped and not self._errored:
+                    if not self.stopped:
                         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                             self.callUserFn('onMousePress', event.pos)
                         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
@@ -514,7 +512,7 @@ class App(object):
                 msPassed = pygame.time.get_ticks() - lastTick
                 if (math.floor(1000 / self.stepsPerSecond) - msPassed < 10):
                     lastTick = pygame.time.get_ticks()
-                    if not (self.paused or self.stopped or self._errored):
+                    if not (self.paused or self.stopped):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn('onKeyHold', (list(self._allKeysDown),))
