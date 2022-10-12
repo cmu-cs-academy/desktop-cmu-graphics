@@ -365,7 +365,6 @@ class App(object):
         return (
             self.inspectorEnabled and
             (self.paused or
-                self.stopped or
                 self.alwaysShowInspector or
                 self.isCtrlKeyDown)
         )
@@ -494,8 +493,7 @@ class App(object):
                             self.callUserFn('onMousePress', event.pos)
                         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                             self.callUserFn('onMouseRelease', event.pos)
-                        elif (event.type == pygame.MOUSEMOTION):
-                            self.inspector.setMousePosition(*event.pos)
+                        elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
                                 self.callUserFn('onMouseMove', event.pos)
                             elif event.buttons[0] == 1:
@@ -506,8 +504,14 @@ class App(object):
                             self.handleKeyRelease(event.key, event.mod)
                     if event.type == pygame.QUIT:
                         self._running = False
+                    elif event.type == pygame.MOUSEMOTION:
+                        self.inspector.setMousePosition(*event.pos)
+                    elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
+                        key = App.getKey(event.key, event.mod)
+                        if key == 'ctrl':
+                            self.isCtrlKeyDown = (event.type == pygame.KEYDOWN)
 
-                ran_user_code = had_event
+                should_redraw = had_event
 
                 msPassed = pygame.time.get_ticks() - lastTick
                 if (math.floor(1000 / self.stepsPerSecond) - msPassed < 10):
@@ -516,9 +520,9 @@ class App(object):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn('onKeyHold', (list(self._allKeysDown),))
-                        ran_user_code = True
+                        should_redraw = True
 
-                if ran_user_code:
+                if should_redraw:
                     self.redrawAll(self._screen, cairo_surface, ctx)
                     pygame.display.flip()
                     self.frameworkRedrew = True
