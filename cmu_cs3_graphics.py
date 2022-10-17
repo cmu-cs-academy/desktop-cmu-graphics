@@ -41,27 +41,12 @@ class AppWrapper(object):
         else:
             return super().__setattr__(attr, value)
 
-def callUserFn(self, fnName, args):
-    # replacement for App.callUserFn()
-    fnName0 = fnName
-    if app.hasException: return
-    if app.mode not in [None, '']:
-        fnName = app.mode + fnName[0].upper() + fnName[1:]
-    if fnName in self.userGlobals:
-        (self.userGlobals[fnName])(app.appWrapper, *args)
-        if (not fnName0.endswith('redrawAll')): redrawAllWrapper(self)
-
-def redrawAllWrapper(app):
-    app.group.clear()
-    try: app.inRedrawAll = True; callUserFn(app, 'redrawAll', [ ])
-    finally: app.inRedrawAll = False
-
 def runApp(width=400, height=400, **kwargs):
     kwargs.update({'width': width, 'height': height})
     for kw in kwargs:
         setattr(app.appWrapper, kw, kwargs[kw])
-    callUserFn(app, 'onAppStart', [ ])
-    redrawAllWrapper(app)
+    app.callUserFn('onAppStart', [ ])
+    app.redrawAllWrapper()
     run()
 
 def setupMvc():
@@ -95,7 +80,7 @@ def setupMvc():
         delUserGlobal(shape.__name__)
         addExportedGlobal(shape.__name__ + 'Shape', makeInvisibleConstructor(shape))
         addExportedGlobal('draw' + shape.__name__, makeDrawFn(shape))
-    App.callUserFn = callUserFn
+    App.callUserFn = App.cs3CallUserFn
     for var in ['Group', 'app']:
         delUserGlobal(var) # de-globalize these if present
     global __all__

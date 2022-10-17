@@ -214,6 +214,17 @@ def cleanAndClose():
     shape_logic.cleanSoundProcesses()
     os._exit(0)
 
+def _safeMethod(appMethod):
+    def m(*args, **kwargs):
+        app = args[0]
+        try:
+            return appMethod(*args, **kwargs)
+        except Exception as e:
+            sys.excepthook(*sys.exc_info())
+            app.stop()
+            app.drawErrorScreen()
+    return m
+
 # Based on Lukas Peraza's pygame framework
 # https://github.com/LBPeraza/Pygame-Asteroids
 class App(object):
@@ -227,6 +238,7 @@ class App(object):
     def quit(self):
         self._running = False
 
+    @_safeMethod
     def callUserFn(self, fnName, args):
         if fnName in self.userGlobals:
             (self.userGlobals[fnName])(*args)
@@ -242,6 +254,21 @@ class App(object):
                         elif fnName in ['onKeyPress', 'onKeyRelease']:
                             args = (translateKeyName(args[0], language), )
                         return self.userGlobals[fnTranslation](*args)
+
+    @_safeMethod
+    def cs3CallUserFn(self, fnName, args):
+        fnName0 = fnName
+        if self.hasException: return
+        if self.mode not in [None, '']:
+            fnName = self.mode + fnName[0].upper() + fnName[1:]
+        if fnName in self.userGlobals:
+            (self.userGlobals[fnName])(self.appWrapper, *args)
+            if (not fnName0.endswith('redrawAll')): self.redrawAllWrapper()
+
+    def redrawAllWrapper(self):
+        self.group.clear()
+        try: self.inRedrawAll = True; self.callUserFn('redrawAll', [ ])
+        finally: self.inRedrawAll = False
 
     @staticmethod
     def getKey(keyCode, modifier):
@@ -261,6 +288,18 @@ class App(object):
                 key = shiftMap.get(key, key).upper()
             return key
         return keyNameMap.get(keyCode, None)
+
+    def drawErrorScreen(self):
+        cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
+        ctx = cairo.Context(cairo_surface)
+
+        Rect(0, 0, self.width, self.height, fill=None, border='red', borderWidth=2)
+        Rect(10, self.height - 60, self.width - 20, 50, fill='white', border='red', borderWidth=4)
+        Label('Exception! App Stopped!', self.width / 2, self.height - 45, size=12, bold=True, font='Arial', fill='red')
+        Label('See console for details', self.width / 2, self.height - 25, size=12, bold=True, font='Arial', fill='red')
+
+        self.redrawAll(self._screen, cairo_surface, ctx)
+        pygame.display.flip()
 
     def handleKeyPress(self, keyCode, modifier):
         key = App.getKey(keyCode, modifier)
@@ -326,7 +365,6 @@ class App(object):
         return (
             self.inspectorEnabled and
             (self.paused or
-                self.stopped or
                 self.alwaysShowInspector or
                 self.isCtrlKeyDown)
         )
@@ -423,6 +461,7 @@ class App(object):
             cwd=current_directory)
         return p
 
+    @_safeMethod
     def run(self):
         ### ZIPFILE VERSION ###
         from cmu_graphics.libs import pygame_loader as pg
@@ -454,8 +493,7 @@ class App(object):
                             self.callUserFn('onMousePress', event.pos)
                         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                             self.callUserFn('onMouseRelease', event.pos)
-                        elif (event.type == pygame.MOUSEMOTION):
-                            self.inspector.setMousePosition(*event.pos)
+                        elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
                                 self.callUserFn('onMouseMove', event.pos)
                             elif event.buttons[0] == 1:
@@ -466,19 +504,25 @@ class App(object):
                             self.handleKeyRelease(event.key, event.mod)
                     if event.type == pygame.QUIT:
                         self._running = False
+                    elif event.type == pygame.MOUSEMOTION:
+                        self.inspector.setMousePosition(*event.pos)
+                    elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
+                        key = App.getKey(event.key, event.mod)
+                        if key == 'ctrl':
+                            self.isCtrlKeyDown = (event.type == pygame.KEYDOWN)
 
-                ran_user_code = had_event
+                should_redraw = had_event
 
                 msPassed = pygame.time.get_ticks() - lastTick
                 if (math.floor(1000 / self.stepsPerSecond) - msPassed < 10):
                     lastTick = pygame.time.get_ticks()
-                    if not self.paused and not self.stopped:
+                    if not (self.paused or self.stopped):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn('onKeyHold', (list(self._allKeysDown),))
-                        ran_user_code = True
+                        should_redraw = True
 
-                if ran_user_code:
+                if should_redraw:
                     self.redrawAll(self._screen, cairo_surface, ctx)
                     pygame.display.flip()
                     self.frameworkRedrew = True
