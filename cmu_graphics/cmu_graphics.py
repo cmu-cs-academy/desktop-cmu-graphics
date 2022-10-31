@@ -551,10 +551,10 @@ class AppWrapper(object):
     readOnlyAttrs = set(['bottom','centerX', 'centerY',
                          'getTextInput', 'left', 'quit', 'right',
                          'run', 'stop', 'top', 'setMaxShapeCount',
-                         'printFullTracebacks', 'maxShapeCount'])
+                         'printFullTracebacks'])
     readWriteAttrs = set(['height', 'paused', 'stepsPerSecond', 'group',
                           'title', 'width', 'mode', 'background',
-                          'beatsPerMinute' ])
+                          'beatsPerMinute', 'maxShapeCount' ])
     allAttrs = readOnlyAttrs | readWriteAttrs
 
     def __init__(self, app):

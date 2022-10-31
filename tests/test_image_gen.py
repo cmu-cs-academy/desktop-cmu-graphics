@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import html
 import os
 import shutil
 import sys
@@ -192,9 +193,9 @@ Thread(target=screenshotAndExit).start()
                 if console_output.strip():
                     REPORT_FILE.write(
                         '<p>Console output for part %d:</p><pre>%s</pre>' %
-                        (i, console_output))
+                        (i, html.escape(console_output.decode('utf-8'))))
                 REPORT_FILE.write(
-                    '<p>Source code for part %d:</p><pre>%s</pre>' % (i, source_code))
+                    '<p>Source code for part %d:</p><pre>%s</pre>' % (i, html.escape(source_code)))
                 all_passed = False
 
     return all_passed
