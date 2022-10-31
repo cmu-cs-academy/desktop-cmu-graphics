@@ -15,10 +15,12 @@ def redrawAll(app):
 
 # -
 
+# Make sure you can't use CS1 shapes in CS3 mode
 def onAppStart(app):
     assertRaises(lambda: Rect(0, 0, 200, 200))
 
 # -
 
+# Make sure the red error box appears
 def onMousePress(app, mouseX, mouseY):
     a = 1 / 0
