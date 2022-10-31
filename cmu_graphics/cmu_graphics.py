@@ -304,7 +304,6 @@ class App(object):
         Label('See console for details', self.width / 2, self.height - 25, size=12, bold=True, font='Arial', fill='red')
 
         self.redrawAll(self._screen, cairo_surface, ctx)
-        pygame.display.flip()
 
     def handleKeyPress(self, keyCode, modifier):
         key = App.getKey(keyCode, modifier)
@@ -365,6 +364,9 @@ class App(object):
 
         # Show PyGame surface
         screen.blit(pygame_surface, (0,0))
+        pygame.display.flip()
+        
+        self.frameworkRedrew = True
 
     def shouldDrawInspector(self):
         return (
@@ -537,8 +539,6 @@ class App(object):
 
                 if should_redraw:
                     self.redrawAll(self._screen, cairo_surface, ctx)
-                    pygame.display.flip()
-                    self.frameworkRedrew = True
 
                 pygame.time.wait(1)
 

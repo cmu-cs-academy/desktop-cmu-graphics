@@ -122,10 +122,15 @@ def run_test(driver, test_name, all_source_code):
     if not raised:
         raise Exception('fn failed to raise an exception')
 '''
-        source_code += '\n######\n'.join(source_code_pieces[:piece_i])
-        source_code += '\ndef onMousePress(x, y):\n'
-        source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
-        source_code += '\n    app.background = "honeydew"'
+        run_fn = 'cmu_graphics.run()'
+        if not test_name.startswith('cs3'):
+            source_code += '\n######\n'.join(source_code_pieces[:piece_i])
+            source_code += '\ndef onMousePress(x, y):\n'
+            source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
+            source_code += '\n    app.background = "honeydew"'
+        else:
+            run_fn = 'runApp()'
+            source_code += source_code_pieces[piece_i]
 
         source_code += '''
 from threading import Thread
@@ -138,8 +143,8 @@ def screenshotAndExit():
         while not getattr(raw_app, '_running', False):
             time.sleep(0.01)
         with cmu_graphics.DRAWING_LOCK:
-            raw_app.callUserFn("onMousePress", (200,200))
             raw_app.frameworkRedrew = False
+            raw_app.callUserFn("onMousePress", (200,200))
         while not raw_app.frameworkRedrew:
             time.sleep(0.01)
         raw_app.getScreenshot(%s)
@@ -149,8 +154,9 @@ def screenshotAndExit():
         os._exit(1)
 
 Thread(target=screenshotAndExit).start()
-cmu_graphics.loop()
 ''' % repr(os.path.abspath(output_path))
+
+        source_code += '\n' + run_fn
 
         with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
             f.write(source_code)
