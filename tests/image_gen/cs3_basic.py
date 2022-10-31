@@ -24,3 +24,8 @@ def onAppStart(app):
 # Make sure the red error box appears
 def onMousePress(app, mouseX, mouseY):
     a = 1 / 0
+
+# Label
+# ^ included to trick the test_image_gen harness into giving us some extra
+# wiggle room. The red error box does include labels, so the Windows result
+# looks a litttle different from the mac one.
