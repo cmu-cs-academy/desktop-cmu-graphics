@@ -27,6 +27,7 @@ from cmu_graphics.cmu_graphics import (
     print,
     assertEqual,
     Robot,
+    runApp,
 )
 
 from cmu_graphics.utils import (
@@ -68,6 +69,7 @@ for language in TRANSLATED_GLOBALS:
 
 __all__.append('setLanguage')
 __all__.append('cmu_graphics')
+__all__.append('runApp')
 
 for language in TRANSLATED_BOOLEANS:
     if language != 'keys':
