@@ -196,6 +196,9 @@ class Sound(object):
     def pause(self):
         self.sound.pause()
 
+SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
+            Polygon, Rect, RegularPolygon, Star, ]
+
 class KeyName(str):
     def __init__(self, baseKey):
         self.__dict__['accentCombinations'] = accentCombinations(str(self))
@@ -222,7 +225,10 @@ def _safeMethod(appMethod):
         except Exception as e:
             sys.excepthook(*sys.exc_info())
             app.stop()
-            app.drawErrorScreen()
+            if app._running:
+                app.drawErrorScreen()
+            else:
+                cleanAndClose()
     return m
 
 # Based on Lukas Peraza's pygame framework
@@ -272,8 +278,10 @@ class App(object):
 
     def redrawAllWrapper(self):
         self.group.clear()
-        try: self.inRedrawAll = True; self.callUserFn('redrawAll', [ ])
-        finally: self.inRedrawAll = False
+
+        self.inRedrawAll = True
+        self.callUserFn('redrawAll', [ ])
+        self.inRedrawAll = False
 
     @staticmethod
     def getKey(keyCode, modifier):
@@ -401,6 +409,7 @@ class App(object):
 
         self.paused = False
         self._stopped = False
+        self._running = False
         self.textInputs = []
 
         self.inspector = shape_logic.Inspector(self)
@@ -408,7 +417,7 @@ class App(object):
         self.alwaysShowInspector = False
         self.isCtrlKeyDown = False
 
-        self.isMvc = False
+        self._isMvc = False
 
     def get_group(self):
         return self._tlg
@@ -491,11 +500,6 @@ class App(object):
 
         lastTick = 0
         self._running = True
-
-        with DRAWING_LOCK:
-            if self.isMvc:
-                self.callUserFn('onAppStart', [ ], self.onAppStartKwargs)
-                self.redrawAllWrapper() # Draw even if there are no events
 
         while self._running:
             sys.stdout.flush()
@@ -589,18 +593,22 @@ def runApp(width=400, height=400, **kwargs):
     setupMvc()
     app.width = width
     app.height = height
-    app._app.onAppStartKwargs = kwargs
 
     if SHAPES_CREATED > 1:
         raise Exception('''
 ****************************************************************************
-runApp (CS3 Mode) is not compatible with shape objects (Rect, Oval, etc).
+Your code created a shape object (Rect, Oval, etc.) before calling runApp().
+
+runApp (CS3 Mode) is not compatible with shape objects.
 
 If you'd like to use CS3 Mode, please use drawing functions 
 (drawRect, drawOval, etc) in redrawAll.
 
 Otherwise, please call cmu_graphics.run() in place of runApp.
 ****************************************************************************''')
+
+    app._app.callUserFn('onAppStart', [ ], kwargs)
+    app._app.redrawAllWrapper() # Draw even if there are no events
 
     run()
 
@@ -609,19 +617,14 @@ def getImageSize(url):
     return (image.width, image.height)
 
 def setupMvc():
-    app._app.isMvc = True
+    app._app._isMvc = True
     app._app.inRedrawAll = False
     userGlobals = app._app.userGlobals
-    shapes = [ Arc, Circle, Image, Label, Line, Oval,
-               Polygon, Rect, RegularPolygon, Star, ]
-
-    shapes = [ Arc, Circle, Image, Label, Line, Oval,
-               Polygon, Rect, RegularPolygon, Star, ]
 
     def makeDrawFn(shape):
         def drawFn(*args, **kwargs):
             if (not app._app.inRedrawAll):
-                raiseMvcViolation('Cannot draw (modify the view) outside of redrawAll')
+                raise MvcException('Cannot draw (modify the view) outside of redrawAll')
             shape(*args, **kwargs)
         return drawFn
 
@@ -653,7 +656,7 @@ def setupMvc():
         if not userDefinedGlobal(var):
             userGlobals[var] = value
 
-    for shape in shapes:
+    for shape in SHAPES:
         delShapeConstructor(shape.__name__)
         addExportedGlobal(shape.__name__ + 'Shape', makeInvisibleConstructor(shape))
         addExportedGlobal('draw' + shape.__name__, makeDrawFn(shape))
@@ -682,6 +685,15 @@ def setupMvc():
     addExportedGlobal('getImageSize', getImageSize)
     App.callUserFn = App.cs3CallUserFn
 
+def injectTempDrawFn(drawFnName):
+    def drawFn(*args, **kwargs):
+        raise Exception(f'You called {drawFnName} (a CS3 Mode function) outside of redrawAll.')
+    __main__.__dict__[drawFnName] = drawFn
+
+def injectTempDrawFns():
+    for shape in SHAPES:
+        injectTempDrawFn('draw' + shape.__name__)
+        
 def onSteps(n):
     for _ in range(n):
         callUserFn('onStep')
@@ -699,6 +711,11 @@ def loop():
     run()
 
 def run():
+    if not app._app._isMvc:
+        for cs3ModeHandler in ('onAppStart', 'redrawAll'):
+            if cs3ModeHandler in __main__.__dict__:
+                raise Exception(f"You defined the event handler {cs3ModeHandler} which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?")
+
     global MAINLOOP_RUN
     MAINLOOP_RUN = True
 
@@ -903,5 +920,6 @@ def check_for_exit_without_run():
 """)
         print(" ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n")
 
+injectTempDrawFns()
 app = AppWrapper(App())
 atexit.register(check_for_exit_without_run)
