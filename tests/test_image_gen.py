@@ -207,6 +207,66 @@ Thread(target=screenshotAndExit).start()
 
     return all_passed
 
+
+
+def run_cs3_exception_tests():
+    print('cs3 exception tests')
+
+    tests = [ 
+        (
+            'drawRect(0,0,200,200)',
+            'runApp()',
+            'You called drawRect (a CS3 Mode function) outside of redrawAll.'
+        ),
+        ('''\
+def onAppStart(app):
+    raise Exception()
+''',
+            'runApp()',
+            'Exception:'
+        ),
+        ('''\
+def redrawAll(app):
+    raise Exception()
+''',
+            'runApp()',
+            'Exception:'
+        ),
+        ('''\
+def redrawAll(app):
+    drawRect(0,0,200,200)
+''',
+        'cmu_graphics.run()',
+        "You defined the event handler redrawAll which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?"
+        )
+    ]
+
+    for test, run_fn, expected_output in tests:
+        source_code = generate_test_source(test, run_fn)
+
+        with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
+            f.write(source_code)
+
+        p = subprocess.Popen(
+            [sys.executable, '-u', f'../{TEST_FILE_PATH}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd='image_gen'
+        )
+        stdout, stderr = p.communicate()
+        console_output = (stdout + stderr).decode('utf-8')
+
+        if expected_output not in console_output:
+            print('Console output:')
+            print(console_output)
+            print('Does not contain expected output:')
+            print(expected_output)
+            print('For test:')
+            print(test)
+            return False
+
+    return True
+
 def main():
     global REPORT_FILE, WAIT
 
@@ -229,6 +289,11 @@ def main():
     try:
         REPORT_FILE = open('report.html', 'w')
         REPORT_FILE.write(REPORT_HEADER)
+
+        if run_cs3_exception_tests():
+            num_successes += 1
+        else:
+            num_failures += 1
 
         for test_py_name in (args.only and [args.only] or os.listdir('image_gen')):
             if not test_py_name.endswith('.py'):
