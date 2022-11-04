@@ -1,3 +1,5 @@
+import types
+
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
 
@@ -646,7 +648,15 @@ def setupMvc():
         addExportedGlobal(fnName, errFn)
 
     def userDefinedGlobal(var):
-        return (var in userGlobals and getattr(userGlobals[var], '__module__', None) == '__main__')
+        if not var in userGlobals:
+            return False
+        
+        value = userGlobals[var]
+        module = getattr(value, '__module__', None) 
+
+        # The user imported a module with this name (like random)
+        # or they defined a function in their own code (like distance)
+        return isinstance(value, types.ModuleType) or module == '__main__'
 
     def delUserGlobal(var):
         if var in userGlobals and not userDefinedGlobal(var):
