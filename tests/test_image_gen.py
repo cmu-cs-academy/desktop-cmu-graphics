@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import html
 import os
 import shutil
 import sys
@@ -81,6 +82,34 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
 
     return mean_squared_error < threshold
 
+def generate_test_source(test, run_fn, extras='', language='en'):
+    source_code = ''
+    source_code += 'import sys'
+    source_code += '\nimport os'
+    if sys.platform == 'darwin':
+        source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
+    source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
+    source_code += '\nfrom cmu_graphics import *\n'
+    source_code += "setLanguage('%s')\n" % (language)
+    source_code += '''def assertRaises(fn, message_substring=None):
+    raised = True
+    try:
+        fn()
+        raised = False
+    except Exception as e:
+        actual_message = str(e)
+        if message_substring is not None and message_substring not in actual_message:
+            raise Exception(f'fn raised exception, but message "{actual_message}" does not contain "{message_substring}"')
+    if not raised:
+        raise Exception('fn failed to raise an exception')
+'''
+    
+    source_code += '\n' + test
+    source_code += '\n' + extras
+    source_code += '\n' + run_fn
+
+    return source_code
+
 def run_test(driver, test_name, all_source_code):
     source_code_pieces = all_source_code.split('\n# -\n')
     source_code = ''
@@ -100,34 +129,18 @@ def run_test(driver, test_name, all_source_code):
 
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
-        source_code = ''
-        source_code += 'import sys'
-        source_code += '\nimport os'
-        if sys.platform == 'darwin':
-            source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
-        source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
-        source_code += '\nfrom cmu_graphics import *\n'
-        source_code += "setLanguage('%s')\n" % (
-            'es' if test_name.endswith('_es') else 'en'
-        )
-        source_code += '''def assertRaises(fn, message_substring=None):
-    raised = True
-    try:
-        fn()
-        raised = False
-    except Exception as e:
-        actual_message = str(e)
-        if message_substring is not None and message_substring not in actual_message:
-            raise Exception(f'fn raised exception, but message "{actual_message}" does not contain "{message_substring}"')
-    if not raised:
-        raise Exception('fn failed to raise an exception')
-'''
-        source_code += '\n######\n'.join(source_code_pieces[:piece_i])
-        source_code += '\ndef onMousePress(x, y):\n'
-        source_code += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
-        source_code += '\n    app.background = "honeydew"'
+        test = ''
+        run_fn = 'cmu_graphics.run()'
+        if not test_name.startswith('cs3'):
+            test += '\n######\n'.join(source_code_pieces[:piece_i])
+            test += '\ndef onMousePress(x, y):\n'
+            test += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
+            test += '\n    app.background = "honeydew"'
+        else:
+            test += source_code_pieces[piece_i]
+            run_fn = 'runApp()'
 
-        source_code += '''
+        screenshot_thread = '''
 from threading import Thread
 import time
 import traceback
@@ -135,11 +148,11 @@ import traceback
 def screenshotAndExit():
     try:
         raw_app = app._app
-        while not getattr(raw_app, '_running', False):
+        while not raw_app._running:
             time.sleep(0.01)
         with cmu_graphics.DRAWING_LOCK:
-            raw_app.callUserFn("onMousePress", (200,200))
             raw_app.frameworkRedrew = False
+            raw_app.callUserFn("onMousePress", (200,200))
         while not raw_app.frameworkRedrew:
             time.sleep(0.01)
         raw_app.getScreenshot(%s)
@@ -149,8 +162,9 @@ def screenshotAndExit():
         os._exit(1)
 
 Thread(target=screenshotAndExit).start()
-cmu_graphics.loop()
 ''' % repr(os.path.abspath(output_path))
+
+        source_code = generate_test_source(test, run_fn, screenshot_thread, 'es' if test_name.endswith('_es') else 'en')
 
         with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
             f.write(source_code)
@@ -186,12 +200,72 @@ cmu_graphics.loop()
                 if console_output.strip():
                     REPORT_FILE.write(
                         '<p>Console output for part %d:</p><pre>%s</pre>' %
-                        (i, console_output))
+                        (i, html.escape(console_output.decode('utf-8'))))
                 REPORT_FILE.write(
-                    '<p>Source code for part %d:</p><pre>%s</pre>' % (i, source_code))
+                    '<p>Source code for part %d:</p><pre>%s</pre>' % (i, html.escape(source_code)))
                 all_passed = False
 
     return all_passed
+
+
+
+def run_cs3_exception_tests():
+    print('cs3 exception tests')
+
+    tests = [ 
+        (
+            'drawRect(0,0,200,200)',
+            'runApp()',
+            'You called drawRect (a CS3 Mode function) outside of redrawAll.'
+        ),
+        ('''\
+def onAppStart(app):
+    raise Exception()
+''',
+            'runApp()',
+            'Exception:'
+        ),
+        ('''\
+def redrawAll(app):
+    raise Exception()
+''',
+            'runApp()',
+            'Exception:'
+        ),
+        ('''\
+def redrawAll(app):
+    drawRect(0,0,200,200)
+''',
+        'cmu_graphics.run()',
+        "You defined the event handler redrawAll which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?"
+        )
+    ]
+
+    for test, run_fn, expected_output in tests:
+        source_code = generate_test_source(test, run_fn)
+
+        with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
+            f.write(source_code)
+
+        p = subprocess.Popen(
+            [sys.executable, '-u', f'../{TEST_FILE_PATH}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd='image_gen'
+        )
+        stdout, stderr = p.communicate()
+        console_output = (stdout + stderr).decode('utf-8')
+
+        if expected_output not in console_output:
+            print('Console output:')
+            print(console_output)
+            print('Does not contain expected output:')
+            print(expected_output)
+            print('For test:')
+            print(test)
+            return False
+
+    return True
 
 def main():
     global REPORT_FILE, WAIT
@@ -215,6 +289,11 @@ def main():
     try:
         REPORT_FILE = open('report.html', 'w')
         REPORT_FILE.write(REPORT_HEADER)
+
+        if run_cs3_exception_tests():
+            num_successes += 1
+        else:
+            num_failures += 1
 
         for test_py_name in (args.only and [args.only] or os.listdir('image_gen')):
             if not test_py_name.endswith('.py'):
