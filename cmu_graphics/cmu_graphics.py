@@ -694,6 +694,8 @@ def setupMvc():
 
     addExportedGlobal('getImageSize', getImageSize)
     App.callUserFn = App.cs3CallUserFn
+    AppWrapper.readWriteAttrs.remove('paused')
+    AppWrapper.allAttrs.remove('paused')
 
 def injectTempDrawFn(drawFnName):
     def drawFn(*args, **kwargs):
