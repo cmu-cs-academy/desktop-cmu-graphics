@@ -43,12 +43,12 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     image_1 = Image.open(path_1)
     image_1 = image_1.convert("RGB")
     image_1.save(path_1)
-    image_1_data = imageio.v2.imread(path_1)
+    image_1_data = imageio.imread(path_1)
 
     image_2 = Image.open(path_2)
     image_2 = image_2.convert("RGB")
     image_2.save(path_2)
-    image_2_data = imageio.v2.imread(path_2)
+    image_2_data = imageio.imread(path_2)
 
     assert image_1_data.shape == (SIZE, SIZE, 3)
     assert image_2_data.shape == (SIZE, SIZE, 3)
