@@ -671,6 +671,65 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
     run()
 
+def setActiveScreen(screen):
+    if (screen in [None, '']) or (not isinstance(screen, str)):
+        raise Exception(f'{repr(screen)} is not a valid screen')
+    redrawAllFnName = f'{screen}_redrawAll'
+    if redrawAllFnName not in app._app.userGlobals:
+        raise Exception(f'Screen {screen} requires {redrawAllFnName}()')
+    app._app.activeScreen = screen
+
+def runAppWithScreens(initialScreen, *args, **kwargs):
+    userGlobals = app._app.userGlobals
+
+    appFnNames = ['onAppStart',
+                  'onKeyPress', 'onKeyHold', 'onKeyRelease',
+                  'onMousePress', 'onMouseDrag', 'onMouseRelease',
+                  'onMouseMove', 'onStep', 'redrawAll']
+
+    def checkForAppFns():
+        for appFnName in appFnNames:
+            if appFnName in userGlobals:
+                raise Exception(f'Do not define {appFnName} when using screens')
+
+    def getScreenFnNames(appFnName):
+        screenFnNames = [ ]
+        for globalVarName in userGlobals:
+            screenAppSuffix = f'_{appFnName}'
+            if globalVarName.endswith(screenAppSuffix):
+                screenFnNames.append(globalVarName)
+        return screenFnNames
+
+    def makeAppFnWrapper(appFnName):
+        if appFnName == 'onAppStart':
+            def onAppStartWrapper(app):
+                for screenFnName in getScreenFnNames('onScreenStart'):
+                    screenFn = userGlobals[screenFnName]
+                    screenFn(app)
+            return onAppStartWrapper
+        else:
+            def appFnWrapper(*args):
+                screen = app._app.activeScreen
+                screenFnName = f'{screen}_{appFnName}'
+                if screenFnName in userGlobals:
+                    screenFn = userGlobals[screenFnName]
+                    return screenFn(*args)
+            return appFnWrapper
+
+    def wrapScreenFns():
+        for appFnName in appFnNames:
+            screenFnNames = getScreenFnNames(appFnName)
+            if (screenFnNames != [ ]) or (appFnName == 'onAppStart'):
+                userGlobals[appFnName] = makeAppFnWrapper(appFnName)
+
+    def go():
+        checkForAppFns()
+        wrapScreenFns()
+        setActiveScreen(initialScreen)
+        runApp(*args, **kwargs)
+
+    go()
+
 def getImageSize(url):
     image = Image(url, 0, 0, visible=False)
     return (image.width, image.height)
@@ -750,6 +809,7 @@ def setupMvc():
         addExportedGlobal(function.__name__, modifyMultiStepsFn(function))
 
     addExportedGlobal('getImageSize', getImageSize)
+    addExportedGlobal('setActiveScreen', setActiveScreen)
     App.callUserFn = App.cs3CallUserFn
     AppWrapper.readWriteAttrs.remove('paused')
     AppWrapper.allAttrs.remove('paused')
