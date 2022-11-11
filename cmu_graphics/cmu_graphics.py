@@ -246,47 +246,73 @@ class App(object):
     def quit(self):
         self._running = False
 
-    @_safeMethod
-    def callUserFn(self, fnName, args, kwargs=None):
-        if kwargs is None:
-            kwargs = dict()
+    def getPosArgCount(self, fn):
+        fn_code = fn.__code__
+        pos_count = fn_code.co_argcount
+        arg_names = fn_code.co_varnames
+        return len(arg_names[:pos_count])
 
-        if fnName in self.userGlobals:
-            (self.userGlobals[fnName])(*args, **kwargs)
+    def getFnNameAndLanguage(self, enFnName):
+        if enFnName in self.userGlobals:
+            return enFnName, 'en'
 
         for language in shape_logic.TRANSLATED_USER_FUNCTION_NAMES:
             if language == 'keys': continue
-            if fnName in shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language]:
-                fnTranslations = shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language][fnName]
+            if enFnName in shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language]:
+                fnTranslations = shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language][enFnName]
                 for fnTranslation in fnTranslations:
                     if (fnTranslation in self.userGlobals):
-                        if fnName == 'onKeyHold':
-                            args = ([translateKeyName(x, language) for x in args[0]], )
-                        elif fnName in ['onKeyPress', 'onKeyRelease']:
-                            args = (translateKeyName(args[0], language), )
-                        return self.userGlobals[fnTranslation](*args, **kwargs)
+                        return fnTranslation, language
+
+        return None, None
+
+    def translateEventHandlerArgs(self, enFnName, language, args):
+        if enFnName == 'onKeyHold':
+            args = ([translateKeyName(x, language) for x in args[0]], )
+        elif enFnName in ('onKeyPress', 'onKeyRelease'):
+            args = (translateKeyName(args[0], language), args[1])
+
+        return args
+
+    def getEventHandlerArgs(self, enFnName, language, fn, args, kwargs):
+        if language != 'en':
+            args = self.translateEventHandlerArgs(enFnName, language, args)
+
+        if self._isMvc:
+            args = (self._wrapper,) + args
+
+        if enFnName in ('onKeyPress', 'onKeyRelease'):
+            if self.getPosArgCount(fn) < len(args):
+                args = args[:-1]
+
+        return args, kwargs
 
     @_safeMethod
-    def cs3CallUserFn(self, fnName, args, kwargs=None):
+    def callUserFn(self, enFnName, args, kwargs=None):
         if kwargs is None:
             kwargs = dict()
 
-        fnName0 = fnName
-        if self.mode not in [None, '']:
-            fnName = self.mode + fnName[0].upper() + fnName[1:]
-        if fnName in self.userGlobals:
-            (self.userGlobals[fnName])(self._wrapper, *args, **kwargs)
-            if (not fnName0.endswith('redrawAll')): self.redrawAllWrapper()
+        fnName, language = self.getFnNameAndLanguage(enFnName)
+        if fnName is None:
+            return
+
+        fn = self.userGlobals[fnName]
+        args, kwargs = self.getEventHandlerArgs(enFnName, language, fn, args, kwargs)
+
+        fn(*args, **kwargs)
+
+        if self._isMvc and enFnName != 'redrawAll':
+            self.redrawAllWrapper()
 
     def redrawAllWrapper(self):
         self.group.clear()
 
         self.inRedrawAll = True
-        self.callUserFn('redrawAll', [ ])
+        self.callUserFn('redrawAll', ())
         self.inRedrawAll = False
 
     @staticmethod
-    def getKey(keyCode, modifier):
+    def getKey(keyCode, modifierMask):
         keyNameMap = { pygame.K_TAB: 'tab', pygame.K_RETURN: 'enter', pygame.K_BACKSPACE: 'backspace',
                        pygame.K_DELETE: 'delete', pygame.K_ESCAPE: 'escape', pygame.K_SPACE: 'space',
                        pygame.K_RIGHT: 'right', pygame.K_LEFT: 'left', pygame.K_UP: 'up', pygame.K_DOWN: 'down',
@@ -299,7 +325,7 @@ class App(object):
         # Punctuation, numbers, and letters
         if 33 < keyCode < 127:
             key = chr(keyCode)
-            if (modifier & pygame.KMOD_SHIFT):
+            if (modifierMask & pygame.KMOD_SHIFT):
                 key = shiftMap.get(key, key).upper()
             return key
         return keyNameMap.get(keyCode, None)
@@ -315,23 +341,34 @@ class App(object):
 
         self.redrawAll(self._screen, cairo_surface, ctx)
 
-    def handleKeyPress(self, keyCode, modifier):
-        key = App.getKey(keyCode, modifier)
+    def getModifiers(self, modifierMask):
+        modifiers = set()
+        if (modifierMask & pygame.KMOD_SHIFT):
+            modifiers.add('shift')
+        if (modifierMask & pygame.KMOD_CTRL):
+            modifiers.add('control')
+        if (modifierMask & pygame.KMOD_META):
+            modifiers.add('meta')
+        return modifiers
+
+    def handleKeyPress(self, keyCode, modifierMask):
+        key = App.getKey(keyCode, modifierMask)
 
         if key == 'ctrl':
             self.isCtrlKeyDown = True
             return
         if key is None: return
-        if key == 'space' and (modifier & pygame.KMOD_SHIFT):
+        if key == 'space' and (modifierMask & pygame.KMOD_SHIFT):
             self.paused = not self.paused
             return
 
         self._allKeysDown.add(key)
 
-        self.callUserFn('onKeyPress', (key,))
+        modifiers = self.getModifiers(modifierMask)
+        self.callUserFn('onKeyPress', (key, modifiers))
 
-    def handleKeyRelease(self, keyCode, modifier):
-        key = App.getKey(keyCode, modifier)
+    def handleKeyRelease(self, keyCode, modifierMask):
+        key = App.getKey(keyCode, modifierMask)
 
         if key == 'ctrl':
             self.isCtrlKeyDown = False
@@ -340,7 +377,8 @@ class App(object):
         if key.upper() in self._allKeysDown: self._allKeysDown.remove(key.upper())
         if key.lower() in self._allKeysDown: self._allKeysDown.remove(key.lower())
 
-        self.callUserFn('onKeyRelease', (key,))
+        modifiers = self.getModifiers(modifierMask)
+        self.callUserFn('onKeyRelease', (key, modifiers))
 
     def redrawAll(self, screen, cairo_surface, ctx):
         shape = shape_logic.Rect({
@@ -666,7 +704,7 @@ If you'd like to use CS3 Mode, please use drawing functions
 Otherwise, please call cmu_graphics.run() in place of runApp.
 ****************************************************************************''')
 
-    app._app.callUserFn('onAppStart', [ ], kwargs)
+    app._app.callUserFn('onAppStart', (), kwargs)
     app._app.redrawAllWrapper() # Draw even if there are no events
 
     run()
@@ -810,7 +848,6 @@ def setupMvc():
 
     addExportedGlobal('getImageSize', getImageSize)
     addExportedGlobal('setActiveScreen', setActiveScreen)
-    App.callUserFn = App.cs3CallUserFn
     AppWrapper.readWriteAttrs.remove('paused')
     AppWrapper.allAttrs.remove('paused')
 
@@ -834,7 +871,7 @@ def onKeyHolds(keys, n):
 
 def onKeyPresses(key, n):
     for _ in range(n):
-        callUserFn('onKeyPress', key)
+        callUserFn('onKeyPress', key, set())
 
 def loop():
     run()
