@@ -386,21 +386,15 @@ class App(object):
                 self.isCtrlKeyDown)
         )
 
-    def __init__(self, width=400, height=400, title=None):
+    def __init__(self):
         self.userGlobals = __main__.__dict__
-        if title is None:
-            try:
-                self.title, _ = os.path.splitext(os.path.basename(os.path.realpath(__main__.__file__)))
-            except:
-                self.title = "CMU CS Academy"
-        else:
-            self.title = title
+        try:
+            self.title, _ = os.path.splitext(os.path.basename(os.path.realpath(__main__.__file__)))
+        except:
+            self.title = "CMU CS Academy"
 
-        self.left = self.top = 0
-        self.centerX = width / 2
-        self.centerY = height / 2
-        self.width = self.right = width
-        self.height = self.bottom = height
+        self._width = 400
+        self._height = 400
         self._allKeysDown = set()
         self.background = None
 
@@ -452,6 +446,61 @@ class App(object):
         return sli.slSetAppProperty('maxShapeCount', value)
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
+    def onResize(self, newScreen=True):
+        if not self._running:
+            return
+        self.updateScreen(newScreen)
+        self.callUserFn('onResize', ())
+        self.redrawAllWrapper()
+
+    def getLeft(self):
+        return 0
+    def setLeft(self, value):
+        raise Exception('App.left is readonly')
+    left = property(getLeft, setLeft)
+
+    def getRight(self):
+        return self._width
+    def setRight(self, value):
+        if not self._isMvc:
+            raise Exception('App.right is readonly')
+        self._width = value
+        self.onResize()
+    right = property(getRight, setRight)
+
+    def getTop(self):
+        return 0
+    def setTop(self, value):
+        raise Exception(t('App.top is readonly'))
+    top = property(getTop, setTop)
+
+    def getBottom(self):
+        return self._height
+    def setBottom(self, value):
+        if not self._isMvc:
+            raise Exception('App.bottom is readonly')
+        self._height = value
+        self.onResize()
+    bottom = property(getBottom, setBottom)
+
+    def getWidth(self):
+        return self._width
+    def setWidth(self, value):
+        if not self._isMvc:
+            raise Exception('App.width is readonly')
+        self._width = value
+        self.onResize()
+    width = property(getWidth, setWidth)
+
+    def getHeight(self):
+        return self._height
+    def setHeight(self, value):
+        if not self._isMvc:
+            raise Exception('App.height is readonly')
+        self._height = value
+        self.onResize()
+    height = property(getHeight, setHeight)
+
     def stop(self):
         self._stopped = True
 
@@ -481,6 +530,12 @@ class App(object):
             cwd=current_directory)
         return p
 
+    def updateScreen(self, newScreen):
+        if newScreen:
+            self._screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+        self._cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
+        self._ctx = cairo.Context(self._cairo_surface)
+
     @_safeMethod
     def run(self):
         ### ZIPFILE VERSION ###
@@ -495,10 +550,8 @@ class App(object):
         pygame.init()
         pygame.display.set_caption(self.title)
 
-        # Make antialiasing possible
-        self._screen = pygame.display.set_mode((self.width,self.height))
-        cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
-        ctx = cairo.Context(cairo_surface)
+        self._screen = None
+        self.updateScreen(True)
 
         lastTick = 0
         self._running = True
@@ -531,6 +584,10 @@ class App(object):
                         key = App.getKey(event.key, event.mod)
                         if key == 'ctrl':
                             self.isCtrlKeyDown = (event.type == pygame.KEYDOWN)
+                    elif event.type == pygame.VIDEORESIZE:
+                        self._width = event.w
+                        self._height = event.h
+                        self.onResize(False)
 
                 should_redraw = had_event
 
@@ -544,7 +601,7 @@ class App(object):
                         should_redraw = True
 
                 if should_redraw:
-                    self.redrawAll(self._screen, cairo_surface, ctx)
+                    self.redrawAll(self._screen, self._cairo_surface, self._ctx)
 
                 pygame.time.wait(1)
 
