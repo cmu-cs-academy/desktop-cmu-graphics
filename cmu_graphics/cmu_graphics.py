@@ -281,7 +281,7 @@ class App(object):
         if self._isMvc:
             args = (self._wrapper,) + args
 
-        if enFnName in ('onKeyPress', 'onKeyRelease'):
+        if enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold'):
             if self.getPosArgCount(fn) < len(args):
                 args = args[:-1]
 
@@ -349,15 +349,18 @@ class App(object):
             modifiers.add('control')
         if (modifierMask & pygame.KMOD_META):
             modifiers.add('meta')
+        if (modifierMask & pygame.KMOD_ALT):
+            modifiers.add('alt')
         return modifiers
 
     def handleKeyPress(self, keyCode, modifierMask):
+        self._modifiers = self.getModifiers(modifierMask)
         key = App.getKey(keyCode, modifierMask)
 
+        if key is None: return
         if key == 'ctrl':
             self.isCtrlKeyDown = True
             return
-        if key is None: return
         if key == 'space' and (modifierMask & pygame.KMOD_SHIFT):
             self.paused = not self.paused
             return
@@ -368,12 +371,13 @@ class App(object):
         self.callUserFn('onKeyPress', (key, modifiers))
 
     def handleKeyRelease(self, keyCode, modifierMask):
+        self._modifiers = self.getModifiers(modifierMask)
         key = App.getKey(keyCode, modifierMask)
 
+        if key is None: return
         if key == 'ctrl':
             self.isCtrlKeyDown = False
             return
-        if key is None: return
         if key.upper() in self._allKeysDown: self._allKeysDown.remove(key.upper())
         if key.lower() in self._allKeysDown: self._allKeysDown.remove(key.lower())
 
@@ -434,6 +438,7 @@ class App(object):
         self._width = 400
         self._height = 400
         self._allKeysDown = set()
+        self._modifiers = set()
         self.background = None
 
         self._stepsPerSecond = 30
@@ -635,7 +640,7 @@ class App(object):
                     if not (self.paused or self.stopped):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
-                            self.callUserFn('onKeyHold', (list(self._allKeysDown),))
+                            self.callUserFn('onKeyHold', (list(self._allKeysDown), set(self._modifiers)))
                         should_redraw = True
 
                 if should_redraw:
@@ -867,7 +872,7 @@ def onSteps(n):
 def onKeyHolds(keys, n):
     assert isinstance(keys, list), t('keys must be a list')
     for _ in range(n):
-        callUserFn('onKeyHold', keys)
+        callUserFn('onKeyHold', keys, set())
 
 def onKeyPresses(key, n):
     for _ in range(n):
