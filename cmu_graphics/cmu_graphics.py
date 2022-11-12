@@ -349,8 +349,6 @@ class App(object):
             modifiers.add('control')
         if (modifierMask & pygame.KMOD_META):
             modifiers.add('meta')
-        if (modifierMask & pygame.KMOD_ALT):
-            modifiers.add('alt')
         return modifiers
 
     def handleKeyPress(self, keyCode, modifierMask):
