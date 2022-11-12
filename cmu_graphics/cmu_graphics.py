@@ -252,6 +252,10 @@ class App(object):
         arg_names = fn_code.co_varnames
         return len(arg_names[:pos_count])
 
+    def usesControl(self, fn):
+        fn_code = fn.__code__
+        return 'control' in fn_code.co_consts
+
     def getFnNameAndLanguage(self, enFnName):
         if enFnName in self.userGlobals:
             return enFnName, 'en'
@@ -284,6 +288,12 @@ class App(object):
         if enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold'):
             if self.getPosArgCount(fn) < len(args):
                 args = args[:-1]
+            elif self.shouldPrintCtrlWarning and self.usesControl(fn):
+                print('INFO: To use the control key in your app without')
+                print('enabling the inspector, set app.inspectorEnabled')
+                print('to False. To stop this message from printing,')
+                print('set app.inspectorEnabled to True.')
+                self.shouldPrintCtrlWarning = False
 
         return args, kwargs
 
@@ -450,7 +460,8 @@ class App(object):
         self.textInputs = []
 
         self.inspector = shape_logic.Inspector(self)
-        self.inspectorEnabled = True
+        self._inspectorEnabled = True
+        self.shouldPrintCtrlWarning = True
         self.alwaysShowInspector = False
         self.isCtrlKeyDown = False
 
@@ -541,6 +552,13 @@ class App(object):
         self._height = value
         self.onResize()
     height = property(getHeight, setHeight)
+
+    def get_inspectorEnabled(self):
+        return self._inspectorEnabled
+    def set_inspectorEnabled(self, value):
+        self.shouldPrintCtrlWarning = False
+        self._inspectorEnabled = value
+    inspectorEnabled = property(get_inspectorEnabled, set_inspectorEnabled)
 
     def stop(self):
         self._stopped = True
@@ -658,7 +676,7 @@ class AppWrapper(object):
                          'printFullTracebacks'])
     readWriteAttrs = set(['height', 'paused', 'stepsPerSecond', 'group',
                           'title', 'width', 'mode', 'background',
-                          'beatsPerMinute', 'maxShapeCount' ])
+                          'beatsPerMinute', 'maxShapeCount', 'inspectorEnabled' ])
     allAttrs = readOnlyAttrs | readWriteAttrs
 
     def __init__(self, app):
