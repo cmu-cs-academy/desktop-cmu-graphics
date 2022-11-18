@@ -352,13 +352,13 @@ class App(object):
         self.redrawAll(self._screen, cairo_surface, ctx)
 
     def getModifiers(self, modifierMask):
-        modifiers = set()
+        modifiers = list()
         if (modifierMask & pygame.KMOD_SHIFT):
-            modifiers.add('shift')
+            modifiers.append('shift')
         if (modifierMask & pygame.KMOD_CTRL):
-            modifiers.add('control')
+            modifiers.append('control')
         if (modifierMask & pygame.KMOD_META):
-            modifiers.add('meta')
+            modifiers.append('meta')
         return modifiers
 
     def handleKeyPress(self, keyCode, modifierMask):
@@ -851,12 +851,6 @@ def setupMvc():
 
     for fnName in ['rounded', 'almostEqual']:
         delHelperFunction(fnName)
-
-    # These functions are normally provided by "from cmu_graphics import *" but
-    # we want to hide them in CS3. Also hide translations of the functions
-    # that would otherwise be recommended in the NameError.
-    for fnName in ['random', 'randrange', 'choice', 'choix', 'seed', 'distance', 'distancia', 'distanz']:
-        delUserGlobal(fnName)
 
     # Modify onSteps, onKeyholds, onKeyPresses so they take in app as parameter
     def modifyMultiStepsFn(origFn):
