@@ -399,10 +399,11 @@ class App(object):
         cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
         ctx = cairo.Context(cairo_surface)
 
-        Rect(0, 0, self.width, self.height, fill=None, border='red', borderWidth=2)
-        Rect(10, self.height - 60, self.width - 20, 50, fill='white', border='red', borderWidth=4)
-        Label('Exception! App Stopped!', self.width / 2, self.height - 45, size=12, bold=True, font='Arial', fill='red')
-        Label('See console for details', self.width / 2, self.height - 25, size=12, bold=True, font='Arial', fill='red')
+        with NoMvc():
+            Rect(0, 0, self.width, self.height, fill=None, border='red', borderWidth=2)
+            Rect(10, self.height - 60, self.width - 20, 50, fill='white', border='red', borderWidth=4)
+            Label('Exception! App Stopped!', self.width / 2, self.height - 45, size=12, bold=True, font='Arial', fill='red')
+            Label('See console for details', self.width / 2, self.height - 25, size=12, bold=True, font='Arial', fill='red')
 
         self.redrawAll(self._screen, cairo_surface, ctx)
 
