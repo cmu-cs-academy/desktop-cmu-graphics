@@ -51,6 +51,10 @@ class Shape(object, metaclass=_ShapeMetaclass):
     _init_attrs = {'fill', 'border', 'borderWidth', 'opacity', 'rotateAngle', 'dashes', 'align', 'visible', 'db'}
 
     def __init__(self, clsName, argNames, args, kwargs):
+        if app is not None and app._app._isMvc:
+            shapeName = self.__class__.__name__
+            raise NotImplementedError(f"Whoops! {shapeName} objects are not available in CS3 Mode. Did you want draw{shapeName}?")
+
         global SHAPES_CREATED
         SHAPES_CREATED += 1
 
@@ -166,6 +170,8 @@ class Group(Shape):
     _init_attrs = {'visible', 'db'}
 
     def __init__(self, *args, **kwargs):
+        if app is not None and app._app._isMvc:
+            raise NotImplementedError("Whoops! Group objects are not available in CS3 Mode.")
         super().__init__('Group', [ ], [ ], kwargs)
         for shape in args: self.add(shape)
 
@@ -212,29 +218,32 @@ SHAPES = {
     'Group': Group,
 }
 
+class NoMvc():
+    def __enter__(self):
+        self.oldMvc = app._app._isMvc
+        app._app._isMvc = False
+
+    def __exit__(self, excType, excValue, tb):
+        app._app._isMvc = self.oldMvc
+
 def makeDrawFn(shape):
     def drawFn(*args, **kwargs):
         if (not app._app._isMvc):
             raise Exception(f'You called draw{shape.__name__} (a CS3 Mode function) outside of redrawAll.')
         if (not app._app.inRedrawAll):
             raise MvcException('Cannot draw (modify the view) outside of redrawAll')
-        shape(*args, **kwargs)
+        with NoMvc():
+            shape(*args, **kwargs)
     return drawFn
 
 def makeInvisibleConstructor(shape):
     def constructor(*args, **kwargs):
         if (not app._app._isMvc):
             raise Exception(f'You called {shape.__name__}Shape (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp().')
-        result = shape(*args, **kwargs)
+        with NoMvc():
+            result = shape(*args, **kwargs)
         result.visible = False
         return result
-    return constructor
-
-def makeConstructor(shape):
-    def constructor(*args, **kwargs):
-        if app._app._isMvc:
-            raise NotImplementedError(f"Whoops! {shape.__name__} objects are not available in CS3 Mode. Did you want draw{shape.__name__}?")
-        return shape(*args, **kwargs)
     return constructor
 
 def createDrawingFunctions():
@@ -242,14 +251,8 @@ def createDrawingFunctions():
     for shapeName, shape in SHAPES.items():
         if shapeName == 'Group':
             continue
-        g[shapeName] = makeConstructor(shape)
         g['draw' + shapeName] = makeDrawFn(shape)
         g[shapeName + 'Shape'] = makeInvisibleConstructor(shape)
-
-def Group(*args, **kwargs):
-    if app is not None and app._app._isMvc:
-        raise NotImplementedError("Whoops! Group objects are not available in CS3 Mode.")
-    return SHAPES['Group'](*args, **kwargs)
 
 createDrawingFunctions()
 
