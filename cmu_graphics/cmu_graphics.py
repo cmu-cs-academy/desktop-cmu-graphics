@@ -198,8 +198,60 @@ class Sound(object):
     def pause(self):
         self.sound.pause()
 
-SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
-            Polygon, Rect, RegularPolygon, Star, ]
+SHAPES = {
+    'Arc': Arc,
+    'Circle': Circle,
+    'Image': Image,
+    'Label': Label,
+    'Line': Line,
+    'Oval': Oval,
+    'Polygon': Polygon,
+    'Rect': Rect,
+    'RegularPolygon': RegularPolygon,
+    'Star': Star,
+    'Group': Group,
+}
+
+def makeDrawFn(shape):
+    def drawFn(*args, **kwargs):
+        if (not app._app._isMvc):
+            raise Exception(f'You called draw{shape.__name__} (a CS3 Mode function) outside of redrawAll.')
+        if (not app._app.inRedrawAll):
+            raise MvcException('Cannot draw (modify the view) outside of redrawAll')
+        shape(*args, **kwargs)
+    return drawFn
+
+def makeInvisibleConstructor(shape):
+    def constructor(*args, **kwargs):
+        if (not app._app._isMvc):
+            raise Exception(f'You called {shape.__name__}Shape (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp().')
+        result = shape(*args, **kwargs)
+        result.visible = False
+        return result
+    return constructor
+
+def makeConstructor(shape):
+    def constructor(*args, **kwargs):
+        if app._app._isMvc:
+            raise NotImplementedError(f"Whoops! {shape.__name__} objects are not available in CS3 Mode. Did you want draw{shape.__name__}?")
+        return shape(*args, **kwargs)
+    return constructor
+
+def createDrawingFunctions():
+    g = globals()
+    for shapeName, shape in SHAPES.items():
+        if shapeName == 'Group':
+            continue
+        g[shapeName] = makeConstructor(shape)
+        g['draw' + shapeName] = makeDrawFn(shape)
+        g[shapeName + 'Shape'] = makeInvisibleConstructor(shape)
+
+def Group(*args, **kwargs):
+    if app is not None and app._app._isMvc:
+        raise NotImplementedError("Whoops! Group objects are not available in CS3 Mode.")
+    return SHAPES['Group'](*args, **kwargs)
+
+createDrawingFunctions()
 
 class KeyName(str):
     def __init__(self, baseKey):
@@ -731,6 +783,8 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
     run()
 
 def setActiveScreen(screen):
+    if (not app._app._isMvc):
+        raise Exception('You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().')
     if (screen in [None, '']) or (not isinstance(screen, str)):
         raise Exception(f'{repr(screen)} is not a valid screen')
     redrawAllFnName = f'{screen}_redrawAll'
@@ -796,97 +850,51 @@ def getImageSize(url):
 def setupMvc():
     app._app._isMvc = True
     app._app.inRedrawAll = False
-    userGlobals = app._app.userGlobals
-
-    def makeDrawFn(shape):
-        def drawFn(*args, **kwargs):
-            if (not app._app.inRedrawAll):
-                raise MvcException('Cannot draw (modify the view) outside of redrawAll')
-            shape(*args, **kwargs)
-        return drawFn
-
-    def makeInvisibleConstructor(shape):
-        def constructor(*args, **kwargs):
-            result = shape(*args, **kwargs)
-            result.visible = False
-            return result
-        return constructor
-
-    def delShapeConstructor(shapeName):
-        def errFn(*args, **kwargs):
-            raise NotImplementedError(f"Whoops! {shapeName} objects are not available in CS3. Did you want draw{shapeName}?")
-        addExportedGlobal(shapeName, errFn)
-
-    def delHelperFunction(fnName):
-        def errFn(*args, **kwargs):
-            raise NameError(f"name {fnName} is not defined. Did you forget to import it from cmu_cs3_utils?")
-        addExportedGlobal(fnName, errFn)
-
-    def userDefinedGlobal(var):
-        if not var in userGlobals:
-            return False
-        
-        value = userGlobals[var]
-        module = getattr(value, '__module__', None) 
-
-        # The user imported a module with this name (like random)
-        # or they defined a function in their own code (like distance)
-        return isinstance(value, types.ModuleType) or module == '__main__'
-
-    def delUserGlobal(var):
-        if var in userGlobals and not userDefinedGlobal(var):
-            del userGlobals[var]
-
-    def addExportedGlobal(var, value):
-        if not userDefinedGlobal(var):
-            userGlobals[var] = value
-
-    for shape in SHAPES:
-        delShapeConstructor(shape.__name__)
-        addExportedGlobal(shape.__name__ + 'Shape', makeInvisibleConstructor(shape))
-        addExportedGlobal('draw' + shape.__name__, makeDrawFn(shape))
-
-    for var in ['Group', 'app']:
-        delUserGlobal(var)
-
-    for fnName in ['rounded', 'almostEqual']:
-        delHelperFunction(fnName)
-
-    # Modify onSteps, onKeyholds, onKeyPresses so they take in app as parameter
-    def modifyMultiStepsFn(origFn):
-        def newFn(app, *args):
-            return origFn(*args)
-        return newFn
-
-    for function in [onSteps,onKeyHolds,onKeyPresses]:
-        addExportedGlobal(function.__name__, modifyMultiStepsFn(function))
-
-    addExportedGlobal('getImageSize', getImageSize)
-    addExportedGlobal('setActiveScreen', setActiveScreen)
+    del app._app.userGlobals['app']
     AppWrapper.readWriteAttrs.remove('paused')
     AppWrapper.allAttrs.remove('paused')
 
-def injectTempDrawFn(drawFnName):
-    def drawFn(*args, **kwargs):
-        raise Exception(f'You called {drawFnName} (a CS3 Mode function) outside of redrawAll.')
-    __main__.__dict__[drawFnName] = drawFn
+def processArgs(fname, params, args):
+    # Check for too many positional arguments
+    if len(args) > len(params):
+        argStr = 'argument' if len(params) == 1 else 'arguments'
+        raise TypeError(f'{fname}() takes {len(params)} positional {argStr} but more were given')
 
-def injectTempDrawFns():
-    for shape in SHAPES:
-        injectTempDrawFn('draw' + shape.__name__)
-        
+    # Check for not enough positional arguments
+    if len(params) > len(args):
+        missingCount = len(params) - len(args)
+        argStr = 'argument' if missingCount == 1 else 'arguments'
+        paramsStr = ', '.join([repr(param) for param in params[len(args):]])
+        raise TypeError(f'{fname}() missing {missingCount} required positional {argStr}: {paramsStr}')
+
+def eventHandlerRepeater(params):
+    def decorator(f):
+        def g(*args):
+            testParams = params
+            if app._app._isMvc:
+                testParams = ('app',) + testParams
+            processArgs(f.__name__, testParams, args)
+            if app._app._isMvc:
+                args = args[1:]
+            f(*args)
+        return g
+    return decorator
+
+@eventHandlerRepeater(('n',))
 def onSteps(n):
     for _ in range(n):
-        callUserFn('onStep')
+        app._app.callUserFn('onStep', ())
 
+@eventHandlerRepeater(('keys', 'n'))
 def onKeyHolds(keys, n):
     assert isinstance(keys, list), t('keys must be a list')
     for _ in range(n):
-        callUserFn('onKeyHold', keys, set())
+        app._app.callUserFn('onKeyHold', (keys, set()))
 
+@eventHandlerRepeater(('key', 'n'))
 def onKeyPresses(key, n):
     for _ in range(n):
-        callUserFn('onKeyPress', key, set())
+        app._app.callUserFn('onKeyPress', (key, set()))
 
 def loop():
     run()
@@ -1101,6 +1109,6 @@ def check_for_exit_without_run():
 """)
         print(" ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n")
 
-injectTempDrawFns()
+app = None
 app = AppWrapper(App())
 atexit.register(check_for_exit_without_run)

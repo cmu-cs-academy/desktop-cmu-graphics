@@ -14,6 +14,26 @@ from cmu_graphics.cmu_graphics import (
     Rect,
     RegularPolygon,
     Star,
+    drawArc,
+    drawCircle,
+    drawImage,
+    drawLabel,
+    drawLine,
+    drawOval,
+    drawPolygon,
+    drawRect,
+    drawRegularPolygon,
+    drawStar,
+    ArcShape,
+    CircleShape,
+    ImageShape,
+    LabelShape,
+    LineShape,
+    OvalShape,
+    PolygonShape,
+    RectShape,
+    RegularPolygonShape,
+    StarShape,
     Sound,
     gradient,
     rgb,
@@ -29,6 +49,8 @@ from cmu_graphics.cmu_graphics import (
     Robot,
     runApp,
     runAppWithScreens,
+    setActiveScreen,
+    getImageSize,
 )
 
 from cmu_graphics.utils import (
@@ -58,6 +80,8 @@ from cmu_graphics.shape_logic import (
 )
 
 __all__ = TRANSLATED_GLOBALS['keys']
+__all__.extend(['setLanguage', 'cmu_graphics', 'runApp', 'runAppWithScreens', 'setActiveScreen', 'getImageSize'])
+__all__.extend(['drawArc', 'ArcShape', 'drawCircle', 'CircleShape', 'drawImage', 'ImageShape', 'drawLabel', 'LabelShape', 'drawLine', 'LineShape', 'drawOval', 'OvalShape', 'drawPolygon', 'PolygonShape', 'drawRect', 'RectShape', 'drawRegularPolygon', 'RegularPolygonShape', 'drawStar', 'StarShape'])
 
 g = globals()
 for language in TRANSLATED_GLOBALS:
@@ -67,11 +91,6 @@ for language in TRANSLATED_GLOBALS:
                 for accent_combination in accentCombinations(trans_name):
                     g[accent_combination] = g[en_name]
                     __all__.append(accent_combination)
-
-__all__.append('setLanguage')
-__all__.append('cmu_graphics')
-__all__.append('runApp')
-__all__.append('runAppWithScreens')
 
 for language in TRANSLATED_BOOLEANS:
     if language != 'keys':
