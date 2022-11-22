@@ -4,6 +4,7 @@ cmu_graphics/meta/updates.json
 tests/image_gen/**/diff*.png
 tests/image_gen/**/output*.png
 tests/report.html
+image_gen
 report.html
 pypi_upload
 cmu_graphics_installer.zip
