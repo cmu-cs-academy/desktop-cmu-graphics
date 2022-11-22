@@ -1,3 +1,4 @@
+import inspect
 import types
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
@@ -204,19 +205,13 @@ class Sound(object):
     def pause(self):
         self.sound.pause()
 
-SHAPES = {
-    'Arc': Arc,
-    'Circle': Circle,
-    'Image': Image,
-    'Label': Label,
-    'Line': Line,
-    'Oval': Oval,
-    'Polygon': Polygon,
-    'Rect': Rect,
-    'RegularPolygon': RegularPolygon,
-    'Star': Star,
-    'Group': Group,
-}
+SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
+            Polygon, Rect, RegularPolygon, Star, ]
+
+APP_FN_NAMES = ['onAppStart',
+                  'onKeyPress', 'onKeyHold', 'onKeyRelease',
+                  'onMousePress', 'onMouseDrag', 'onMouseRelease',
+                  'onMouseMove', 'onStep', 'redrawAll']
 
 class NoMvc():
     def __enter__(self):
@@ -248,7 +243,8 @@ def makeInvisibleConstructor(shape):
 
 def createDrawingFunctions():
     g = globals()
-    for shapeName, shape in SHAPES.items():
+    for shape in SHAPES:
+        shapeName = shape.__name__
         if shapeName == 'Group':
             continue
         g['draw' + shapeName] = makeDrawFn(shape)
@@ -522,6 +518,7 @@ class App(object):
         self.isCtrlKeyDown = False
 
         self._isMvc = False
+        self._ranWithScreens = False
 
     def get_group(self):
         return self._tlg
@@ -712,7 +709,7 @@ class App(object):
                     if not (self.paused or self.stopped):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
-                            self.callUserFn('onKeyHold', (list(self._allKeysDown), set(self._modifiers)))
+                            self.callUserFn('onKeyHold', (list(self._allKeysDown), list(self._modifiers)))
                         should_redraw = True
 
                 if should_redraw:
@@ -764,6 +761,13 @@ class AppWrapper(object):
         return super().__setattr__(attr, value)
 
 def runApp(width=400, height=400, **kwargs):
+    if not app._app._ranWithScreens:
+        for appFnName in APP_FN_NAMES:
+            screenAppSuffix = f'_{appFnName}'
+            for globalVarName in app._app.userGlobals:
+                if globalVarName.endswith(screenAppSuffix):
+                    raise Exception(f'The name of your function "{globalVarName}" ends with "{screenAppSuffix}", which is only allowed if you are using "screens" in CS3 Mode. To run an app with screens, call runAppWithScreens() instead of runApp().')
+
     setupMvc()
     app.width = width
     app.height = height
@@ -799,13 +803,8 @@ def setActiveScreen(screen):
 def runAppWithScreens(initialScreen, *args, **kwargs):
     userGlobals = app._app.userGlobals
 
-    appFnNames = ['onAppStart',
-                  'onKeyPress', 'onKeyHold', 'onKeyRelease',
-                  'onMousePress', 'onMouseDrag', 'onMouseRelease',
-                  'onMouseMove', 'onStep', 'redrawAll']
-
     def checkForAppFns():
-        for appFnName in appFnNames:
+        for appFnName in APP_FN_NAMES:
             if appFnName in userGlobals:
                 raise Exception(f'Do not define {appFnName} when using screens')
 
@@ -834,14 +833,16 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
             return appFnWrapper
 
     def wrapScreenFns():
-        for appFnName in appFnNames:
+        for appFnName in APP_FN_NAMES:
             screenFnNames = getScreenFnNames(appFnName)
             if (screenFnNames != [ ]) or (appFnName == 'onAppStart'):
                 userGlobals[appFnName] = makeAppFnWrapper(appFnName)
 
     def go():
+        app._app._ranWithScreens = True
         checkForAppFns()
         wrapScreenFns()
+        app._app._isMvc = True
         setActiveScreen(initialScreen)
         runApp(*args, **kwargs)
 
@@ -871,34 +872,34 @@ def processArgs(fname, params, args):
         paramsStr = ', '.join([repr(param) for param in params[len(args):]])
         raise TypeError(f'{fname}() missing {missingCount} required positional {argStr}: {paramsStr}')
 
-def eventHandlerRepeater(params):
-    def decorator(f):
-        def g(*args):
-            testParams = params
-            if app._app._isMvc:
-                testParams = ('app',) + testParams
-            processArgs(f.__name__, testParams, args)
-            if app._app._isMvc:
-                args = args[1:]
-            f(*args)
-        return g
-    return decorator
+def eventHandlerRepeater(f):
+    sig = inspect.signature(f)
+    params = tuple(sig.parameters.keys())
+    def g(*args):
+        testParams = params
+        if app._app._isMvc:
+            testParams = ('app',) + testParams
+        processArgs(f.__name__, testParams, args)
+        if app._app._isMvc:
+            args = args[1:]
+        f(*args)
+    return g
 
-@eventHandlerRepeater(('n',))
+@eventHandlerRepeater
 def onSteps(n):
     for _ in range(n):
         app._app.callUserFn('onStep', ())
 
-@eventHandlerRepeater(('keys', 'n'))
+@eventHandlerRepeater
 def onKeyHolds(keys, n):
     assert isinstance(keys, list), t('keys must be a list')
     for _ in range(n):
-        app._app.callUserFn('onKeyHold', (keys, set()))
+        app._app.callUserFn('onKeyHold', (keys, []))
 
-@eventHandlerRepeater(('key', 'n'))
+@eventHandlerRepeater
 def onKeyPresses(key, n):
     for _ in range(n):
-        app._app.callUserFn('onKeyPress', (key, set()))
+        app._app.callUserFn('onKeyPress', (key, []))
 
 def loop():
     run()

@@ -29,3 +29,14 @@ def onMousePress(app, mouseX, mouseY):
 # ^ included to trick the test_image_gen harness into giving us some extra
 # wiggle room. The red error box does include labels, so the Windows result
 # looks a litttle different from the mac one.
+
+# -
+
+# app.paused should not be available in CS3 mode
+def onMousePress(app, mouseX, mouseY):
+    print(app.paused)
+
+# Label
+# ^ included to trick the test_image_gen harness into giving us some extra
+# wiggle room. The red error box does include labels, so the Windows result
+# looks a litttle different from the mac one.
