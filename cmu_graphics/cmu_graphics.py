@@ -728,14 +728,13 @@ class AppWrapper(object):
                          'run', 'stop', 'top', 'setMaxShapeCount',
                          'printFullTracebacks'])
     readWriteAttrs = set(['height', 'paused', 'stepsPerSecond', 'group',
-                          'title', 'width', 'mode', 'background',
+                          'title', 'width', 'background',
                           'beatsPerMinute', 'maxShapeCount', 'inspectorEnabled' ])
     allAttrs = readOnlyAttrs | readWriteAttrs
 
     def __init__(self, app):
         self._app = app
         app._wrapper = self
-        app.mode = ''
 
     def __dir__(self):
         fields = set(AppWrapper.allAttrs)
