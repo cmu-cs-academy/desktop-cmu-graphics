@@ -140,6 +140,9 @@ def run_test(driver, test_name, all_source_code):
             test += source_code_pieces[piece_i]
             run_fn = 'runApp()'
 
+        if test_name.endswith('_screens'):
+            run_fn = "runAppWithScreens('a')"
+
         screenshot_thread = '''
 from threading import Thread
 import time

@@ -1,3 +1,4 @@
+import inspect
 import types
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
@@ -51,6 +52,10 @@ class Shape(object, metaclass=_ShapeMetaclass):
     _init_attrs = {'fill', 'border', 'borderWidth', 'opacity', 'rotateAngle', 'dashes', 'align', 'visible', 'db'}
 
     def __init__(self, clsName, argNames, args, kwargs):
+        if app is not None and app._app._isMvc:
+            shapeName = self.__class__.__name__
+            raise NotImplementedError(f"Whoops! {shapeName} objects are not available in CS3 Mode. Did you want draw{shapeName}?")
+
         global SHAPES_CREATED
         SHAPES_CREATED += 1
 
@@ -166,6 +171,8 @@ class Group(Shape):
     _init_attrs = {'visible', 'db'}
 
     def __init__(self, *args, **kwargs):
+        if app is not None and app._app._isMvc:
+            raise NotImplementedError("Whoops! Group objects are not available in CS3 Mode.")
         super().__init__('Group', [ ], [ ], kwargs)
         for shape in args: self.add(shape)
 
@@ -200,6 +207,50 @@ class Sound(object):
 
 SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
             Polygon, Rect, RegularPolygon, Star, ]
+
+APP_FN_NAMES = ['onAppStart',
+                  'onKeyPress', 'onKeyHold', 'onKeyRelease',
+                  'onMousePress', 'onMouseDrag', 'onMouseRelease',
+                  'onMouseMove', 'onStep', 'redrawAll']
+
+class NoMvc():
+    def __enter__(self):
+        self.oldMvc = app._app._isMvc
+        app._app._isMvc = False
+
+    def __exit__(self, excType, excValue, tb):
+        app._app._isMvc = self.oldMvc
+
+def makeDrawFn(shape):
+    def drawFn(*args, **kwargs):
+        if (not app._app._isMvc):
+            raise Exception(f'You called draw{shape.__name__} (a CS3 Mode function) outside of redrawAll.')
+        if (not app._app.inRedrawAll):
+            raise MvcException('Cannot draw (modify the view) outside of redrawAll')
+        with NoMvc():
+            shape(*args, **kwargs)
+    return drawFn
+
+def makeInvisibleConstructor(shape):
+    def constructor(*args, **kwargs):
+        if (not app._app._isMvc):
+            raise Exception(f'You called {shape.__name__}Shape (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp().')
+        with NoMvc():
+            result = shape(*args, **kwargs)
+        result.visible = False
+        return result
+    return constructor
+
+def createDrawingFunctions():
+    g = globals()
+    for shape in SHAPES:
+        shapeName = shape.__name__
+        if shapeName == 'Group':
+            continue
+        g['draw' + shapeName] = makeDrawFn(shape)
+        g[shapeName + 'Shape'] = makeInvisibleConstructor(shape)
+
+createDrawingFunctions()
 
 class KeyName(str):
     def __init__(self, baseKey):
@@ -246,47 +297,83 @@ class App(object):
     def quit(self):
         self._running = False
 
-    @_safeMethod
-    def callUserFn(self, fnName, args, kwargs=None):
-        if kwargs is None:
-            kwargs = dict()
+    def getPosArgCount(self, fn):
+        fn_code = fn.__code__
+        pos_count = fn_code.co_argcount
+        arg_names = fn_code.co_varnames
+        return len(arg_names[:pos_count])
 
-        if fnName in self.userGlobals:
-            (self.userGlobals[fnName])(*args, **kwargs)
+    def usesControl(self, fn):
+        fn_code = fn.__code__
+        return 'control' in fn_code.co_consts
+
+    def getFnNameAndLanguage(self, enFnName):
+        if enFnName in self.userGlobals:
+            return enFnName, 'en'
 
         for language in shape_logic.TRANSLATED_USER_FUNCTION_NAMES:
             if language == 'keys': continue
-            if fnName in shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language]:
-                fnTranslations = shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language][fnName]
+            if enFnName in shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language]:
+                fnTranslations = shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language][enFnName]
                 for fnTranslation in fnTranslations:
                     if (fnTranslation in self.userGlobals):
-                        if fnName == 'onKeyHold':
-                            args = ([translateKeyName(x, language) for x in args[0]], )
-                        elif fnName in ['onKeyPress', 'onKeyRelease']:
-                            args = (translateKeyName(args[0], language), )
-                        return self.userGlobals[fnTranslation](*args, **kwargs)
+                        return fnTranslation, language
+
+        return None, None
+
+    def translateEventHandlerArgs(self, enFnName, language, args):
+        if enFnName == 'onKeyHold':
+            args = ([translateKeyName(x, language) for x in args[0]], )
+        elif enFnName in ('onKeyPress', 'onKeyRelease'):
+            args = (translateKeyName(args[0], language), args[1])
+
+        return args
+
+    def getEventHandlerArgs(self, enFnName, language, fn, args, kwargs):
+        if language != 'en':
+            args = self.translateEventHandlerArgs(enFnName, language, args)
+
+        if self._isMvc:
+            args = (self._wrapper,) + args
+
+        if enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold'):
+            if self.getPosArgCount(fn) < len(args):
+                args = args[:-1]
+            elif self.shouldPrintCtrlWarning and self.usesControl(fn):
+                print('INFO: To use the control key in your app without')
+                print('enabling the inspector, set app.inspectorEnabled')
+                print('to False. To stop this message from printing,')
+                print('set app.inspectorEnabled to True.')
+                self.shouldPrintCtrlWarning = False
+
+        return args, kwargs
 
     @_safeMethod
-    def cs3CallUserFn(self, fnName, args, kwargs=None):
+    def callUserFn(self, enFnName, args, kwargs=None):
         if kwargs is None:
             kwargs = dict()
 
-        fnName0 = fnName
-        if self.mode not in [None, '']:
-            fnName = self.mode + fnName[0].upper() + fnName[1:]
-        if fnName in self.userGlobals:
-            (self.userGlobals[fnName])(self._wrapper, *args, **kwargs)
-            if (not fnName0.endswith('redrawAll')): self.redrawAllWrapper()
+        fnName, language = self.getFnNameAndLanguage(enFnName)
+        if fnName is None:
+            return
+
+        fn = self.userGlobals[fnName]
+        args, kwargs = self.getEventHandlerArgs(enFnName, language, fn, args, kwargs)
+
+        fn(*args, **kwargs)
+
+        if self._isMvc and enFnName != 'redrawAll':
+            self.redrawAllWrapper()
 
     def redrawAllWrapper(self):
         self.group.clear()
 
         self.inRedrawAll = True
-        self.callUserFn('redrawAll', [ ])
+        self.callUserFn('redrawAll', ())
         self.inRedrawAll = False
 
     @staticmethod
-    def getKey(keyCode, modifier):
+    def getKey(keyCode, modifierMask):
         keyNameMap = { pygame.K_TAB: 'tab', pygame.K_RETURN: 'enter', pygame.K_BACKSPACE: 'backspace',
                        pygame.K_DELETE: 'delete', pygame.K_ESCAPE: 'escape', pygame.K_SPACE: 'space',
                        pygame.K_RIGHT: 'right', pygame.K_LEFT: 'left', pygame.K_UP: 'up', pygame.K_DOWN: 'down',
@@ -299,7 +386,7 @@ class App(object):
         # Punctuation, numbers, and letters
         if 33 < keyCode < 127:
             key = chr(keyCode)
-            if (modifier & pygame.KMOD_SHIFT):
+            if (modifierMask & pygame.KMOD_SHIFT):
                 key = shiftMap.get(key, key).upper()
             return key
         return keyNameMap.get(keyCode, None)
@@ -308,39 +395,54 @@ class App(object):
         cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
         ctx = cairo.Context(cairo_surface)
 
-        Rect(0, 0, self.width, self.height, fill=None, border='red', borderWidth=2)
-        Rect(10, self.height - 60, self.width - 20, 50, fill='white', border='red', borderWidth=4)
-        Label('Exception! App Stopped!', self.width / 2, self.height - 45, size=12, bold=True, font='Arial', fill='red')
-        Label('See console for details', self.width / 2, self.height - 25, size=12, bold=True, font='Arial', fill='red')
+        with NoMvc():
+            Rect(0, 0, self.width, self.height, fill=None, border='red', borderWidth=2)
+            Rect(10, self.height - 60, self.width - 20, 50, fill='white', border='red', borderWidth=4)
+            Label('Exception! App Stopped!', self.width / 2, self.height - 45, size=12, bold=True, font='Arial', fill='red')
+            Label('See console for details', self.width / 2, self.height - 25, size=12, bold=True, font='Arial', fill='red')
 
         self.redrawAll(self._screen, cairo_surface, ctx)
 
-    def handleKeyPress(self, keyCode, modifier):
-        key = App.getKey(keyCode, modifier)
+    def getModifiers(self, modifierMask):
+        modifiers = list()
+        if (modifierMask & pygame.KMOD_SHIFT):
+            modifiers.append('shift')
+        if (modifierMask & pygame.KMOD_CTRL):
+            modifiers.append('control')
+        if (modifierMask & pygame.KMOD_META):
+            modifiers.append('meta')
+        return modifiers
 
+    def handleKeyPress(self, keyCode, modifierMask):
+        self._modifiers = self.getModifiers(modifierMask)
+        key = App.getKey(keyCode, modifierMask)
+
+        if key is None: return
         if key == 'ctrl':
             self.isCtrlKeyDown = True
             return
-        if key is None: return
-        if key == 'space' and (modifier & pygame.KMOD_SHIFT):
+        if key == 'space' and (modifierMask & pygame.KMOD_SHIFT):
             self.paused = not self.paused
             return
 
         self._allKeysDown.add(key)
 
-        self.callUserFn('onKeyPress', (key,))
+        modifiers = self.getModifiers(modifierMask)
+        self.callUserFn('onKeyPress', (key, modifiers))
 
-    def handleKeyRelease(self, keyCode, modifier):
-        key = App.getKey(keyCode, modifier)
+    def handleKeyRelease(self, keyCode, modifierMask):
+        self._modifiers = self.getModifiers(modifierMask)
+        key = App.getKey(keyCode, modifierMask)
 
+        if key is None: return
         if key == 'ctrl':
             self.isCtrlKeyDown = False
             return
-        if key is None: return
         if key.upper() in self._allKeysDown: self._allKeysDown.remove(key.upper())
         if key.lower() in self._allKeysDown: self._allKeysDown.remove(key.lower())
 
-        self.callUserFn('onKeyRelease', (key,))
+        modifiers = self.getModifiers(modifierMask)
+        self.callUserFn('onKeyRelease', (key, modifiers))
 
     def redrawAll(self, screen, cairo_surface, ctx):
         shape = shape_logic.Rect({
@@ -375,7 +477,7 @@ class App(object):
         # Show PyGame surface
         screen.blit(pygame_surface, (0,0))
         pygame.display.flip()
-        
+
         self.frameworkRedrew = True
 
     def shouldDrawInspector(self):
@@ -386,22 +488,17 @@ class App(object):
                 self.isCtrlKeyDown)
         )
 
-    def __init__(self, width=400, height=400, title=None):
+    def __init__(self):
         self.userGlobals = __main__.__dict__
-        if title is None:
-            try:
-                self.title, _ = os.path.splitext(os.path.basename(os.path.realpath(__main__.__file__)))
-            except:
-                self.title = "CMU CS Academy"
-        else:
-            self.title = title
+        try:
+            self.title, _ = os.path.splitext(os.path.basename(os.path.realpath(__main__.__file__)))
+        except:
+            self.title = "CMU CS Academy"
 
-        self.left = self.top = 0
-        self.centerX = width / 2
-        self.centerY = height / 2
-        self.width = self.right = width
-        self.height = self.bottom = height
+        self._width = 400
+        self._height = 400
         self._allKeysDown = set()
+        self._modifiers = set()
         self.background = None
 
         self._stepsPerSecond = 30
@@ -415,11 +512,13 @@ class App(object):
         self.textInputs = []
 
         self.inspector = shape_logic.Inspector(self)
-        self.inspectorEnabled = True
+        self._inspectorEnabled = True
+        self.shouldPrintCtrlWarning = True
         self.alwaysShowInspector = False
         self.isCtrlKeyDown = False
 
         self._isMvc = False
+        self._ranWithScreens = False
 
     def get_group(self):
         return self._tlg
@@ -452,6 +551,68 @@ class App(object):
         return sli.slSetAppProperty('maxShapeCount', value)
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
+    def onResize(self, newScreen=True):
+        if not self._running:
+            return
+        self.updateScreen(newScreen)
+        self.callUserFn('onResize', ())
+        self.redrawAllWrapper()
+
+    def getLeft(self):
+        return 0
+    def setLeft(self, value):
+        raise Exception('App.left is readonly')
+    left = property(getLeft, setLeft)
+
+    def getRight(self):
+        return self._width
+    def setRight(self, value):
+        if not self._isMvc:
+            raise Exception('App.right is readonly')
+        self._width = value
+        self.onResize()
+    right = property(getRight, setRight)
+
+    def getTop(self):
+        return 0
+    def setTop(self, value):
+        raise Exception(t('App.top is readonly'))
+    top = property(getTop, setTop)
+
+    def getBottom(self):
+        return self._height
+    def setBottom(self, value):
+        if not self._isMvc:
+            raise Exception('App.bottom is readonly')
+        self._height = value
+        self.onResize()
+    bottom = property(getBottom, setBottom)
+
+    def getWidth(self):
+        return self._width
+    def setWidth(self, value):
+        if not self._isMvc:
+            raise Exception('App.width is readonly')
+        self._width = value
+        self.onResize()
+    width = property(getWidth, setWidth)
+
+    def getHeight(self):
+        return self._height
+    def setHeight(self, value):
+        if not self._isMvc:
+            raise Exception('App.height is readonly')
+        self._height = value
+        self.onResize()
+    height = property(getHeight, setHeight)
+
+    def get_inspectorEnabled(self):
+        return self._inspectorEnabled
+    def set_inspectorEnabled(self, value):
+        self.shouldPrintCtrlWarning = False
+        self._inspectorEnabled = value
+    inspectorEnabled = property(get_inspectorEnabled, set_inspectorEnabled)
+
     def stop(self):
         self._stopped = True
 
@@ -481,6 +642,12 @@ class App(object):
             cwd=current_directory)
         return p
 
+    def updateScreen(self, newScreen):
+        if newScreen:
+            self._screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+        self._cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
+        self._ctx = cairo.Context(self._cairo_surface)
+
     @_safeMethod
     def run(self):
         ### ZIPFILE VERSION ###
@@ -495,10 +662,8 @@ class App(object):
         pygame.init()
         pygame.display.set_caption(self.title)
 
-        # Make antialiasing possible
-        self._screen = pygame.display.set_mode((self.width,self.height))
-        cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
-        ctx = cairo.Context(cairo_surface)
+        self._screen = None
+        self.updateScreen(True)
 
         lastTick = 0
         self._running = True
@@ -531,6 +696,10 @@ class App(object):
                         key = App.getKey(event.key, event.mod)
                         if key == 'ctrl':
                             self.isCtrlKeyDown = (event.type == pygame.KEYDOWN)
+                    elif event.type == pygame.VIDEORESIZE:
+                        self._width = event.w
+                        self._height = event.h
+                        self.onResize(False)
 
                 should_redraw = had_event
 
@@ -540,11 +709,11 @@ class App(object):
                     if not (self.paused or self.stopped):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
-                            self.callUserFn('onKeyHold', (list(self._allKeysDown),))
+                            self.callUserFn('onKeyHold', (list(self._allKeysDown), list(self._modifiers)))
                         should_redraw = True
 
                 if should_redraw:
-                    self.redrawAll(self._screen, cairo_surface, ctx)
+                    self.redrawAll(self._screen, self._cairo_surface, self._ctx)
 
                 pygame.time.wait(1)
 
@@ -559,14 +728,13 @@ class AppWrapper(object):
                          'run', 'stop', 'top', 'setMaxShapeCount',
                          'printFullTracebacks'])
     readWriteAttrs = set(['height', 'paused', 'stepsPerSecond', 'group',
-                          'title', 'width', 'mode', 'background',
-                          'beatsPerMinute', 'maxShapeCount' ])
+                          'title', 'width', 'background',
+                          'beatsPerMinute', 'maxShapeCount', 'inspectorEnabled' ])
     allAttrs = readOnlyAttrs | readWriteAttrs
 
     def __init__(self, app):
         self._app = app
         app._wrapper = self
-        app.mode = ''
 
     def __dir__(self):
         fields = set(AppWrapper.allAttrs)
@@ -592,6 +760,13 @@ class AppWrapper(object):
         return super().__setattr__(attr, value)
 
 def runApp(width=400, height=400, **kwargs):
+    if not app._app._ranWithScreens:
+        for appFnName in APP_FN_NAMES:
+            screenAppSuffix = f'_{appFnName}'
+            for globalVarName in app._app.userGlobals:
+                if globalVarName.endswith(screenAppSuffix):
+                    raise Exception(f'The name of your function "{globalVarName}" ends with "{screenAppSuffix}", which is only allowed if you are using "screens" in CS3 Mode. To run an app with screens, call runAppWithScreens() instead of runApp().')
+
     setupMvc()
     app.width = width
     app.height = height
@@ -603,121 +778,128 @@ Your code created a shape object (Rect, Oval, etc.) before calling runApp().
 
 runApp (CS3 Mode) is not compatible with shape objects.
 
-If you'd like to use CS3 Mode, please use drawing functions 
+If you'd like to use CS3 Mode, please use drawing functions
 (drawRect, drawOval, etc) in redrawAll.
 
 Otherwise, please call cmu_graphics.run() in place of runApp.
 ****************************************************************************''')
 
-    app._app.callUserFn('onAppStart', [ ], kwargs)
+    app._app.callUserFn('onAppStart', (), kwargs)
     app._app.redrawAllWrapper() # Draw even if there are no events
 
     run()
 
+def setActiveScreen(screen):
+    if (not app._app._isMvc):
+        raise Exception('You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().')
+    if (screen in [None, '']) or (not isinstance(screen, str)):
+        raise Exception(f'{repr(screen)} is not a valid screen')
+    redrawAllFnName = f'{screen}_redrawAll'
+    if redrawAllFnName not in app._app.userGlobals:
+        raise Exception(f'Screen {screen} requires {redrawAllFnName}()')
+    app._app.activeScreen = screen
+
+def runAppWithScreens(initialScreen, *args, **kwargs):
+    userGlobals = app._app.userGlobals
+
+    def checkForAppFns():
+        for appFnName in APP_FN_NAMES:
+            if appFnName in userGlobals:
+                raise Exception(f'Do not define {appFnName} when using screens')
+
+    def getScreenFnNames(appFnName):
+        screenFnNames = [ ]
+        for globalVarName in userGlobals:
+            screenAppSuffix = f'_{appFnName}'
+            if globalVarName.endswith(screenAppSuffix):
+                screenFnNames.append(globalVarName)
+        return screenFnNames
+
+    def makeAppFnWrapper(appFnName):
+        if appFnName == 'onAppStart':
+            def onAppStartWrapper(app):
+                for screenFnName in getScreenFnNames('onScreenStart'):
+                    screenFn = userGlobals[screenFnName]
+                    screenFn(app)
+            return onAppStartWrapper
+        else:
+            def appFnWrapper(*args):
+                screen = app._app.activeScreen
+                screenFnName = f'{screen}_{appFnName}'
+                if screenFnName in userGlobals:
+                    screenFn = userGlobals[screenFnName]
+                    return screenFn(*args)
+            return appFnWrapper
+
+    def wrapScreenFns():
+        for appFnName in APP_FN_NAMES:
+            screenFnNames = getScreenFnNames(appFnName)
+            if (screenFnNames != [ ]) or (appFnName == 'onAppStart'):
+                userGlobals[appFnName] = makeAppFnWrapper(appFnName)
+
+    def go():
+        app._app._ranWithScreens = True
+        checkForAppFns()
+        wrapScreenFns()
+        app._app._isMvc = True
+        setActiveScreen(initialScreen)
+        runApp(*args, **kwargs)
+
+    go()
+
 def getImageSize(url):
-    image = Image(url, 0, 0, visible=False)
-    return (image.width, image.height)
+    with NoMvc():
+        image = Image(url, 0, 0, visible=False)
+        return (image.width, image.height)
 
 def setupMvc():
     app._app._isMvc = True
     app._app.inRedrawAll = False
-    userGlobals = app._app.userGlobals
-
-    def makeDrawFn(shape):
-        def drawFn(*args, **kwargs):
-            if (not app._app.inRedrawAll):
-                raise MvcException('Cannot draw (modify the view) outside of redrawAll')
-            shape(*args, **kwargs)
-        return drawFn
-
-    def makeInvisibleConstructor(shape):
-        def constructor(*args, **kwargs):
-            result = shape(*args, **kwargs)
-            result.visible = False
-            return result
-        return constructor
-
-    def delShapeConstructor(shapeName):
-        def errFn(*args, **kwargs):
-            raise NotImplementedError(f"Whoops! {shapeName} objects are not available in CS3. Did you want draw{shapeName}?")
-        addExportedGlobal(shapeName, errFn)
-
-    def delHelperFunction(fnName):
-        def errFn(*args, **kwargs):
-            raise NameError(f"name {fnName} is not defined. Did you forget to import it from cmu_cs3_utils?")
-        addExportedGlobal(fnName, errFn)
-
-    def userDefinedGlobal(var):
-        if not var in userGlobals:
-            return False
-        
-        value = userGlobals[var]
-        module = getattr(value, '__module__', None) 
-
-        # The user imported a module with this name (like random)
-        # or they defined a function in their own code (like distance)
-        return isinstance(value, types.ModuleType) or module == '__main__'
-
-    def delUserGlobal(var):
-        if var in userGlobals and not userDefinedGlobal(var):
-            del userGlobals[var]
-
-    def addExportedGlobal(var, value):
-        if not userDefinedGlobal(var):
-            userGlobals[var] = value
-
-    for shape in SHAPES:
-        delShapeConstructor(shape.__name__)
-        addExportedGlobal(shape.__name__ + 'Shape', makeInvisibleConstructor(shape))
-        addExportedGlobal('draw' + shape.__name__, makeDrawFn(shape))
-
-    for var in ['Group', 'app']:
-        delUserGlobal(var)
-
-    for fnName in ['rounded', 'almostEqual']:
-        delHelperFunction(fnName)
-
-    # These functions are normally provided by "from cmu_graphics import *" but
-    # we want to hide them in CS3. Also hide translations of the functions
-    # that would otherwise be recommended in the NameError.
-    for fnName in ['random', 'randrange', 'choice', 'choix', 'seed', 'distance', 'distancia', 'distanz']:
-        delUserGlobal(fnName)
-
-    # Modify onSteps, onKeyholds, onKeyPresses so they take in app as parameter
-    def modifyMultiStepsFn(origFn):
-        def newFn(app, *args):
-            return origFn(*args)
-        return newFn
-
-    for function in [onSteps,onKeyHolds,onKeyPresses]:
-        addExportedGlobal(function.__name__, modifyMultiStepsFn(function))
-
-    addExportedGlobal('getImageSize', getImageSize)
-    App.callUserFn = App.cs3CallUserFn
+    del app._app.userGlobals['app']
     AppWrapper.readWriteAttrs.remove('paused')
     AppWrapper.allAttrs.remove('paused')
 
-def injectTempDrawFn(drawFnName):
-    def drawFn(*args, **kwargs):
-        raise Exception(f'You called {drawFnName} (a CS3 Mode function) outside of redrawAll.')
-    __main__.__dict__[drawFnName] = drawFn
+def processArgs(fname, params, args):
+    # Check for too many positional arguments
+    if len(args) > len(params):
+        argStr = 'argument' if len(params) == 1 else 'arguments'
+        raise TypeError(f'{fname}() takes {len(params)} positional {argStr} but more were given')
 
-def injectTempDrawFns():
-    for shape in SHAPES:
-        injectTempDrawFn('draw' + shape.__name__)
-        
+    # Check for not enough positional arguments
+    if len(params) > len(args):
+        missingCount = len(params) - len(args)
+        argStr = 'argument' if missingCount == 1 else 'arguments'
+        paramsStr = ', '.join([repr(param) for param in params[len(args):]])
+        raise TypeError(f'{fname}() missing {missingCount} required positional {argStr}: {paramsStr}')
+
+def eventHandlerRepeater(f):
+    sig = inspect.signature(f)
+    params = tuple(sig.parameters.keys())
+    def g(*args):
+        testParams = params
+        if app._app._isMvc:
+            testParams = ('app',) + testParams
+        processArgs(f.__name__, testParams, args)
+        if app._app._isMvc:
+            args = args[1:]
+        f(*args)
+    return g
+
+@eventHandlerRepeater
 def onSteps(n):
     for _ in range(n):
-        callUserFn('onStep')
+        app._app.callUserFn('onStep', ())
 
+@eventHandlerRepeater
 def onKeyHolds(keys, n):
     assert isinstance(keys, list), t('keys must be a list')
     for _ in range(n):
-        callUserFn('onKeyHold', keys)
+        app._app.callUserFn('onKeyHold', (keys, []))
 
+@eventHandlerRepeater
 def onKeyPresses(key, n):
     for _ in range(n):
-        callUserFn('onKeyPress', key)
+        app._app.callUserFn('onKeyPress', (key, []))
 
 def loop():
     run()
@@ -932,6 +1114,6 @@ def check_for_exit_without_run():
 """)
         print(" ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n")
 
-injectTempDrawFns()
+app = None
 app = AppWrapper(App())
 atexit.register(check_for_exit_without_run)
