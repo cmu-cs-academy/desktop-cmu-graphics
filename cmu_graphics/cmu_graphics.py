@@ -477,7 +477,7 @@ class App(object):
         # Show PyGame surface
         screen.blit(pygame_surface, (0,0))
         pygame.display.flip()
-        
+
         self.frameworkRedrew = True
 
     def shouldDrawInspector(self):
@@ -778,7 +778,7 @@ Your code created a shape object (Rect, Oval, etc.) before calling runApp().
 
 runApp (CS3 Mode) is not compatible with shape objects.
 
-If you'd like to use CS3 Mode, please use drawing functions 
+If you'd like to use CS3 Mode, please use drawing functions
 (drawRect, drawOval, etc) in redrawAll.
 
 Otherwise, please call cmu_graphics.run() in place of runApp.
@@ -848,8 +848,9 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
     go()
 
 def getImageSize(url):
-    image = Image(url, 0, 0, visible=False)
-    return (image.width, image.height)
+    with NoMvc():
+        image = Image(url, 0, 0, visible=False)
+        return (image.width, image.height)
 
 def setupMvc():
     app._app._isMvc = True
