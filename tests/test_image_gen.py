@@ -103,14 +103,14 @@ def generate_test_source(test, run_fn, extras='', language='en'):
     if not raised:
         raise Exception('fn failed to raise an exception')
 '''
-    
+
     source_code += '\n' + test
     source_code += '\n' + extras
     source_code += '\n' + run_fn
 
     return source_code
 
-def run_test(driver, test_name, all_source_code):
+def run_test(test_name, all_source_code):
     source_code_pieces = all_source_code.split('\n# -\n')
     source_code = ''
     i = 0
@@ -215,7 +215,7 @@ Thread(target=screenshotAndExit).start()
 def run_cs3_exception_tests():
     print('cs3 exception tests')
 
-    tests = [ 
+    tests = [
         (
             'drawRect(0,0,200,200)',
             'runApp()',
@@ -282,7 +282,6 @@ def main():
     num_failures = 0
     num_successes = 0
     start_time = time.time()
-    driver = None
 
     # Duplicate the image_gen directory into the current working directory so that
     # the parallel Python version tests don't step on each other and cause
@@ -308,7 +307,7 @@ def main():
             REPORT_FILE.flush()
             print(test_py_name)
             with open('image_gen/%s' % test_py_name, encoding='utf-8') as f:
-                if not run_test(driver, test_py_name[:-3], f.read()):
+                if not run_test(test_py_name[:-3], f.read()):
                     print('image_gen/%s failed' % test_py_name)
                     REPORT_FILE.write('<p>image_gen/%s failed' % (test_py_name))
                     REPORT_FILE.write('</div>')
@@ -324,17 +323,6 @@ def main():
         try:
             REPORT_FILE.write(REPORT_FOOTER)
             REPORT_FILE.close()
-        except:
-            pass
-        try:
-            if driver:
-                print('Saving screenshot in final_screenshot.png')
-                driver.save_screenshot('final_screenshot.png')
-        except:
-            print('Exception saving screenshot')
-            traceback.print_exc()
-        try:
-            driver.close()
         except:
             pass
         try:

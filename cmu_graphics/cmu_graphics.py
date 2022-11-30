@@ -349,7 +349,7 @@ class App(object):
         return args, kwargs
 
     @_safeMethod
-    def callUserFn(self, enFnName, args, kwargs=None):
+    def callUserFn(self, enFnName, args, kwargs=None, redraw=True):
         if kwargs is None:
             kwargs = dict()
 
@@ -362,7 +362,7 @@ class App(object):
 
         fn(*args, **kwargs)
 
-        if self._isMvc and enFnName != 'redrawAll':
+        if redraw and self._isMvc and enFnName != 'redrawAll':
             self.redrawAllWrapper()
 
     def redrawAllWrapper(self):
@@ -784,12 +784,14 @@ If you'd like to use CS3 Mode, please use drawing functions
 Otherwise, please call cmu_graphics.run() in place of runApp.
 ****************************************************************************''')
 
-    app._app.callUserFn('onAppStart', (), kwargs)
+    app._app.callUserFn('onAppStart', (), kwargs, redraw=False)
+    if app._app._ranWithScreens:
+        app._app.callUserFn(f'{app._app.activeScreen}_onScreenActivated', ())
     app._app.redrawAllWrapper() # Draw even if there are no events
 
     run()
 
-def setActiveScreen(screen):
+def setActiveScreen(screen, suppressEvent=False):
     if (not app._app._isMvc):
         raise Exception('You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().')
     if (screen in [None, '']) or (not isinstance(screen, str)):
@@ -798,6 +800,8 @@ def setActiveScreen(screen):
     if redrawAllFnName not in app._app.userGlobals:
         raise Exception(f'Screen {screen} requires {redrawAllFnName}()')
     app._app.activeScreen = screen
+    if not suppressEvent:
+        app._app.callUserFn(f'{screen}_onScreenActivated', ())
 
 def runAppWithScreens(initialScreen, *args, **kwargs):
     userGlobals = app._app.userGlobals
@@ -842,7 +846,7 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
         checkForAppFns()
         wrapScreenFns()
         app._app._isMvc = True
-        setActiveScreen(initialScreen)
+        setActiveScreen(initialScreen, suppressEvent=True)
         runApp(*args, **kwargs)
 
     go()
