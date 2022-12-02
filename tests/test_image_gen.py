@@ -164,7 +164,7 @@ def screenshotAndExit():
         traceback.print_exc()
         os._exit(1)
 
-Thread(target=screenshotAndExit).start()
+Thread(target=screenshotAndExit, daemon=True).start()
 ''' % repr(os.path.abspath(output_path))
 
         source_code = generate_test_source(test, run_fn, screenshot_thread, 'es' if test_name.endswith('_es') else 'en')
