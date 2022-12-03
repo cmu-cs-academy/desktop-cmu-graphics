@@ -268,6 +268,10 @@ def translateKeyName(keyName, originalLanguage):
 
 def cleanAndClose():
     shape_logic.cleanSoundProcesses()
+    try:
+        app._app.callUserFn('onAppStop', (), redraw=False)
+    except:
+        pass
     os._exit(0)
 
 def _safeMethod(appMethod):
@@ -786,7 +790,7 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
     app._app.callUserFn('onAppStart', (), kwargs, redraw=False)
     if app._app._ranWithScreens:
-        app._app.callUserFn(f'{app._app.activeScreen}_onScreenActivated', ())
+        app._app.callUserFn(f'{app._app.activeScreen}_onScreenActivate', ())
     app._app.redrawAllWrapper() # Draw even if there are no events
 
     run()
@@ -801,14 +805,14 @@ def setActiveScreen(screen, suppressEvent=False):
         raise Exception(f'Screen {screen} requires {redrawAllFnName}()')
     app._app.activeScreen = screen
     if not suppressEvent:
-        app._app.callUserFn(f'{screen}_onScreenActivated', ())
+        app._app.callUserFn(f'{screen}_onScreenActivate', ())
 
 def runAppWithScreens(initialScreen, *args, **kwargs):
     userGlobals = app._app.userGlobals
 
     def checkForAppFns():
         for appFnName in APP_FN_NAMES:
-            if appFnName in userGlobals:
+            if appFnName != 'onAppStart' and appFnName in userGlobals:
                 raise Exception(f'Do not define {appFnName} when using screens')
 
     def getScreenFnNames(appFnName):
@@ -821,8 +825,11 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
 
     def makeAppFnWrapper(appFnName):
         if appFnName == 'onAppStart':
+            origOnAppStart = userGlobals.get('onAppStart')
             def onAppStartWrapper(app):
-                for screenFnName in getScreenFnNames('onScreenStart'):
+                if origOnAppStart:
+                    origOnAppStart(app)
+                for screenFnName in sorted(getScreenFnNames('onAppStart')):
                     screenFn = userGlobals[screenFnName]
                     screenFn(app)
             return onAppStartWrapper
@@ -910,7 +917,7 @@ def loop():
 
 def run():
     if not app._app._isMvc:
-        for cs3ModeHandler in ('onAppStart', 'redrawAll'):
+        for cs3ModeHandler in ['redrawAll']:
             if cs3ModeHandler in __main__.__dict__:
                 raise Exception(f"You defined the event handler {cs3ModeHandler} which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?")
 
