@@ -32,10 +32,9 @@ for:
     test_script:
       # We have to skip py310-zip because its version of pycairo has a Windows-specific
       # bug. I'm not sure why py36-pip fails.
-      - set TOX_SKIP_ENV="py36-pip|py310-zip"
       # We used to be able to use the --parallel 2 option with tox, but that doesn't seem to work
       # now.
-      - C:\Python310\python.exe -m tox
+      - set "TOX_SKIP_ENV=(py36-pip|py310-zip)" && C:\Python310\python.exe -m tox
 
     # See more info on RDP here:
     #   https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
@@ -65,13 +64,12 @@ for:
 
     before_test:
       - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:~/venv3.10/bin/
-      # pycairo is failing to install on py38 for some reason (as of 12/15/2023)
-      - export TOX_SKIP_ENV=py38-pip
       - export ARCHFLAGS="-arch x86_64"
       - $PYBIN build/build.py
 
     test_script:
-      - $PYBIN -m tox --parallel 2
+      # pycairo is failing to install on py38 for some reason (as of 12/15/2023)
+      - TOX_SKIP_ENV=py38-pip $PYBIN -m tox --parallel 2
 
     # on_finish:
     #   - export APPVEYOR_SSH_BLOCK=true
