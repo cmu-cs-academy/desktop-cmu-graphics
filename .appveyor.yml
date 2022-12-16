@@ -4,6 +4,7 @@ environment:
   # Insert your device's public SSH key here to access the Mac build image.
   APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9Rkdcjvu0MQOMOqlpa5J757pso3iPzMOt6WK3WgJW0kZl/6l/UZfjN9fgJ6PXhtSQkXgyvOrhuyMVdIZIstdbZKnpC6KV274gof44653ildsK3wPSpuF2v9lmPPvfQWyHCfjb19T06p4Rh5idUmZqPXtMFNWL2vSR4IGBE90JlaNOdXDU07KPVkjbb5vsQLh/vl47N2LjU4vDCqHscQ+wVJuExE63vVuv2T3SDYJNpjAuvLZStdIjOjTyRaJHq2uazfajaKK1Ss3IUgvWnfFqg7WD9zASC9VffxZd9mvP1PtAODIPENdZWNFODsdIlSHTwAdO3DhWbwaDS+nfDhgB evan@Evans-MBP.wv.cc.cmu.edu
 
+
   matrix:
     - job_name: Windows Tests
       appveyor_build_worker_image: Visual Studio 2019
@@ -33,8 +34,8 @@ for:
       # bug. I'm not sure why py36-pip fails.
       - C:\Python310\python.exe -m tox -e "py{37,38,39}-{pip,zip},py310-pip,py36-zip" --parallel 2
 
-    # on_finish:
-    #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    on_finish:
+      - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
   -
     matrix:
