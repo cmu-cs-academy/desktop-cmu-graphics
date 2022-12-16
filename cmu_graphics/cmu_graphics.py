@@ -571,8 +571,6 @@ class App(object):
     def getRight(self):
         return self._width
     def setRight(self, value):
-        if not self._isMvc:
-            raise Exception('App.right is readonly')
         self._width = value
         self.onResize()
     right = property(getRight, setRight)
@@ -586,8 +584,6 @@ class App(object):
     def getBottom(self):
         return self._height
     def setBottom(self, value):
-        if not self._isMvc:
-            raise Exception('App.bottom is readonly')
         self._height = value
         self.onResize()
     bottom = property(getBottom, setBottom)
@@ -595,8 +591,6 @@ class App(object):
     def getWidth(self):
         return self._width
     def setWidth(self, value):
-        if not self._isMvc:
-            raise Exception('App.width is readonly')
         self._width = value
         self.onResize()
     width = property(getWidth, setWidth)
@@ -604,8 +598,6 @@ class App(object):
     def getHeight(self):
         return self._height
     def setHeight(self, value):
-        if not self._isMvc:
-            raise Exception('App.height is readonly')
         self._height = value
         self.onResize()
     height = property(getHeight, setHeight)
