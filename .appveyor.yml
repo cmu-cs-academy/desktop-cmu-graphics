@@ -32,10 +32,17 @@ for:
     test_script:
       # We have to skip py310-zip because its version of pycairo has a Windows-specific
       # bug. I'm not sure why py36-pip fails.
-      - C:\Python310\python.exe -m tox -e "py{37,38,39}-{pip,zip},py310-pip,py36-zip" --parallel 2
+      - set TOX_SKIP_ENV="py36-pip|py310-zip"
+      # We used to be able to use the --parallel 2 option with tox, but that doesn't seem to work
+      # now.
+      - C:\Python310\python.exe -m tox
 
-    on_finish:
-      - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    # See more info on RDP here:
+    #   https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
+    # The password for the RDP user is listed here:
+    #   https://ci.appveyor.com/project/austin-schick/cpython-cmu-graphics-0l7rb/settings/environment
+    # on_finish:
+    #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
   -
     matrix:
