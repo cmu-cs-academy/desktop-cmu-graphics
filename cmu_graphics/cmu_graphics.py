@@ -340,10 +340,13 @@ class App(object):
         if self._isMvc:
             args = (self._wrapper,) + args
 
-        if enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold'):
+        if enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold', 'onMousePress', 'onMouseRelease', 'onMouseDrag'):
             if self.getPosArgCount(fn) < len(args):
                 args = args[:-1]
-            elif self.shouldPrintCtrlWarning and self.usesControl(fn):
+            elif (enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold')
+                and self.shouldPrintCtrlWarning 
+                and self.usesControl(fn)
+            ):
                 print('INFO: To use the control key in your app without')
                 print('enabling the inspector, set app.inspectorEnabled')
                 print('to False. To stop this message from printing,')
@@ -671,15 +674,15 @@ class App(object):
                 for event in pygame.event.get():
                     had_event = True
                     if not self.stopped:
-                        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                            self.callUserFn('onMousePress', event.pos)
-                        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                            self.callUserFn('onMouseRelease', event.pos)
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            self.callUserFn('onMousePress', (*event.pos, event.button - 1))
+                        elif event.type == pygame.MOUSEBUTTONUP:
+                            self.callUserFn('onMouseRelease', (*event.pos, event.button - 1))
                         elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
                                 self.callUserFn('onMouseMove', event.pos)
-                            elif event.buttons[0] == 1:
-                                self.callUserFn('onMouseDrag', event.pos)
+                            else:
+                                self.callUserFn('onMouseDrag', (*event.pos, [i for i in range(3) if event.buttons[i] != 0]))
                         elif event.type == pygame.KEYDOWN:
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
