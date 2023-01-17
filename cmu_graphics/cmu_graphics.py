@@ -674,9 +674,9 @@ class App(object):
                 for event in pygame.event.get():
                     had_event = True
                     if not self.stopped:
-                        if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
                             self.callUserFn('onMousePress', (*event.pos, event.button - 1))
-                        elif event.type == pygame.MOUSEBUTTONUP:
+                        elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
                             self.callUserFn('onMouseRelease', (*event.pos, event.button - 1))
                         elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
