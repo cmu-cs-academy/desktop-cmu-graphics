@@ -45,8 +45,14 @@ class Sound(object):
 
         Timer(0.1, self.checkDone).start()
 
-import os
 import sys
+import os
+
+def read_from_parent():
+    try:
+        return input()
+    except EOFError:
+        os._exit(0)
 
 def main():
     soundUrl = json.loads(sys.stdin.readline())['url']
@@ -55,7 +61,7 @@ def main():
     print('done')
 
     while True:
-        request = json.loads(input())
+        request = json.loads(read_from_parent())
         command = request['command']
         kwargs = request['kwargs']
         commandMap = {'pause': s.pause, 'play': s.play}
