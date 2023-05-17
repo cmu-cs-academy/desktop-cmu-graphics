@@ -18,7 +18,12 @@ class Sound(object):
         self.loop = False
         self._quit = False
         self.musicLock = Lock()
-        Timer(0.1, self.checkDone).start()
+        self.queueCheckDone()
+
+    def queueCheckDone(self):
+        timer = Timer(0.1, self.checkDone)
+        timer.daemon = True
+        timer.start()
 
     def play(self, doLoop=False, doRestart=False):
         with self.musicLock:
@@ -43,9 +48,8 @@ class Sound(object):
                 if self.loop:
                     mixer.music.play()
 
-        Timer(0.1, self.checkDone).start()
+        self.queueCheckDone()
 
-import os
 import sys
 
 def main():
@@ -55,6 +59,8 @@ def main():
     print('done')
 
     while True:
+        # input() will raise an EOFError after the parent dies,
+        # which will cause the program to end
         request = json.loads(input())
         command = request['command']
         kwargs = request['kwargs']
