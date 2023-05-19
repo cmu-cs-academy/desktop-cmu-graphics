@@ -3,7 +3,7 @@
 This folder contains scripts for
 
 * To update bundled pygame, run `python3 ../../../build/helpers/build_pygame_modules.py` from `cmu_graphics/libs/pygame_loader`. Then run `replace_images.py` to replace the Pygame logo with the CMU Graphics icon.
-* To update bundled pillow, manually download pillow wheels for any new platforms, and copy the PIL folder out of them to cmu_graphics/libs/pil_loader
+* To update bundled pil, run `python3 ../../../build/helpers/build_pil_modules.py` from `cmu_graphics/libs/pil_image_loader`.
 * To update bundled cairo, follow the instructions in build_cairo_binaries.md
 * Sign and notarize binaries with `notarize.sh`
 
