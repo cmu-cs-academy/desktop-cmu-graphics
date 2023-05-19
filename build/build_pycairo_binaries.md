@@ -64,12 +64,30 @@ export LDFLAGS="-arch arm64"
 ```
 
 To compile on any architecture, we need PKG_CONFIG_PATH set up right. 
-pkg config needs to know how to access libffi and cairo. These are the paths
-that brew uses to install those libraries for me:
+pkg config needs to know how to access libffi and cairo (probably -- 
+libffi may not actually be necessary to add here, something to look into in the 
+future).  
+
+These are the paths that brew uses to install those libraries for me on my x86 machine:
 
 ```
 export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig:/usr/local/opt/cairo/lib/pkgconfig/"
 ```
+
+And on my arm machine:
+
+```
+export PKG_CONFIG_PATH="/opt/homebrew/Library/Homebrew/os/mac/pkgconfig/:/opt/homebrew/lib/pkgconfig/"
+```
+
+These lines were useful for me in finding the right paths to add to PKG_CONFIG_PATH:
+
+```
+find /opt -name cairo.pc
+find /opt -name libffi.pc
+```
+
+Note that Homebrew installs into `/opt` on arm machines, and `/usr` on x86 machines.
 
 Compile the wheel:
 
