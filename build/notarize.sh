@@ -1,7 +1,6 @@
 set -e
 
 # setup
-source env.sh
 export zipname=cmu_graphics_installer.zip
 
 # signing
