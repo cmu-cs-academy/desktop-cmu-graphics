@@ -63,7 +63,7 @@ for:
       - export PATH=/usr/local/bin:$PATH
 
     before_test:
-      - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:~/venv3.10/bin/
+      - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:~/venv3.10/bin/:~/venv3.11/bin/
       - export ARCHFLAGS="-arch x86_64"
       - $PYBIN build/build.py
 
