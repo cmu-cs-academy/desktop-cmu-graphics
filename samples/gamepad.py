@@ -1,6 +1,6 @@
 """A simple demo of using a PS4 controller to move a circle."""
 from cmu_graphics import *
-import sys
+import samples.joystick
 
 class Player(object):
     def __init__(self, cx, cy):

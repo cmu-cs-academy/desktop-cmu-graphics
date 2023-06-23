@@ -4,6 +4,26 @@ import types
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
 
+class Signal():
+    def __init__(self):
+        self.receivers = []
+
+    def connect(self, receiver):
+        self.receivers.append(receiver)
+
+    def send_robust(self, *args, **kwargs):
+        for receiver in self.receivers:
+            try:
+                receiver(*args, **kwargs)
+            except Exception:
+                print('\nAn error occurred in a signal receiver')
+                import traceback
+                traceback.print_exc()
+
+
+pygameEvent = Signal()
+onStepEvent = Signal()
+
 EPSILON = 10e-7
 def almostEqual(x, y, epsilon=EPSILON):
     return abs(x - y) <= epsilon
@@ -344,7 +364,7 @@ class App(object):
             if self.getPosArgCount(fn) < len(args):
                 args = args[:-1]
             elif (enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold')
-                and self.shouldPrintCtrlWarning 
+                and self.shouldPrintCtrlWarning
                 and self.usesControl(fn)
             ):
                 print('INFO: To use the control key in your app without')
@@ -451,75 +471,6 @@ class App(object):
         modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyRelease', (key, modifiers))
 
-    def handleJoyPress(self, button, joystick):
-        self._allJoyButtonsDown[joystick].add(button)
-        self.callUserFn('onJoyPress', (button, joystick))
-
-    def handleJoyRelease(self, button, joystick):
-        if button in self._allJoyButtonsDown[joystick]: self._allJoyButtonsDown[joystick].remove(button)
-        self.callUserFn('onJoyRelease', (button, joystick))
-
-    def handleDigitalJoyAxisPress(self, value, axis, joystick):
-        self._allDigitalJoyAxisDown[joystick].add((axis, value))
-
-    def handleDigitalJoyAxisRelease(self, value, axis, joystick):
-        if (axis, value) in self._allDigitalJoyAxisDown[joystick]: self._allDigitalJoyAxisDown[joystick].remove((axis, value))
-
-    # Hats are just DPADs, so we'll handle them like buttons
-    def handleJoyHat(self, values, joystick):
-        # We will index the _lastJoyAxis dict using the joystick and H for hat
-        key = f"J{joystick}H"
-        prev = self._lastJoyAxis.get(key,(0,0))
-
-        # Only signal a button press if it is newly pressed.
-        # You can get (0,1) followed by (1,1), meaning one of the buttons stayed pressed.
-        if values[1] == 1 and prev[1] != 1:
-            self.handleJoyPress("H0", joystick)
-        elif values[1] == -1 and prev[1] != -1:
-            self.handleJoyPress("H2", joystick)
-
-        if values[1] == 0 and prev[1] == 1:
-            self.handleJoyRelease("H0", joystick)
-        elif values[1] == 0 and prev[1] == -1:
-            self.handleJoyRelease("H2", joystick)
-
-        if values[0] == 1 and prev[0] != 1:
-            self.handleJoyPress("H1", joystick)
-        elif values[0] == -1 and prev[0] != -1:
-            self.handleJoyPress("H3", joystick)
-
-        if values[0] == 0 and prev[0] == 1:
-            self.handleJoyRelease("H1", joystick)
-        elif values[0] == 0 and prev[0] == -1:
-            self.handleJoyRelease("H3", joystick)
-
-        self._lastJoyAxis[key] = values
-
-    def handleDigitalJoyAxis(self, value, axis, joystick):
-        # We are going to treat this as a digital, which many are.
-        if almostEqual(value, 0, 0.5):
-            value = 0
-        elif almostEqual(value, 1, 0.5):
-            value = 1
-        elif almostEqual(value, -1, 0.5):
-            value = -1
-        else:
-            return
-
-        # We will index the _lastJoyAxis dict using the joystick and axis
-        key = f"J{joystick}A{axis}"
-        prev = self._lastJoyAxis.get(key,0)
-
-        # Control stick was pushed in a direction
-        if value != 0 and prev == 0:
-            self.handleDigitalJoyAxisPress(value, axis, joystick)
-
-        # Control stick was released in that direction
-        if value == 0 and prev != 0:
-            self.handleDigitalJoyAxisRelease(prev, axis, joystick)
-
-        self._lastJoyAxis[key] = value
-
     def redrawAll(self, screen, cairo_surface, ctx):
         shape = shape_logic.Rect({
             'noGroup': True,
@@ -574,9 +525,6 @@ class App(object):
         self._width = 400
         self._height = 400
         self._allKeysDown = set()
-        self._allJoyButtonsDown = dict()
-        self._allDigitalJoyAxisDown = dict()
-        self._lastJoyAxis = dict()
         self._modifiers = set()
         self.background = None
 
@@ -739,8 +687,6 @@ class App(object):
         lastTick = 0
         self._running = True
 
-        joysticks = {}
-
         while self._running:
             sys.stdout.flush()
             with DRAWING_LOCK:
@@ -769,31 +715,12 @@ class App(object):
                         key = App.getKey(event.key, event.mod)
                         if key == 'ctrl':
                             self.isCtrlKeyDown = (event.type == pygame.KEYDOWN)
-                    elif event.type == pygame.JOYDEVICEADDED:
-                        joy = pygame.joystick.Joystick(event.device_index)
-                        joysticks[joy.get_instance_id()] = joy
-                        self._allJoyButtonsDown[joy.get_instance_id()] = set()
-                        self._allDigitalJoyAxisDown[joy.get_instance_id()] = set()
-                        joy.rumble(0, 0.7, 500) # Rumble if it can and is connected
-                    elif event.type == pygame.JOYDEVICEREMOVED:
-                        del joysticks[event.instance_id]
-                        key = f"J{joystick}H"
-                        if key in self._lastJoyAxis: del self._lastJoyAxis[key]
-                        del self._allJoyButtonsDown[event.instance_id]
-                        del self._allDigitalJoyAxisDown[event.instance_id]
-                    elif event.type == pygame.JOYBUTTONDOWN:
-                        self.handleJoyPress(str(event.button), event.instance_id)
-                    elif event.type == pygame.JOYBUTTONUP:
-                        self.handleJoyRelease(str(event.button), event.instance_id)
-                    elif event.type == pygame.JOYHATMOTION:
-                        self.handleJoyHat(event.value, event.instance_id)
-                    elif event.type == pygame.JOYAXISMOTION:
-                        self.handleDigitalJoyAxis(event.value, event.axis, event.instance_id)
-                        self.callUserFn('onJoyAxis', (event.value, event.axis, event.instance_id))
                     elif event.type == pygame.VIDEORESIZE:
                         self._width = event.w
                         self._height = event.h
                         self.onResize(False)
+
+                    pygameEvent.send_robust(event, callUserFn=self.callUserFn, app=self._wrapper)
 
                 should_redraw = had_event
 
@@ -804,12 +731,7 @@ class App(object):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn('onKeyHold', (list(self._allKeysDown), list(self._modifiers)))
-                        for joystick in self._allJoyButtonsDown:
-                            if len(self._allJoyButtonsDown[joystick]) > 0:
-                                self.callUserFn('onJoyButtonHold', (list(self._allJoyButtonsDown[joystick]), joystick))
-                        for joystick in self._allDigitalJoyAxisDown:
-                            if len(self._allDigitalJoyAxisDown[joystick]) > 0:
-                                self.callUserFn('onDigitalJoyAxis', (list(self._allDigitalJoyAxisDown[joystick]), joystick))
+                        onStepEvent.send_robust(callUserFn=self.callUserFn, app=self._wrapper)
                         should_redraw = True
 
                 if should_redraw:
