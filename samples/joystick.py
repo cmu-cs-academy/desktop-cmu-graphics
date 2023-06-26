@@ -1,9 +1,9 @@
 try:
-    # Use this to import pygame possible
-    import pygame
-except:
-    # Use this to import pygame if cmu_graphics was installed via a zip file
+    # Use this to import pygame if cmu_graphics was installed via zip file
     from cmu_graphics.libs import pygame_loader as pygame
+except:
+    # Use this to import pygame if we couldn't use pygame_loader
+    import pygame
 
 from cmu_graphics import almostEqual, pygameEvent, onStepEvent
 
