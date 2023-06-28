@@ -107,6 +107,7 @@ from cmu_graphics.cmu_graphics import (
     getImageSize,
     pygameEvent,
     onStepEvent,
+    onMainLoopEvent,
 )
 
 from cmu_graphics.utils import (

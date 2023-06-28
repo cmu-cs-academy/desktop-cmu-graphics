@@ -13,7 +13,7 @@ _lastJoyAxis = dict()
 _joysticks = dict()
 
 
-def handlePygameEvent(event, callUserFn=None, app=None):
+def handlePygameEvent(event, callUserFn, app):
     print(event)
     if event.type == pygame.JOYDEVICEADDED:
         joy = pygame.joystick.Joystick(event.device_index)
@@ -23,7 +23,7 @@ def handlePygameEvent(event, callUserFn=None, app=None):
         joy.rumble(0, 0.7, 500)  # Rumble if it can and is connected
     elif event.type == pygame.JOYDEVICEREMOVED:
         del _joysticks[event.instance_id]
-        key = f"J{joystick}H"
+        key = f"J{event.instance_id}H"
         if key in _lastJoyAxis:
             del _lastJoyAxis[key]
         del _allJoyButtonsDown[event.instance_id]
@@ -42,7 +42,7 @@ def handlePygameEvent(event, callUserFn=None, app=None):
 pygameEvent.connect(handlePygameEvent)
 
 
-def handleOnStepEvent(callUserFn=None, app=None):
+def handleOnStepEvent(callUserFn, app):
     for joystick in _allJoyButtonsDown:
         if len(_allJoyButtonsDown[joystick]) > 0:
             callUserFn('onJoyButtonHold', (list(_allJoyButtonsDown[joystick]), joystick))

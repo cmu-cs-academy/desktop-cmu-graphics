@@ -23,6 +23,7 @@ class Signal():
 
 pygameEvent = Signal()
 onStepEvent = Signal()
+onMainLoopEvent = Signal()
 
 EPSILON = 10e-7
 def almostEqual(x, y, epsilon=EPSILON):
@@ -720,7 +721,7 @@ class App(object):
                         self._height = event.h
                         self.onResize(False)
 
-                    pygameEvent.send_robust(event, callUserFn=self.callUserFn, app=self._wrapper)
+                    pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 
                 should_redraw = had_event
 
@@ -731,11 +732,13 @@ class App(object):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn('onKeyHold', (list(self._allKeysDown), list(self._modifiers)))
-                        onStepEvent.send_robust(callUserFn=self.callUserFn, app=self._wrapper)
+                        onStepEvent.send_robust(self.callUserFn, self._wrapper)
                         should_redraw = True
 
                 if should_redraw:
                     self.redrawAll(self._screen, self._cairo_surface, self._ctx)
+
+                onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
 
                 pygame.time.wait(1)
 
