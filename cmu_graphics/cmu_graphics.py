@@ -4,6 +4,27 @@ import types
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
 
+class Signal():
+    def __init__(self):
+        self.receivers = []
+
+    def connect(self, receiver):
+        self.receivers.append(receiver)
+
+    def send_robust(self, *args, **kwargs):
+        for receiver in self.receivers:
+            try:
+                receiver(*args, **kwargs)
+            except Exception:
+                print('\nAn error occurred in a signal receiver')
+                import traceback
+                traceback.print_exc()
+
+
+pygameEvent = Signal()
+onStepEvent = Signal()
+onMainLoopEvent = Signal()
+
 EPSILON = 10e-7
 def almostEqual(x, y, epsilon=EPSILON):
     return abs(x - y) <= epsilon
@@ -344,7 +365,7 @@ class App(object):
             if self.getPosArgCount(fn) < len(args):
                 args = args[:-1]
             elif (enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold')
-                and self.shouldPrintCtrlWarning 
+                and self.shouldPrintCtrlWarning
                 and self.usesControl(fn)
             ):
                 print('INFO: To use the control key in your app without')
@@ -700,6 +721,8 @@ class App(object):
                         self._height = event.h
                         self.onResize(False)
 
+                    pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
+
                 should_redraw = had_event
 
                 msPassed = pygame.time.get_ticks() - lastTick
@@ -709,10 +732,13 @@ class App(object):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn('onKeyHold', (list(self._allKeysDown), list(self._modifiers)))
+                        onStepEvent.send_robust(self.callUserFn, self._wrapper)
                         should_redraw = True
 
                 if should_redraw:
                     self.redrawAll(self._screen, self._cairo_surface, self._ctx)
+
+                onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
 
                 pygame.time.wait(1)
 

@@ -105,6 +105,9 @@ from cmu_graphics.cmu_graphics import (
     runAppWithScreens,
     setActiveScreen,
     getImageSize,
+    pygameEvent,
+    onStepEvent,
+    onMainLoopEvent,
 )
 
 from cmu_graphics.utils import (
