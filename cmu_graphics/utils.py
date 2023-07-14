@@ -227,7 +227,7 @@ def tupleString(a):
 def roundedTupleString(a, precision = 0):
     return tupleString(utilsRounded(a, precision))
 
-def getArcPoints(cx, cy, width, height, startAngle = None, sweepAngle = None, sizeForN = None):
+def getArcPoints(cx, cy, width, height, startAngle = None, sweepAngle = None, sizeForN = None, isMvc = False):
     # get points that approximate an oval
     a, b = width / 2, height / 2
     pts = []
@@ -242,10 +242,11 @@ def getArcPoints(cx, cy, width, height, startAngle = None, sweepAngle = None, si
     n = rounded(6 + 18 * sizeForN / 50)
     n = math.ceil(n / 4) * 4
     denominator = n if sweepAngle == 360 else n - 1
-    startAngle = toRadians(90 - startAngle)
+    startAngle = toRadians(startAngle) if isMvc else toRadians(90 - startAngle) 
     sweepAngle = toRadians(sweepAngle)
+    multiplyFactor = 1 if isMvc else -1;
     for i in range(n):
-        theta = startAngle - (sweepAngle * i / denominator)
+        theta = startAngle + (multiplyFactor * (sweepAngle * i / denominator))
         x = cx + a * math.cos(theta)
         y = cy - b * math.sin(theta)
         pts.append([x, y])

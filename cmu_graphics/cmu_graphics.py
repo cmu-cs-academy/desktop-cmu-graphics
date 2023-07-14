@@ -90,7 +90,11 @@ class Shape(object, metaclass=_ShapeMetaclass):
                 raise Exception(t("{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'",
                                 { 'error': t('TypeError'), 'callSpec': t(clsName) + '()', 'arg': attr }))
 
-        self._shape = slInitShape(clsName, argNames, args, kwargs)
+        isMvc = False
+        if len(argNames) < len(args):
+            isMvc = args[-1]
+            args = args[:-1]
+        self._shape = slInitShape(clsName, argNames, args, kwargs, isMvc)
         self._shape.studentShape = self
 
     def __setattr__(self, attr, val):
@@ -249,7 +253,7 @@ def makeDrawFn(shape):
         if (not app._app.inRedrawAll):
             raise MvcException('Cannot draw (modify the view) outside of redrawAll')
         with NoMvc():
-            shape(*args, **kwargs)
+            shape(*args, True, **kwargs)
     return drawFn
 
 def makeInvisibleConstructor(shape):

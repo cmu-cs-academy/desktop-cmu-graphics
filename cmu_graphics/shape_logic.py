@@ -512,6 +512,7 @@ def initShapeAttrs():
     ShapeAttr('url', checkUrl, None)
     ShapeAttr('db', checkValue, '')
     ShapeAttr('group', checkValue, None)
+    ShapeAttr('isMvc', checkBoolean, False);
 initShapeAttrs()
 
 # This metaclass prevents 'cmu_graphics.' from being included in the name
@@ -2331,7 +2332,7 @@ class Oval(PolygonWithTransform):
     def __init__(self, attrs):
         attrs['initialPoints'] = utils.flatten(utils.getArcPoints(
             attrs['centerX'], attrs['centerY'], attrs['width'], attrs['height'],
-            attrs.get('startAngle', None), attrs.get('sweepAngle', None)))
+            attrs.get('startAngle', None), attrs.get('sweepAngle', None), None, attrs['isMvc']))
         attrs['transformMatrix'] = [
             [attrs['width'] / 2, 0],
             [0, attrs['height'] / 2],
@@ -2341,22 +2342,22 @@ class Oval(PolygonWithTransform):
             attrs['startAngle'] = 0
         if ('sweepAngle' not in attrs):
             attrs['sweepAngle'] = 360
-        attrs['bezierPoints'] = Oval.getBezierPoints(attrs['startAngle'], attrs['sweepAngle'])
+        attrs['bezierPoints'] = Oval.getBezierPoints(attrs['startAngle'], attrs['sweepAngle'], attrs['isMvc'])
         super().__init__(attrs)
 
     @staticmethod
-    def getBezierPoints(startAngle, sweepAngle):
+    def getBezierPoints(startAngle, sweepAngle, isMvc):
         offset = utils.toRadians(startAngle)
         remaining = sweepAngle
         bp = []
         while (remaining > 0):
-            bp.extend(Oval.getBezierFragment(utils.toRadians(min(90, remaining)), offset))
+            bp.extend(Oval.getBezierFragment(utils.toRadians(min(90, remaining)), offset, isMvc))
             offset += math.pi / 2
             remaining -= 90
         return bp
 
     @staticmethod
-    def getBezierFragment(sweepAngle, offsetAngle):
+    def getBezierFragment(sweepAngle, offsetAngle, isMvc):
         # Return a cubic Bezier curve that approximates up to 90 degrees of a circle.
         # https://www.tinaja.com/glib/bezcirc2.pdf
         result = [[0, 0], [0, 0], [0, 0], [0, 0]]
@@ -2370,12 +2371,19 @@ class Oval(PolygonWithTransform):
         result[1][0] = result[2][0]
         result[1][1] = -result[2][1]
 
+        angle = (sweepAngle / 2) + offsetAngle
+        if (not isMvc):
+            angle -= (math.pi / 2)
+
         result = utils.rotatePoints(
             result, 
-            utils.toDegrees((sweepAngle / 2) + offsetAngle - (math.pi / 2)),
+            utils.toDegrees(angle),
             0, 
             0
         )
+        
+        if isMvc:
+            result = [[pair[0],-pair[1]] for pair in result]
         return result
 
     def get_bezierPoints(self): return self.get('bezierPoints')
@@ -2436,6 +2444,7 @@ class Arc(Oval):
         super().__init__(attrs)
         self.ovalWidth = attrs['width']
         self.ovalHeight = attrs['height']
+        self.regeneratePoints()
 
     def get_ovalWidth(self): return self.get('ovalWidth')
     def set_ovalWidth(self, v): return self.set({'ovalWidth': v})
@@ -2477,10 +2486,13 @@ class Arc(Oval):
         return v
     sweepAngle = shape_property(get_sweepAngle, set_sweepAngle)
 
+    def get_isMvc(self): return self.get('isMvc')
+    isMvc = shape_property(get_isMvc)
+
     def regeneratePoints(self):
         self.pointList = utils.getArcPoints(
             0, 0, 2, 2, self.startAngle, self.sweepAngle,
-            (self.width + self.height) / 2
+            (self.width + self.height) / 2, self.isMvc
         )
         for pt in self.pointList:
             newPt = [
@@ -2490,7 +2502,7 @@ class Arc(Oval):
             pt[0] = newPt[0] + self.translation[0]
             pt[1] = newPt[1] + self.translation[1]
         self.pointList = self.pointList
-        self.bezierPoints = Oval.getBezierPoints(self.startAngle, self.sweepAngle)
+        self.bezierPoints = Oval.getBezierPoints(self.startAngle, self.sweepAngle, self.isMvc)
 
     def getRotateAnchor(self):
         return [self.pointList[0][0], self.pointList[0][1]]
@@ -3042,7 +3054,7 @@ class ShapeLogicInterface(object):
     def slGetAppProperty(app, propName):
         return activeDrawing.appProperties[propName]
 
-    def slInitShape(self, clsName, argNames, args, kwargs):
+    def slInitShape(self, clsName, argNames, args, kwargs, isMvc):
         if clsName == 'Image':
             clsName = 'CMUImage'
         checkArgCount(clsName, None, argNames, args)
@@ -3056,6 +3068,7 @@ class ShapeLogicInterface(object):
             attr = argNames[i]
             shapeAttrs[attr].typeCheckFn(clsName, attr, args[i], False)
             constructorArgs[argNames[i]] = args[i]
+        constructorArgs['isMvc'] = isMvc
         shape = self.slNew(clsName, constructorArgs)
         try:
             align = None
