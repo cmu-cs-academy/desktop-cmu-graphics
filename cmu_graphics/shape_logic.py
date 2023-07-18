@@ -2444,7 +2444,6 @@ class Arc(Oval):
         super().__init__(attrs)
         self.ovalWidth = attrs['width']
         self.ovalHeight = attrs['height']
-        self.regeneratePoints()
 
     def get_ovalWidth(self): return self.get('ovalWidth')
     def set_ovalWidth(self, v): return self.set({'ovalWidth': v})
