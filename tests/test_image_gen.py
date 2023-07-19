@@ -6,7 +6,6 @@ import os
 import shutil
 import sys
 import time
-import traceback
 
 import imageio
 from PIL import Image
