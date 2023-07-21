@@ -7,8 +7,8 @@ students. CMU Graphics and its desktop version are maintained by
 project which develops free-to-use middle and high school computer science
 curriculum.
 
-Desktop CMU Graphics works with **Python 3.6-3.10** and is compatible with
-[Replit](https://replit.com/) and [Coding Rooms](https://www.codingrooms.com/) 
+Desktop CMU Graphics works with **Python 3.6-3.11** and is compatible with
+[Replit](https://replit.com/) and [Coding Rooms](https://www.codingrooms.com/)
 (see the "Replit" and "Coding Rooms" sections below). This
 package, including its documentation, is licensed under the
 [BSD 3-Clause license](https://github.com/cmu-cs-academy/desktop-cmu-graphics/blob/master/LICENSE).
