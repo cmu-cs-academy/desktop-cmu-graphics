@@ -1,0 +1,10 @@
+def redrawAll(app):
+    drawArc(75, 125, 100, 200, 45, 135)
+    drawArc(125, 125, 100, 200, 45, 135, rotateAngle = 90)
+    drawArc(250, 125, 100, 300, 45, 135, rotateAngle = 90)
+    drawArc(250, 200, 100, 300, 45, 20, rotateAngle = 90)
+    drawArc(250, 200, 100, 300, 45, 20, rotateAngle = 110)
+    drawArc(75, 200, 50, 50, 0, 90, rotateAngle = 30)
+    drawArc(150, 200, 50, 50, -30, 90)
+    drawArc(350, 350, 100, 50, 0, 270, border='red', fill='blue')
+    drawArc(75, 350, 80, 80, 0, 345, borderWidth=4, fill=None, border='green')

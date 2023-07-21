@@ -80,6 +80,11 @@ class Shape(object, metaclass=_ShapeMetaclass):
         global SHAPES_CREATED
         SHAPES_CREATED += 1
 
+        isMvc = False
+        if 'isMvc' in kwargs:
+            isMvc = kwargs['isMvc']
+            del kwargs['isMvc']
+
         for attr in list(kwargs.keys()):
             en_attr = toEnglish(attr, 'shape-attr')
             if attr != en_attr and en_attr is not None:
@@ -90,7 +95,7 @@ class Shape(object, metaclass=_ShapeMetaclass):
                 raise Exception(t("{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'",
                                 { 'error': t('TypeError'), 'callSpec': t(clsName) + '()', 'arg': attr }))
 
-        self._shape = slInitShape(clsName, argNames, args, kwargs)
+        self._shape = slInitShape(clsName, argNames, args, kwargs, isMvc)
         self._shape.studentShape = self
 
     def __setattr__(self, attr, val):
@@ -249,6 +254,7 @@ def makeDrawFn(shape):
         if (not app._app.inRedrawAll):
             raise MvcException('Cannot draw (modify the view) outside of redrawAll')
         with NoMvc():
+            kwargs['isMvc'] = True
             shape(*args, **kwargs)
     return drawFn
 
