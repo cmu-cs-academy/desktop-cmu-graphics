@@ -24,17 +24,18 @@ for:
         - job_name: Windows Tests
 
     install:
-      - C:\Python310\python.exe -m pip install tox twine build
+      - C:\Python311\python.exe -m pip install tox twine build
 
     before_test:
-      - C:\Python310\python.exe build/build.py
+      - C:\Python311\python.exe build/build.py
 
     test_script:
       # We have to skip py310-zip because its version of pycairo has a Windows-specific
       # bug. I'm not sure why py36-pip fails.
+      # The other *-pip builds are really slow for some reason, so we skip all but py310-pip.
       # We used to be able to use the --parallel 2 option with tox, but that doesn't seem to work
       # now.
-      - set "TOX_SKIP_ENV=(py36-pip|py310-zip)" && C:\Python310\python.exe -m tox
+      - set "TOX_SKIP_ENV=(py3.-pip|py310-zip)" && C:\Python310\python.exe -m tox
 
     # See more info on RDP here:
     #   https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
