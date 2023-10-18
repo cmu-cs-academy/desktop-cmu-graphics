@@ -742,6 +742,7 @@ class App(object):
                         should_redraw = True
 
                 if should_redraw:
+                    self.inspector.clearCache()
                     self.redrawAll(self._screen, self._cairo_surface, self._ctx)
 
                 onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
