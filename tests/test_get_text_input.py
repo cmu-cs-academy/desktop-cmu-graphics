@@ -8,6 +8,7 @@ import time
 from datetime import datetime, timedelta
 from threading import Thread
 
+CMU_GRAPHICS_DEBUG = True
 from cmu_graphics import *
 
 def get_children_pids():

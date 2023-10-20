@@ -1068,6 +1068,7 @@ def print_debug_info():
     print('Platform:', sys.platform)
     print('Python Version:', '.'.join(platform.python_version_tuple()))
     print('Executable Path:', sys.executable)
+    print('Python path:', sys.path)
     print('Working Directory:', current_directory)
     print('='*80)
 
@@ -1094,7 +1095,7 @@ import copy
 DRAWING_LOCK = threading.RLock()
 
 ### ZIPFILE VERSION ###
-from cmu_graphics.libs import pygame_loader as pgame
+from cmu_graphics.libs import pygame_loader as pygame
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import pygame
