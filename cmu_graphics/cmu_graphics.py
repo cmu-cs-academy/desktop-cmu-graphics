@@ -676,15 +676,6 @@ class App(object):
 
     @_safeMethod
     def run(self):
-        ### ZIPFILE VERSION ###
-        from cmu_graphics.libs import pygame_loader as pg
-        ### END ZIPFILE VERSION ###
-        ### PYPI VERSION ###
-        import pygame as pg
-        ### END PYPI VERSION ###
-        global pygame
-        pygame = pg
-
         pygame.init()
         pygame.display.set_caption(self.title)
 
@@ -1102,10 +1093,12 @@ import copy
 
 DRAWING_LOCK = threading.RLock()
 
-pygame = None # defer module load until run
-# pygame takes a few seconds to load. when a getTextInput happens before we
-# get a chance to render the screen, we don't want to wait a few seconds
-# for a pygame load here _and_ a few seconds for a pygame load there
+### ZIPFILE VERSION ###
+from cmu_graphics.libs import pygame_loader as pgame
+### END ZIPFILE VERSION ###
+### PYPI VERSION ###
+import pygame
+### END PYPI VERSION ###
 
 sli = shape_logic.ShapeLogicInterface()
 slInitShape = sli.slInitShape
