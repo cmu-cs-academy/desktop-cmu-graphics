@@ -8,7 +8,7 @@ platform = loader_util.get_platform_string()
 if 'mac' in platform:
     platform = '_'.join(platform.split('_')[:-1])
 module_path = os.path.join(module_directory, 'cairo_' + platform)
-sys.path.append(module_path)
+sys.path.insert(0, module_path)
 
 import cairo
 

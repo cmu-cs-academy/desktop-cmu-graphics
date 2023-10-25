@@ -19,8 +19,10 @@ def main():
     split_versions(zip_dest, pypi_dest, "")
 
     zipfile_name = "cmu_graphics_installer.zip"
+    print('Creating zip file...')
     subprocess.run([sys.executable, '-m', 'zipfile', '-c', zipfile_name, zip_dest],
         check=True)
+    print('Running python -m build...')
     subprocess.run([sys.executable, '-m', 'build'], cwd=pypi_dest, check=True)
 
     if args.publish:

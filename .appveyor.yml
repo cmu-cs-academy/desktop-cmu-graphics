@@ -55,7 +55,7 @@ for:
       # homebrew because of a conflicting file.
       - brew install -f --overwrite xorgproto
       - brew install cairo pkg-config
-      - export PYBIN=~/venv3.10/bin/python
+      - export PYBIN=~/venv3.11/bin/python
       - $PYBIN -m pip install -U pip
       - $PYBIN -m pip install tox twine build
       # Put /usr/local/bin at the front of PATH so that homebrew's pkg-config will
@@ -65,7 +65,7 @@ for:
       - export PATH=/usr/local/bin:$PATH
 
     before_test:
-      - export PATH=$PATH:~/venv3.6/bin/:~/venv3.7/bin/:~/venv3.8/bin/:~/venv3.9/bin/:~/venv3.10/bin/:~/venv3.11/bin/
+      - export PATH=$PATH:~/venv3.8/bin/:~/venv3.9/bin/:~/venv3.10/bin/:~/venv3.11/bin/
       - export ARCHFLAGS="-arch x86_64"
       - $PYBIN build/build.py
 
