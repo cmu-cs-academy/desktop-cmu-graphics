@@ -271,10 +271,7 @@ def checkShape(obj, attr, value, isFn):
         typeError(obj, attr, value, t('Shape'), isFn)
 
 def checkWidthHeight(obj, attr, value, isFn):
-    if (isinstance(obj, Rect)
-        or isinstance(obj, Oval)
-        or isinstance(obj, PolygonInCircle)):
-
+    if isinstance(obj, (Rect, Oval, PolygonInCircle, CMUImage)):
         return checkPositive(obj, attr, value, isFn)
     return checkNonNegative(obj, attr, value, isFn)
 
