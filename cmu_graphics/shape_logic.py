@@ -1623,7 +1623,7 @@ def getFont(baseFontName, isBold=False, isItalic=False):
     elif baseFontName.lower() in ('serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'):
         fontName = baseFontName.lower()
     else:
-        fontName = 'Arial'
+        fontName = baseFontName
 
     bold = cairo.FONT_WEIGHT_BOLD if isBold else cairo.FONT_WEIGHT_NORMAL
     italic = cairo.FONT_SLANT_ITALIC if isItalic else cairo.FONT_SLANT_NORMAL
