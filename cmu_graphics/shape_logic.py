@@ -1058,21 +1058,23 @@ class Shape(object):
         checkNumber(t('hits(x, y)'), t('y'), y, True)
         return self._hits(x, y)
 
+    def getEdges(self):
+        edges = []
+        approxPoints = self.getApproxPoints()
+        for i in range(len(approxPoints)):
+            x1, y1 = approxPoints[i]
+            k = (i + 1) % (len(approxPoints))
+            x2, y2 = approxPoints[k]
+            if x1 < x2:
+                edges.append((x1, y1, x2, y2))
+            else:
+                edges.append((x2, y2, x1, y1))
+        return edges
+
     def edgesIntersect(self, shape):
-        pts1 = self.getApproxPoints()
-        pts2 = shape.getApproxPoints()
-        k = None
-        for i in range(len(pts1)):
-            x1, y1 = pts1[i];
-            k = (i + 1) % (len(pts1));
-            x2, y2 = pts1[k];
-            for j in range(len(pts2)):
-                x3, y3 = pts2[j];
-                k = (j + 1) % (len(pts2))
-                x4, y4 = pts2[k];
-                if (utils.segmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4)):
-                    return True
-        return False
+        edges1 = self.getEdges()
+        edges2 = shape.getEdges()
+        return utils.edgesIntersect(edges1, edges2)
 
     def containsShape(self, *arguments):
         checkArgCount(self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments);
@@ -1112,9 +1114,14 @@ class Shape(object):
         myShapes = utils.getChildShapes(self)
         targetShapes = utils.getChildShapes(targetShape)
 
+        myShapesEdges = [shape.getEdges() for shape in myShapes]
+        targetShapesEdges = [shape.getEdges() for shape in targetShapes]
+
         for i in range(len(myShapes)):
             for j in range(len(targetShapes)):
-                if (myShapes[i].edgesIntersect(targetShapes[j])):
+                if not (myShapes[i].boundsIntersect(targetShapes[j])):
+                    continue
+                if (utils.edgesIntersect(myShapesEdges[i], targetShapesEdges[j])):
                     return True
 
         targetApproxPoints = [shape.getApproxPoints() for shape in targetShapes]
