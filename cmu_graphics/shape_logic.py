@@ -1036,20 +1036,27 @@ class Shape(object):
         checkNumber(t('contains(x, y)'), 'y', y, True)
         return utils.polygonContainsPoint(self.getApproxPoints(), x, y)
 
-    def hits(self, *arguments): # hits(x,y)
-        checkArgCount(self.__class__.__name__, t('hits'), [t('x'), t('y')], arguments)
-        x, y = arguments
-        checkNumber(t('hits(x, y)'), t('x'), x, True)
-        checkNumber(t('hits(x, y)'), t('y'), y, True)
+    def _filled(self):
+        return (self.fill is not None or isinstance(self, CMUImage))
+
+    def _hits(self, x, y):
+        # Internal method used by hitsShape and hits, no typechecking
         pts = self.getApproxPoints()
         if (not utils.polygonContainsPoint(pts, x, y)): return False
-        if (self.fill or isinstance(self, CMUImage)): return True
+        if (self._filled()): return True
         border = self.border
         if (not border): return False;
         # ok, so we have a border, but no fill, so we 'hit' if we
         # are within a borderWidth of the border
         bw = self.borderWidth if border else 0
         return utils.pointNearPolygonBorder(pts, x, y, bw)
+
+    def hits(self, *arguments): # hits(x,y)
+        checkArgCount(self.__class__.__name__, t('hits'), [t('x'), t('y')], arguments)
+        x, y = arguments
+        checkNumber(t('hits(x, y)'), t('x'), x, True)
+        checkNumber(t('hits(x, y)'), t('y'), y, True)
+        return self._hits(x, y)
 
     def edgesIntersect(self, shape):
         pts1 = self.getApproxPoints()
@@ -1110,16 +1117,37 @@ class Shape(object):
                 if (myShapes[i].edgesIntersect(targetShapes[j])):
                     return True
 
+        targetApproxPoints = [shape.getApproxPoints() for shape in targetShapes]
+
         for i in range(len(myShapes)):
+            shape1 = myShapes[i]
+            shape1ApproxPoints = shape1.getApproxPoints()
+            if (len(shape1ApproxPoints) == 0):
+                continue
+            shape1Vertex = shape1ApproxPoints[0]
+
             for j in range(len(targetShapes)):
-                shape1 = myShapes[i]
                 shape2 = targetShapes[j]
-                if any((shape2.hits(pt[0], pt[1]) for pt in shape1.getApproxPoints())):
-                    return True
-                if any((shape1.hits(pt[0], pt[1]) for pt in shape2.getApproxPoints())):
-                    return True
-                if myShapes[i].edgesIntersect(targetShapes[j]):
-                    return True
+                shape2ApproxPoints = targetApproxPoints[j]
+
+                if (shape1._filled() and shape2._filled()):
+                    if (len(shape2ApproxPoints) == 0):
+                        continue
+
+                    targetVertex = shape2ApproxPoints[0];
+
+                    if (shape2._hits(shape1Vertex[0], shape1Vertex[1])):
+                        return True
+                    if (shape1._hits(targetVertex[0], targetVertex[1])):
+                        return True
+
+                if (not shape2._filled()):
+                    if any((shape2._hits(pt[0], pt[1]) for pt in shape1ApproxPoints)):
+                        return True
+
+                if (not shape1._filled()):
+                    if any((shape1._hits(pt[0], pt[1]) for pt in shape2ApproxPoints)):
+                        return True
 
         return False
 
