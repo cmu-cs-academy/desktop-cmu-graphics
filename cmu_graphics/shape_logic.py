@@ -1112,15 +1112,18 @@ class Shape(object):
         # Symmetric.  Two shapes hit each other if any of their
         # vertices hit the other or their edges intersect.
         myShapes = utils.getChildShapes(self)
-        targetShapes = utils.getChildShapes(targetShape)
+        allTargetShapes = utils.getChildShapes(targetShape)
+        targetShapes = []
+
+        for targetShape in allTargetShapes:
+            if any(targetShape.boundsIntersect(myShape) for myShape in myShapes):
+                targetShapes.append(targetShape)
 
         myShapesEdges = [shape.getEdges() for shape in myShapes]
         targetShapesEdges = [shape.getEdges() for shape in targetShapes]
 
         for i in range(len(myShapes)):
             for j in range(len(targetShapes)):
-                if not (myShapes[i].boundsIntersect(targetShapes[j])):
-                    continue
                 if (utils.edgesIntersect(myShapesEdges[i], targetShapesEdges[j])):
                     return True
 
