@@ -130,13 +130,13 @@ def edgesIntersect(edges1, edges2):
     ADD = True
     REMOVE = False
 
-    x_to_events = defaultdict(set)
-    for (n, edges) in ((1, edges1), (2, edges2)):
+    x_to_events = defaultdict(list)
+    for (shape, edges) in ((1, edges1), (2, edges2)):
         for edge in edges:
-            # Assumes that x1 < x2 for all edges
+            # Assumes that x1 <= x2 for all edges
             (x1, _, x2, _) = edge
-            x_to_events[x1].add((n, ADD, edge))
-            x_to_events[x2].add((n, REMOVE, edge))
+            x_to_events[x1].append((shape, ADD, edge))
+            x_to_events[x2].append((shape, REMOVE, edge))
 
     active_edges1 = set()
     active_edges2 = set()
@@ -145,8 +145,8 @@ def edgesIntersect(edges1, edges2):
     # which is sorted by the points' x values. 
     # 
     # We're keeping track of which line segments are "active" as we go
-    # (which line segments intersect with the line y=x for the current x value).
-    #
+    # (which line segments intersect with the line x=x for the current x value).
+    # 
     # When we encounter a new line segment, we see if it intersects with any
     # active line segments in the other shape. 
     for (_, events) in sorted(x_to_events.items(), key=lambda item: item[0]):
