@@ -1464,7 +1464,7 @@ class Group(Shape):
         for shape in self._shapes: shape.left += dx
     def get_left(self):
         if len(self._shapes) == 0: return 0
-        return min(map(lambda s: s.left, self._shapes))
+        return utils.min_or_inf(list(map(lambda s: s.left, self._shapes)))
     def set_left(self, v): self.addx(v - self.left)
     left = shape_property(get_left, set_left)
     def get_right(self):
@@ -1481,7 +1481,7 @@ class Group(Shape):
     def get_top(self):
         if (len(self._shapes) == 0):
             return 0
-        return min(map(lambda s: s.top, self._shapes))
+        return utils.min_or_inf(list(map(lambda s: s.top, self._shapes)))
     def set_top(self, v): self.addy(v - self.top)
     top = shape_property(get_top, set_top)
     def get_bottom(self):
@@ -1904,11 +1904,11 @@ class Polygon(Shape):
         self.set({'centerY': v})
     centerY = shape_property(get_centerY, set_centerY)
 
-    def get_left(self): return min(map(lambda point: point[0], self.pointList))
+    def get_left(self): return utils.min_or_inf(list(map(lambda point: point[0], self.pointList)))
     def set_left(self, v): self.addx(v - self.left); return v
     left = shape_property(get_left, set_left)
 
-    def get_top(self): return min(map(lambda point: point[1], self.pointList))
+    def get_top(self): return utils.min_or_inf(list(map(lambda point: point[1], self.pointList)))
     def set_top(self, v): self.addy(v - self.top); return v
     top = shape_property(get_top, set_top)
 
@@ -3058,6 +3058,13 @@ class ShapeLogicInterface(object):
             result = lambda *args, **kwargs: self.slApply(slObj, attr, args, kwargs)
         elif hasattr(result, 'studentShape'):
             result = result.studentShape
+
+        # This matches the behavior of deepcopy() in the JS implementation.
+        # JSON.stringify(Infinity) returns 'null'
+        # And is needed to return None for an empty polygon's left, right, etc
+        if result == math.inf:
+            result = None
+
         return result
 
     def slSetWithTypeCheck(self, obj, attr, val):

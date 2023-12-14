@@ -356,3 +356,8 @@ def getStarPoints(cx, cy, r, points, roundness, rotateAngle):
 def convertLabelValue(value):
     if callable(value): return '<function>'
     return str(value)
+
+def min_or_inf(L):
+    if len(L) == 0:
+        return math.inf
+    return min(L)
