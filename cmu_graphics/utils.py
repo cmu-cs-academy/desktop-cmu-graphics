@@ -1,6 +1,7 @@
 import decimal
 import math
 from . import shape_logic
+from collections import defaultdict
 
 def toDegrees(radians): return radians * 180 / math.pi
 def toRadians(degrees): return degrees * math.pi / 180
@@ -124,6 +125,42 @@ def distanceToLineSegment2(x, y, x1, y1, x2, y2):
     t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / l2
     t = max(0, min(1, t))
     return distance2(x, y, x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+
+def edgesIntersect(edges1, edges2):
+    ADD = True
+    REMOVE = False
+
+    x_to_events = defaultdict(list)
+    for (shape, edges) in ((1, edges1), (2, edges2)):
+        for edge in edges:
+            # Assumes that x1 <= x2 for all edges
+            (x1, _, x2, _) = edge
+            x_to_events[x1].append((shape, ADD, edge))
+            x_to_events[x2].append((shape, REMOVE, edge))
+
+    active_edges1 = set()
+    active_edges2 = set()
+
+    # Here we're looping over a list of all line segments' start and ends points,
+    # which is sorted by the points' x values. 
+    # 
+    # We're keeping track of which line segments are "active" as we go
+    # (which line segments intersect with the line x=x for the current x value).
+    # 
+    # When we encounter a new line segment, we see if it intersects with any
+    # active line segments in the other shape. 
+    for (_, events) in sorted(x_to_events.items(), key=lambda item: item[0]):
+        for shape, event_type, edge1 in events:
+            my_active_edges, other_active_edges = (active_edges1, active_edges2) if shape == 1 else (active_edges2, active_edges1)
+            if event_type == ADD:
+                for edge2 in other_active_edges:
+                    if segmentsIntersect(*edge1, *edge2):
+                        return True
+                my_active_edges.add(edge1)
+            else:
+                my_active_edges.remove(edge1)
+
+    return False
 
 def segmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4):
     dxa = x2 - x1
@@ -319,3 +356,8 @@ def getStarPoints(cx, cy, r, points, roundness, rotateAngle):
 def convertLabelValue(value):
     if callable(value): return '<function>'
     return str(value)
+
+def min_or_inf(L):
+    if len(L) == 0:
+        return math.inf
+    return min(L)

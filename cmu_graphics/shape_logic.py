@@ -1036,14 +1036,14 @@ class Shape(object):
         checkNumber(t('contains(x, y)'), 'y', y, True)
         return utils.polygonContainsPoint(self.getApproxPoints(), x, y)
 
-    def hits(self, *arguments): # hits(x,y)
-        checkArgCount(self.__class__.__name__, t('hits'), [t('x'), t('y')], arguments)
-        x, y = arguments
-        checkNumber(t('hits(x, y)'), t('x'), x, True)
-        checkNumber(t('hits(x, y)'), t('y'), y, True)
+    def _filled(self):
+        return (self.fill is not None or isinstance(self, CMUImage))
+
+    def _hits(self, x, y):
+        # Internal method used by hitsShape and hits, no typechecking
         pts = self.getApproxPoints()
         if (not utils.polygonContainsPoint(pts, x, y)): return False
-        if (self.fill or isinstance(self, CMUImage)): return True
+        if (self._filled()): return True
         border = self.border
         if (not border): return False;
         # ok, so we have a border, but no fill, so we 'hit' if we
@@ -1051,21 +1051,30 @@ class Shape(object):
         bw = self.borderWidth if border else 0
         return utils.pointNearPolygonBorder(pts, x, y, bw)
 
+    def hits(self, *arguments): # hits(x,y)
+        checkArgCount(self.__class__.__name__, t('hits'), [t('x'), t('y')], arguments)
+        x, y = arguments
+        checkNumber(t('hits(x, y)'), t('x'), x, True)
+        checkNumber(t('hits(x, y)'), t('y'), y, True)
+        return self._hits(x, y)
+
+    def getEdges(self):
+        edges = []
+        approxPoints = self.getApproxPoints()
+        for i in range(len(approxPoints)):
+            x1, y1 = approxPoints[i]
+            k = (i + 1) % (len(approxPoints))
+            x2, y2 = approxPoints[k]
+            if x1 < x2:
+                edges.append((x1, y1, x2, y2))
+            else:
+                edges.append((x2, y2, x1, y1))
+        return edges
+
     def edgesIntersect(self, shape):
-        pts1 = self.getApproxPoints()
-        pts2 = shape.getApproxPoints()
-        k = None
-        for i in range(len(pts1)):
-            x1, y1 = pts1[i];
-            k = (i + 1) % (len(pts1));
-            x2, y2 = pts1[k];
-            for j in range(len(pts2)):
-                x3, y3 = pts2[j];
-                k = (j + 1) % (len(pts2))
-                x4, y4 = pts2[k];
-                if (utils.segmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4)):
-                    return True
-        return False
+        edges1 = self.getEdges()
+        edges2 = shape.getEdges()
+        return utils.edgesIntersect(edges1, edges2)
 
     def containsShape(self, *arguments):
         checkArgCount(self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments);
@@ -1103,23 +1112,52 @@ class Shape(object):
         # Symmetric.  Two shapes hit each other if any of their
         # vertices hit the other or their edges intersect.
         myShapes = utils.getChildShapes(self)
-        targetShapes = utils.getChildShapes(targetShape)
+        allTargetShapes = utils.getChildShapes(targetShape)
+        targetShapes = []
+
+        for targetShape in allTargetShapes:
+            if any(targetShape.boundsIntersect(myShape) for myShape in myShapes):
+                targetShapes.append(targetShape)
+
+        myShapesEdges = [shape.getEdges() for shape in myShapes]
+        targetShapesEdges = [shape.getEdges() for shape in targetShapes]
 
         for i in range(len(myShapes)):
             for j in range(len(targetShapes)):
-                if (myShapes[i].edgesIntersect(targetShapes[j])):
+                if (utils.edgesIntersect(myShapesEdges[i], targetShapesEdges[j])):
                     return True
 
+        targetApproxPoints = [shape.getApproxPoints() for shape in targetShapes]
+
         for i in range(len(myShapes)):
+            shape1 = myShapes[i]
+            shape1ApproxPoints = shape1.getApproxPoints()
+            if (len(shape1ApproxPoints) == 0):
+                continue
+            shape1Vertex = shape1ApproxPoints[0]
+
             for j in range(len(targetShapes)):
-                shape1 = myShapes[i]
                 shape2 = targetShapes[j]
-                if any((shape2.hits(pt[0], pt[1]) for pt in shape1.getApproxPoints())):
-                    return True
-                if any((shape1.hits(pt[0], pt[1]) for pt in shape2.getApproxPoints())):
-                    return True
-                if myShapes[i].edgesIntersect(targetShapes[j]):
-                    return True
+                shape2ApproxPoints = targetApproxPoints[j]
+
+                if (shape1._filled() and shape2._filled()):
+                    if (len(shape2ApproxPoints) == 0):
+                        continue
+
+                    targetVertex = shape2ApproxPoints[0];
+
+                    if (shape2._hits(shape1Vertex[0], shape1Vertex[1])):
+                        return True
+                    if (shape1._hits(targetVertex[0], targetVertex[1])):
+                        return True
+
+                if (not shape2._filled()):
+                    if any((shape2._hits(pt[0], pt[1]) for pt in shape1ApproxPoints)):
+                        return True
+
+                if (not shape1._filled()):
+                    if any((shape1._hits(pt[0], pt[1]) for pt in shape2ApproxPoints)):
+                        return True
 
         return False
 
@@ -1426,7 +1464,7 @@ class Group(Shape):
         for shape in self._shapes: shape.left += dx
     def get_left(self):
         if len(self._shapes) == 0: return 0
-        return min(map(lambda s: s.left, self._shapes))
+        return utils.min_or_inf(list(map(lambda s: s.left, self._shapes)))
     def set_left(self, v): self.addx(v - self.left)
     left = shape_property(get_left, set_left)
     def get_right(self):
@@ -1443,7 +1481,7 @@ class Group(Shape):
     def get_top(self):
         if (len(self._shapes) == 0):
             return 0
-        return min(map(lambda s: s.top, self._shapes))
+        return utils.min_or_inf(list(map(lambda s: s.top, self._shapes)))
     def set_top(self, v): self.addy(v - self.top)
     top = shape_property(get_top, set_top)
     def get_bottom(self):
@@ -1866,11 +1904,11 @@ class Polygon(Shape):
         self.set({'centerY': v})
     centerY = shape_property(get_centerY, set_centerY)
 
-    def get_left(self): return min(map(lambda point: point[0], self.pointList))
+    def get_left(self): return utils.min_or_inf(list(map(lambda point: point[0], self.pointList)))
     def set_left(self, v): self.addx(v - self.left); return v
     left = shape_property(get_left, set_left)
 
-    def get_top(self): return min(map(lambda point: point[1], self.pointList))
+    def get_top(self): return utils.min_or_inf(list(map(lambda point: point[1], self.pointList)))
     def set_top(self, v): self.addy(v - self.top); return v
     top = shape_property(get_top, set_top)
 
@@ -3020,6 +3058,13 @@ class ShapeLogicInterface(object):
             result = lambda *args, **kwargs: self.slApply(slObj, attr, args, kwargs)
         elif hasattr(result, 'studentShape'):
             result = result.studentShape
+
+        # This matches the behavior of deepcopy() in the JS implementation.
+        # JSON.stringify(Infinity) returns 'null'
+        # And is needed to return None for an empty polygon's left, right, etc
+        if result == math.inf:
+            result = None
+
         return result
 
     def slSetWithTypeCheck(self, obj, attr, val):
