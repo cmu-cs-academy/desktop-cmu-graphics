@@ -1082,7 +1082,7 @@ class Shape(object):
         checkShape(t('containsShape(targetShape)'), t('targetShape'), targetShape, True);
 
         if (isinstance(targetShape, Group)):
-            return all([self.containsShape(shape) for shape in targetShape.children])
+            return all([self.containsShape(shape) for shape in targetShape._shapes])
 
         # This shapes fully contains the target shape if their
         # edges do not intersect, but (any point of / all points of)
@@ -1458,7 +1458,7 @@ class Group(Shape):
         return any(shape.contains(x, y) for shape in self._shapes)
 
     def containsShape(self, target):
-        return any(shape.containsShape(shape) for shape in self._shapes)
+        return any(shape.containsShape(target) for shape in self._shapes)
 
     def addx(self, dx):
         for shape in self._shapes: shape.left += dx
