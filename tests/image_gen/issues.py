@@ -213,6 +213,13 @@ assert concave.containsShape(not_inside)
 concave.visible = False
 not_inside.visible = False
 
+# Check issue from PR #56
+i = Rect(200,200,50,50)
+g = Group(Oval(5,5,10,10),
+          Line(1,1,8,8,fill='blue'),Line(1,8,8,1,fill='green'))
+assert i.containsShape(g)
+i.visible = g.visible = False
+
 # Check that hitsShape works correctly for images without fill
 url = 'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/default_avatar.png'
 img = Image(url, 100, 100)
