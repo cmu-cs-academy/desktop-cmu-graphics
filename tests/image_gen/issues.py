@@ -217,7 +217,7 @@ not_inside.visible = False
 i = Rect(200,200,50,50)
 g = Group(Oval(5,5,10,10),
           Line(1,1,8,8,fill='blue'),Line(1,8,8,1,fill='green'))
-assert i.containsShape(g)
+assert not i.containsShape(g)
 i.visible = g.visible = False
 
 # Check that hitsShape works correctly for images without fill
