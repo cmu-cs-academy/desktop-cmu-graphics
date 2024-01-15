@@ -32,3 +32,7 @@ assert redondeado(arm.y1) == 164
 assert redondeado(arm.x2) == 170
 assert arm.y2 == 156
 
+Línea(100, 300, 200, 300, guión=True)
+Línea(100, 310, 200, 310, guión=False)
+Línea(100, 320, 200, 320, guión=(5, 10))
+Línea(100, 330, 200, 330, guión=(5, 10, 20, 10))

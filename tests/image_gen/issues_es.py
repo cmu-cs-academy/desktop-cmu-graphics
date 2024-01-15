@@ -202,7 +202,7 @@ c = Circulo(200, 20, 5)
 g = Grupo(c)
 
 def setGroup(shape, val):
-  shape.grupo = val
+    shape.grupo = val
 
 # should not be possible to set group
 assertRaises(lambda: setGroup(c, g))
@@ -228,6 +228,11 @@ g2.visible = Falso
 removedRect = Rect(200, 200, 100, 100)
 app.grupo.quitar(removedRect)
 removedRect.alFrente()
+
+# Ensure default fill is passed through a group
+g = Grupo(Rect(0, 0, 200, 200))
+assert g.relleno == 'negro'
+g.visible = Falso
 
 ###########
 # Ensure hitsShape works with non-filled shapes
@@ -280,3 +285,7 @@ assert app.pausada == False
 
 x = aleatorio()
 assert isinstance(x, float) and x >= 0 and x < 1, x
+###########
+
+assert Rect(1,2,3,4,fill='blue').relleno == 'blue'
+assert Rect(1,2,3,4,fill='azul').fill == 'azul'

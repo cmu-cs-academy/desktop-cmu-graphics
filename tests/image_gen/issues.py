@@ -11,6 +11,7 @@ g._shapes = 1233
 assert len(g.children) == 2, g.children
 assert g.shapes == 4
 assert g._shapes == 1233
+assert type(g.children) == list
 
 g.foo = r2
 assert g.foo == r2
@@ -213,12 +214,8 @@ assert concave.containsShape(not_inside)
 concave.visible = False
 not_inside.visible = False
 
-# Check issue from PR #56
-i = Rect(200,200,50,50)
-g = Group(Oval(5,5,10,10),
-          Line(1,1,8,8,fill='blue'),Line(1,8,8,1,fill='green'))
-assert i.containsShape(g)
-i.visible = g.visible = False
+# Make sure that polygon point lists are of type list
+assert type(concave.pointList) == list
 
 # Check that hitsShape works correctly for images without fill
 url = 'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/default_avatar.png'
@@ -233,6 +230,13 @@ assert c1.hitsShape(img)
 assert c2.hitsShape(img)
 
 Group(img, c1, c2, visible=False)
+
+# Check issue from https://github.com/cmu-cs-academy/desktop-cmu-graphics/pull/56
+i = Rect(200,200,50,50)
+g = Group(Oval(5,5,10,10),
+          Line(1,1,8,8,fill='blue'),Line(1,8,8,1,fill='green'))
+assert not i.containsShape(g)
+i.visible = g.visible = False
 
 # Ensure can have attributes that translate to the same word
 custom = Rect(200, 200, 200, 200, visible=False)
@@ -301,6 +305,11 @@ removedRect = Rect(200, 200, 100, 100)
 app.group.remove(removedRect)
 removedRect.toFront()
 
+# Ensure default fill is passed through a group
+g = Group(Rect(0, 0, 200, 200))
+assert g.fill == 'black'
+g.visible = False
+
 ###########
 # Ensure hitsShape works with non-filled shapes
 emptyCircle = Circle(200, 200, 200, fill=None, border='black', borderWidth=50)
@@ -354,3 +363,10 @@ assert app.paused == False
 
 x = random()
 assert isinstance(x, float) and x >= 0 and x < 1, x
+
+assert str(app) == '<App object>'
+assertRaises(lambda: Rect(0, 0, 1, app), '<App object>')
+###########
+
+assert Rect(1,2,3,4,fill='blue').relleno == 'blue'
+assert Rect(1,2,3,4,fill='azul').fill == 'azul'

@@ -758,6 +758,12 @@ class AppWrapper(object):
         self._app = app
         app._wrapper = self
 
+    def __str__(self):
+        return '<App object>'
+
+    def __repr__(self):
+        return '<App object>'
+
     def __dir__(self):
         fields = set(AppWrapper.allAttrs)
         for field in self.__dict__:

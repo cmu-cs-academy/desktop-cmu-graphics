@@ -31,3 +31,11 @@ assert rounded(arm.x1) == 80
 assert rounded(arm.y1) == 164
 assert rounded(arm.x2) == 170
 assert arm.y2 == 156
+
+Line(100, 300, 200, 300, dashes=True)
+Line(100, 310, 200, 310, dashes=False)
+Line(100, 320, 200, 320, dashes=(5, 10))
+Line(100, 330, 200, 330, dashes=(5, 10, 20, 10))
+assertRaises(lambda: Line(100, 330, 200, 330, dashes='asdf'),
+             "Line.dashes should be bool (but 'asdf' is of type str)")
+

@@ -13,8 +13,6 @@ import numpy
 
 import subprocess
 
-SIZE = 400
-
 REPORT_FILE = None
 
 TEST_FILE_PATH = 'runner.py'
@@ -39,31 +37,26 @@ div.error img {
 REPORT_FOOTER = '</body></html>'
 
 def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
-    image_1 = Image.open(path_1)
-    image_1 = image_1.convert("RGB")
-    image_1.save(path_1)
     image_1_data = imageio.imread(path_1)
-
-    image_2 = Image.open(path_2)
-    image_2 = image_2.convert("RGB")
-    image_2.save(path_2)
     image_2_data = imageio.imread(path_2)
 
-    assert image_1_data.shape == (SIZE, SIZE, 3)
-    assert image_2_data.shape == (SIZE, SIZE, 3)
+    assert image_1_data.shape[2] == 4
     assert image_1_data.shape == image_2_data.shape, image_2_data.shape
 
-    error_array = (image_1_data.astype('float') - image_2_data.astype('float')) ** 2
-    mean_squared_error = numpy.sum(error_array) / float(SIZE * SIZE)
+    rows, cols = image_1_data.shape[:2]
+
+    error_array = (
+        image_1_data.astype('float') - image_2_data.astype('float'))**2
+    mean_squared_error = numpy.sum(error_array) / float(rows * cols)
 
     if mean_squared_error >= threshold:
         diff_image_path = 'image_gen/%s/diff_%d.png' % (test_name, test_piece_i)
 
         per_pixel_error = error_array.sum(axis=2)
 
-        visual_diff = numpy.zeros((SIZE, SIZE, 4), dtype=numpy.uint8)
-        for i in range(SIZE):
-            for j in range(SIZE):
+        visual_diff = numpy.zeros((rows, cols, 4), dtype=numpy.uint8)
+        for i in range(rows):
+            for j in range(cols):
                 this_error = per_pixel_error[i][j]
                 if this_error > 0:
                     if this_error < threshold:
