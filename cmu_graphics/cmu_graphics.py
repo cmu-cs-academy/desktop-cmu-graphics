@@ -722,7 +722,7 @@ class App(object):
                 should_redraw = had_event
 
                 msPassed = pygame.time.get_ticks() - lastTick
-                if (math.floor(1000 / self.stepsPerSecond) - msPassed < 10):
+                if (1000 / self.stepsPerSecond - msPassed < 1):
                     lastTick = pygame.time.get_ticks()
                     if not (self.paused or self.stopped):
                         self.callUserFn('onStep', ())
