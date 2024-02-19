@@ -19,6 +19,8 @@ pkg-config
 cairo
 ```
 
+**Make sure these libraries are installed.**  If cairo is not installed, the build will appear to succeed, but pycairo will fail to import with a cryptic warning.
+
 If you've previously installed one of these libraries and you'd like to ugrade
 it, you can use `brew upgrade packagename`.
 
@@ -111,15 +113,15 @@ Unzipping the file produces two folders, one of which is called "cairo".
 That's the one we care about. There should be one binary in there, which
 we will need to delocate.
 
-You'll need to pick an appropriate path to put the delocated binaries in.
+You'll need to pick an appropriate folder name for the delocated binaries.
 Our convention is to use e.g. "cpython-311-darwin_dylibs" 
-for a file named "_cairo.cpython-311-darwin.so". Take the middle of the
+for an so file named "_cairo.cpython-311-darwin.so". Take the middle of the
 binary name (after _cairo. and before .so) and add "_dylibs" to the end.
 
 The following command should be run from `dist`. You want to delocate
 the "cairo" directory, which contains the file like 
 "_cairo.cpython-311-darwin.so". This should produce a folder like
-"cpython-311-darwin_dylibs" in "dist/cairo" which has many .dylib files.
+"cpython-311-darwin_dylibs" in "dist/cairo" which has many .dylib files inside.
 
 ```
 export libpath="cpython-311-darwin_dylibs"
