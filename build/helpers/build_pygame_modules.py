@@ -4,10 +4,10 @@
 import subprocess
 
 links = {
-    'pygame_mac_311': 'https://files.pythonhosted.org/packages/13/36/97b13be0f1f715b70afa9d13a70c1709959611507de03696d1db2ca60b1b/pygame-2.4.0-cp311-cp311-macosx_10_9_x86_64.whl',
-    'pygame_mac_arm_311': 'https://files.pythonhosted.org/packages/4c/53/29ba6c1472b1285d4925e29dda6b7ca8248c12e5702708caedf8b1ac9fb9/pygame-2.4.0-cp311-cp311-macosx_11_0_arm64.whl',
-    'pygame_win_32_311': 'https://files.pythonhosted.org/packages/75/ef/8a2f68857149860bd74be79395dfd0c4556f8c6a40f75efc20d783dd3f59/pygame-2.4.0-cp311-cp311-win32.whl',
-    'pygame_win_64_311': 'https://files.pythonhosted.org/packages/09/0a/7ba8a50463c289763ab67cde3edf76bfdf9d095b578f9e0782a47ec89c76/pygame-2.4.0-cp311-cp311-win_amd64.whl',
+    'pygame_mac_312': 'https://files.pythonhosted.org/packages/48/05/5fc3ee405cee85308f1dd5c0fb7bd0835256969a22b18a55698ffaf498ac/pygame-2.5.2-cp312-cp312-macosx_10_9_x86_64.whl',
+    'pygame_mac_arm_312': 'https://files.pythonhosted.org/packages/4c/0b/90b489ae7fc363020d6d18d3e4522b6021f4e0e84fbdd28c1d468c8a8e31/pygame-2.5.2-cp312-cp312-macosx_11_0_arm64.whl',
+    'pygame_win_32_312': 'https://files.pythonhosted.org/packages/05/28/5ca545423d6bb55f7ba9d09904c963ced15178f072551629a46b5499d105/pygame-2.5.2-cp312-cp312-win32.whl',
+    'pygame_win_64_312': 'https://files.pythonhosted.org/packages/66/57/1311ff5bbd64093795f64c66910bbc12b7c5d83ca95766cce7ba501ff7e7/pygame-2.5.2-cp312-cp312-win_amd64.whl',
 }
 
 def run_command(args):
