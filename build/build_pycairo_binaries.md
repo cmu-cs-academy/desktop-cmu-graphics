@@ -1,8 +1,11 @@
 # Windows
 
-We've been able to reliably find compiled Windows binaries for cairo here:
+The PyPi wheels for Windows can be vendored directly, just like the Pygame
+and PIL wheels.
 
-https://www.lfd.uci.edu/~gohlke/pythonlibs/#pycairo
+Wheels downloaded from PyPi will not include a cairo.dll file like the old
+gholke binaries did, but they work anyway. Cairo seems to be bundled directly
+into the extension module (we think).
 
 # Mac:
 
