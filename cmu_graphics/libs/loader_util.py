@@ -5,6 +5,9 @@ import struct
 import platform
 import os
 
+min_minor_version = 8
+max_minor_version = 12
+
 ### ZIPFILE VERSION ###
 def get_platform_string():
     plat = "unsupported"
@@ -19,9 +22,6 @@ def get_platform_string():
     python_major, python_minor, _ = platform.python_version_tuple()
     plat += "_%s%s" % (python_major, python_minor)
     return plat
-
-min_minor_version = 8
-max_minor_version = 12
 
 def verify_os():
     if sys.platform not in ["darwin", "win32"]:
