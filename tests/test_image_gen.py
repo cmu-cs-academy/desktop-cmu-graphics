@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse
 import html
 import os
@@ -87,6 +85,8 @@ def generate_test_source(test, run_fn, extras='', language='en'):
     source_code += '\nimport os'
     if sys.platform == 'darwin':
         source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
+    if sys.platform == 'win32':
+        source_code += '\nos.environ["SDL_AUDIODRIVER"] = "dummy"'
     source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
     source_code += '\nfrom cmu_graphics import *\n'
     source_code += "setLanguage('%s')\n" % (language)
@@ -273,7 +273,6 @@ def main():
     global REPORT_FILE, WAIT
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('directory', type=str, default='../CMU_CS_Academy_CS_1/', nargs='?')
     parser.add_argument('--only', type=str, help='The name of a single python file to run')
 
     args = parser.parse_args()
