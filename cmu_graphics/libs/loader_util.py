@@ -5,6 +5,9 @@ import struct
 import platform
 import os
 
+min_minor_version = 8
+max_minor_version = 12
+
 ### ZIPFILE VERSION ###
 def get_platform_string():
     plat = "unsupported"
@@ -20,15 +23,13 @@ def get_platform_string():
     plat += "_%s%s" % (python_major, python_minor)
     return plat
 
-max_minor_version = 11
-
 def verify_os():
     if sys.platform not in ["darwin", "win32"]:
         print("""\
 It looks like your computer is using a(n) %(os)s operating system.
-%(os)s is not currently supported by CMU Graphics. We support Python 3.6
+%(os)s is not currently supported by CMU Graphics. We support Python 3.%(min_minor_version)d
 through Python 3.%(max_minor_version)d on Windows and MacOS.""" 
-% {'os': sys.platform, 'max_minor_version': max_minor_version})
+% {'os': sys.platform, 'max_minor_version': max_minor_version, 'min_minor_version': min_minor_version})
         os._exit(1)
         
 ### END ZIPFILE VERSION ###
@@ -51,16 +52,16 @@ We recommend installing Python 3.%(max_minor_version)d from python.org"""
     if int(python_minor) > max_minor_version:
         print("""\
 It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
-supported by CMU Graphics. We support Python 3.6-3.%(max_minor_version)d. We recommend
+supported by CMU Graphics. We support Python 3.%(min_minor_version)d-3.%(max_minor_version)d. We recommend
 installing Python 3.%(max_minor_version)d from python.org""" %
-{"minor": python_minor, 'max_minor_version': max_minor_version})
+{"minor": python_minor, 'max_minor_version': max_minor_version, 'min_minor_version': min_minor_version})
         os._exit(1)
     ### END ZIPFILE VERSION ###
 
-    if int(python_minor) < 6:
+    if int(python_minor) < min_minor_version:
         print("""\
 It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
-supported by CMU Graphics. We support Python 3.6 and higher. We recommend 
+supported by CMU Graphics. We support Python 3.%(min_minor_version)d and higher. We recommend 
 installing Python 3.%(max_minor_version)d from python.org""" %
-{"minor": python_minor, 'max_minor_version': max_minor_version})
+{"minor": python_minor, 'max_minor_version': max_minor_version, 'min_minor_version': min_minor_version})
         os._exit(1)

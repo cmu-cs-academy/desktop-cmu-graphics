@@ -30,13 +30,8 @@ for:
       - C:\Python311\python.exe build/build.py
 
     test_script:
-      # We have to skip py310-zip because its version of pycairo has a Windows-specific
-      # bug. I'm not sure why py36-pip fails.
-      # The other *-pip builds are really slow for some reason, so we skip all but py310-pip.
-      # Python 3.11 pip and zip fail to install needed dependencies
-      # We used to be able to use the --parallel 2 option with tox, but that doesn't seem to work
-      # now.
-      - set "TOX_SKIP_ENV=(py3.-pip|py310-zip|py311.*)" && C:\Python311\python.exe -m tox
+      # We have to skip py310-zip because its version of pycairo has a Windows-specific bug.
+      - set "TOX_SKIP_ENV=py310-zip" && C:\Python311\python.exe -m tox --parallel 2
 
     # See more info on RDP here:
     #   https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
@@ -70,9 +65,7 @@ for:
       - $PYBIN build/build.py
 
     test_script:
-      # pycairo is failing to install on py38 for some reason (as of 12/15/2023)
-      # all pip tests failing for some reason (as of at least 1/16/2023)
-      - TOX_SKIP_ENV=.*-pip $PYBIN -m tox --parallel 2
+      - $PYBIN -m tox --parallel 2
 
     # on_finish:
     #   - export APPVEYOR_SSH_BLOCK=true
