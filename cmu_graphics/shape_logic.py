@@ -2033,14 +2033,14 @@ class Rect(Polygon):
 class Line(Polygon):
     def __init__(self, attrs):
         attrs['initialPoints'] = utils.flatten(utils.getLinePoints(attrs['x1'], attrs['y1'], attrs['x2'], attrs['y2'], 2))
-        
+
         exactValues = {
             'x1': attrs['x1'],
             'x2': attrs['x2'],
             'y1': attrs['y1'],
             'y2': attrs['y2'],
         }
-        
+
         del attrs['x1']
         del attrs['y1']
         del attrs['x2']
@@ -2071,7 +2071,7 @@ class Line(Polygon):
     def getXY(self, i0, i1, j, name):
         if (name in self.exactValues):
             return self.exactValues[name]
-    
+
         points = self.pointList
         return (points[i0][j] + points[i1][j]) / 2
 
@@ -2411,12 +2411,12 @@ class Oval(PolygonWithTransform):
             angle -= (math.pi / 2)
 
         result = utils.rotatePoints(
-            result, 
+            result,
             utils.toDegrees(angle),
-            0, 
+            0,
             0
         )
-        
+
         if isMvc:
             result = [[pair[0],-pair[1]] for pair in result]
         return result
@@ -2541,12 +2541,12 @@ class Arc(Oval):
     def getRotateAnchor(self):
         return [self.pointList[0][0], self.pointList[0][1]]
 
-    def get_centerX(self): return utils.round2(self.pointList[0][0])
-    def set_centerX(self, v): self.addx(v - self.centerX)
+    def get_centerX(self): return utils.round2(self.centroidX)
+    def set_centerX(self, v): self.addx(v - self.centroidX)
     centerX = shape_property(get_centerX, set_centerX)
 
-    def get_centerY(self): return utils.round2(self.pointList[0][1])
-    def set_centerY(self, v): self.addy(v - self.centerY)
+    def get_centerY(self): return utils.round2(self.centroidY)
+    def set_centerY(self, v): self.addy(v - self.centroidY)
     centerY = shape_property(get_centerY, set_centerY)
 
     def toString(self):
