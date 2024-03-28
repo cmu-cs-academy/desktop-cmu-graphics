@@ -2549,6 +2549,10 @@ class Arc(Oval):
     def set_centerY(self, v): self.addy(v - self.centerY)
     centerY = shape_property(get_centerY, set_centerY)
 
+    def toString(self):
+        args = [self.centerX, self.centerY, self.ovalWidth, self.ovalHeight, self.startAngle, self.sweepAngle]
+        return t('Arc{{args}}', {'args': utils.roundedTupleString(args, 2)})
+
 class Circle(Oval):
     def __init__(self, attrs):
         attrs['width'] = attrs['height'] = 2 * attrs['radius']
