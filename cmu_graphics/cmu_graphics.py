@@ -590,6 +590,7 @@ class App(object):
             return
         self.updateScreen(newScreen)
         self.callUserFn('onResize', ())
+        self.redrawAllWrapper()
 
     def getLeft(self):
         return 0
