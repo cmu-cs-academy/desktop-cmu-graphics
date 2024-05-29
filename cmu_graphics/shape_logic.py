@@ -3034,7 +3034,13 @@ class ShapeLogicInterface(object):
     def newSound(self, url):
         checkArgCount(None, t('Sound'), [t('url')], (url,))
         checkString(t('Sound'), t('url'), url, False)
-        return CMUSound(url)
+        generatedSound = CMUSound(url)
+        try:
+            generatedSound.play(False, False)
+            generatedSound.pause()
+        except Exception:
+            raise ValueError(f"File {url} does not exist or is not a valid sound file")
+        return generatedSound
 
     def slNew(self, className, args):
         return (objConstructors[className])(args)
