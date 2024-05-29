@@ -589,8 +589,9 @@ class App(object):
         if not self._running:
             return
         self.updateScreen(newScreen)
-        self.callUserFn('onResize', ())
-        self.redrawAllWrapper()
+        self.callUserFn('onResize', (), redraw=False)
+        if self._isMvc:
+            self.redrawAllWrapper()
 
     def getLeft(self):
         return 0
