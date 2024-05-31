@@ -479,6 +479,12 @@ class App(object):
         self.callUserFn('onKeyRelease', (key, modifiers))
 
     def redrawAll(self, screen, cairo_surface, ctx):
+        if self._autoResize:
+            tempw = self.width
+            temph = self.height
+            self.width = self.startWidth
+            self.height = self.startHeight
+
         shape = shape_logic.Rect({
             'noGroup': True,
             'top': 0,
@@ -508,8 +514,29 @@ class App(object):
         # Create PyGame surface
         pygame_surface = pygame.image.frombuffer(data_string, (self.width, self.height), 'RGBA')
 
+        if self._autoResize:
+            self.width = tempw
+            self.height = temph
+            scalex = self.width/self.startWidth
+            scaley = self.height/self.startHeight
+            if self._keepAspectRatio:
+                scale=min(scalex, scaley)
+                offsety=0
+                offsetx=0
+                if scale == scaley:
+                    offsetx=(scalex-scaley)*self.width/2
+                    scale*=self.height
+                else:
+                    offsety=(scaley-scalex)*self.height/2
+                    scale*=self.width
+                pygame_surface = pygame.transform.smoothscale(pygame_surface, (scale, scale))
+                screen.blit(pygame_surface, (offsetx,offsety))
+            else:
+                pygame_surface = pygame.transform.smoothscale(pygame_surface, (self.width, self.height))
+
         # Show PyGame surface
-        screen.blit(pygame_surface, (0,0))
+        if not self._keepAspectRatio:
+            screen.blit(pygame_surface, (0,0))
         pygame.display.flip()
 
         self.frameworkRedrew = True
@@ -546,7 +573,9 @@ class App(object):
         self.textInputs = []
 
         self._autoResize = False
-        self._keepAspectRation = False
+        self._keepAspectRatio = False
+        self.startWidth = 400
+        self.startHeight = 400
 
         self.inspector = shape_logic.Inspector(self)
         self._inspectorEnabled = True
@@ -570,7 +599,7 @@ class App(object):
     stopped = property(get_stopped, set_stopped)
     
     def get_autoResize(self):
-        return self._stopped
+        return self._autoResize
     def set_autoResize(self, value):
         if not isinstance(value, bool):
             raise Exception('App.autoResize is a boolean')
@@ -578,11 +607,13 @@ class App(object):
     autoResize = property(get_autoResize, set_autoResize)
 
     def get_keepAspectRatio(self):
-        return self._stopped
+        return self._keepAspectRatio
     def set_keepAspectRatio(self, value):
         if not isinstance(value, bool):
             raise Exception('App.keepAspectRatio is a boolean')
-        self._keepAspectRation = value
+        self._keepAspectRatio = value
+        if value:
+            self._autoResize = value
     keepAspectRatio = property(get_keepAspectRatio, set_keepAspectRatio)
     
     def getStepsPerSecond(self):
@@ -814,6 +845,8 @@ def runApp(width=400, height=400, **kwargs):
     setupMvc()
     app.width = width
     app.height = height
+    app.startWidth = width
+    app.startHeight = height
 
     if SHAPES_CREATED > 1:
         raise Exception('''
