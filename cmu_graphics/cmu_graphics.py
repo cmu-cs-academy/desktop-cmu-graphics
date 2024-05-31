@@ -545,6 +545,9 @@ class App(object):
         self._running = False
         self.textInputs = []
 
+        self._autoResize = False
+        self._keepAspectRation = False
+
         self.inspector = shape_logic.Inspector(self)
         self._inspectorEnabled = True
         self.shouldPrintCtrlWarning = True
@@ -565,7 +568,23 @@ class App(object):
     def set_stopped(self, _):
         raise Exception('App.stopped is readonly')
     stopped = property(get_stopped, set_stopped)
+    
+    def get_autoResize(self):
+        return self._stopped
+    def set_autoResize(self, value):
+        if not isinstance(value, bool):
+            raise Exception('App.autoResize is a boolean')
+        self._autoResize = value
+    autoResize = property(get_autoResize, set_autoResize)
 
+    def get_keepAspectRatio(self):
+        return self._stopped
+    def set_keepAspectRatio(self, value):
+        if not isinstance(value, bool):
+            raise Exception('App.keepAspectRatio is a boolean')
+        self._keepAspectRation = value
+    keepAspectRatio = property(get_keepAspectRatio, set_keepAspectRatio)
+    
     def getStepsPerSecond(self):
         return self._stepsPerSecond
     def setStepsPerSecond(self, value):
@@ -753,7 +772,8 @@ class AppWrapper(object):
                          'printFullTracebacks'])
     readWriteAttrs = set(['height', 'paused', 'stepsPerSecond', 'group',
                           'title', 'width', 'background',
-                          'beatsPerMinute', 'maxShapeCount', 'inspectorEnabled' ])
+                          'beatsPerMinute', 'maxShapeCount', 'inspectorEnabled',
+                          'autoResize', 'keepAspectRatio'  ])
     allAttrs = readOnlyAttrs | readWriteAttrs
 
     def __init__(self, app):
