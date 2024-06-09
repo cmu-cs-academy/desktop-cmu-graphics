@@ -208,6 +208,8 @@ class Group(Shape):
 
 class Sound(object):
     def __init__(self, url):
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
         if hasattr(__main__, '__file__'):
             self.sound = pygame.mixer.Sound(os.path.abspath(__main__.__file__ + '/../' + url))
         else:
@@ -821,7 +823,6 @@ If you'd like to use CS3 Mode, please use drawing functions
 Otherwise, please call cmu_graphics.run() in place of runApp.
 ****************************************************************************''')
 
-    pygame.mixer.init()
     app._app.callUserFn('onAppStart', (), kwargs, redraw=False)
     if app._app._ranWithScreens:
         app._app.callUserFn(f'{app._app.activeScreen}_onScreenActivate', ())
@@ -951,7 +952,6 @@ def loop():
 
 def run():
     if not app._app._isMvc:
-        pygame.mixer.init()
         for cs3ModeHandler in ['redrawAll']:
             if cs3ModeHandler in __main__.__dict__:
                 raise Exception(f"You defined the event handler {cs3ModeHandler} which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?")
