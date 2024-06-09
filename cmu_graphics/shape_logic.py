@@ -2985,11 +2985,6 @@ class ShapeLogicInterface(object):
 
         return Gradient(list(colors), 'center' if start is None else start)
 
-    def newSound(self, url):
-        checkArgCount(None, t('Sound'), [t('url')], (url,))
-        checkString(t('Sound'), t('url'), url, False)
-        return CMUSound(url)
-
     def slNew(self, className, args):
         return (objConstructors[className])(args)
 
