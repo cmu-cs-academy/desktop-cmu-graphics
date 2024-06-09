@@ -208,7 +208,7 @@ class Group(Shape):
 
 class Sound(object):
     def __init__(self, url):
-        self.sound = slNewSound(url)
+        ...
 
     def play(self, **kwargs):
         default_kwargs = {'loop': False, 'restart': False}
@@ -1107,7 +1107,6 @@ slInitShape = sli.slInitShape
 slGet = sli.slGet
 rgb = sli.rgb
 gradient = sli.gradient
-slNewSound = sli.newSound
 toEnglish = sli.toEnglish
 accentCombinations = sli.accentCombinations
 t = sli.t
