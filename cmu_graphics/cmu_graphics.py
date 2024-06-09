@@ -208,7 +208,11 @@ class Group(Shape):
 
 class Sound(object):
     def __init__(self, url):
-        ...
+        self.sound = pygame.mixer.Sound(url)
+        if not pygame.mixer.find_channel():
+            pygame.mixer.set_num_channels(pygame.mixer.get_num_channels() * 2)
+        self.channel = pygame.mixer.find_channel()
+        self.started = False
 
     def play(self, **kwargs):
         default_kwargs = {'loop': False, 'restart': False}
@@ -226,10 +230,16 @@ class Sound(object):
             raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
         if not isinstance(restart, bool):
             raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
-        self.sound.play(loop, restart)
+        
+        loop = -1 if loop else 0
+        if restart or not self.started:
+            self.channel.play(self.sound, loop)
+            self.started = True
+        else:
+            self.channel.unpause()
 
     def pause(self):
-        self.sound.pause()
+        self.channel.pause()
 
 SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
             Polygon, Rect, RegularPolygon, Star, ]
@@ -808,6 +818,7 @@ If you'd like to use CS3 Mode, please use drawing functions
 Otherwise, please call cmu_graphics.run() in place of runApp.
 ****************************************************************************''')
 
+    pygame.mixer.init()
     app._app.callUserFn('onAppStart', (), kwargs, redraw=False)
     if app._app._ranWithScreens:
         app._app.callUserFn(f'{app._app.activeScreen}_onScreenActivate', ())
@@ -937,6 +948,7 @@ def loop():
 
 def run():
     if not app._app._isMvc:
+        pygame.mixer.init()
         for cs3ModeHandler in ['redrawAll']:
             if cs3ModeHandler in __main__.__dict__:
                 raise Exception(f"You defined the event handler {cs3ModeHandler} which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?")
