@@ -210,7 +210,13 @@ class Sound(object):
     def __init__(self, url):
         if not pygame.mixer.get_init():
             pygame.mixer.init()
-        if hasattr(__main__, '__file__'):
+        if (url.startswith('http')):
+            try:
+                response = webrequest.get(url)
+                self.sound = pygame.mixer.Sound(io.BytesIO(response.read()))
+            except:
+                raise Exception('Failed to load sound data')
+        elif hasattr(__main__, '__file__'):
             self.sound = pygame.mixer.Sound(os.path.abspath(__main__.__file__ + '/../' + url))
         else:
             self.sound = pygame.mixer.Sound(os.getcwd() + '/' + url)
@@ -1012,6 +1018,7 @@ class CSAcademyConsole(InteractiveConsole):
 
 import os
 import sys
+import io
 from datetime import datetime
 from datetime import timedelta
 import json
