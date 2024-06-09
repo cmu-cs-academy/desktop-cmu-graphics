@@ -208,7 +208,7 @@ class Group(Shape):
 
 class Sound(object):
     def __init__(self, url):
-        self.sound = pygame.mixer.Sound(url)
+        self.sound = pygame.mixer.Sound(os.path.abspath(__main__.__file__ + '/../' + url))
         if not pygame.mixer.find_channel():
             pygame.mixer.set_num_channels(pygame.mixer.get_num_channels() * 2)
         self.channel = pygame.mixer.find_channel()
