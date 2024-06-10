@@ -210,12 +210,19 @@ class Sound(object):
     def __init__(self, url):
         if not pygame.mixer.get_init():
             pygame.mixer.init()
+        if (url.startswith('file://')):
+            url = url.split('/')[-1]
         if (url.startswith('http')):
-            try:
-                response = webrequest.get(url)
-                self.sound = pygame.mixer.Sound(io.BytesIO(response.read()))
-            except:
-                raise Exception('Failed to load sound data')
+            for i in range(10):
+                try:
+                    response = webrequest.get(url)
+                    self.sound = pygame.mixer.Sound(io.BytesIO(response.read()))
+                except:
+                    if i<9:
+                        continue
+                    else:
+                        raise Exception('Failed to load sound data')
+                break
         elif hasattr(__main__, '__file__'):
             self.sound = pygame.mixer.Sound(os.path.abspath(__main__.__file__ + '/../' + url))
         else:
