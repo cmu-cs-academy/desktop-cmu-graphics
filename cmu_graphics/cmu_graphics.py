@@ -208,7 +208,29 @@ class Group(Shape):
 
 class Sound(object):
     def __init__(self, url):
-        self.sound = slNewSound(url)
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+        if (url.startswith('file://')):
+            url = url.split('/')[-1]
+        if (url.startswith('http')):
+            for i in range(10):
+                try:
+                    response = webrequest.get(url)
+                    self.sound = pygame.mixer.Sound(io.BytesIO(response.read()))
+                except:
+                    if i<9:
+                        continue
+                    else:
+                        raise Exception('Failed to load sound data')
+                break
+        elif hasattr(__main__, '__file__'):
+            self.sound = pygame.mixer.Sound(os.path.abspath(__main__.__file__ + '/../' + url))
+        else:
+            self.sound = pygame.mixer.Sound(os.getcwd() + '/' + url)
+        if not pygame.mixer.find_channel():
+            pygame.mixer.set_num_channels(pygame.mixer.get_num_channels() * 2)
+        self.channel = pygame.mixer.find_channel()
+        self.started = False
 
     def play(self, **kwargs):
         default_kwargs = {'loop': False, 'restart': False}
@@ -226,10 +248,16 @@ class Sound(object):
             raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
         if not isinstance(restart, bool):
             raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
-        self.sound.play(loop, restart)
+        
+        loop = -1 if loop else 0
+        if restart or not self.started:
+            self.channel.play(self.sound, loop)
+            self.started = True
+        else:
+            self.channel.unpause()
 
     def pause(self):
-        self.sound.pause()
+        self.channel.pause()
 
 SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
             Polygon, Rect, RegularPolygon, Star, ]
@@ -997,6 +1025,7 @@ class CSAcademyConsole(InteractiveConsole):
 
 import os
 import sys
+import io
 from datetime import datetime
 from datetime import timedelta
 import json
@@ -1107,7 +1136,6 @@ slInitShape = sli.slInitShape
 slGet = sli.slGet
 rgb = sli.rgb
 gradient = sli.gradient
-slNewSound = sli.newSound
 toEnglish = sli.toEnglish
 accentCombinations = sli.accentCombinations
 t = sli.t
