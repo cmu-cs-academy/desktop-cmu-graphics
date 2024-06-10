@@ -2,6 +2,9 @@ import decimal
 import math
 from . import shape_logic
 from collections import defaultdict
+from PIL import Image
+import os
+import __main__
 
 def toDegrees(radians): return radians * 180 / math.pi
 def toRadians(degrees): return degrees * math.pi / 180
@@ -361,3 +364,6 @@ def min_or_inf(L):
     if len(L) == 0:
         return math.inf
     return min(L)
+
+def openImage(fileName):
+    return Image.open(os.path.abspath(__main__.__file__ + '/../' + fileName))
