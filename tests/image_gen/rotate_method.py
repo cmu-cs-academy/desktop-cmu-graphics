@@ -1,5 +1,3 @@
-from cmu_graphics import *
-
 r = Circle(200, 100, 50)
 o = Oval(200, 100, 100, 30, fill='red')
 rp = RegularPolygon(200, 100, 50, 3, fill='green')
@@ -45,5 +43,3 @@ a = Arc(200, 200, 150, 150, 90, 180, db='all')
 r = Rect(0, 0, 10, 10)
 g = Group(a, r)
 g.rotate(45, 100, 100)
-
-cmu_graphics.run()
