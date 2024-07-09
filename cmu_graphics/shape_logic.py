@@ -1012,10 +1012,22 @@ class Shape(object):
     def getRotateAnchor(self): return self.centroid
 
     def get_rotateAngle(self): return self.get('rotateAngle')
-    def set_rotateAngle(self, v): self.rotate(v - self.rotateAngle)
+    def set_rotateAngle(self, v): self._rotate(v - self.rotateAngle)
     rotateAngle = shape_property(get_rotateAngle, set_rotateAngle)
 
-    def rotate(self, degrees = None, cx = None, cy = None):
+    def rotate(self, *arguments):
+        checkArgCount(self.__class__.__name__, t('rotate'),
+                      [t('degrees'), t('x'), t('y')],
+                      arguments)
+        degrees, x, y = arguments
+
+        checkNumber(t('rotate(degrees, x, y)'), t('degrees'), degrees, True)
+        checkNumber(t('rotate(degrees, x, y)'), t('x'), x, True)
+        checkNumber(t('rotate(degrees, x, y)'), t('y'), y, True)
+        self._rotate(degrees, x, y)
+
+    def _rotate(self, degrees = None, cx = None, cy = None):
+        # Internal method used by rotate, no typechecking
         if (cx is None and cy is None):
             cx, cy = self.getRotateAnchor()
             cx = utils.round6(cx)
@@ -1514,12 +1526,12 @@ class Group(Shape):
             self.scalexy('y', (v / self.height))
     height = shape_property(get_height, set_height)
 
-    def rotate(self, degrees = None, cx = None, cy = None):
+    def _rotate(self, degrees = None, cx = None, cy = None):
         if (len(self._shapes) == 0):
             self.set({'rotateAngle': self.rotateAngle + degrees})
             return
 
-        super().rotate(degrees, cx, cy)
+        super()._rotate(degrees, cx, cy)
 
     def doRotate(self, degrees, cx, cy):
         for s in self._shapes: s.rotate(degrees, cx, cy)
@@ -2064,8 +2076,8 @@ class Line(Polygon):
         super().scalexy(varName, k, scaleAnchor)
         self.exactValues = {}
 
-    def rotate(self, degrees = None, cx = None, cy = None):
-        super().rotate(degrees, cx, cy)
+    def _rotate(self, degrees = None, cx = None, cy = None):
+        super()._rotate(degrees, cx, cy)
         self.exactValues = {}
 
     def getXY(self, i0, i1, j, name):

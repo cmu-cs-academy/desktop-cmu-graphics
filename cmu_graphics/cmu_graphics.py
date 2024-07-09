@@ -66,7 +66,8 @@ class Shape(object, metaclass=_ShapeMetaclass):
         'width', 'height', 'fill', 'opacity', 'border', 'borderWidth', 'dashes',
         'align', 'rotateAngle', 'visible',
         'group', # Not sure if this should be documented?
-        'toBack', 'toFront', 'contains', 'hits', 'containsShape', 'hitsShape'
+        'toBack', 'toFront', 'contains', 'hits', 'containsShape', 'hitsShape',
+        'rotate',
     }
 
     # This represents the valid keyword arguments passed to the constructor
