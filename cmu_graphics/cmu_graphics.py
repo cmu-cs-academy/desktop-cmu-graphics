@@ -249,7 +249,7 @@ class Sound(object):
             raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
         if not isinstance(restart, bool):
             raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
-        
+
         loop = -1 if loop else 0
         if restart or not self.started:
             self.channel.play(self.sound, loop)
@@ -323,7 +323,6 @@ def translateKeyName(keyName, originalLanguage):
     return KeyName(TRANSLATED_KEY_NAMES[originalLanguage].get(keyName, keyName))
 
 def cleanAndClose():
-    shape_logic.cleanSoundProcesses()
     try:
         app._app.callUserFn('onAppStop', (), redraw=False)
     except:
