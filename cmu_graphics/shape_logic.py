@@ -304,7 +304,7 @@ def checkString(obj, attr, value, isFn):
 
 def checkUrl(obj, attr, value, isFn):
     if isinstance(value,Image.Image):
-        raise Exception(""" drawImage only accepts string URL or CMUImage.
+        raise Exception("""drawImage only accepts string URLs or instances of CMUImage.
             Did you forget to wrap a PIL image in a CMUImage?""")
     if type(value) != str and not isinstance(value, PILWrapper):
         typeError(obj, attr, value, 'string-or-CMUImage', isFn)
