@@ -3,6 +3,7 @@ import types
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
+from PIL import Image as PILImage
 
 class Signal():
     def __init__(self):
@@ -94,6 +95,18 @@ class Shape(object, metaclass=_ShapeMetaclass):
             if not en_attr in self._init_attrs:
                 raise Exception(t("{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'",
                                 { 'error': t('TypeError'), 'callSpec': t(clsName) + '()', 'arg': attr }))
+
+        if  clsName == 'Image':
+            if isinstance(args[0], str):
+                if hasattr(__main__, '__file__'):
+                    main_directory = os.path.abspath(__main__.__file__) + '/../'
+                else:
+                    main_directory = os.getcwd() + '/'
+                pil_img = PILImage.open(main_directory + args[0])
+                args = (pil_img,) + args[1:]
+            if isinstance(args[0], PILImage.Image):
+                cmu_img = shape_logic.PILWrapper(args[0])
+                args = (cmu_img,) + args[1:]
 
         self._shape = slInitShape(clsName, argNames, args, kwargs, isMvc)
         self._shape.studentShape = self

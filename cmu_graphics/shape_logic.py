@@ -303,9 +303,6 @@ def checkString(obj, attr, value, isFn):
     if type(value) != str: typeError(obj, attr, value, 'string', isFn)
 
 def checkUrl(obj, attr, value, isFn):
-    if isinstance(value,Image.Image):
-        raise Exception(""" drawImage only accepts string URL or CMUImage.
-            Did you forget to wrap a PIL image in a CMUImage?""")
     if type(value) != str and not isinstance(value, PILWrapper):
         typeError(obj, attr, value, 'string-or-CMUImage', isFn)
 
@@ -2036,14 +2033,14 @@ class Rect(Polygon):
 class Line(Polygon):
     def __init__(self, attrs):
         attrs['initialPoints'] = utils.flatten(utils.getLinePoints(attrs['x1'], attrs['y1'], attrs['x2'], attrs['y2'], 2))
-        
+
         exactValues = {
             'x1': attrs['x1'],
             'x2': attrs['x2'],
             'y1': attrs['y1'],
             'y2': attrs['y2'],
         }
-        
+
         del attrs['x1']
         del attrs['y1']
         del attrs['x2']
@@ -2074,7 +2071,7 @@ class Line(Polygon):
     def getXY(self, i0, i1, j, name):
         if (name in self.exactValues):
             return self.exactValues[name]
-    
+
         points = self.pointList
         return (points[i0][j] + points[i1][j]) / 2
 
@@ -2414,12 +2411,12 @@ class Oval(PolygonWithTransform):
             angle -= (math.pi / 2)
 
         result = utils.rotatePoints(
-            result, 
+            result,
             utils.toDegrees(angle),
-            0, 
+            0,
             0
         )
-        
+
         if isMvc:
             result = [[pair[0],-pair[1]] for pair in result]
         return result
