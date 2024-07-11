@@ -3,7 +3,6 @@ import types
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
-from PIL import Image as PILImage
 
 class Signal():
     def __init__(self):
