@@ -303,8 +303,8 @@ def checkString(obj, attr, value, isFn):
     if type(value) != str: typeError(obj, attr, value, 'string', isFn)
 
 def checkUrl(obj, attr, value, isFn):
-    if type(value) != str and not isinstance(value, PILWrapper):
-        typeError(obj, attr, value, 'string-or-CMUImage', isFn)
+    if type(value) != str and not isinstance(value, PILWrapper) and not isinstance(value, Image.Image):
+        typeError(obj, attr, value, 'string-or-PILImage-or-CMUImage', isFn)
 
 def checkBooleanOrArray(obj, attr, value, isFn):
     if type(value) != list and type(value) != tuple: checkBoolean(obj, attr, value, isFn)
@@ -2326,6 +2326,8 @@ atexit.register(cleanSoundProcesses)
 class CMUImage(PolygonWithTransform):
     def __init__(self, attrs):
         if attrs is not None:
+            if isinstance(attrs['url'], Image.Image):
+                attrs['url'] = PILWrapper(attrs['url'])
             imageData = loadImage(attrs['url'])
 
             height, width = imageData['height'], imageData['width']
