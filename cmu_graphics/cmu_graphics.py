@@ -209,11 +209,18 @@ class Group(Shape):
 
 class Sound(object):
     def __init__(self, url):
+        if not isinstance(url, str):
+            callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
+            err = t(
+                    '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
+                    {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': 'string', 'value': repr(url), 'valueType': type(url).__name__}
+                    )
+            raise Exception(err)
         if not pygame.mixer.get_init():
             pygame.mixer.init()
-        if (url.startswith('file://')):
+        if url.startswith('file://'):
             url = url.split('/')[-1]
-        if (url.startswith('http')):
+        if url.startswith('http'):
             for i in range(10):
                 try:
                     response = webrequest.get(url)
