@@ -365,8 +365,22 @@ def min_or_inf(L):
         return math.inf
     return min(L)
 
+from cmu_graphics.libs import webrequest
+
 def openImage(fileName):
-    if hasattr(__main__, '__file__'):
+    if (fileName.startswith('http')):
+        # reference is a url
+        for i in range(10):
+            try:
+                response = webrequest.get(fileName)
+                return PILImage.open(response)
+            except:
+                if i < 9:
+                    continue
+                else:
+                    raise(f'Failed to open image {fileName}')
+            break
+    elif hasattr(__main__, '__file__'):
         main_directory = os.path.abspath(__main__.__file__) + '/../'
     else:
         main_directory = os.getcwd() + '/'
