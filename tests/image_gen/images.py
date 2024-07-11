@@ -14,3 +14,12 @@ app.group.clear()
 from PIL import Image as PILImage
 sample = CMUImage(PILImage.open('sample.jpg'))
 drawImages(sample)
+
+# -
+
+app.group.clear()
+
+# Drawing a PIL image, scaling, and rotating
+from PIL import Image as PILImage
+sample = PILImage.open('sample.jpg')
+drawImages(sample)
