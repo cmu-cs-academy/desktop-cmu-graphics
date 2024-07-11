@@ -2,9 +2,6 @@ import decimal
 import math
 from . import shape_logic
 from collections import defaultdict
-from PIL import Image as PILImage
-import os
-import __main__
 
 def toDegrees(radians): return radians * 180 / math.pi
 def toRadians(degrees): return degrees * math.pi / 180
@@ -364,24 +361,3 @@ def min_or_inf(L):
     if len(L) == 0:
         return math.inf
     return min(L)
-
-from cmu_graphics.libs import webrequest
-
-def openImage(fileName):
-    if (fileName.startswith('http')):
-        # reference is a url
-        for i in range(10):
-            try:
-                response = webrequest.get(fileName)
-                return PILImage.open(response)
-            except:
-                if i < 9:
-                    continue
-                else:
-                    raise(f'Failed to open image {fileName}')
-            break
-    elif hasattr(__main__, '__file__'):
-        main_directory = os.path.abspath(__main__.__file__) + '/../'
-    else:
-        main_directory = os.getcwd() + '/'
-    return PILImage.open(main_directory + fileName)
