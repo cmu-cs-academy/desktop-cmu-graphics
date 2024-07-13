@@ -95,7 +95,7 @@ That being said, before changing anything, setup your testing environment; you w
 
 #### If on the other hand it fails, it will give you a `report.html` file that contains info on the sub-tests that failed.
 ##### `report.html` should have 3 images on top (correct image, output image and difference image respectively) as well as the entire test code. Copy that test code in a new python file and run it to get to the place that threw the error. From there happy debugging.
-###### Final tip, if you want to run test_image_gen.py again delete the generated files and folder by it (runner.py, report.html and image_gen) to avoid it crashing at you.
+###### Final tip, if you want to run test_image_gen.py again delete the generated image_gen folder to avoid it crashing at you.
 
 # Making changes
 
