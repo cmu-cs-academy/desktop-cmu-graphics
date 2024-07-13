@@ -27,7 +27,7 @@ You may also find yourself prompted to install cmake and-or zlib at some point, 
 
 # Start developing
 
-#### In your terminal navigate to desktop-cmu-graphics folder (all the following command to execute in the terminal will be from desktop-cmu-graphics, except otherwise specified)
+#### In your terminal navigate to desktop-cmu-graphics folder (all the following command to execute in the terminal will be from desktop-cmu-graphics, except otherwise specified):
 
 - `cd ~`
 - `ls`
@@ -60,7 +60,7 @@ That being said, before changing anything, setup your testing environment; you w
 
 # Testing
 
-#### On your first time only you will have to
+#### On your first time only you will have to:
 - Build the pip and zip packages:
 
       python build/build.py
