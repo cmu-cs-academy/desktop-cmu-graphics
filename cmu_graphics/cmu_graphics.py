@@ -208,64 +208,75 @@ class Group(Shape):
     def __len__(self): return len(self._shape._shapes)
 
 class Sound(object):
+    loaded = False
     def __init__(self, url):
-        if not isinstance(url, str):
-            callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
-            err = t(
-                    '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
-                    {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': 'string', 'value': repr(url), 'valueType': type(url).__name__}
-                    )
-            raise Exception(err)
-        if not pygame.mixer.get_init():
-            pygame.mixer.init()
-        if url.startswith('file://'):
-            url = url.split('/')[-1]
-        if url.startswith('http'):
-            for i in range(10):
-                try:
-                    response = webrequest.get(url)
-                    self.sound = pygame.mixer.Sound(io.BytesIO(response.read()))
-                except:
-                    if i<9:
-                        continue
-                    else:
-                        raise Exception('Failed to load sound data')
-                break
-        elif hasattr(__main__, '__file__'):
-            self.sound = pygame.mixer.Sound(os.path.abspath(__main__.__file__ + '/../' + url))
-        else:
-            self.sound = pygame.mixer.Sound(os.getcwd() + '/' + url)
-        if not pygame.mixer.find_channel():
-            pygame.mixer.set_num_channels(pygame.mixer.get_num_channels() * 2)
-        self.channel = pygame.mixer.find_channel()
-        self.started = False
+        try:
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            Sound.loaded = True
+        except Exception as e:
+            print('Error initializing sound module:', e)
+            print('Game will continue without sound.')
+
+        if Sound.loaded:
+            if not isinstance(url, str):
+                callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
+                err = t(
+                        '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
+                        {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': 'string', 'value': repr(url), 'valueType': type(url).__name__}
+                        )
+                raise Exception(err)
+            
+            if url.startswith('file://'):
+                url = url.split('/')[-1]
+            if url.startswith('http'):
+                for i in range(10):
+                    try:
+                        response = webrequest.get(url)
+                        self.sound = pygame.mixer.Sound(io.BytesIO(response.read()))
+                    except:
+                        if i<9:
+                            continue
+                        else:
+                            raise Exception('Failed to load sound data')
+                    break
+            elif hasattr(__main__, '__file__'):
+                self.sound = pygame.mixer.Sound(os.path.abspath(__main__.__file__ + '/../' + url))
+            else:
+                self.sound = pygame.mixer.Sound(os.getcwd() + '/' + url)
+            if not pygame.mixer.find_channel():
+                pygame.mixer.set_num_channels(pygame.mixer.get_num_channels() * 2)
+            self.channel = pygame.mixer.find_channel()
+            self.started = False
 
     def play(self, **kwargs):
-        default_kwargs = {'loop': False, 'restart': False}
+        if Sound.loaded:
+            default_kwargs = {'loop': False, 'restart': False}
 
-        for keyword in kwargs:
-            english_keyword = toEnglish(keyword, 'shape-attr')
-            if english_keyword not in default_kwargs:
-                raise Exception("TypeError: %s.%s() got an unexpected keyword argument '%s'" % (t('Sound'), t('play'), keyword))
-            default_kwargs[english_keyword] = kwargs[keyword]
+            for keyword in kwargs:
+                english_keyword = toEnglish(keyword, 'shape-attr')
+                if english_keyword not in default_kwargs:
+                    raise Exception("TypeError: %s.%s() got an unexpected keyword argument '%s'" % (t('Sound'), t('play'), keyword))
+                default_kwargs[english_keyword] = kwargs[keyword]
 
-        loop = default_kwargs['loop']
-        restart = default_kwargs['restart']
+            loop = default_kwargs['loop']
+            restart = default_kwargs['restart']
 
-        if not isinstance(loop, bool):
-            raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
-        if not isinstance(restart, bool):
-            raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
+            if not isinstance(loop, bool):
+                raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
+            if not isinstance(restart, bool):
+                raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
 
-        loop = -1 if loop else 0
-        if restart or not self.started:
-            self.channel.play(self.sound, loop)
-            self.started = True
-        else:
-            self.channel.unpause()
+            loop = -1 if loop else 0
+            if restart or not self.started:
+                self.channel.play(self.sound, loop)
+                self.started = True
+            else:
+                self.channel.unpause()
 
     def pause(self):
-        self.channel.pause()
+        if Sound.loaded:
+            self.channel.pause()
 
 SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
             Polygon, Rect, RegularPolygon, Star, ]
