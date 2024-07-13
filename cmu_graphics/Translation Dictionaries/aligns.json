@@ -1,0 +1,47 @@
+{
+  "keys": [
+    "left-top",
+    "top",
+    "right-top",
+    "left",
+    "center",
+    "right",
+    "left-bottom",
+    "bottom",
+    "right-bottom",
+    "top-left",
+    "top-right",
+    "bottom-left",
+    "bottom-right"
+  ],
+  "es": {
+    "left-top": "izquierda-superior",
+    "top": "superior",
+    "right-top": "derecha-superior",
+    "left": "izquierda",
+    "center": "centro",
+    "right": "derecha",
+    "left-bottom": "izquierda-inferior",
+    "bottom": "inferior",
+    "right-bottom": "derecha-inferior",
+    "top-left": "superior-izquierda",
+    "top-right": "superior-derecha",
+    "bottom-left": "inferior-izquierda",
+    "bottom-right": "inferior-derecha"
+  },
+  "de": {
+    "left-top": "links-oben",
+    "top": "oben",
+    "right-top": "rechts-oben",
+    "left": "links",
+    "center": "mitte",
+    "right": "rechts",
+    "left-bottom": "links-unten",
+    "bottom": "unten",
+    "right-bottom": "rechts-unten",
+    "top-left": "oben-links",
+    "top-right": "oben-rechts",
+    "bottom-left": "unten-links",
+    "bottom-right": "unten-rechts"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "keys": [
+    "background",
+    "getTextInput",
+    "group",
+    "maxShapeCount",
+    "paused",
+    "setTextInputs",
+    "stepsPerSecond",
+    "stop",
+    "stopped",
+    "setMaxShapeCount"
+  ],
+  "es": {
+    "background": "fondo",
+    "getTextInput": "obtenerEntradaDeTexto",
+    "group": "grupo",
+    "maxShapeCount": "maxCuentaDeFiguras",
+    "paused": "pausada",
+    "setTextInputs": "establecerEntradaDeTexto",
+    "stepsPerSecond": "pasosPorSegundo",
+    "stop": "detener",
+    "stopped": "detenido",
+    "setMaxShapeCount": "establecerCuentaFormasMaximas"
+  },
+  "de": {
+    "background": "hintergrund",
+    "getTextInput": "holeTextEingabe",
+    "group": "gruppe",
+    "maxShapeCount": "maximaleFormMenge",
+    "paused": "pausiert",
+    "setTextInputs": "setzeTextEingaben",
+    "stepsPerSecond": "schritteProSekunde",
+    "stop": "stop",
+    "stopped": "gestoppt",
+    "setMaxShapeCount": "setzeMaxFormAnzahl"
+  }
+}

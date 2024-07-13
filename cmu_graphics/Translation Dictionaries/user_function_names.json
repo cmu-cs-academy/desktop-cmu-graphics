@@ -1,0 +1,32 @@
+{
+  "keys": [
+    "onKeyHold",
+    "onKeyPress",
+    "onKeyRelease",
+    "onMouseDrag",
+    "onMouseMove",
+    "onMousePress",
+    "onMouseRelease",
+    "onStep"
+  ],
+  "es": {
+    "onKeyHold": "enTeclaRetenida",
+    "onKeyPress": "enTeclaPresionada",
+    "onKeyRelease": "enTeclaSoltada",
+    "onMouseDrag": "enRatónArrastrado",
+    "onMouseMove": "enRatónMovido",
+    "onMousePress": "enRatónPresionado",
+    "onMouseRelease": "enRatónSoltado",
+    "onStep": "enPaso"
+  },
+  "de": {
+    "onKeyHold": "beiTasteHalten",
+    "onKeyPress": "beiTasteRunter",
+    "onKeyRelease": "beiTasteHoch",
+    "onMouseDrag": "beiMausMitTasteZiehen",
+    "onMouseMove": "beiMausbewegung",
+    "onMousePress": "beiMaustasteRunter",
+    "onMouseRelease": "beiMaustasteHoch",
+    "onStep": "beimSchritt"
+  }
+}

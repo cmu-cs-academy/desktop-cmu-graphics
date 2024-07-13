@@ -1,0 +1,44 @@
+{
+  "keys": [
+    "space",
+    "enter",
+    "left",
+    "right",
+    "up",
+    "down",
+    "pageup",
+    "pagedown",
+    "escape",
+    "delete",
+    "backspace",
+    "tab"
+  ],
+  "es": {
+    "space": "espacio",
+    "enter": "intro",
+    "left": "izquierda",
+    "right": "derecha",
+    "up": "arriba",
+    "down": "abajo",
+    "pageup": "repág",
+    "pagedown": "avpág",
+    "escape": "escapar",
+    "delete": "suprimir",
+    "backspace": "retroceso",
+    "tab": "pestaña"
+  },
+  "de": {
+    "space": "leertaste",
+    "enter": "enter",
+    "left": "links",
+    "right": "rechts",
+    "up": "pfeil-hoch",
+    "down": "pfeil-runter",
+    "pageup": "bild-hoch",
+    "pagedown": "bild-runter",
+    "escape": "escape",
+    "delete": "entfernen",
+    "backspace": "löschen",
+    "tab": "tab"
+  }
+}
