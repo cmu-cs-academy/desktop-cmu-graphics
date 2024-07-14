@@ -24,25 +24,37 @@ import uuid
 import re
 
 # start_translate
-with open('./Translation Dictionaries/color_names.json', 'r') as file:
+fileDir = str(os.path.dirname(os.path.abspath(__file__)))
+with open(fileDir + '/Translation Dictionaries/color_names.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_COLOR_NAMES = json.load(file)
-with open('./Translation Dictionaries/gradient_starts.json', 'r') as file:
+with open(fileDir + '/Translation Dictionaries/gradient_starts.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_GRADIENT_STARTS = json.load(file)
-with open('./Translation Dictionaries/aligns.json', 'r') as file:
+with open(fileDir + '/Translation Dictionaries/aligns.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_ALIGNS = json.load(file)
-with open('./Translation Dictionaries/shape_attrs.json', 'r') as file:
+with open(fileDir + '/Translation Dictionaries/shape_attrs.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_SHAPE_ATTRS = json.load(file)
-with open('./Translation Dictionaries/booleans.json', 'r') as file:
+with open(fileDir + '/Translation Dictionaries/booleans.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_BOOLEANS = json.load(file)
-with open('./Translation Dictionaries/globals.json', 'r') as file:
+print(TRANSLATED_BOOLEANS)
+with open(fileDir + '/Translation Dictionaries/globals.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_GLOBALS = json.load(file)
-with open('./Translation Dictionaries/user_function_names.json', 'r') as file:
+with open(fileDir + '/Translation Dictionaries/user_function_names.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_USER_FUNCTION_NAMES = json.load(file)
-with open('./Translation Dictionaries/key_names.json', 'r') as file:
+with open(fileDir + '/Translation Dictionaries/key_names.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_KEY_NAMES = json.load(file)
-with open('./Translation Dictionaries/app_attrs.json', 'r') as file:
+with open(fileDir + '/Translation Dictionaries/app_attrs.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_APP_ATTRS = json.load(file)
-with open('./Translation Dictionaries/strings.json', 'r') as file:
+with open(fileDir + '/Translation Dictionaries/strings.json', 'r',
+            encoding='utf-8') as file:
     TRANSLATED_STRINGS = json.load(file)
 
 # end_translate
@@ -166,7 +178,7 @@ def toEnglish(key, context, returnLanguage = False):
     else:
         return translation
 
-supportedLanguages = ['en', 'es', 'de']
+supportedLanguages = ['en', 'es', 'de', 'fr']
 
 class CMUException(Exception): pass
 
