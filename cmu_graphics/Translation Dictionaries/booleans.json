@@ -1,5 +1,6 @@
 {
   "keys": ["True", "False"],
   "es": { "True": "Verdadero", "False": "Falso" },
-  "de": { "True": "Wahr", "False": "Falsch" }
+  "de": { "True": "Wahr", "False": "Falsch" },
+  "fr": { "True": "Vrai", "False": "Faux" }
 }

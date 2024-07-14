@@ -40,5 +40,19 @@
     "delete": "entfernen",
     "backspace": "löschen",
     "tab": "tab"
+  },
+  "fr": {
+    "space": "espace",
+    "enter": "entrée",
+    "left": "gauche",
+    "right": "droite",
+    "up": "haut",
+    "down": "bas",
+    "pageup": "pagehaut",
+    "pagedown": "pagebas",
+    "escape": "échapper",
+    "delete": "supprimer",
+    "backspace": "backspace",
+    "tab": "tab"
   }
 }

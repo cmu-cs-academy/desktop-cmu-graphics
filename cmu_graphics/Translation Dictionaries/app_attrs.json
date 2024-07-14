@@ -34,5 +34,17 @@
     "stop": "stop",
     "stopped": "gestoppt",
     "setMaxShapeCount": "setzeMaxFormAnzahl"
+  },
+  "fr": {
+    "background": "arrièrePlan",
+    "getTextInput": "saisieDeTexte",
+    "group": "groupe",
+    "maxShapeCount": "nombreMaximaleDeFormes",
+    "paused": "enPause",
+    "setTextInputs": "définirSaisieDeTexte",
+    "stepsPerSecond": "étapesParSeconde",
+    "stop": "arrêter",
+    "stopped": "arrêté",
+    "setMaxShapeCount": "définirNombreMaximaleDeFormes"
   }
 }

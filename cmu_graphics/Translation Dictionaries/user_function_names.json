@@ -28,5 +28,15 @@
     "onMousePress": "beiMaustasteRunter",
     "onMouseRelease": "beiMaustasteHoch",
     "onStep": "beimSchritt"
+  },
+  "fr": {
+    "onKeyHold": "surToucheMaintenue",
+    "onKeyPress": "surToucheAppuyée",
+    "onKeyRelease": "surToucheRelâchée",
+    "onMouseDrag": "surGlissementSouris",
+    "onMouseMove": "surDéplacementSouris",
+    "onMousePress": "surAppuiSouris",
+    "onMouseRelease": "surRelâchementSouris",
+    "onStep": "surPas"
   }
 }

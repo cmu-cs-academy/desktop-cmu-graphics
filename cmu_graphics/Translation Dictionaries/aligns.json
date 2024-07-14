@@ -43,5 +43,20 @@
     "top-right": "oben-rechts",
     "bottom-left": "unten-links",
     "bottom-right": "unten-rechts"
+  },
+  "fr": {
+    "left-top": "gauche-haut",
+    "top": "haut",
+    "right-top": "droite-haut",
+    "left": "gauche",
+    "center": "centre",
+    "right": "droite",
+    "left-bottom": "gauche-bas",
+    "bottom": "bas",
+    "right-bottom": "droite-bas",
+    "top-left": "haut-gauche",
+    "top-right": "haut-droite",
+    "bottom-left": "bas-gauche",
+    "bottom-right": "bas-droite"
   }
 }
