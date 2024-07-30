@@ -2922,11 +2922,11 @@ class Inspector(object):
         h = 12
         margin = 10
         pointLabelCenterX = min(
-            400 - margin - w / 2,
+            self.app.width - margin - w / 2,
             max(margin + w / 2, self.bestX - 10)
         )
         pointLabelCenterY = min(
-            400 - margin - h / 2,
+            self.app.height - margin - h / 2,
             max(margin + h / 2, self.bestY - 10)
         )
 
@@ -2980,7 +2980,7 @@ class Inspector(object):
         lineHeight = 12
         infoHeight = lineHeight * len(newLines)
         ctx.rectangle(
-            400 - 2 * margin - infoWidth,
+            self.app.width - 2 * margin - infoWidth,
             minTop,
             infoWidth + 2 * margin,
             infoHeight + margin
@@ -2999,7 +2999,7 @@ class Inspector(object):
 
             drawCenteredText(
                 firstword,
-                400 -
+                self.app.width -
                     margin -
                     infoWidth / 2 -
                     (newlineWidth + firstwordWidth) / 2 +
@@ -3010,7 +3010,7 @@ class Inspector(object):
             ctx.select_font_face(*getFont('arial'))
             drawCenteredText(
                 newline,
-                400 -
+                self.app.width -
                     margin -
                     infoWidth / 2 +
                     (newlineWidth + firstwordWidth) / 2 -
