@@ -2733,6 +2733,9 @@ class Inspector(object):
                 if isinstance(value, str):
                     result += value
                     result += ', '
+                elif isinstance(value, RGB):
+                    result += value._strVal
+                    result += ', '
                 else:
                     result += value.attrs['strVal']
                     result += ', '
