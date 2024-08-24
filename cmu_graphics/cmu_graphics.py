@@ -285,6 +285,19 @@ class Sound(object):
         if Sound.initialized and self.channel:
             self.channel.pause()
 
+    def setVolume(self, volume: float):
+        """
+        Volume in the range of 0.0 to 1.0 (inclusive)\n
+        If value < 0.0, the volume will not be changed\n
+        If value > 1.0, the volume will be set to 1.0
+        """
+        if Sound.initialized:
+            self.sound.set_volume(volume)
+
+    def getVolume(self):
+        if Sound.initialized:
+            return self.sound.get_volume()
+
 SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
             Polygon, Rect, RegularPolygon, Star, ]
 
