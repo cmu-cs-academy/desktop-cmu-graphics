@@ -208,17 +208,19 @@ class Group(Shape):
     def __len__(self): return len(self._shape._shapes)
 
 class Sound(object):
-    loaded = False
+    initialized = False
+    number_of_sounds = 0
     def __init__(self, url):
         try:
             if not pygame.mixer.get_init():
                 pygame.mixer.init()
-            Sound.loaded = True
+                pygame.mixer.set_num_channels(1)
+                Sound.initialized = True
         except Exception as e:
             print('Error initializing sound module:', e)
             print('Game will continue without sound.')
 
-        if Sound.loaded:
+        if Sound.initialized:
             if not isinstance(url, str):
                 callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
                 err = t(
@@ -226,14 +228,18 @@ class Sound(object):
                         {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': 'string', 'value': repr(url), 'valueType': type(url).__name__}
                         )
                 raise Exception(err)
-            
+
+            Sound.number_of_sounds += 1
+            if pygame.mixer.get_num_channels()==Sound.number_of_sounds:
+                pygame.mixer.set_num_channels(Sound.number_of_sounds * 2)
+
             if url.startswith('file://'):
-                url = url.split('/')[-1]
+                url = url.split('//')[-1]
             if url.startswith('http'):
                 for i in range(10):
                     try:
                         response = webrequest.get(url)
-                        self.sound = pygame.mixer.Sound(io.BytesIO(response.read()))
+                        self.sound = io.BytesIO(response.read())
                     except:
                         if i<9:
                             continue
@@ -241,16 +247,15 @@ class Sound(object):
                             raise Exception('Failed to load sound data')
                     break
             elif hasattr(__main__, '__file__'):
-                self.sound = pygame.mixer.Sound(os.path.abspath(__main__.__file__ + '/../' + url))
+                self.sound = os.path.abspath(__main__.__file__ + '/../' + url)
             else:
-                self.sound = pygame.mixer.Sound(os.getcwd() + '/' + url)
-            if not pygame.mixer.find_channel():
-                pygame.mixer.set_num_channels(pygame.mixer.get_num_channels() * 2)
-            self.channel = pygame.mixer.find_channel()
-            self.started = False
+                self.sound = os.getcwd() + '/' + url
+
+            self.sound = pygame.mixer.Sound(self.sound)
+            self.channel = None
 
     def play(self, **kwargs):
-        if Sound.loaded:
+        if Sound.initialized:
             default_kwargs = {'loop': False, 'restart': False}
 
             for keyword in kwargs:
@@ -268,14 +273,16 @@ class Sound(object):
                 raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
 
             loop = -1 if loop else 0
-            if restart or not self.started:
-                self.channel.play(self.sound, loop)
-                self.started = True
+            if not self.channel or not self.channel.get_busy():
+                self.channel = self.sound.play(loops=loop)
+            elif restart:
+                self.channel.stop()
+                self.channel = self.sound.play(loops=loop)
             else:
                 self.channel.unpause()
 
     def pause(self):
-        if Sound.loaded:
+        if Sound.initialized and self.channel:
             self.channel.pause()
 
 SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
