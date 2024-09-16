@@ -247,9 +247,9 @@ class Sound(object):
                             raise Exception('Failed to load sound data')
                     break
             elif hasattr(__main__, '__file__'):
-                self.sound = os.path.abspath(__main__.__file__ + '/../' + url)
+                self.sound = os.path.abspath(os.path.join(__main__.__file__, "..", url))
             else:
-                self.sound = os.getcwd() + '/' + url
+                self.sound = os.path.abspath(os.path.join(os.getcwd(), url))
 
             self.sound = pygame.mixer.Sound(self.sound)
             self.channel = None
@@ -274,6 +274,8 @@ class Sound(object):
 
             loop = -1 if loop else 0
             if not self.channel or not self.channel.get_busy():
+                self.channel = self.sound.play(loops=loop)
+            elif restart and self.channel.get_busy():
                 self.channel = self.sound.play(loops=loop)
             elif restart:
                 self.channel.stop()
