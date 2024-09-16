@@ -275,7 +275,7 @@ class Sound(object):
             loop = -1 if loop else 0
             if not self.channel or not self.channel.get_busy():
                 self.channel = self.sound.play(loops=loop)
-            elif restart and self.channel.get_busy():
+            elif restart and self.channel.get_sound() != self.sound:
                 self.channel = self.sound.play(loops=loop)
             elif restart:
                 self.channel.stop()
