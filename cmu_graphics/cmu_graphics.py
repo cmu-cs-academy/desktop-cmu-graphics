@@ -3,6 +3,7 @@ import types
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
+from PIL import Image as PILImage
 
 class Signal():
     def __init__(self):
@@ -44,6 +45,32 @@ def dsin(angle):
 
 def dcos(angle):
     return math.cos(math.radians(angle))
+
+def openImage(fileName):
+    if not isinstance(fileName, str):
+        callSpec = '{className}.{attr}'.format(className=t('Image'), attr=t('url'))
+        err = t(
+                '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
+                {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': 'string', 'value': repr(fileName), 'valueType': type(fileName).__name__}
+                )
+        raise Exception(err)
+    if (fileName.startswith('http')):
+        # reference is a url
+        for i in range(10):
+            try:
+                response = webrequest.get(fileName)
+                return PILImage.open(response)
+            except:
+                if i < 9:
+                    continue
+                else:
+                    raise(t('Failed to open image'))
+            break
+    elif hasattr(__main__, '__file__'):
+        main_directory = os.path.abspath(__main__.__file__) + '/../'
+    else:
+        main_directory = os.getcwd() + '/'
+    return PILImage.open(main_directory + fileName)
 
 def setLanguage(language):
     sli.setLanguage(language)

@@ -142,13 +142,13 @@ def edgesIntersect(edges1, edges2):
     active_edges2 = set()
 
     # Here we're looping over a list of all line segments' start and ends points,
-    # which is sorted by the points' x values. 
-    # 
+    # which is sorted by the points' x values.
+    #
     # We're keeping track of which line segments are "active" as we go
     # (which line segments intersect with the line x=x for the current x value).
-    # 
+    #
     # When we encounter a new line segment, we see if it intersects with any
-    # active line segments in the other shape. 
+    # active line segments in the other shape.
     for (_, events) in sorted(x_to_events.items(), key=lambda item: item[0]):
         for shape, event_type, edge1 in events:
             my_active_edges, other_active_edges = (active_edges1, active_edges2) if shape == 1 else (active_edges2, active_edges1)
@@ -279,7 +279,7 @@ def getArcPoints(cx, cy, width, height, startAngle = None, sweepAngle = None, si
     n = rounded(6 + 18 * sizeForN / 50)
     n = math.ceil(n / 4) * 4
     denominator = n if sweepAngle == 360 else n - 1
-    startAngle = toRadians(startAngle) if isMvc else toRadians(90 - startAngle) 
+    startAngle = toRadians(startAngle) if isMvc else toRadians(90 - startAngle)
     sweepAngle = toRadians(sweepAngle)
     multiplyFactor = 1 if isMvc else -1;
     for i in range(n):
