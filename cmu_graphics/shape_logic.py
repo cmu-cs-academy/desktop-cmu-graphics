@@ -10,6 +10,7 @@ from cmu_graphics.libs import pil_image_loader as Image
 ### PYPI VERSION ###
 import cairo
 from PIL import Image
+
 ### END PYPI VERSION ###
 from cmu_graphics.libs import webrequest
 from io import BytesIO
@@ -432,6 +433,10 @@ class PILWrapper(object):
 def hashReference(reference):
     if isinstance(reference, PILWrapper):
         return reference.uuid
+    if isinstance(reference, Image.Image):
+        # I heard of something called imagehash, maybe we can use that and it will be faster without compromising accuracy
+        # return hash(reference.convert("L").resize((16, 16)).tobytes())
+        return hash(reference.tobytes())
     return hash(reference)
 
 def loadImageFromStringReference(reference):
@@ -447,14 +452,21 @@ def loadImageFromStringReference(reference):
         image = Image.open(reference)
     return PILWrapper(image)
 
-def loadImage(reference):
-    if isinstance(reference, PILWrapper):
-        image = reference
-    else:
-        image = loadImageFromStringReference(reference)
+def loadImageFromPILReference(reference):
+    return PILWrapper(reference)
 
-    surface = image.surface
-    activeDrawing.images[hashReference(reference)] = surface
+def loadImage(reference):
+    if hashReference(reference) not in activeDrawing.images:
+        if isinstance(reference, PILWrapper):
+            image = reference
+        elif isinstance(reference, Image.Image):
+            image = loadImageFromPILReference(reference)
+        else:
+            image = loadImageFromStringReference(reference)
+        surface = image.surface
+        activeDrawing.images[hashReference(reference)] = surface
+    else:
+        surface = activeDrawing.images[hashReference(reference)]
 
     return {'width': surface.get_width(), 'height': surface.get_height()}
 
@@ -2326,8 +2338,6 @@ atexit.register(cleanSoundProcesses)
 class CMUImage(PolygonWithTransform):
     def __init__(self, attrs):
         if attrs is not None:
-            if isinstance(attrs['url'], Image.Image):
-                attrs['url'] = PILWrapper(attrs['url'])
             imageData = loadImage(attrs['url'])
 
             height, width = imageData['height'], imageData['width']
