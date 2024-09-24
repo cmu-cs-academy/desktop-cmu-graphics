@@ -226,7 +226,7 @@ def checkArgCount(clsName, fnName, argNames, args):
         else:
             callSpec = (clsName or fnName)
         pyThrow(t(
-            'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}',
+            'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} positional arguments ({{argNames}}), not {{argsLen}}',
             {
                 'callSpec': callSpec,
                 'argNamesLen': len(argNames),
