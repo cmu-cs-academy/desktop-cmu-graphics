@@ -297,6 +297,9 @@ class Sound(object):
             self.sound.set_volume(volume)
 
     def getVolume(self):
+        """
+        Returns the volume (range: 0.0 - 1.0 (inclusive))
+        """
         if Sound.initialized:
             return self.sound.get_volume()
 
