@@ -220,15 +220,15 @@ class Sound(object):
             print('Error initializing sound module:', e)
             print('Game will continue without sound.')
 
-        if Sound.initialized:
-            if not isinstance(url, str):
-                callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
-                err = t(
-                        '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
-                        {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': 'string', 'value': repr(url), 'valueType': type(url).__name__}
-                        )
-                raise Exception(err)
+        if not isinstance(url, str):
+            callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
+            err = t(
+                    '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
+                    {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': 'string', 'value': repr(url), 'valueType': type(url).__name__}
+                    )
+            raise Exception(err)
 
+        if Sound.initialized:
             Sound.number_of_sounds += 1
             if pygame.mixer.get_num_channels()==Sound.number_of_sounds:
                 pygame.mixer.set_num_channels(Sound.number_of_sounds * 2)
