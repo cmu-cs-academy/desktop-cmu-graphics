@@ -208,17 +208,11 @@ class Group(Shape):
     def __len__(self): return len(self._shape._shapes)
 
 class Sound(object):
-    initialized = False
     number_of_sounds = 0
     def __init__(self, url):
-        try:
-            if not pygame.mixer.get_init():
-                pygame.mixer.init()
-                pygame.mixer.set_num_channels(1)
-                Sound.initialized = True
-        except Exception as e:
-            print('Error initializing sound module:', e)
-            print('Game will continue without sound.')
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+            pygame.mixer.set_num_channels(1)
 
         if not isinstance(url, str):
             callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
@@ -228,64 +222,61 @@ class Sound(object):
                     )
             raise Exception(err)
 
-        if Sound.initialized:
-            Sound.number_of_sounds += 1
-            if pygame.mixer.get_num_channels()==Sound.number_of_sounds:
-                pygame.mixer.set_num_channels(Sound.number_of_sounds * 2)
+        Sound.number_of_sounds += 1
+        if pygame.mixer.get_num_channels()==Sound.number_of_sounds:
+            pygame.mixer.set_num_channels(Sound.number_of_sounds * 2)
 
-            if url.startswith('file://'):
-                url = url.split('//')[-1]
-            if url.startswith('http'):
-                for i in range(10):
-                    try:
-                        response = webrequest.get(url)
-                        self.sound = io.BytesIO(response.read())
-                    except:
-                        if i<9:
-                            continue
-                        else:
-                            raise Exception('Failed to load sound data')
-                    break
-            elif hasattr(__main__, '__file__'):
-                self.sound = os.path.abspath(os.path.join(__main__.__file__, "..", url))
-            else:
-                self.sound = os.path.abspath(os.path.join(os.getcwd(), url))
+        if url.startswith('file://'):
+            url = url.split('//')[-1]
+        if url.startswith('http'):
+            for i in range(10):
+                try:
+                    response = webrequest.get(url)
+                    self.sound = io.BytesIO(response.read())
+                except:
+                    if i<9:
+                        continue
+                    else:
+                        raise Exception('Failed to load sound data')
+                break
+        elif hasattr(__main__, '__file__'):
+            self.sound = os.path.abspath(os.path.join(__main__.__file__, "..", url))
+        else:
+            self.sound = os.path.abspath(os.path.join(os.getcwd(), url))
 
-            self.sound = pygame.mixer.Sound(self.sound)
-            self.channel = None
+        self.sound = pygame.mixer.Sound(self.sound)
+        self.channel = None
 
     def play(self, **kwargs):
-        if Sound.initialized:
-            default_kwargs = {'loop': False, 'restart': False}
+        default_kwargs = {'loop': False, 'restart': False}
 
-            for keyword in kwargs:
-                english_keyword = toEnglish(keyword, 'shape-attr')
-                if english_keyword not in default_kwargs:
-                    raise Exception("TypeError: %s.%s() got an unexpected keyword argument '%s'" % (t('Sound'), t('play'), keyword))
-                default_kwargs[english_keyword] = kwargs[keyword]
+        for keyword in kwargs:
+            english_keyword = toEnglish(keyword, 'shape-attr')
+            if english_keyword not in default_kwargs:
+                raise Exception("TypeError: %s.%s() got an unexpected keyword argument '%s'" % (t('Sound'), t('play'), keyword))
+            default_kwargs[english_keyword] = kwargs[keyword]
 
-            loop = default_kwargs['loop']
-            restart = default_kwargs['restart']
+        loop = default_kwargs['loop']
+        restart = default_kwargs['restart']
 
-            if not isinstance(loop, bool):
-                raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
-            if not isinstance(restart, bool):
-                raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
+        if not isinstance(loop, bool):
+            raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
+        if not isinstance(restart, bool):
+            raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
 
-            loop = -1 if loop else 0
-            if not self.channel or not self.channel.get_busy():
-                self.channel = self.sound.play(loops=loop)
-            elif restart and self.channel.get_sound() != self.sound:
-                self.channel = self.sound.play(loops=loop)
-            elif restart:
-                self.channel.stop()
-                self.channel = self.sound.play(loops=loop)
-            else:
-                self.channel.unpause()
+        loop = -1 if loop else 0
+        if not self.channel or not self.channel.get_busy():
+            self.channel = self.sound.play(loops=loop)
+        elif restart and self.channel.get_sound() != self.sound:
+            self.channel = self.sound.play(loops=loop)
+        elif restart:
+            self.channel.stop()
+            self.channel = self.sound.play(loops=loop)
+        else:
+            self.channel.unpause()
 
     def pause(self):
-        if Sound.initialized and self.channel:
-            self.channel.pause()
+        self.channel.pause()
 
     def setVolume(self, volume: float):
         """
@@ -293,15 +284,13 @@ class Sound(object):
         If value < 0.0, the volume will not be changed\n
         If value > 1.0, the volume will be set to 1.0
         """
-        if Sound.initialized:
-            self.sound.set_volume(volume)
+        self.sound.set_volume(volume)
 
     def getVolume(self):
         """
         Returns the volume (range: 0.0 - 1.0 (inclusive))
         """
-        if Sound.initialized:
-            return self.sound.get_volume()
+        return self.sound.get_volume()
 
 SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
             Polygon, Rect, RegularPolygon, Star, ]
