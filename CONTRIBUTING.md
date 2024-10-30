@@ -42,6 +42,7 @@ Inside of `desktop-cmu-graphics` you will find the following...
 
     (If this fails, modify `desktop-cmu-graphics/setup.py` on line 33 and remove cmu_graphics.samples`)
 
+3. Add everything that has been created up to now to .gitignore
 
 # Running a Build
 
@@ -56,10 +57,6 @@ python build/build.py
 Before building, it might be useful to run the testsuite to make sure your changes haven't broken anything.
 
 ## Setup for Testing
-
-- Build the pip and zip packages:
-
-      python build/build.py
 
 - Install testing dependencies:
 
