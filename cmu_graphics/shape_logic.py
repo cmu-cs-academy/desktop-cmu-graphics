@@ -226,7 +226,7 @@ def checkArgCount(clsName, fnName, argNames, args):
         else:
             callSpec = (clsName or fnName)
         pyThrow(t(
-            'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} arguments ({{argNames}}), not {{argsLen}}',
+            'Arg Count Error: {{callSpec}}() takes {{argNamesLen}} positional arguments ({{argNames}}), not {{argsLen}}',
             {
                 'callSpec': callSpec,
                 'argNamesLen': len(argNames),
@@ -357,7 +357,7 @@ def RGBListAlmostEqual(v1, v2, epsilon):
         if type(v1[i]) != type(v2[i]): return False
         if isinstance(v1[i], RGB):
             if not RGBAlmostEqual(v1[i], v2[i], epsilon): return False
-        elif isinstance(v1[i], list) or isinstance(v[i], tuple):
+        elif isinstance(v1[i], list) or isinstance(v2[i], tuple):
             if not RGBListAlmostEqual(v1[i], v2[i], epsilon): return False
         else:
             raise Exception('RGBListAlmostEqual: invalid type: {t}'.format(t=v1[i]))
@@ -750,7 +750,7 @@ class Gradient(object, metaclass=_ShapeMetaclass):
     def __init__(self, colors, start):
         checkArray(self, t('colors'), colors, False)
         if len(colors) < 2:
-            pyThrow(t('Need to pass at least 2 colors to gradient(); you gave {{colorLen}}', {'colorLen': v1[i]}));
+            pyThrow(t('Need to pass at least 2 colors to gradient(); you gave {{colorLen}}', {'colorLen': len(colors)}));
         for color in colors:
             if color is None:
                 pyThrow(t('{{error}}: None cannot be used inside gradient.colors', {'error': t('TypeError')}))
@@ -2045,14 +2045,14 @@ class Rect(Polygon):
 class Line(Polygon):
     def __init__(self, attrs):
         attrs['initialPoints'] = utils.flatten(utils.getLinePoints(attrs['x1'], attrs['y1'], attrs['x2'], attrs['y2'], 2))
-        
+
         exactValues = {
             'x1': attrs['x1'],
             'x2': attrs['x2'],
             'y1': attrs['y1'],
             'y2': attrs['y2'],
         }
-        
+
         del attrs['x1']
         del attrs['y1']
         del attrs['x2']
@@ -2083,7 +2083,7 @@ class Line(Polygon):
     def getXY(self, i0, i1, j, name):
         if (name in self.exactValues):
             return self.exactValues[name]
-    
+
         points = self.pointList
         return (points[i0][j] + points[i1][j]) / 2
 
@@ -2423,12 +2423,12 @@ class Oval(PolygonWithTransform):
             angle -= (math.pi / 2)
 
         result = utils.rotatePoints(
-            result, 
+            result,
             utils.toDegrees(angle),
-            0, 
+            0,
             0
         )
-        
+
         if isMvc:
             result = [[pair[0],-pair[1]] for pair in result]
         return result
@@ -2733,6 +2733,9 @@ class Inspector(object):
                 if isinstance(value, str):
                     result += value
                     result += ', '
+                elif isinstance(value, RGB):
+                    result += value._strVal
+                    result += ', '
                 else:
                     result += value.attrs['strVal']
                     result += ', '
@@ -2919,11 +2922,11 @@ class Inspector(object):
         h = 12
         margin = 10
         pointLabelCenterX = min(
-            400 - margin - w / 2,
+            self.app.width - margin - w / 2,
             max(margin + w / 2, self.bestX - 10)
         )
         pointLabelCenterY = min(
-            400 - margin - h / 2,
+            self.app.height - margin - h / 2,
             max(margin + h / 2, self.bestY - 10)
         )
 
@@ -2977,7 +2980,7 @@ class Inspector(object):
         lineHeight = 12
         infoHeight = lineHeight * len(newLines)
         ctx.rectangle(
-            400 - 2 * margin - infoWidth,
+            self.app.width - 2 * margin - infoWidth,
             minTop,
             infoWidth + 2 * margin,
             infoHeight + margin
@@ -2996,7 +2999,7 @@ class Inspector(object):
 
             drawCenteredText(
                 firstword,
-                400 -
+                self.app.width -
                     margin -
                     infoWidth / 2 -
                     (newlineWidth + firstwordWidth) / 2 +
@@ -3007,7 +3010,7 @@ class Inspector(object):
             ctx.select_font_face(*getFont('arial'))
             drawCenteredText(
                 newline,
-                400 -
+                self.app.width -
                     margin -
                     infoWidth / 2 +
                     (newlineWidth + firstwordWidth) / 2 -

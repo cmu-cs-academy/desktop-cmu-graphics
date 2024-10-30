@@ -648,12 +648,26 @@ class App(object):
         if self.textInputs:
             return self.textInputs.pop(0)
         p = self.spawnModalProcess()
-        packet = bytes(json.dumps({'title': self.title, 'prompt': prompt}) + '\n', encoding='utf-8')
+        packet = bytes(
+            json.dumps({"title": self.title, "prompt": prompt, "getInput": True})
+            + "\n",
+            encoding="utf-8",
+        )
         result, errors = p.communicate(packet)
         if p.returncode is not None and p.returncode != 0:
             print(errors.decode('utf-8'))
             raise Exception('Exception in getTextInput.')
         return result.decode('utf-8')
+
+    def showMessage(self, prompt=""):
+        p = self.spawnModalProcess()
+        packet = bytes(
+            json.dumps({"title": self.title, "prompt": prompt, "getInput": False}) + "\n", encoding="utf-8"
+        )
+        unused_result, errors = p.communicate(packet)
+        if p.returncode is not None and p.returncode != 0:
+            print(errors.decode("utf-8"))
+            raise Exception("Exception in showMessage.")
 
     def setTextInputs(self, *args):
         for arg in args:
@@ -749,7 +763,7 @@ class MvcException(Exception): pass
 
 class AppWrapper(object):
     readOnlyAttrs = set(['bottom','centerX', 'centerY',
-                         'getTextInput', 'left', 'quit', 'right',
+                         'getTextInput', 'showMessage', 'left', 'quit', 'right',
                          'run', 'stop', 'top', 'setMaxShapeCount',
                          'printFullTracebacks'])
     readWriteAttrs = set(['height', 'paused', 'stepsPerSecond', 'group',

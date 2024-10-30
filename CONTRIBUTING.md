@@ -100,6 +100,7 @@ Prior to re-running `test_image_gen.py`, delete the generated folder `image_gen`
 
 Once you have fixed a bug or added a new features, the next step is to submit your changes back to the project so that others can benefit.
 
+
 1. Create a new branch in your fork with a simple descriptive name (e.g., `new_feature_\<feature name>`).
 2. Implement your changes locally on the branch. Use multiple short and descriptive commits. And test your code!
 3. Push commits to GitHub using VSCode UI or `git push`.
@@ -108,3 +109,8 @@ Once you have fixed a bug or added a new features, the next step is to submit yo
     - Include details like what's changed and why.
 5. We'll review your PR and provide feedback if needed. Changes might be requested.
 6. If your pull request is approved, it will be merged.  Thanks for your contribution!
+
+# Translation
+
+Translation into Spanish and German is handled by a library.
+You don't need to edit the content between `# start_translate` and `# end_translate`.
