@@ -10,7 +10,7 @@ environment:
       appveyor_build_worker_image: Visual Studio 2019
 
     - job_name: macOS Tests
-      appveyor_build_worker_image: macos-monterey
+      appveyor_build_worker_image: macos-sonoma
 
 matrix:
   fast_finish: false
@@ -46,6 +46,8 @@ for:
         - job_name: macOS Tests
 
     install:
+      - export HOMEBREW_NO_AUTO_UPDATE=1
+      - export HOMEBREW_NO_INSTALL_CLEANUP=1
       # Force install xorgproto, which is a dependency of cairo but can't be linked by
       # homebrew because of a conflicting file.
       - brew install -f --overwrite xorgproto
