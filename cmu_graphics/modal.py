@@ -7,9 +7,7 @@ import libs.pygame_loader as pygame
 import cairo
 import pygame
 ### END PYPI VERSION ###
-import sys
 import json
-import os
 
 def roundedrec(ctx,x,y,w,h,radius_x=5,radius_y=5):
     # from mono moonlight aka mono silverlight
@@ -265,7 +263,10 @@ class Button(object):
         self.modal = modal
         self.centerX = self.modal.width / 2
         self.padding = 10
-        self.top = self.modal.textBox.top + self.modal.textBox.height + self.padding
+        if self.modal.textBox:
+            self.top = self.modal.textBox.top + self.modal.textBox.height + self.padding
+        else:
+            self.top = self.modal.dividerY + self.modal.textYMargin
         self.bottom = self.modal.height - self.padding
         self.height = self.bottom - self.top
         self.width = self.height * 1.2
@@ -315,7 +316,7 @@ class Button(object):
             self.modal.execute()
 
 class TextBoxModal(object):
-    def __init__(self, title, prompt):
+    def __init__(self, title, prompt, getInput):
         self.title = title
         self.prompt = prompt
 
@@ -325,7 +326,7 @@ class TextBoxModal(object):
         self.left = self.centerX - (self.width / 2)
         self.right = self.left + self.width
 
-        self.inputHeight = 100
+        self.inputHeight = 100 if getInput else 70
 
         self.textXMargin = 15
         self.textYMargin = 18
@@ -336,7 +337,7 @@ class TextBoxModal(object):
         self.active = True
         self.measureCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
         self.dividerY = self.drawPrompt(self.measureCtx, simulate = True) + self.textYMargin
-        self.textBox = TextBox(self)
+        self.textBox = TextBox(self) if getInput else None
         self.button = Button(self)
 
         self.mouseIsDown = False
@@ -360,7 +361,8 @@ class TextBoxModal(object):
 
         self.drawBox(ctx)
         self.drawPrompt(ctx)
-        self.textBox.draw(ctx)
+        if self.textBox:
+            self.textBox.draw(ctx)
         self.button.draw(ctx)
 
         ctx.restore()
@@ -411,10 +413,12 @@ class TextBoxModal(object):
         return currTop + lineHeight
 
     def onStep(self):
-        self.textBox.onStep()
+        if self.textBox:
+            self.textBox.onStep()
 
     def execute(self):
-        print(''.join(self.textBox.buf), end='')
+        if self.textBox:
+            print(''.join(self.textBox.buf), end='')
         self.running = False
 
     def run(self):
@@ -438,18 +442,19 @@ class TextBoxModal(object):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     self.button.onMousePress(event.pos)
 
-                    if self.textBox.contains(*event.pos):
-                        self.textBox.focus()
-                    else:
-                        self.textBox.active = False
-                        self.cursorPos = None
+                    if self.textBox:
+                        if self.textBox.contains(*event.pos):
+                            self.textBox.focus()
+                        else:
+                            self.textBox.active = False
+                            self.cursorPos = None
 
-                    if self.textBox.active:
-                        lastMousePosition = event.pos
-                        self.textBox.anchorPos = None
-                        self.textBox.cursorPos = self.textBox.cursorPosFromCoord(event.pos[0])
-                        tickHadMouseDownEvent = True
-                        self.mouseIsDown = True
+                        if self.textBox.active:
+                            lastMousePosition = event.pos
+                            self.textBox.anchorPos = None
+                            self.textBox.cursorPos = self.textBox.cursorPosFromCoord(event.pos[0])
+                            tickHadMouseDownEvent = True
+                            self.mouseIsDown = True
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                     lastMousePosition = event.pos
                     self.mouseIsDown = False
@@ -463,11 +468,14 @@ class TextBoxModal(object):
                     lastMousePosition = event.pos
                     tickHadMouseDownEvent = True
                     self.mouseIsDown = True
-                    self.textBox.onMouseDrag(event.pos)
+                    if self.textBox:
+                        self.textBox.onMouseDrag(event.pos)
                 elif event.type == pygame.KEYDOWN:
-                    self.textBox.onKeyPress(event.key, event.mod)
+                    if self.textBox:
+                        self.textBox.onKeyPress(event.key, event.mod)
                 elif event.type == pygame.KEYUP:
-                    self.textBox.onKeyRelease(event.key, event.mod)
+                    if self.textBox:
+                        self.textBox.onKeyRelease(event.key, event.mod)
                 elif event.type == pygame.QUIT:
                     self.running = False
 
@@ -475,7 +483,7 @@ class TextBoxModal(object):
                 abs(self._msPassed - math.floor((1000 / self._stepsPerSecond))) < 10):
                 self._msPassed = 0
                 self.onStep()
-                if self.mouseIsDown and not tickHadMouseDownEvent:
+                if self.textBox and self.mouseIsDown and not tickHadMouseDownEvent:
                     self.textBox.onMouseDrag(lastMousePosition)
 
             self.redrawAll(screen, cairo_surface, ctx)
@@ -486,7 +494,7 @@ class TextBoxModal(object):
 
 def main():
     request = json.loads(input())
-    TextBoxModal(request['title'], request['prompt'])
+    TextBoxModal(request["title"], request["prompt"], request["getInput"])
 
 if __name__ == '__main__':
     main()

@@ -16,3 +16,8 @@ Build the pip and zip packages:
 Run the tests:
 
     python -m tox
+
+# Translation
+
+Translation into Spanish and German is handled by a library.
+You don't need to edit the content between `# start_translate` and `# end_translate`.
