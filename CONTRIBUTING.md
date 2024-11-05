@@ -5,8 +5,9 @@
 
     - GIT: https://git-scm.com/downloads
     - Python: https://www.python.org/downloads/
-    - An IDE (we recommend PyCharm or VSCode)
-    - You may also find yourself prompted to install cmake and-or zlib at some point, but if not don't worry about it.
+    - An IDE (we recommend VSCode)
+    - If you running on a Mac, install pkg-config with [homebrew](https://brew.sh/): `brew install pkg-config`
+
 3. [Fork the repo to your own GitHub](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo#forking-a-repository)
 4. [Clone your fork to your local machine](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository#cloning-a-repository)
 
@@ -15,38 +16,31 @@
 Inside of `desktop-cmu-graphics` you will find the following...
 
 - `build/` Various scripts related to building the downloadable zip file.
-- `documentation/` Some documentation related to development.  (Currently very sparse.)
+- `documentation/` Some documentation related to development. 
 - `samples/` Some sample code that uses `cmu_graphics`.
-- `tests/` Testcases for testing the library and making sure that code changes don't break things.
+- `tests/` Test cases for testing the library and making sure that code changes don't break things.
 - `cmu_graphics` The actual code for the graphics library itself.
 
     - `cmu_graphics.py` The main library code
     - `shape_logic.py` The shapes (or shape like things) that can be drawn
     - `utils.py` The various utility functions provided for users
     - `sound.py` The code to handle sound
-    - `modal.py` **!!I have no idea, someone else should update this!!**
+    - `modal.py` Code for app.getTextInput and app.showMessage
 
 # Preparing the Local Workspace
 
-1. There are a number of dependencies that need to be installed:
+There are a number of dependencies that need to be installed:
 
         cd <path/to/desktop-cmu-graphics>
         python -m venv venv
-        source venv/Scripts/activate (if on Windows)
+        .\venv\Scripts\activate (if on Windows)
         source venv/bin/activate     (otherwise)
         pip install twine build tox
 
-2. Install `cmu_graphics` into the local virtual environment as editable:  
-
-        pip install -e .
-
-    (If this fails, modify `desktop-cmu-graphics/setup.py` on line 33 and remove cmu_graphics.samples`)
-
-3. Add everything that has been created up to now to .gitignore
 
 # Running a Build
 
-To build the installer zip file, do...
+To build the installer zip file, run...
 
 ```
 python build/build.py
@@ -54,10 +48,11 @@ python build/build.py
 
 # Testing
 
-Before building, it might be useful to run the testsuite to make sure your changes haven't broken anything.
+Before creating a new pull request, you should run the test suite to make sure your changes haven't broken anything.
 
 ## Setup for Testing
 
+- Build the library as described above in "Running a Build"
 - Install testing dependencies:
 
       pip install psutil pillow imageio numpy
@@ -70,12 +65,11 @@ Run tox:
 tox
 ```
 
-After the first time of running tox successfully, we recommend you changing your `tox.ini` file to only run the tests once, by restricting the interpreters to one that worked the first time.
+This will run the tests using a bunch of different versions of python. The tests will fail for particular "environments" if you don't have the necessary version of python already installed. After running tox once for all environments, you can run it for just a single environment so that it is much faster. Pick an environment that succeeded the first time, e.g. `py310-pip` and pass that to tox:
 
-For example, the second line should go from something like this:  
-`envlist=py{38,39,310,311,312}-{pip,zip}`  
-To something like this:  
-`envlist=py{311}-{pip}`
+```
+tox -e py310-pip
+```
 
 ## Using the test output
 
@@ -90,7 +84,7 @@ To run a test in isolation, do...
 
 ## Image Generation Tests
 
-`test_image_gen.py` runs a variety of testcases that produce images.  If it fails, it will produce a `report.html` file that contains info on the sub-tests that failed.
+`test_image_gen.py` runs a variety of test cases that produce images.  If it fails, it will produce a `report.html` file that contains info on the sub-tests that failed.
 
 The report will have 3 images on top (correct image, output image and difference image respectively) as well as the entire test code. Copy that test code in a new python file and run it to get to the place that threw the error. From there happy debugging.
 
@@ -99,7 +93,6 @@ Prior to re-running `test_image_gen.py`, delete the generated folder `image_gen`
 # Submitting Changes
 
 Once you have fixed a bug or added a new features, the next step is to submit your changes back to the project so that others can benefit.
-
 
 1. Create a new branch in your fork with a simple descriptive name (e.g., `new_feature_\<feature name>`).
 2. Implement your changes locally on the branch. Use multiple short and descriptive commits. And test your code!
