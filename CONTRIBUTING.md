@@ -1,7 +1,7 @@
 # Getting started
 
 1. [Have a GitHub account](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github)
-2. Download the following programs on your os:
+2. Download the following programs:
 
     - GIT: https://git-scm.com/downloads
     - Python: https://www.python.org/downloads/
@@ -83,13 +83,14 @@ To run a test in isolation, run (change py310-pip to the name of the tox environ
 
     cd /path/to/desktop-cmu-graphics/.tox/py310-pip/tmp
     source ../bin/activate
-    python /path/to/desktop-cmu-graphics/tests/<test_name>
+    rm -rf image_gen
+    python /path/to/desktop-cmu-graphics/tests/<test_name.py>
 
 ## Image Generation Tests
 
 `test_image_gen.py` runs a variety of test cases that produce images.  If it fails, it will produce a `report.html` file that contains info on the sub-tests that failed.
 
-The report will have 3 images on top (correct image, output image and difference image respectively) as well as the entire test code. Copy that test code in a new python file and run it to get to the place that threw the error. From there happy debugging.
+The report will have 3 images on top (correct image, output image and difference image respectively) as well as the entire test code. Copy that test code in a new python file and run it to reproduce the error. 
 
 Prior to re-running `test_image_gen.py`, delete the generated folder `image_gen`.
 
