@@ -57,7 +57,7 @@ Before creating a new pull request, you should run the test suite to make sure y
 
       pip install psutil pillow imageio numpy
 
-## Running the Testcases
+## Running the test cases
 
 Run tox:
 
@@ -73,14 +73,17 @@ tox -e py310-pip
 
 ## Using the test output
 
-If tox gives an error, try running the specific test that failed.  Tests are located in:  
+If tox gives an error, it can be helpful to run the specific test that failed without using tox. Tests are located in:  
+
 - `tests/test_get_text_input.py`
 - `tests/test_sound.py`
 - `tests/test_image_gen.py`
 
-To run a test in isolation, do...
+To run a test in isolation, run (change py310-pip to the name of the tox environment you want to use)...
 
-    python tests/<test_name>
+    cd /path/to/desktop-cmu-graphics/.tox/py310-pip/tmp
+    source ../bin/activate
+    python /path/to/desktop-cmu-graphics/tests/<test_name>
 
 ## Image Generation Tests
 
