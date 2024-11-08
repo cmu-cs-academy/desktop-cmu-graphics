@@ -66,9 +66,9 @@ def openImage(fileName):
                 else:
                     raise(t('Failed to open image'))
             break
-    elif hasattr(__main__, '__file__'):
+    elif hasattr(__main__, '__file__'): # running with a file
         main_directory = os.path.abspath(__main__.__file__) + '/../'
-    else:
+    else: # running in a REPL
         main_directory = os.getcwd() + '/'
     return PILImage.open(main_directory + fileName)
 
