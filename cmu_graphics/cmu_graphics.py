@@ -223,7 +223,7 @@ class Sound(object):
             raise Exception(err)
 
         Sound.number_of_sounds += 1
-        if pygame.mixer.get_num_channels()==Sound.number_of_sounds:
+        if pygame.mixer.get_num_channels() == Sound.number_of_sounds:
             pygame.mixer.set_num_channels(Sound.number_of_sounds * 2)
 
         if url.startswith('file://'):
