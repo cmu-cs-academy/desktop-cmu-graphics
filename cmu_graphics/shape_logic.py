@@ -451,13 +451,15 @@ def loadImageFromStringReference(reference):
     return PILWrapper(image)
 
 def loadImage(reference):
-    if isinstance(reference, PILWrapper):
-        image = reference
+    if hashReference(reference) not in activeDrawing.images:
+        if isinstance(reference, PILWrapper):
+            image = reference
+        else:
+            image = loadImageFromStringReference(reference)
+        surface = image.surface
+        activeDrawing.images[hashReference(reference)] = surface
     else:
-        image = loadImageFromStringReference(reference)
-
-    surface = image.surface
-    activeDrawing.images[hashReference(reference)] = surface
+        surface = activeDrawing.images[hashReference(reference)]
 
     return {'width': surface.get_width(), 'height': surface.get_height()}
 
