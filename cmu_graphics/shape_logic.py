@@ -213,6 +213,9 @@ def typeError(obj, attr, value, typeName, isFn):
         else:
             callSpec = '{className}.{attr}'.format(className=t(obj.__class__.__name__), attr=t(attr))
     valueType = type(value).__name__
+    if isinstance(value,Image.Image):
+        value = "ImageFile"
+        valueType = 'PIL.Image)\n(did you forget to wrap your PIL.Image in a CMUImage?'
     err = t(
         '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
         {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': typeName, 'value': repr(value), 'valueType': valueType}
