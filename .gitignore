@@ -8,6 +8,7 @@ tests/report.html
 report.html
 pypi_upload
 cmu_graphics_installer.zip
+cmu_graphics_installer/
 foo.py
 
 ##########################
