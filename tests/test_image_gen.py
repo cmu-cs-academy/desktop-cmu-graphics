@@ -40,7 +40,7 @@ def is_mac_pip_ci():
     is_mac = sys.platform == 'darwin'
     is_pip = 'pip' in os.getenv('TOX_ENV_NAME', '')
     is_ci = os.environ.get('CI', False)
-    return is_ci and is_mac and is_pip 
+    return is_ci and is_mac and is_pip
 
 def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     image_1 = Image.open(path_1)
@@ -89,10 +89,8 @@ def generate_test_source(test, run_fn, extras='', language='en'):
     source_code = ''
     source_code += 'import sys'
     source_code += '\nimport os'
-    if sys.platform == 'darwin':
-        source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
-    if sys.platform == 'win32':
-        source_code += '\nos.environ["SDL_AUDIODRIVER"] = "dummy"'
+    source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
+    source_code += '\nos.environ["SDL_AUDIODRIVER"] = "dummy"'
     source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
     source_code += '\nfrom cmu_graphics import *\n'
     source_code += "setLanguage('%s')\n" % (language)
