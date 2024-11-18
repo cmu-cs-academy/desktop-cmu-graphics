@@ -9,5 +9,9 @@ build-backend="setuptools.build_meta"
 exclude = ["cmu_graphics/libs"]
 src = ["cmu_graphics"]
 
+
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.ruff.lint.per-file-ignores]
+"cmu_graphics/*" = ["F401", "E402"]
