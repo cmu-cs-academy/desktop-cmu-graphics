@@ -20,3 +20,4 @@ quote-style = "single"
 # an existing import is unavoidable
 "cmu_graphics/cmu_graphics.py" = ["F811"]
 "cmu_graphics/modal.py" = ["F811"]
+"cmu_graphics/shape_logic.py" = ["F811"]
