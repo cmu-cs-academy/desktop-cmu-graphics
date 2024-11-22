@@ -19,3 +19,4 @@ quote-style = "single"
 # {cmu_graphics.py} uses template macros (custom implementaton), so redefining
 # an existing import is unavoidable
 "cmu_graphics/cmu_graphics.py" = ["F811"]
+"cmu_graphics/modal.py" = ["F811"]

@@ -1,15 +1,19 @@
 import math
+
 ### ZIPFILE VERSION ###
 import libs.cairo_loader as cairo
 import libs.pygame_loader as pygame
+
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import cairo
 import pygame
+
 ### END PYPI VERSION ###
 import json
 
-def roundedrec(ctx,x,y,w,h,radius_x=5,radius_y=5):
+
+def roundedrec(ctx, x, y, w, h, radius_x=5, radius_y=5):
     # from mono moonlight aka mono silverlight
     # test limits (without using multiplications)
     # http://graphics.stanford.edu/courses/cs248-98-fall/Final/q1.html
@@ -35,19 +39,51 @@ def roundedrec(ctx,x,y,w,h,radius_x=5,radius_y=5):
     ctx.rel_curve_to(0.0, -c2, radius_x - c1, -radius_y, radius_x, -radius_y)
     ctx.close_path()
 
-keyNameMap = { pygame.K_TAB: 'tab', pygame.K_RETURN: 'enter', pygame.K_BACKSPACE: 'backspace',
-               pygame.K_DELETE: 'delete', pygame.K_ESCAPE: 'escape', pygame.K_SPACE: 'space',
-               pygame.K_RIGHT: 'right', pygame.K_LEFT: 'left', pygame.K_UP: 'up', pygame.K_DOWN: 'down'}
 
-shiftMap = { '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*',
-             '9':'(', '0':')', '[':'{', ']':'}', '/':'?', '=':'+', '\\':'|', '\'':'"',
-             ',':'<', '.':'>', '-':'_', ';':':', '`':'~' }
+keyNameMap = {
+    pygame.K_TAB: 'tab',
+    pygame.K_RETURN: 'enter',
+    pygame.K_BACKSPACE: 'backspace',
+    pygame.K_DELETE: 'delete',
+    pygame.K_ESCAPE: 'escape',
+    pygame.K_SPACE: 'space',
+    pygame.K_RIGHT: 'right',
+    pygame.K_LEFT: 'left',
+    pygame.K_UP: 'up',
+    pygame.K_DOWN: 'down',
+}
+
+shiftMap = {
+    '1': '!',
+    '2': '@',
+    '3': '#',
+    '4': '$',
+    '5': '%',
+    '6': '^',
+    '7': '&',
+    '8': '*',
+    '9': '(',
+    '0': ')',
+    '[': '{',
+    ']': '}',
+    '/': '?',
+    '=': '+',
+    '\\': '|',
+    "'": '"',
+    ',': '<',
+    '.': '>',
+    '-': '_',
+    ';': ':',
+    '`': '~',
+}
+
 
 class KeyHoldData(object):
     def __init__(self):
         self.isDown = False
         self.timer = None
         self.delay = 400
+
 
 class TextBox(object):
     def __init__(self, modal):
@@ -61,7 +97,7 @@ class TextBox(object):
         self.padding = 4
         self.textAnchor = [
             self.left + self.padding,
-            self.top + self.height - ((self.height - self.textSize) / 2)
+            self.top + self.height - ((self.height - self.textSize) / 2),
         ]
         self.textOffset = 0
         self.active = True
@@ -75,11 +111,19 @@ class TextBox(object):
         self.cursorActive = True
         self.cursorTimer = pygame.time.get_ticks()
 
-    def get_left(self): return self.modal.left + self.modal.textXMargin
+    def get_left(self):
+        return self.modal.left + self.modal.textXMargin
+
     left = property(get_left)
-    def get_top(self): return self.modal.dividerY + self.modal.textYMargin
+
+    def get_top(self):
+        return self.modal.dividerY + self.modal.textYMargin
+
     top = property(get_top)
-    def get_width(self): return self.modal.width - (2 * self.modal.textXMargin)
+
+    def get_width(self):
+        return self.modal.width - (2 * self.modal.textXMargin)
+
     width = property(get_width)
 
     def draw(self, ctx):
@@ -96,10 +140,19 @@ class TextBox(object):
 
         clipYMargin = 10
         ctx.save()
-        ctx.rectangle(self.left + self.padding, self.top - clipYMargin, self.width - 2 * self.padding, self.top + self.height + 2 * clipYMargin)
+        ctx.rectangle(
+            self.left + self.padding,
+            self.top - clipYMargin,
+            self.width - 2 * self.padding,
+            self.top + self.height + 2 * clipYMargin,
+        )
         ctx.clip()
 
-        cursorX = self.textAnchor[0] + self.getTextWidth(''.join(self.buf[:self.cursorPos])) + self.textOffset
+        cursorX = (
+            self.textAnchor[0]
+            + self.getTextWidth(''.join(self.buf[: self.cursorPos]))
+            + self.textOffset
+        )
         maxCursorX = self.left + self.width - self.padding
         minCursorX = self.left + self.padding
         cursorX = max(min(cursorX, maxCursorX), minCursorX)
@@ -107,10 +160,14 @@ class TextBox(object):
         cursorBottom = self.textAnchor[1] + 2
 
         if self.active and self.anchorPos is not None:
-            anchorX = self.textAnchor[0] + self.getTextWidth(''.join(self.buf[:self.anchorPos])) + self.textOffset
+            anchorX = (
+                self.textAnchor[0]
+                + self.getTextWidth(''.join(self.buf[: self.anchorPos]))
+                + self.textOffset
+            )
             left = min(cursorX, anchorX)
             right = max(cursorX, anchorX)
-            ctx.set_source_rgba(1.0, .85, .7)
+            ctx.set_source_rgba(1.0, 0.85, 0.7)
             ctx.rectangle(left, cursorTop, right - left, cursorBottom - cursorTop)
             ctx.fill()
 
@@ -125,7 +182,7 @@ class TextBox(object):
         ctx.select_font_face(*self.font)
         ctx.set_font_size(self.textSize)
         ctx.text_path(''.join(self.buf))
-        ctx.set_source_rgba(0.0,0.0,0.0,1.0)
+        ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
         ctx.fill()
         ctx.restore()
 
@@ -134,8 +191,16 @@ class TextBox(object):
             return 0
 
         for i in range(len(self.buf)):
-            lowerX = self.textAnchor[0] + self.getTextWidth(''.join(self.buf[:i])) + self.textOffset
-            upperX = self.textAnchor[0] + self.getTextWidth(''.join(self.buf[:i+1])) + self.textOffset
+            lowerX = (
+                self.textAnchor[0]
+                + self.getTextWidth(''.join(self.buf[:i]))
+                + self.textOffset
+            )
+            upperX = (
+                self.textAnchor[0]
+                + self.getTextWidth(''.join(self.buf[: i + 1]))
+                + self.textOffset
+            )
             if lowerX - 5 < x <= upperX - 5:
                 return i
 
@@ -150,9 +215,9 @@ class TextBox(object):
         ctx.restore()
         return xAdvance
 
-    def contains(self, x, y, checkYOnly = False):
-        xInBounds = (self.left < x < self.left + self.width)
-        yInBounds = (self.top < y < self.top + self.height)
+    def contains(self, x, y, checkYOnly=False):
+        xInBounds = self.left < x < self.left + self.width
+        yInBounds = self.top < y < self.top + self.height
         return (xInBounds or checkYOnly) and (yInBounds)
 
     def onStep(self):
@@ -164,13 +229,18 @@ class TextBox(object):
             if data.timer is None and data.isDown:
                 data.timer = pygame.time.get_ticks()
                 data.delay = 400
-            elif (data.timer is not None
-                  and pygame.time.get_ticks() - data.timer > data.delay):
+            elif (
+                data.timer is not None
+                and pygame.time.get_ticks() - data.timer > data.delay
+            ):
                 data.timer = pygame.time.get_ticks()
                 data.delay = 50
-                if key == 'backspace': self.onBackSpace()
-                elif key == 'left': self.onKeyLeft()
-                elif key == 'right': self.onKeyRight()
+                if key == 'backspace':
+                    self.onBackSpace()
+                elif key == 'left':
+                    self.onKeyLeft()
+                elif key == 'right':
+                    self.onKeyRight()
         self.resetTextOffset()
 
     def onKeyLeft(self):
@@ -188,8 +258,9 @@ class TextBox(object):
             self.cursorPos = lower
             self.anchorPos = None
         else:
-            if self.cursorPos == 0: return
-            self.buf = self.buf[:self.cursorPos-1] + self.buf[self.cursorPos:]
+            if self.cursorPos == 0:
+                return
+            self.buf = self.buf[: self.cursorPos - 1] + self.buf[self.cursorPos :]
             self.cursorPos = max(0, self.cursorPos - 1)
 
     def onKeyRight(self):
@@ -200,11 +271,12 @@ class TextBox(object):
             self.cursorPos = min(self.cursorPos + 1, len(self.buf))
 
     def onKeyPress(self, keyCode, modifier):
-        if not self.active: return
+        if not self.active:
+            return
         # Punctuation, space, numbers, and letters
         if 31 < keyCode < 127:
             key = chr(keyCode)
-            if (modifier & pygame.KMOD_SHIFT):
+            if modifier & pygame.KMOD_SHIFT:
                 key = shiftMap.get(key, key).upper()
 
             if (modifier & pygame.KMOD_CTRL) or (modifier & pygame.KMOD_LMETA):
@@ -238,11 +310,15 @@ class TextBox(object):
     def resetTextOffset(self):
         maxCursorX = self.left + self.width - self.padding
         minCursorX = self.left + self.padding
-        cursorX = self.textAnchor[0] + self.getTextWidth(''.join(self.buf[:self.cursorPos])) + self.textOffset
+        cursorX = (
+            self.textAnchor[0]
+            + self.getTextWidth(''.join(self.buf[: self.cursorPos]))
+            + self.textOffset
+        )
         if cursorX > maxCursorX:
-            self.textOffset -= (cursorX - maxCursorX)
+            self.textOffset -= cursorX - maxCursorX
         elif cursorX < minCursorX:
-            self.textOffset += (minCursorX - cursorX)
+            self.textOffset += minCursorX - cursorX
 
     def onKeyRelease(self, keyCode, mod):
         key = keyNameMap.get(keyCode, None)
@@ -255,8 +331,10 @@ class TextBox(object):
     def onMouseDrag(self, pos):
         if self.active and self.cursorPos is not None:
             if self.contains(*pos, checkYOnly=True):
-                if self.anchorPos is None: self.anchorPos = self.cursorPos
+                if self.anchorPos is None:
+                    self.anchorPos = self.cursorPos
                 self.cursorPos = self.cursorPosFromCoord(pos[0])
+
 
 class Button(object):
     def __init__(self, modal):
@@ -272,7 +350,7 @@ class Button(object):
         self.width = self.height * 1.2
         self.left = self.centerX - (self.width / 2)
         self.right = self.centerX + (self.width / 2)
-        self.baseColor = (0.7, 0.6, .35, 1.0)
+        self.baseColor = (0.7, 0.6, 0.35, 1.0)
         self.hoverColor = (0.75, 0.7, 0.5, 1.0)
         self.color = self.baseColor
         self.font = ('Arial', cairo.FONT_WEIGHT_NORMAL, cairo.FONT_SLANT_NORMAL)
@@ -315,6 +393,7 @@ class Button(object):
         if self.contains(*pos):
             self.modal.execute()
 
+
 class TextBoxModal(object):
     def __init__(self, title, prompt, getInput):
         self.title = title
@@ -336,7 +415,9 @@ class TextBoxModal(object):
 
         self.active = True
         self.measureCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
-        self.dividerY = self.drawPrompt(self.measureCtx, simulate = True) + self.textYMargin
+        self.dividerY = (
+            self.drawPrompt(self.measureCtx, simulate=True) + self.textYMargin
+        )
         self.textBox = TextBox(self) if getInput else None
         self.button = Button(self)
 
@@ -347,14 +428,18 @@ class TextBoxModal(object):
 
         self.run()
 
-    def get_height(self): return (self.dividerY - self.top) + self.inputHeight
+    def get_height(self):
+        return (self.dividerY - self.top) + self.inputHeight
+
     height = property(get_height)
 
     def redrawAll(self, screen, cairo_surface, ctx):
         self.draw(ctx)
         data_string = cairo_surface.get_data()
-        pygame_surface = pygame.image.frombuffer(data_string, (int(self.width), int(self.height)), 'RGBA')
-        screen.blit(pygame_surface, (0,0))
+        pygame_surface = pygame.image.frombuffer(
+            data_string, (int(self.width), int(self.height)), 'RGBA'
+        )
+        screen.blit(pygame_surface, (0, 0))
 
     def draw(self, ctx):
         ctx.save()
@@ -375,7 +460,7 @@ class TextBoxModal(object):
         ctx.stroke()
 
     def drawBox(self, ctx):
-        ctx.set_source_rgba(1.0,1.0,1.0,1.0)
+        ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)
         roundedrec(ctx, self.left, self.top, self.width, self.height, 0, 0)
         ctx.fill()
 
@@ -405,7 +490,7 @@ class TextBoxModal(object):
 
             if not simulate:
                 ctx.text_path(word)
-                ctx.set_source_rgba(0.0,0.0,0.0,1.0)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
                 ctx.fill()
 
             currLeft += xAdvance
@@ -429,8 +514,10 @@ class TextBoxModal(object):
         clock = pygame.time.Clock()
 
         # Make antialiasing possible
-        screen = pygame.display.set_mode((int(self.width),int(self.height)))
-        cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(self.width), int(self.height))
+        screen = pygame.display.set_mode((int(self.width), int(self.height)))
+        cairo_surface = cairo.ImageSurface(
+            cairo.FORMAT_ARGB32, int(self.width), int(self.height)
+        )
         ctx = cairo.Context(cairo_surface)
 
         self.running = True
@@ -452,18 +539,18 @@ class TextBoxModal(object):
                         if self.textBox.active:
                             lastMousePosition = event.pos
                             self.textBox.anchorPos = None
-                            self.textBox.cursorPos = self.textBox.cursorPosFromCoord(event.pos[0])
+                            self.textBox.cursorPos = self.textBox.cursorPosFromCoord(
+                                event.pos[0]
+                            )
                             tickHadMouseDownEvent = True
                             self.mouseIsDown = True
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                     lastMousePosition = event.pos
                     self.mouseIsDown = False
-                elif (event.type == pygame.MOUSEMOTION and
-                      event.buttons == (0, 0, 0)):
+                elif event.type == pygame.MOUSEMOTION and event.buttons == (0, 0, 0):
                     self.button.onMouseMove(event.pos)
                     lastMousePosition = event.pos
-                elif (event.type == pygame.MOUSEMOTION and
-                      event.buttons[0] == 1):
+                elif event.type == pygame.MOUSEMOTION and event.buttons[0] == 1:
                     # On drag
                     lastMousePosition = event.pos
                     tickHadMouseDownEvent = True
@@ -479,8 +566,10 @@ class TextBoxModal(object):
                 elif event.type == pygame.QUIT:
                     self.running = False
 
-            if (self._msPassed > math.floor((1000 / self._stepsPerSecond)) or
-                abs(self._msPassed - math.floor((1000 / self._stepsPerSecond))) < 10):
+            if (
+                self._msPassed > math.floor((1000 / self._stepsPerSecond))
+                or abs(self._msPassed - math.floor((1000 / self._stepsPerSecond))) < 10
+            ):
                 self._msPassed = 0
                 self.onStep()
                 if self.textBox and self.mouseIsDown and not tickHadMouseDownEvent:
@@ -492,9 +581,11 @@ class TextBoxModal(object):
         pygame.display.quit()
         pygame.quit()
 
+
 def main():
     request = json.loads(input())
-    TextBoxModal(request["title"], request["prompt"], request["getInput"])
+    TextBoxModal(request['title'], request['prompt'], request['getInput'])
+
 
 if __name__ == '__main__':
     main()
