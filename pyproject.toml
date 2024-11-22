@@ -16,3 +16,6 @@ quote-style = "single"
 
 [tool.ruff.lint.per-file-ignores]
 "cmu_graphics/*" = ["F401", "F403", "E402"]
+# {cmu_graphics.py} uses template macros (custom implementaton), so redefining
+# an existing import is unavoidable
+"cmu_graphics/cmu_graphics.py" = ["F811"]
