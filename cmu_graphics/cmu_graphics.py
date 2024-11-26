@@ -375,16 +375,18 @@ def _safeMethod(appMethod):
                 cleanAndClose()
     return m
 
+SHIFT_MAP = { '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*',
+                     '9':'(', '0':')', '[':'{', ']':'}', '/':'?', '=':'+', '\\':'|', '\'':'"',
+                     ',':'<', '.':'>', '-':'_', ';':':', '`':'~',
+                     'a':'A', 'b':'B', 'c':'C', 'd':'D', 'e':'E', 'f':'F', 'g':'G', 'h':'H',
+                     'i':'I', 'j':'J', 'k':'K', 'l':'L', 'm':'M', 'n':'N', 'o':'O', 'p':'P',
+                     'q':'Q', 'r':'R', 's':'S', 't':'T', 'u':'U', 'v':'V', 'w':'W', 'x':'X',
+                     'y':'Y', 'z':'Z' }
+UNSHIFT_MAP = {y: x for x, y in SHIFT_MAP.items()}
+
 # Based on Lukas Peraza's pygame framework
 # https://github.com/LBPeraza/Pygame-Asteroids
-class App(object):
-    shiftMap = { '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*',
-                     '9':'(', '0':')', '[':'{', ']':'}', '/':'?', '=':'+', '\\':'|', '\'':'"',
-                     ',':'<', '.':'>', '-':'_', ';':':', '`':'~' }
-    unShiftMap = { '!':'1', '@':'2', '#':'3', '$':'4', '%':'5', '^':'6', '&':'7', '*':'8',
-                    '(':'9', ')':'0', '{':'[', '}':']', '?':'/', '+':'=', '|':'\\', '"':'\'',
-                   '<':',', '>':'.', '_':'-', ':':';', '~':'`' }
-    
+class App(object):    
     def printFullTracebacks(self):
         shape_logic.printFullTracebacks()
 
@@ -484,7 +486,7 @@ class App(object):
         if 33 < keyCode < 127:
             key = chr(keyCode)
             if (modifierMask & pygame.KMOD_SHIFT):
-                key = App.shiftMap.get(key, key).upper()
+                key = SHIFT_MAP.get(key, key)
             return key
         return keyNameMap.get(keyCode, None)
 
@@ -535,12 +537,10 @@ class App(object):
         if key == 'ctrl':
             self.isCtrlKeyDown = False
             return
-        if key.upper() in self._allKeysDown: self._allKeysDown.remove(key.upper())
-        if key.lower() in self._allKeysDown: self._allKeysDown.remove(key.lower())
-        if key in App.shiftMap and App.shiftMap[key] in self._allKeysDown:
-            self._allKeysDown.remove(App.shiftMap[key])
-        if key in App.unShiftMap and App.unShiftMap[key] in self._allKeysDown:
-            self._allKeysDown.remove(App.unShiftMap[key])
+        if key in SHIFT_MAP and SHIFT_MAP[key] in self._allKeysDown:
+            self._allKeysDown.remove(SHIFT_MAP[key])
+        if key in UNSHIFT_MAP and UNSHIFT_MAP[key] in self._allKeysDown:
+            self._allKeysDown.remove(UNSHIFT_MAP[key])
 
         modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyRelease', (key, modifiers))
