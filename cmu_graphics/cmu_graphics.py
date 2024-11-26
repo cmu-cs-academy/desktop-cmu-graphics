@@ -378,6 +378,13 @@ def _safeMethod(appMethod):
 # Based on Lukas Peraza's pygame framework
 # https://github.com/LBPeraza/Pygame-Asteroids
 class App(object):
+    shiftMap = { '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*',
+                     '9':'(', '0':')', '[':'{', ']':'}', '/':'?', '=':'+', '\\':'|', '\'':'"',
+                     ',':'<', '.':'>', '-':'_', ';':':', '`':'~' }
+    unShiftMap = { '!':'1', '@':'2', '#':'3', '$':'4', '%':'5', '^':'6', '&':'7', '*':'8',
+                    '(':'9', ')':'0', '{':'[', '}':']', '?':'/', '+':'=', '|':'\\', '"':'\'',
+                   '<':',', '>':'.', '_':'-', ':':';', '~':'`' }
+    
     def printFullTracebacks(self):
         shape_logic.printFullTracebacks()
 
@@ -473,15 +480,11 @@ class App(object):
                        pygame.K_RIGHT: 'right', pygame.K_LEFT: 'left', pygame.K_UP: 'up', pygame.K_DOWN: 'down',
                        pygame.K_RCTRL: 'ctrl', pygame.K_LCTRL: 'ctrl'}
 
-        shiftMap = { '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*',
-                     '9':'(', '0':')', '[':'{', ']':'}', '/':'?', '=':'+', '\\':'|', '\'':'"',
-                     ',':'<', '.':'>', '-':'_', ';':':', '`':'~' }
-
         # Punctuation, numbers, and letters
         if 33 < keyCode < 127:
             key = chr(keyCode)
             if (modifierMask & pygame.KMOD_SHIFT):
-                key = shiftMap.get(key, key).upper()
+                key = App.shiftMap.get(key, key).upper()
             return key
         return keyNameMap.get(keyCode, None)
 
@@ -534,6 +537,10 @@ class App(object):
             return
         if key.upper() in self._allKeysDown: self._allKeysDown.remove(key.upper())
         if key.lower() in self._allKeysDown: self._allKeysDown.remove(key.lower())
+        if key in App.shiftMap and App.shiftMap[key] in self._allKeysDown:
+            self._allKeysDown.remove(App.shiftMap[key])
+        if key in App.unShiftMap and App.unShiftMap[key] in self._allKeysDown:
+            self._allKeysDown.remove(App.unShiftMap[key])
 
         modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyRelease', (key, modifiers))
