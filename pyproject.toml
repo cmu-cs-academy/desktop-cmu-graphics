@@ -7,7 +7,7 @@ requires = [
 build-backend="setuptools.build_meta"
 
 [tool.ruff]
-exclude = ["cmu_graphics/libs"]
+exclude = ["cmu_graphics/libs", "cmu_graphics/shape_logic.py"]
 src = ["cmu_graphics"]
 
 
