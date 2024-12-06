@@ -99,6 +99,7 @@ from cmu_graphics.cmu_graphics import (
     round,
     dcos,
     dsin,
+    openImage,
     onSteps,
     onKeyHolds,
     onKeyPresses,
@@ -142,7 +143,7 @@ from cmu_graphics.shape_logic import (
 )
 
 __all__ = TRANSLATED_GLOBALS['keys']
-__all__.extend(['setLanguage', 'cmu_graphics', 'runApp', 'runAppWithScreens', 'setActiveScreen', 'getImageSize', 'dcos', 'dsin'])
+__all__.extend(['setLanguage', 'cmu_graphics', 'runApp', 'runAppWithScreens', 'setActiveScreen', 'getImageSize', 'dcos', 'dsin', 'openImage'])
 __all__.extend(['drawArc', 'ArcShape', 'drawCircle', 'CircleShape', 'drawImage', 'ImageShape', 'drawLabel', 'LabelShape', 'drawLine', 'LineShape', 'drawOval', 'OvalShape', 'drawPolygon', 'PolygonShape', 'drawRect', 'RectShape', 'drawRegularPolygon', 'RegularPolygonShape', 'drawStar', 'StarShape'])
 
 g = globals()
