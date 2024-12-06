@@ -20,10 +20,10 @@ def get_signing_identity():
 
 def is_signed(path):
     signing_info = subprocess.run(
-        ['codesign', '-dv', path], 
+        ['codesign', '-dv', path],
         stderr=subprocess.PIPE
     ).stderr.decode('utf-8')
-    
+
     return f'TeamIdentifier={TEAM_ID}' in signing_info
 
 def get_unsigned_binaries():

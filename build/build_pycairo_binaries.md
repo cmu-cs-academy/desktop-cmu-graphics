@@ -9,7 +9,7 @@ into the extension module (we think).
 
 # Mac:
 
-MacOS binaries for pycairo must be compiled from scratch. 
+MacOS binaries for pycairo must be compiled from scratch.
 Here are some instructions for doing so:
 
 <hr/>
@@ -68,10 +68,10 @@ export ARCHFLAGS="-arch arm64"
 export LDFLAGS="-arch arm64"
 ```
 
-To compile on any architecture, we need PKG_CONFIG_PATH set up right. 
-pkg config needs to know how to access libffi and cairo (probably -- 
-libffi may not actually be necessary to add here, something to look into in the 
-future).  
+To compile on any architecture, we need PKG_CONFIG_PATH set up right.
+pkg config needs to know how to access libffi and cairo (probably --
+libffi may not actually be necessary to add here, something to look into in the
+future).
 
 These are the paths that brew uses to install those libraries for me on my x86 machine:
 
@@ -112,17 +112,17 @@ mv *.whl wheel
 unzip wheel
 ```
 
-Unzipping the file produces two folders, one of which is called "cairo". 
+Unzipping the file produces two folders, one of which is called "cairo".
 That's the one we care about. There should be one binary in there, which
 we will need to delocate.
 
 You'll need to pick an appropriate folder name for the delocated binaries.
-Our convention is to use e.g. "cpython-311-darwin_dylibs" 
+Our convention is to use e.g. "cpython-311-darwin_dylibs"
 for an so file named "_cairo.cpython-311-darwin.so". Take the middle of the
 binary name (after _cairo. and before .so) and add "_dylibs" to the end.
 
 The following command should be run from `dist`. You want to delocate
-the "cairo" directory, which contains the file like 
+the "cairo" directory, which contains the file like
 "_cairo.cpython-311-darwin.so". This should produce a folder like
 "cpython-311-darwin_dylibs" in "dist/cairo" which has many .dylib files inside.
 

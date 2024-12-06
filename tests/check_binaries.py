@@ -16,11 +16,11 @@ def is_properly_signed(path):
         )
     except subprocess.CalledProcessError:
         return False
-    
+
     result_lines = result_bytes.decode('iso-8859-1').splitlines()
     if 'Authority=Developer ID Application: Evan Mallory (LXH25PRRZ2)' not in result_lines:
         return False
-    
+
     return True
 
 def has_correct_architecture(path):
@@ -32,10 +32,10 @@ def has_correct_architecture(path):
 
     if is_x86 and not 'x86_64' in result:
         return False
-    
+
     if is_arm and not 'arm64' in result:
         return False
-    
+
     return True
 
 def verify_codesignatures():

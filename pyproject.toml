@@ -1,6 +1,22 @@
 [build-system]
 requires = [
     "setuptools>=42",
-    "wheel"
+    "wheel",
+    "pre-commit"
 ]
 build-backend="setuptools.build_meta"
+
+[tool.ruff]
+exclude = ["cmu_graphics/libs", "tests", "build", "samples"]
+
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint.per-file-ignores]
+"cmu_graphics/*" = ["F401", "F403", "E402"]
+# {cmu_graphics.py} uses template macros (custom implementaton), so redefining
+# an existing import is unavoidable
+"cmu_graphics/cmu_graphics.py" = ["F811"]
+"cmu_graphics/modal.py" = ["F811"]
+"cmu_graphics/shape_logic.py" = ["F811"]

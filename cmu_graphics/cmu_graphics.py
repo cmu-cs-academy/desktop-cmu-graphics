@@ -4,7 +4,8 @@ import types
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
 
-class Signal():
+
+class Signal:
     def __init__(self):
         self.receivers = []
 
@@ -18,6 +19,7 @@ class Signal():
             except Exception:
                 print('\nAn error occurred in a signal receiver')
                 import traceback
+
                 traceback.print_exc()
 
 
@@ -26,57 +28,105 @@ onStepEvent = Signal()
 onMainLoopEvent = Signal()
 
 EPSILON = 10e-7
+
+
 def almostEqual(x, y, epsilon=EPSILON):
     return abs(x - y) <= epsilon
+
 
 def rounded(d):
     sign = 1 if (d >= 0) else -1
     d = abs(d)
     n = int(d)
-    if (d - n >= 0.5): n += 1
+    if d - n >= 0.5:
+        n += 1
     return sign * n
 
+
 def round(*args):
-    raise Exception(t("Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound"))
+    raise Exception(
+        t(
+            "Use our rounded(n) instead of Python 3's round(n)\n  Python 3's round(n) does not work as one might expect!\n  If you still want Python 3's round, use pythonRound"
+        )
+    )
+
 
 def dsin(angle):
     return math.sin(math.radians(angle))
 
+
 def dcos(angle):
     return math.cos(math.radians(angle))
+
 
 def setLanguage(language):
     sli.setLanguage(language)
 
+
 _print = print
+
+
 def print(*args, **kwargs):
     return _print(*args, **kwargs)
+
 
 def Robot(*args, **kwargs):
     raise NotImplementedError()
 
+
 def assertEqual(*args, **kwargs):
     raise NotImplementedError()
+
 
 class Shape(object, metaclass=_ShapeMetaclass):
     # This represents the attributes and methods handled by JS that the user
     # can call/get/set
     _js_attrs = {
-        'left', 'right', 'top', 'bottom', 'centerX', 'centerY',
-        'width', 'height', 'fill', 'opacity', 'border', 'borderWidth', 'dashes',
-        'align', 'rotateAngle', 'visible',
-        'group', # Not sure if this should be documented?
-        'toBack', 'toFront', 'contains', 'hits', 'containsShape', 'hitsShape',
+        'left',
+        'right',
+        'top',
+        'bottom',
+        'centerX',
+        'centerY',
+        'width',
+        'height',
+        'fill',
+        'opacity',
+        'border',
+        'borderWidth',
+        'dashes',
+        'align',
+        'rotateAngle',
+        'visible',
+        'group',  # Not sure if this should be documented?
+        'toBack',
+        'toFront',
+        'contains',
+        'hits',
+        'containsShape',
+        'hitsShape',
         'rotate',
     }
 
     # This represents the valid keyword arguments passed to the constructor
-    _init_attrs = {'fill', 'border', 'borderWidth', 'opacity', 'rotateAngle', 'dashes', 'align', 'visible', 'db'}
+    _init_attrs = {
+        'fill',
+        'border',
+        'borderWidth',
+        'opacity',
+        'rotateAngle',
+        'dashes',
+        'align',
+        'visible',
+        'db',
+    }
 
     def __init__(self, clsName, argNames, args, kwargs):
         if app is not None and app._app._isMvc:
             shapeName = self.__class__.__name__
-            raise NotImplementedError(f"Whoops! {shapeName} objects are not available in CS3 Mode. Did you want draw{shapeName}?")
+            raise NotImplementedError(
+                f'Whoops! {shapeName} objects are not available in CS3 Mode. Did you want draw{shapeName}?'
+            )
 
         global SHAPES_CREATED
         SHAPES_CREATED += 1
@@ -92,15 +142,23 @@ class Shape(object, metaclass=_ShapeMetaclass):
                 kwargs[en_attr] = kwargs[attr]
                 del kwargs[attr]
 
-            if not en_attr in self._init_attrs:
-                raise Exception(t("{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'",
-                                { 'error': t('TypeError'), 'callSpec': t(clsName) + '()', 'arg': attr }))
+            if en_attr not in self._init_attrs:
+                raise Exception(
+                    t(
+                        "{{error}}: {{callSpec}} got an unexpected keyword argument '{{arg}}'",
+                        {
+                            'error': t('TypeError'),
+                            'callSpec': t(clsName) + '()',
+                            'arg': attr,
+                        },
+                    )
+                )
 
         self._shape = slInitShape(clsName, argNames, args, kwargs, isMvc)
         self._shape.studentShape = self
 
     def __setattr__(self, attr, val):
-        if (attr[0] == '_'):
+        if attr[0] == '_':
             self.__dict__[attr] = val
         else:
             en_attr = toEnglish(attr, 'shape-attr')
@@ -111,7 +169,7 @@ class Shape(object, metaclass=_ShapeMetaclass):
         return val
 
     def __getattr__(self, attr):
-        if (attr[0] == '_'):
+        if attr[0] == '_':
             return self.__dict__[attr]
 
         en_attr = toEnglish(attr, 'shape-attr')
@@ -123,9 +181,11 @@ class Shape(object, metaclass=_ShapeMetaclass):
     def __repr__(self):
         return self._shape._toString()
 
+
 class Rect(Shape):
     def __init__(self, *args, **kwargs):
         super().__init__('Rect', ['left', 'top', 'width', 'height'], args, kwargs)
+
 
 class Image(Shape):
     _js_attrs = Shape._js_attrs | {'url'}
@@ -134,9 +194,13 @@ class Image(Shape):
     def __init__(self, *args, **kwargs):
         super().__init__('Image', ['url', 'left', 'top'], args, kwargs)
 
+
 class Oval(Shape):
     def __init__(self, *args, **kwargs):
-        super().__init__('Oval', ['centerX', 'centerY', 'width', 'height'], args, kwargs)
+        super().__init__(
+            'Oval', ['centerX', 'centerY', 'width', 'height'], args, kwargs
+        )
+
 
 class Circle(Shape):
     _js_attrs = Shape._js_attrs | {'radius'}
@@ -144,42 +208,66 @@ class Circle(Shape):
     def __init__(self, *args, **kwargs):
         super().__init__('Circle', ['centerX', 'centerY', 'radius'], args, kwargs)
 
+
 class RegularPolygon(Shape):
     _js_attrs = Shape._js_attrs | {'radius', 'points'}
 
     def __init__(self, *args, **kwargs):
-        super().__init__('RegularPolygon', ['centerX', 'centerY', 'radius', 'points'], args, kwargs)
+        super().__init__(
+            'RegularPolygon', ['centerX', 'centerY', 'radius', 'points'], args, kwargs
+        )
+
 
 class Star(Shape):
     _js_attrs = Shape._js_attrs | {'radius', 'points', 'roundness'}
     _init_attrs = Shape._init_attrs | {'roundness'}
 
     def __init__(self, *args, **kwargs):
-        super().__init__('Star', ['centerX', 'centerY', 'radius', 'points'], args, kwargs)
+        super().__init__(
+            'Star', ['centerX', 'centerY', 'radius', 'points'], args, kwargs
+        )
+
 
 class Line(Shape):
     _js_attrs = Shape._js_attrs | {
-        'x1', 'y1', 'x2', 'y2', 'lineWidth', 'arrowStart', 'arrowEnd'
+        'x1',
+        'y1',
+        'x2',
+        'y2',
+        'lineWidth',
+        'arrowStart',
+        'arrowEnd',
     }
-    _init_attrs = (Shape._init_attrs | {'lineWidth', 'arrowStart', 'arrowEnd'}) - {'align', 'border', 'borderWidth'}
+    _init_attrs = (Shape._init_attrs | {'lineWidth', 'arrowStart', 'arrowEnd'}) - {
+        'align',
+        'border',
+        'borderWidth',
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__('Line', ['x1', 'y1', 'x2', 'y2'], args, kwargs)
+
 
 class Polygon(Shape):
     _js_attrs = Shape._js_attrs | {'addPoint', 'pointList'}
     _init_attrs = Shape._init_attrs - {'align'}
 
     def __init__(self, *args, **kwargs):
-        super().__init__('Polygon', [ 'initialPoints' ], [args], kwargs)
+        super().__init__('Polygon', ['initialPoints'], [args], kwargs)
+
 
 class Arc(Shape):
     _js_attrs = Shape._js_attrs | {'startAngle', 'sweepAngle'}
     _init_attrs = Shape._init_attrs - {'align'}
 
     def __init__(self, *args, **kwargs):
-        super().__init__('Arc', ['centerX', 'centerY', 'width', 'height',
-                                 'startAngle', 'sweepAngle'], args, kwargs)
+        super().__init__(
+            'Arc',
+            ['centerX', 'centerY', 'width', 'height', 'startAngle', 'sweepAngle'],
+            args,
+            kwargs,
+        )
+
 
 class Label(Shape):
     _js_attrs = Shape._js_attrs | {'value', 'font', 'size', 'bold', 'italic'}
@@ -188,27 +276,55 @@ class Label(Shape):
     def __init__(self, *args, **kwargs):
         super().__init__('Label', ['value', 'centerX', 'centerY'], args, kwargs)
 
+
 class Group(Shape):
-    _js_attrs = Shape._js_attrs | {'children', 'add', 'clear', 'remove', 'hitTest',
+    _js_attrs = Shape._js_attrs | {
+        'children',
+        'add',
+        'clear',
+        'remove',
+        'hitTest',
         # these attributes are not pass-through, so will throw an error if used
-        'arrowEnd', 'arrowStart', 'url', 'radius', 'points', 'roundness',
-        'x1', 'y1', 'x2', 'y2', 'lineWidth', 'startAngle', 'sweepAngle',
-        'value', 'font', 'size', 'bold', 'italic'
+        'arrowEnd',
+        'arrowStart',
+        'url',
+        'radius',
+        'points',
+        'roundness',
+        'x1',
+        'y1',
+        'x2',
+        'y2',
+        'lineWidth',
+        'startAngle',
+        'sweepAngle',
+        'value',
+        'font',
+        'size',
+        'bold',
+        'italic',
     }
     _init_attrs = {'visible', 'db'}
 
     def __init__(self, *args, **kwargs):
         if app is not None and app._app._isMvc:
-            raise NotImplementedError("Whoops! Group objects are not available in CS3 Mode.")
-        super().__init__('Group', [ ], [ ], kwargs)
-        for shape in args: self.add(shape)
+            raise NotImplementedError(
+                'Whoops! Group objects are not available in CS3 Mode.'
+            )
+        super().__init__('Group', [], [], kwargs)
+        for shape in args:
+            self.add(shape)
 
-    def __iter__(self): return iter(self._shape)
+    def __iter__(self):
+        return iter(self._shape)
 
-    def __len__(self): return len(self._shape._shapes)
+    def __len__(self):
+        return len(self._shape._shapes)
+
 
 class Sound(object):
     number_of_sounds = 0
+
     def __init__(self, url):
         if not pygame.mixer.get_init():
             pygame.mixer.init()
@@ -217,9 +333,15 @@ class Sound(object):
         if not isinstance(url, str):
             callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
             err = t(
-                    '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
-                    {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': 'string', 'value': repr(url), 'valueType': type(url).__name__}
-                    )
+                '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
+                {
+                    'error': t('TypeError'),
+                    'callSpec': callSpec,
+                    'typeName': 'string',
+                    'value': repr(url),
+                    'valueType': type(url).__name__,
+                },
+            )
             raise Exception(err)
 
         Sound.number_of_sounds += 1
@@ -228,19 +350,16 @@ class Sound(object):
 
         if url.startswith('file://'):
             url = url.split('//')[-1]
+
         if url.startswith('http'):
-            for i in range(10):
-                try:
-                    response = webrequest.get(url)
-                    self.sound = io.BytesIO(response.read())
-                except:
-                    if i<9:
-                        continue
-                    else:
-                        raise Exception('Failed to load sound data')
-                break
+            try:
+                response = webrequest.get(url)
+                self.sound = io.BytesIO(response.read())
+            except Exception:
+                raise Exception('Failed to load sound data')
+
         elif hasattr(__main__, '__file__'):
-            self.sound = os.path.abspath(os.path.join(__main__.__file__, "..", url))
+            self.sound = os.path.abspath(os.path.join(__main__.__file__, '..', url))
         else:
             self.sound = os.path.abspath(os.path.join(os.getcwd(), url))
 
@@ -253,16 +372,25 @@ class Sound(object):
         for keyword in kwargs:
             english_keyword = toEnglish(keyword, 'shape-attr')
             if english_keyword not in default_kwargs:
-                raise Exception("TypeError: %s.%s() got an unexpected keyword argument '%s'" % (t('Sound'), t('play'), keyword))
+                raise Exception(
+                    "TypeError: %s.%s() got an unexpected keyword argument '%s'"
+                    % (t('Sound'), t('play'), keyword)
+                )
             default_kwargs[english_keyword] = kwargs[keyword]
 
         loop = default_kwargs['loop']
         restart = default_kwargs['restart']
 
         if not isinstance(loop, bool):
-            raise Exception('The loop argument to Sound.play must be True or False, got ' + repr(loop))
+            raise Exception(
+                'The loop argument to Sound.play must be True or False, got '
+                + repr(loop)
+            )
         if not isinstance(restart, bool):
-            raise Exception('The restart argument to Sound.play must be True or False, got ' + repr(restart))
+            raise Exception(
+                'The restart argument to Sound.play must be True or False, got '
+                + repr(restart)
+            )
 
         loop = -1 if loop else 0
         if not self.channel or not self.channel.get_busy():
@@ -292,15 +420,35 @@ class Sound(object):
         """
         return self.sound.get_volume()
 
-SHAPES = [ Arc, Circle, Image, Label, Line, Oval,
-            Polygon, Rect, RegularPolygon, Star, ]
 
-APP_FN_NAMES = ['onAppStart',
-                  'onKeyPress', 'onKeyHold', 'onKeyRelease',
-                  'onMousePress', 'onMouseDrag', 'onMouseRelease',
-                  'onMouseMove', 'onStep', 'redrawAll']
+SHAPES = [
+    Arc,
+    Circle,
+    Image,
+    Label,
+    Line,
+    Oval,
+    Polygon,
+    Rect,
+    RegularPolygon,
+    Star,
+]
 
-class NoMvc():
+APP_FN_NAMES = [
+    'onAppStart',
+    'onKeyPress',
+    'onKeyHold',
+    'onKeyRelease',
+    'onMousePress',
+    'onMouseDrag',
+    'onMouseRelease',
+    'onMouseMove',
+    'onStep',
+    'redrawAll',
+]
+
+
+class NoMvc:
     def __enter__(self):
         self.oldMvc = app._app._isMvc
         app._app._isMvc = False
@@ -308,26 +456,35 @@ class NoMvc():
     def __exit__(self, excType, excValue, tb):
         app._app._isMvc = self.oldMvc
 
+
 def makeDrawFn(shape):
     def drawFn(*args, **kwargs):
-        if (not app._app._isMvc):
-            raise Exception(f'You called draw{shape.__name__} (a CS3 Mode function) outside of redrawAll.')
-        if (not app._app.inRedrawAll):
+        if not app._app._isMvc:
+            raise Exception(
+                f'You called draw{shape.__name__} (a CS3 Mode function) outside of redrawAll.'
+            )
+        if not app._app.inRedrawAll:
             raise MvcException('Cannot draw (modify the view) outside of redrawAll')
         with NoMvc():
             kwargs['isMvc'] = True
             shape(*args, **kwargs)
+
     return drawFn
+
 
 def makeInvisibleConstructor(shape):
     def constructor(*args, **kwargs):
-        if (not app._app._isMvc):
-            raise Exception(f'You called {shape.__name__}Shape (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp().')
+        if not app._app._isMvc:
+            raise Exception(
+                f'You called {shape.__name__}Shape (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp().'
+            )
         with NoMvc():
             result = shape(*args, **kwargs)
         result.visible = False
         return result
+
     return constructor
+
 
 def createDrawingFunctions():
     g = globals()
@@ -338,7 +495,9 @@ def createDrawingFunctions():
         g['draw' + shapeName] = makeDrawFn(shape)
         g[shapeName + 'Shape'] = makeInvisibleConstructor(shape)
 
+
 createDrawingFunctions()
+
 
 class KeyName(str):
     def __init__(self, baseKey):
@@ -350,30 +509,36 @@ class KeyName(str):
     def __setattr__(self, attr, value):
         raise AttributeError(f"'str' object has no attribute '{attr}'")
 
+
 def translateKeyName(keyName, originalLanguage):
-    if originalLanguage not in TRANSLATED_KEY_NAMES: return keyName
+    if originalLanguage not in TRANSLATED_KEY_NAMES:
+        return keyName
     return KeyName(TRANSLATED_KEY_NAMES[originalLanguage].get(keyName, keyName))
+
 
 def cleanAndClose():
     try:
         app._app.callUserFn('onAppStop', (), redraw=False)
-    except:
+    except Exception:
         pass
     os._exit(0)
+
 
 def _safeMethod(appMethod):
     def m(*args, **kwargs):
         app = args[0]
         try:
             return appMethod(*args, **kwargs)
-        except Exception as e:
+        except Exception:
             sys.excepthook(*sys.exc_info())
             app.stop()
             if app._running:
                 app.drawErrorScreen()
             else:
                 cleanAndClose()
+
     return m
+
 
 # Based on Lukas Peraza's pygame framework
 # https://github.com/LBPeraza/Pygame-Asteroids
@@ -403,18 +568,21 @@ class App(object):
             return enFnName, 'en'
 
         for language in shape_logic.TRANSLATED_USER_FUNCTION_NAMES:
-            if language == 'keys': continue
+            if language == 'keys':
+                continue
             if enFnName in shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language]:
-                fnTranslations = shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language][enFnName]
+                fnTranslations = shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language][
+                    enFnName
+                ]
                 for fnTranslation in fnTranslations:
-                    if (fnTranslation in self.userGlobals):
+                    if fnTranslation in self.userGlobals:
                         return fnTranslation, language
 
         return None, None
 
     def translateEventHandlerArgs(self, enFnName, language, args):
         if enFnName == 'onKeyHold':
-            args = ([translateKeyName(x, language) for x in args[0]], )
+            args = ([translateKeyName(x, language) for x in args[0]],)
         elif enFnName in ('onKeyPress', 'onKeyRelease'):
             args = (translateKeyName(args[0], language), args[1])
 
@@ -427,10 +595,18 @@ class App(object):
         if self._isMvc:
             args = (self._wrapper,) + args
 
-        if enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold', 'onMousePress', 'onMouseRelease', 'onMouseDrag'):
+        if enFnName in (
+            'onKeyPress',
+            'onKeyRelease',
+            'onKeyHold',
+            'onMousePress',
+            'onMouseRelease',
+            'onMouseDrag',
+        ):
             if self.getPosArgCount(fn) < len(args):
                 args = args[:-1]
-            elif (enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold')
+            elif (
+                enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold')
                 and self.shouldPrintCtrlWarning
                 and self.usesControl(fn)
             ):
@@ -468,19 +644,49 @@ class App(object):
 
     @staticmethod
     def getKey(keyCode, modifierMask):
-        keyNameMap = { pygame.K_TAB: 'tab', pygame.K_RETURN: 'enter', pygame.K_BACKSPACE: 'backspace',
-                       pygame.K_DELETE: 'delete', pygame.K_ESCAPE: 'escape', pygame.K_SPACE: 'space',
-                       pygame.K_RIGHT: 'right', pygame.K_LEFT: 'left', pygame.K_UP: 'up', pygame.K_DOWN: 'down',
-                       pygame.K_RCTRL: 'ctrl', pygame.K_LCTRL: 'ctrl'}
+        keyNameMap = {
+            pygame.K_TAB: 'tab',
+            pygame.K_RETURN: 'enter',
+            pygame.K_BACKSPACE: 'backspace',
+            pygame.K_DELETE: 'delete',
+            pygame.K_ESCAPE: 'escape',
+            pygame.K_SPACE: 'space',
+            pygame.K_RIGHT: 'right',
+            pygame.K_LEFT: 'left',
+            pygame.K_UP: 'up',
+            pygame.K_DOWN: 'down',
+            pygame.K_RCTRL: 'ctrl',
+            pygame.K_LCTRL: 'ctrl',
+        }
 
-        shiftMap = { '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*',
-                     '9':'(', '0':')', '[':'{', ']':'}', '/':'?', '=':'+', '\\':'|', '\'':'"',
-                     ',':'<', '.':'>', '-':'_', ';':':', '`':'~' }
+        shiftMap = {
+            '1': '!',
+            '2': '@',
+            '3': '#',
+            '4': '$',
+            '5': '%',
+            '6': '^',
+            '7': '&',
+            '8': '*',
+            '9': '(',
+            '0': ')',
+            '[': '{',
+            ']': '}',
+            '/': '?',
+            '=': '+',
+            '\\': '|',
+            "'": '"',
+            ',': '<',
+            '.': '>',
+            '-': '_',
+            ';': ':',
+            '`': '~',
+        }
 
         # Punctuation, numbers, and letters
         if 33 < keyCode < 127:
             key = chr(keyCode)
-            if (modifierMask & pygame.KMOD_SHIFT):
+            if modifierMask & pygame.KMOD_SHIFT:
                 key = shiftMap.get(key, key).upper()
             return key
         return keyNameMap.get(keyCode, None)
@@ -491,19 +697,43 @@ class App(object):
 
         with NoMvc():
             Rect(0, 0, self.width, self.height, fill=None, border='red', borderWidth=2)
-            Rect(10, self.height - 60, self.width - 20, 50, fill='white', border='red', borderWidth=4)
-            Label('Exception! App Stopped!', self.width / 2, self.height - 45, size=12, bold=True, font='Arial', fill='red')
-            Label('See console for details', self.width / 2, self.height - 25, size=12, bold=True, font='Arial', fill='red')
+            Rect(
+                10,
+                self.height - 60,
+                self.width - 20,
+                50,
+                fill='white',
+                border='red',
+                borderWidth=4,
+            )
+            Label(
+                'Exception! App Stopped!',
+                self.width / 2,
+                self.height - 45,
+                size=12,
+                bold=True,
+                font='Arial',
+                fill='red',
+            )
+            Label(
+                'See console for details',
+                self.width / 2,
+                self.height - 25,
+                size=12,
+                bold=True,
+                font='Arial',
+                fill='red',
+            )
 
         self.redrawAll(self._screen, cairo_surface, ctx)
 
     def getModifiers(self, modifierMask):
         modifiers = list()
-        if (modifierMask & pygame.KMOD_SHIFT):
+        if modifierMask & pygame.KMOD_SHIFT:
             modifiers.append('shift')
-        if (modifierMask & pygame.KMOD_CTRL):
+        if modifierMask & pygame.KMOD_CTRL:
             modifiers.append('control')
-        if (modifierMask & pygame.KMOD_META):
+        if modifierMask & pygame.KMOD_META:
             modifiers.append('meta')
         return modifiers
 
@@ -511,7 +741,8 @@ class App(object):
         self._modifiers = self.getModifiers(modifierMask)
         key = App.getKey(keyCode, modifierMask)
 
-        if key is None: return
+        if key is None:
+            return
         if key == 'ctrl':
             self.isCtrlKeyDown = True
             return
@@ -528,25 +759,30 @@ class App(object):
         self._modifiers = self.getModifiers(modifierMask)
         key = App.getKey(keyCode, modifierMask)
 
-        if key is None: return
+        if key is None:
+            return
         if key == 'ctrl':
             self.isCtrlKeyDown = False
             return
-        if key.upper() in self._allKeysDown: self._allKeysDown.remove(key.upper())
-        if key.lower() in self._allKeysDown: self._allKeysDown.remove(key.lower())
+        if key.upper() in self._allKeysDown:
+            self._allKeysDown.remove(key.upper())
+        if key.lower() in self._allKeysDown:
+            self._allKeysDown.remove(key.lower())
 
         modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyRelease', (key, modifiers))
 
     def redrawAll(self, screen, cairo_surface, ctx):
-        shape = shape_logic.Rect({
-            'noGroup': True,
-            'top': 0,
-            'left': 0,
-            'width': self.width,
-            'height': self.height,
-            'fill': self.background or 'white',
-        })
+        shape = shape_logic.Rect(
+            {
+                'noGroup': True,
+                'top': 0,
+                'left': 0,
+                'width': self.width,
+                'height': self.height,
+                'fill': self.background or 'white',
+            }
+        )
         shape.draw(ctx)
 
         ctx.save()
@@ -566,28 +802,29 @@ class App(object):
         data_string = cairo_surface.get_data()
 
         # Create PyGame surface
-        pygame_surface = pygame.image.frombuffer(data_string, (self.width, self.height), 'RGBA')
+        pygame_surface = pygame.image.frombuffer(
+            data_string, (self.width, self.height), 'RGBA'
+        )
 
         # Show PyGame surface
-        screen.blit(pygame_surface, (0,0))
+        screen.blit(pygame_surface, (0, 0))
         pygame.display.flip()
 
         self.frameworkRedrew = True
 
     def shouldDrawInspector(self):
-        return (
-            self.inspectorEnabled and
-            (self.paused or
-                self.alwaysShowInspector or
-                self.isCtrlKeyDown)
+        return self.inspectorEnabled and (
+            self.paused or self.alwaysShowInspector or self.isCtrlKeyDown
         )
 
     def __init__(self):
         self.userGlobals = __main__.__dict__
         try:
-            self.title, _ = os.path.splitext(os.path.basename(os.path.realpath(__main__.__file__)))
-        except:
-            self.title = "CMU CS Academy"
+            self.title, _ = os.path.splitext(
+                os.path.basename(os.path.realpath(__main__.__file__))
+            )
+        except Exception:
+            self.title = 'CMU CS Academy'
 
         self._width = 400
         self._height = 400
@@ -616,33 +853,43 @@ class App(object):
 
     def get_group(self):
         return self._tlg
+
     def set_group(self, _):
         raise Exception('App.group is readonly')
+
     group = property(get_group, set_group)
 
     def get_stopped(self):
         return self._stopped
+
     def set_stopped(self, _):
         raise Exception('App.stopped is readonly')
+
     stopped = property(get_stopped, set_stopped)
 
     def getStepsPerSecond(self):
         return self._stepsPerSecond
+
     def setStepsPerSecond(self, value):
         shape_logic.checkNumber(sli.t('app'), 'stepsPerSecond', value, False)
         self._stepsPerSecond = value
+
     stepsPerSecond = property(getStepsPerSecond, setStepsPerSecond)
 
     def getBackground(self):
         return sli.slGetAppProperty('background')
+
     def setBackground(self, value):
         return sli.slSetAppProperty('background', value)
+
     background = property(getBackground, setBackground)
 
     def getMaxShapeCount(self):
         return sli.slGetAppProperty('maxShapeCount')
+
     def setMaxShapeCount(self, value):
         return sli.slSetAppProperty('maxShapeCount', value)
+
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
     def onResize(self, newScreen=True):
@@ -655,49 +902,63 @@ class App(object):
 
     def getLeft(self):
         return 0
+
     def setLeft(self, value):
         raise Exception('App.left is readonly')
+
     left = property(getLeft, setLeft)
 
     def getRight(self):
         return self._width
+
     def setRight(self, value):
         self._width = value
         self.onResize()
+
     right = property(getRight, setRight)
 
     def getTop(self):
         return 0
+
     def setTop(self, value):
         raise Exception(t('App.top is readonly'))
+
     top = property(getTop, setTop)
 
     def getBottom(self):
         return self._height
+
     def setBottom(self, value):
         self._height = value
         self.onResize()
+
     bottom = property(getBottom, setBottom)
 
     def getWidth(self):
         return self._width
+
     def setWidth(self, value):
         self._width = value
         self.onResize()
+
     width = property(getWidth, setWidth)
 
     def getHeight(self):
         return self._height
+
     def setHeight(self, value):
         self._height = value
         self.onResize()
+
     height = property(getHeight, setHeight)
 
     def get_inspectorEnabled(self):
         return self._inspectorEnabled
+
     def set_inspectorEnabled(self, value):
         self.shouldPrintCtrlWarning = False
         self._inspectorEnabled = value
+
     inspectorEnabled = property(get_inspectorEnabled, set_inspectorEnabled)
 
     def stop(self):
@@ -708,9 +969,9 @@ class App(object):
             return self.textInputs.pop(0)
         p = self.spawnModalProcess()
         packet = bytes(
-            json.dumps({"title": self.title, "prompt": prompt, "getInput": True})
-            + "\n",
-            encoding="utf-8",
+            json.dumps({'title': self.title, 'prompt': prompt, 'getInput': True})
+            + '\n',
+            encoding='utf-8',
         )
         result, errors = p.communicate(packet)
         if p.returncode is not None and p.returncode != 0:
@@ -718,35 +979,47 @@ class App(object):
             raise Exception('Exception in getTextInput.')
         return result.decode('utf-8')
 
-    def showMessage(self, prompt=""):
+    def showMessage(self, prompt=''):
         p = self.spawnModalProcess()
         packet = bytes(
-            json.dumps({"title": self.title, "prompt": prompt, "getInput": False}) + "\n", encoding="utf-8"
+            json.dumps({'title': self.title, 'prompt': prompt, 'getInput': False})
+            + '\n',
+            encoding='utf-8',
         )
         unused_result, errors = p.communicate(packet)
         if p.returncode is not None and p.returncode != 0:
-            print(errors.decode("utf-8"))
-            raise Exception("Exception in showMessage.")
+            print(errors.decode('utf-8'))
+            raise Exception('Exception in showMessage.')
 
     def setTextInputs(self, *args):
         for arg in args:
             if not isinstance(arg, str):
-                raise Exception('Arguments to setTextInputs must be strings. %r is not a string.' % arg)
+                raise Exception(
+                    'Arguments to setTextInputs must be strings. %r is not a string.'
+                    % arg
+                )
         self.textInputs = list(args)
 
     def spawnModalProcess(self):
         current_directory = os.path.dirname(os.path.realpath(__file__))
         modal_path = os.path.join(current_directory, 'modal.py')
         p = subprocess.Popen(
-            [sys.executable, modal_path], stdout=subprocess.PIPE,
-            stdin=subprocess.PIPE, stderr=subprocess.PIPE,
-            cwd=current_directory)
+            [sys.executable, modal_path],
+            stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=current_directory,
+        )
         return p
 
     def updateScreen(self, newScreen):
         if newScreen:
-            self._screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
-        self._cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
+            self._screen = pygame.display.set_mode(
+                (self.width, self.height), pygame.RESIZABLE
+            )
+        self._cairo_surface = cairo.ImageSurface(
+            cairo.FORMAT_ARGB32, self.width, self.height
+        )
         self._ctx = cairo.Context(self._cairo_surface)
 
     @_safeMethod
@@ -768,14 +1041,24 @@ class App(object):
                     had_event = True
                     if not self.stopped:
                         if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
-                            self.callUserFn('onMousePress', (*event.pos, event.button - 1))
+                            self.callUserFn(
+                                'onMousePress', (*event.pos, event.button - 1)
+                            )
                         elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
-                            self.callUserFn('onMouseRelease', (*event.pos, event.button - 1))
+                            self.callUserFn(
+                                'onMouseRelease', (*event.pos, event.button - 1)
+                            )
                         elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
                                 self.callUserFn('onMouseMove', event.pos)
                             else:
-                                self.callUserFn('onMouseDrag', (*event.pos, [i for i in range(3) if event.buttons[i] != 0]))
+                                self.callUserFn(
+                                    'onMouseDrag',
+                                    (
+                                        *event.pos,
+                                        [i for i in range(3) if event.buttons[i] != 0],
+                                    ),
+                                )
                         elif event.type == pygame.KEYDOWN:
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
@@ -787,7 +1070,7 @@ class App(object):
                     elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
                         key = App.getKey(event.key, event.mod)
                         if key == 'ctrl':
-                            self.isCtrlKeyDown = (event.type == pygame.KEYDOWN)
+                            self.isCtrlKeyDown = event.type == pygame.KEYDOWN
                     elif event.type == pygame.VIDEORESIZE:
                         self._width = event.w
                         self._height = event.h
@@ -798,12 +1081,15 @@ class App(object):
                 should_redraw = had_event
 
                 msPassed = pygame.time.get_ticks() - lastTick
-                if (1000 / self.stepsPerSecond - msPassed < 1):
+                if 1000 / self.stepsPerSecond - msPassed < 1:
                     lastTick = pygame.time.get_ticks()
                     if not (self.paused or self.stopped):
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
-                            self.callUserFn('onKeyHold', (list(self._allKeysDown), list(self._modifiers)))
+                            self.callUserFn(
+                                'onKeyHold',
+                                (list(self._allKeysDown), list(self._modifiers)),
+                            )
                         onStepEvent.send_robust(self.callUserFn, self._wrapper)
                         should_redraw = True
 
@@ -818,16 +1104,43 @@ class App(object):
         pygame.quit()
         cleanAndClose()
 
-class MvcException(Exception): pass
+
+class MvcException(Exception):
+    pass
+
 
 class AppWrapper(object):
-    readOnlyAttrs = set(['bottom','centerX', 'centerY',
-                         'getTextInput', 'showMessage', 'left', 'quit', 'right',
-                         'run', 'stop', 'top', 'setMaxShapeCount',
-                         'printFullTracebacks'])
-    readWriteAttrs = set(['height', 'paused', 'stepsPerSecond', 'group',
-                          'title', 'width', 'background',
-                          'beatsPerMinute', 'maxShapeCount', 'inspectorEnabled' ])
+    readOnlyAttrs = set(
+        [
+            'bottom',
+            'centerX',
+            'centerY',
+            'getTextInput',
+            'showMessage',
+            'left',
+            'quit',
+            'right',
+            'run',
+            'stop',
+            'top',
+            'setMaxShapeCount',
+            'printFullTracebacks',
+        ]
+    )
+    readWriteAttrs = set(
+        [
+            'height',
+            'paused',
+            'stepsPerSecond',
+            'group',
+            'title',
+            'width',
+            'background',
+            'beatsPerMinute',
+            'maxShapeCount',
+            'inspectorEnabled',
+        ]
+    )
     allAttrs = readOnlyAttrs | readWriteAttrs
 
     def __init__(self, app):
@@ -843,7 +1156,7 @@ class AppWrapper(object):
 
     def __getattribute__(self, attr):
         attr = toEnglish(attr, 'app-attr')
-        if (attr == '_app' or not attr in AppWrapper.allAttrs):
+        if attr == '_app' or attr not in AppWrapper.allAttrs:
             return super().__getattribute__(attr)
         return self._app.__getattribute__(attr)
 
@@ -851,11 +1164,12 @@ class AppWrapper(object):
         attr = toEnglish(attr, 'app-attr')
         if (attr != '_app') and (getattr(self._app, 'inRedrawAll', False)):
             raise MvcException(f'Cannot change app.{attr} in redrawAll')
-        if (attr in AppWrapper.readOnlyAttrs):
+        if attr in AppWrapper.readOnlyAttrs:
             raise Exception(f'app.{attr} is read-only')
-        if (attr in AppWrapper.readWriteAttrs):
+        if attr in AppWrapper.readWriteAttrs:
             return self._app.__setattr__(attr, value)
         return super().__setattr__(attr, value)
+
 
 def runApp(width=400, height=400, **kwargs):
     if not app._app._ranWithScreens:
@@ -863,14 +1177,16 @@ def runApp(width=400, height=400, **kwargs):
             screenAppSuffix = f'_{appFnName}'
             for globalVarName in app._app.userGlobals:
                 if globalVarName.endswith(screenAppSuffix):
-                    raise Exception(f'The name of your function "{globalVarName}" ends with "{screenAppSuffix}", which is only allowed if you are using "screens" in CS3 Mode. To run an app with screens, call runAppWithScreens() instead of runApp().')
+                    raise Exception(
+                        f'The name of your function "{globalVarName}" ends with "{screenAppSuffix}", which is only allowed if you are using "screens" in CS3 Mode. To run an app with screens, call runAppWithScreens() instead of runApp().'
+                    )
 
     setupMvc()
     app.width = width
     app.height = height
 
     if SHAPES_CREATED > 1:
-        raise Exception('''
+        raise Exception("""
 ****************************************************************************
 Your code created a shape object (Rect, Oval, etc.) before calling runApp().
 
@@ -880,18 +1196,21 @@ If you'd like to use CS3 Mode, please use drawing functions
 (drawRect, drawOval, etc) in redrawAll.
 
 Otherwise, please call cmu_graphics.run() in place of runApp.
-****************************************************************************''')
+****************************************************************************""")
 
     app._app.callUserFn('onAppStart', (), kwargs, redraw=False)
     if app._app._ranWithScreens:
         app._app.callUserFn(f'{app._app.activeScreen}_onScreenActivate', ())
-    app._app.redrawAllWrapper() # Draw even if there are no events
+    app._app.redrawAllWrapper()  # Draw even if there are no events
 
     run()
 
+
 def setActiveScreen(screen, suppressEvent=False):
-    if (not app._app._isMvc):
-        raise Exception('You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().')
+    if not app._app._isMvc:
+        raise Exception(
+            'You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().'
+        )
     if (screen in [None, '']) or (not isinstance(screen, str)):
         raise Exception(f'{repr(screen)} is not a valid screen')
     redrawAllFnName = f'{screen}_redrawAll'
@@ -900,6 +1219,7 @@ def setActiveScreen(screen, suppressEvent=False):
     app._app.activeScreen = screen
     if not suppressEvent:
         app._app.callUserFn(f'{screen}_onScreenActivate', ())
+
 
 def runAppWithScreens(initialScreen, *args, **kwargs):
     userGlobals = app._app.userGlobals
@@ -910,7 +1230,7 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
                 raise Exception(f'Do not define {appFnName} when using screens')
 
     def getScreenFnNames(appFnName):
-        screenFnNames = [ ]
+        screenFnNames = []
         for globalVarName in userGlobals:
             screenAppSuffix = f'_{appFnName}'
             if globalVarName.endswith(screenAppSuffix):
@@ -920,26 +1240,30 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
     def makeAppFnWrapper(appFnName):
         if appFnName == 'onAppStart':
             origOnAppStart = userGlobals.get('onAppStart')
+
             def onAppStartWrapper(app):
                 if origOnAppStart:
                     origOnAppStart(app)
                 for screenFnName in sorted(getScreenFnNames('onAppStart')):
                     screenFn = userGlobals[screenFnName]
                     screenFn(app)
+
             return onAppStartWrapper
         else:
+
             def appFnWrapper(*args):
                 screen = app._app.activeScreen
                 screenFnName = f'{screen}_{appFnName}'
                 if screenFnName in userGlobals:
                     screenFn = userGlobals[screenFnName]
                     return screenFn(*args)
+
             return appFnWrapper
 
     def wrapScreenFns():
         for appFnName in APP_FN_NAMES:
             screenFnNames = getScreenFnNames(appFnName)
-            if (screenFnNames != [ ]) or (appFnName == 'onAppStart'):
+            if (screenFnNames != []) or (appFnName == 'onAppStart'):
                 userGlobals[appFnName] = makeAppFnWrapper(appFnName)
 
     def go():
@@ -952,10 +1276,12 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
 
     go()
 
+
 def getImageSize(url):
     with NoMvc():
         image = Image(url, 0, 0, visible=False)
         return (image.width, image.height)
+
 
 def setupMvc():
     app._app._isMvc = True
@@ -964,22 +1290,29 @@ def setupMvc():
     AppWrapper.readWriteAttrs.remove('paused')
     AppWrapper.allAttrs.remove('paused')
 
+
 def processArgs(fname, params, args):
     # Check for too many positional arguments
     if len(args) > len(params):
         argStr = 'argument' if len(params) == 1 else 'arguments'
-        raise TypeError(f'{fname}() takes {len(params)} positional {argStr} but more were given')
+        raise TypeError(
+            f'{fname}() takes {len(params)} positional {argStr} but more were given'
+        )
 
     # Check for not enough positional arguments
     if len(params) > len(args):
         missingCount = len(params) - len(args)
         argStr = 'argument' if missingCount == 1 else 'arguments'
-        paramsStr = ', '.join([repr(param) for param in params[len(args):]])
-        raise TypeError(f'{fname}() missing {missingCount} required positional {argStr}: {paramsStr}')
+        paramsStr = ', '.join([repr(param) for param in params[len(args) :]])
+        raise TypeError(
+            f'{fname}() missing {missingCount} required positional {argStr}: {paramsStr}'
+        )
+
 
 def eventHandlerRepeater(f):
     sig = inspect.signature(f)
     params = tuple(sig.parameters.keys())
+
     def g(*args):
         testParams = params
         if app._app._isMvc:
@@ -988,12 +1321,15 @@ def eventHandlerRepeater(f):
         if app._app._isMvc:
             args = args[1:]
         f(*args)
+
     return g
+
 
 @eventHandlerRepeater
 def onSteps(n):
     for _ in range(n):
         app._app.callUserFn('onStep', ())
+
 
 @eventHandlerRepeater
 def onKeyHolds(keys, n):
@@ -1001,37 +1337,47 @@ def onKeyHolds(keys, n):
     for _ in range(n):
         app._app.callUserFn('onKeyHold', (keys, []))
 
+
 @eventHandlerRepeater
 def onKeyPresses(key, n):
     for _ in range(n):
         app._app.callUserFn('onKeyPress', (key, []))
 
+
 def loop():
     run()
+
 
 def run():
     if not app._app._isMvc:
         for cs3ModeHandler in ['redrawAll']:
             if cs3ModeHandler in __main__.__dict__:
-                raise Exception(f"You defined the event handler {cs3ModeHandler} which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?")
+                raise Exception(
+                    f"You defined the event handler {cs3ModeHandler} which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?"
+                )
 
     global MAINLOOP_RUN
     MAINLOOP_RUN = True
 
     if not os.environ.get('CI', False):
-        t = threading.Thread(target=CSAcademyConsole().interact).start()
+        threading.Thread(target=CSAcademyConsole().interact).start()
 
     try:
         app._app.run()
     except KeyboardInterrupt:
         cleanAndClose()
 
+
 from code import InteractiveConsole
+
+
 class CSAcademyConsole(InteractiveConsole):
     def __init__(self):
-        self.__class__.__name__ = "CS Academy Console"
+        self.__class__.__name__ = 'CS Academy Console'
         __main__.__dict__['exit'] = lambda: cleanAndClose()
-        super().__init__(locals=__main__.__dict__, filename = '<%s>' % self.__class__.__name__)
+        super().__init__(
+            locals=__main__.__dict__, filename='<%s>' % self.__class__.__name__
+        )
 
     # Override the default error handling functions to avoid using our own
     # excepthook function
@@ -1069,6 +1415,7 @@ class CSAcademyConsole(InteractiveConsole):
         super().interact()
         cleanAndClose()
 
+
 import os
 import sys
 import io
@@ -1086,15 +1433,18 @@ UPDATE_CONFIG_FILE_PATH = os.path.join(
     'updates.json',
 )
 
+
 def get_update_info():
     if os.path.exists(UPDATE_CONFIG_FILE_PATH):
         with open(UPDATE_CONFIG_FILE_PATH, 'r') as f:
             return json.loads(f.read())
     return {}
 
+
 def save_update_info(update_info):
     with open(UPDATE_CONFIG_FILE_PATH, 'w') as f:
         f.write(json.dumps(update_info))
+
 
 def check_for_update():
     try:
@@ -1109,9 +1459,14 @@ def check_for_update():
             last_attempt = datetime.fromtimestamp(update_info['last_attempt'])
 
         if last_attempt is None or (datetime.now() - last_attempt > timedelta(days=1)):
-            most_recent_version = webrequest.get(
-                'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/version.txt'
-            ).read().decode('ascii').strip()
+            most_recent_version = (
+                webrequest.get(
+                    'https://s3.amazonaws.com/cmu-cs-academy.lib.prod/desktop-cmu-graphics/version.txt'
+                )
+                .read()
+                .decode('ascii')
+                .strip()
+            )
 
             update_info['last_attempt'] = datetime.now().timestamp()
             update_info['most_recent_version'] = most_recent_version
@@ -1120,7 +1475,9 @@ def check_for_update():
             most_recent_version = update_info.get('most_recent_version', version)
 
         if most_recent_version > version:
-            print(f'\n\nYou are running cmu-graphics version {version}, but a newer version {most_recent_version} is available.')
+            print(
+                f'\n\nYou are running cmu-graphics version {version}, but a newer version {most_recent_version} is available.'
+            )
             ### ZIPFILE VERSION ###
             print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
             ### END ZIPFILE VERSION ###
@@ -1128,41 +1485,46 @@ def check_for_update():
             print('Run "pip install --upgrade cmu-graphics" to upgrade.')
             ### END PYPI VERSION ###
             print('\n\n')
-    except:
+    except Exception:
         pass
+
 
 if 'CMU_GRAPHICS_NO_UPDATE' not in __main__.__dict__:
     check_for_update()
 
+
 def print_debug_info():
     import platform
+
     current_directory = os.path.dirname(os.path.realpath(__file__))
     with open(os.path.join(current_directory, 'meta', 'version.txt')) as f:
         version = f.read().strip()
-    print('='*80)
+    print('=' * 80)
     print('CMU Graphics Version:', version)
     print('Platform:', sys.platform)
     print('Python Version:', '.'.join(platform.python_version_tuple()))
     print('Executable Path:', sys.executable)
     print('Python path:', sys.path)
     print('Working Directory:', current_directory)
-    print('='*80)
+    print('=' * 80)
+
 
 if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
     print_debug_info()
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 import math
+
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import cairo_loader as cairo
+
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import cairo
+
 ### END PYPI VERSION ###
-from cmu_graphics import shape_logic
 from random import *
 from cmu_graphics.utils import *
-import json
 import atexit
 import threading
 import traceback
@@ -1172,6 +1534,7 @@ DRAWING_LOCK = threading.RLock()
 
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import pygame_loader as pygame
+
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import pygame
@@ -1188,6 +1551,7 @@ t = sli.t
 
 SHAPES_CREATED = 0
 MAINLOOP_RUN = False
+
 
 # Checks to see if a user created shapes but did not call
 # cmu_graphics.run()
@@ -1220,7 +1584,10 @@ def check_for_exit_without_run():
                             (*******(
                             (**(
 """)
-        print(" ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n")
+        print(
+            ' ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n'
+        )
+
 
 app = None
 app = AppWrapper(App())

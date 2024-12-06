@@ -16,7 +16,7 @@
 Inside of `desktop-cmu-graphics` you will find the following...
 
 - `build/` Various scripts related to building the downloadable zip file.
-- `documentation/` Some documentation related to development. 
+- `documentation/` Some documentation related to development.
 - `samples/` Some sample code that uses `cmu_graphics`.
 - `tests/` Test cases for testing the library and making sure that code changes don't break things.
 - `cmu_graphics` The actual code for the graphics library itself.
@@ -73,7 +73,7 @@ tox -e py310-pip
 
 ## Using the test output
 
-If tox gives an error, it can be helpful to run the specific test that failed without using tox. Tests are located in:  
+If tox gives an error, it can be helpful to run the specific test that failed without using tox. Tests are located in:
 
 - `tests/test_get_text_input.py`
 - `tests/test_sound.py`
@@ -90,7 +90,7 @@ To run a test in isolation, run (change py310-pip to the name of the tox environ
 
 `test_image_gen.py` runs a variety of test cases that produce images.  If it fails, it will produce a `report.html` file that contains info on the sub-tests that failed.
 
-The report will have 3 images on top (correct image, output image and difference image respectively) as well as the entire test code. Copy that test code in a new python file and run it to reproduce the error. 
+The report will have 3 images on top (correct image, output image and difference image respectively) as well as the entire test code. Copy that test code in a new python file and run it to reproduce the error.
 
 Prior to re-running `test_image_gen.py`, delete the generated folder `image_gen`.
 
