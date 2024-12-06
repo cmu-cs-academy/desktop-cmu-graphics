@@ -5,7 +5,7 @@ repos:
     rev: v2.4.0
     hooks:
     -   id: trailing-whitespace
-        stages: [commit]
+        stages: [pre-commit]
         exclude: libs
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
