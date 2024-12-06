@@ -7,8 +7,7 @@ requires = [
 build-backend="setuptools.build_meta"
 
 [tool.ruff]
-exclude = ["cmu_graphics/libs"]
-src = ["cmu_graphics"]
+exclude = ["cmu_graphics/libs", "tests", "build", "samples"]
 
 
 [tool.ruff.format]
