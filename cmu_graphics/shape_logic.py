@@ -213,6 +213,9 @@ def typeError(obj, attr, value, typeName, isFn):
         else:
             callSpec = '{className}.{attr}'.format(className=t(obj.__class__.__name__), attr=t(attr))
     valueType = type(value).__name__
+    if isinstance(value,Image.Image):
+        value = "ImageFile"
+        valueType = 'PIL.Image)\n(did you forget to wrap your PIL.Image in a CMUImage?'
     err = t(
         '{{error}}: {{callSpec}} should be {{typeName}} (but {{value}} is of type {{valueType}})',
         {'error': t('TypeError'), 'callSpec': callSpec, 'typeName': typeName, 'value': repr(value), 'valueType': valueType}
@@ -448,13 +451,15 @@ def loadImageFromStringReference(reference):
     return PILWrapper(image)
 
 def loadImage(reference):
-    if isinstance(reference, PILWrapper):
-        image = reference
+    if hashReference(reference) not in activeDrawing.images:
+        if isinstance(reference, PILWrapper):
+            image = reference
+        else:
+            image = loadImageFromStringReference(reference)
+        surface = image.surface
+        activeDrawing.images[hashReference(reference)] = surface
     else:
-        image = loadImageFromStringReference(reference)
-
-    surface = image.surface
-    activeDrawing.images[hashReference(reference)] = surface
+        surface = activeDrawing.images[hashReference(reference)]
 
     return {'width': surface.get_width(), 'height': surface.get_height()}
 
