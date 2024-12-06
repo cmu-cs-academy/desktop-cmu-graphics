@@ -35,7 +35,8 @@ There are a number of dependencies that need to be installed:
         python -m venv venv
         .\venv\Scripts\activate (if on Windows)
         source venv/bin/activate     (otherwise)
-        pip install twine build tox
+        pip install twine build tox pre-commit
+        pre-commit install
 
 
 # Running a Build
