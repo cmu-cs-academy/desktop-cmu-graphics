@@ -5,11 +5,14 @@ import shutil
 import sys
 import time
 
-import imageio
+import imageio.v2 as imageio
 from PIL import Image
 import numpy
 
 import subprocess
+import functools
+
+print = functools.partial(print, flush=True)
 
 SIZE = 400
 
