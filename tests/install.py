@@ -19,3 +19,5 @@ else:
     for path in os.listdir(dist_dir):
         if path.endswith('.whl'):
             subprocess.run(['pip', 'install', os.path.join(dist_dir, path)], check=True)
+    # sometimes the above doesn't install the cmu-graphics you are currently working on, in which case try the below:
+    # subprocess.run(['pip', 'install', '-e', '../../..'], check=True)

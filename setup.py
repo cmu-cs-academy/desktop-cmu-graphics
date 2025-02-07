@@ -30,7 +30,7 @@ setuptools.setup(
         'certifi>=2020.6.20',
         'pycairo>=1.20',
     ],
-    packages=['cmu_graphics', 'cmu_graphics.samples', 'cmu_graphics.libs'],
+    packages=['cmu_graphics', 'samples', 'cmu_graphics.libs'],
     package_data={'cmu_graphics': ['meta/version.txt']},
-    python_requires='>=3.6, <4',
+    python_requires='>=3.8, <4',
 )
