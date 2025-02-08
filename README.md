@@ -7,12 +7,11 @@ students. CMU Graphics and its desktop version are maintained by
 project which develops free-to-use middle and high school computer science
 curriculum.
 
-Desktop CMU Graphics works with **Python 3.6-3.11** and is compatible with
+Desktop CMU Graphics works with **Python 3.8-3.13** and is compatible with
 [Replit](https://replit.com/) and [Coding Rooms](https://www.codingrooms.com/)
 (see the "Replit" and "Coding Rooms" sections below). This
 package, including its documentation, is licensed under the
 [BSD 3-Clause license](https://github.com/cmu-cs-academy/desktop-cmu-graphics/blob/master/LICENSE).
-
 
 ## Installation
 
@@ -21,8 +20,8 @@ package, including its documentation, is licensed under the
 There are two different ways to install Desktop CMU Graphics on a device:
 
 1. (Mac and Windows only) Use the [zip file installer](https://academy.cs.cmu.edu/desktop) that is available
-for download on the CMU CS Academy website.
-1. (Mac, Windows, and Linux) Use pip, Python’s built-in package-managing software.
+   for download on the CMU CS Academy website.
+2. (Mac, Windows, and Linux) Use pip, Python’s built-in package-managing software.
 
 Both methods come with their own advantages and limitations. If you're in doubt
 about which to choose, the zip file installer is the most likely to succeed. It
@@ -46,8 +45,9 @@ If you're using a Mac or Linux, install the software packages needed by pycairo.
 
 Run the following command:
 
-```
+```sh
 pip install cmu-graphics
+
 ```
 
 ## Getting Started
@@ -55,20 +55,21 @@ pip install cmu-graphics
 To run our graphics framework, include the following line at the top of your
 Python file:
 
-```
+```sh
 from cmu_graphics import *
+
 ```
 
 At the end of your Python file, add this line:
 
-```
+```sh
 cmu_graphics.run()
+
 ```
 
 From there, the syntax for using the graphics package is identical to the
 online version of the framework. You can find more details about how to use the
 graphics framework here on our [documentation page](https://academy.cs.cmu.edu/docs).
-
 
 ## Teacher Support and Documentation
 
@@ -87,14 +88,13 @@ the framework. Students can reach out to their teachers for questions about
 CMU Graphics, and a full reference documentation for the graphics
 framework is available on our [documentation page](https://academy.cs.cmu.edu/docs).
 
-
 ## Replit
 
 Desktop CMU Graphics is compatible with [Replit](https://replit.com/). To use
 the package on the Replit website:
 
 1. Create a new repl. Choose "Python-CMUGraphics" as the language.
-1. Run your code!
+2. Run your code!
 
 ## Coding Rooms
 
@@ -102,6 +102,6 @@ Desktop CMU Graphics is compatible with [Coding Rooms](https://www.codingrooms.c
 Coding Rooms website:
 
 1. Visit [this link](https://www.codingrooms.com/compiler/python3) to create a workspace
-1. Click "Start Coding Python for Free Now"
-1. Click the blue "View Desktop" button above the shell
-1. Run your code!
+2. Click "Start Coding Python for Free Now"
+3. Click the blue "View Desktop" button above the shell
+4. Run your code!

@@ -32,5 +32,5 @@ setuptools.setup(
     ],
     packages=['cmu_graphics', 'cmu_graphics.samples', 'cmu_graphics.libs'],
     package_data={'cmu_graphics': ['meta/version.txt']},
-    python_requires='>=3.6, <4',
+    python_requires='>=3.8, <4',
 )
