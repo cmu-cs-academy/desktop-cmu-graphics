@@ -1052,8 +1052,6 @@ class App(object):
             with DRAWING_LOCK:
                 had_event = False
                 for event in pygame.event.get():
-                    if (event.type == pygame.WINDOWSIZECHANGED or event.type == pygame.WINDOWRESIZED):
-                        print(event, event.type)
                     had_event = True
                     if not self.stopped:
                         if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
