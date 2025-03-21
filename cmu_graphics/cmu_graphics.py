@@ -621,10 +621,6 @@ class App(object):
 
     @_safeMethod
     def callUserFn(self, enFnName, args, kwargs=None, redraw=True):
-        if enFnName != "onStep":
-            print("calling user function ", enFnName)
-
-
         if kwargs is None:
             kwargs = dict()
 
