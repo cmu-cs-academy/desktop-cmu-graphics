@@ -904,9 +904,7 @@ class App(object):
                 cairo.FORMAT_ARGB32, self.width, self.height
             )
             self._ctx = cairo.Context(self._cairo_surface)
-#DO THIS change the setWidht etc to call internal instead of onResize()
-#make sure everyting else works
-#change videoresized to windowresized/windowsizechanged. handle them the same
+
     def onResize(self):
         self._cairo_surface = cairo.ImageSurface(
                 cairo.FORMAT_ARGB32, self.width, self.height
