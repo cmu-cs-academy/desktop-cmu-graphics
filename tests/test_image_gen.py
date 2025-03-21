@@ -195,7 +195,7 @@ Thread(target=screenshotAndExit, daemon=True).start()
 
         if not os.path.exists(correct_path):
             print('Generating new %s' % correct_path)
-            os.system('cp %s %s' % (output_path, correct_path))
+            shutil.copy(output_path, correct_path)
             continue
         else:
             threshold = 25
