@@ -892,10 +892,23 @@ class App(object):
 
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
-    def onResize(self, newScreen=True):
-        if not self._running:
-            return
-        self.updateScreen(newScreen)
+    def internalOnResize(self):
+        if self._running:
+            self._screen = pygame.display.set_mode(
+                    (self.width, self.height), pygame.RESIZABLE
+                )
+            self._cairo_surface = cairo.ImageSurface(
+                cairo.FORMAT_ARGB32, self.width, self.height
+            )
+            self._ctx = cairo.Context(self._cairo_surface)
+#DO THIS change the setWidht etc to call internal instead of onResize()
+#make sure everyting else works
+#change videoresized to windowresized/windowsizechanged. handle them the same
+    def onResize(self):
+        self._cairo_surface = cairo.ImageSurface(
+                cairo.FORMAT_ARGB32, self.width, self.height
+        )
+        self._ctx = cairo.Context(self._cairo_surface)
         self.callUserFn('onResize', (), redraw=False)
         if self._isMvc:
             self.redrawAllWrapper()
@@ -913,7 +926,7 @@ class App(object):
 
     def setRight(self, value):
         self._width = value
-        self.onResize()
+        self.internalOnResize()
 
     right = property(getRight, setRight)
 
@@ -930,7 +943,7 @@ class App(object):
 
     def setBottom(self, value):
         self._height = value
-        self.onResize()
+        self.internalOnResize()
 
     bottom = property(getBottom, setBottom)
 
@@ -939,7 +952,7 @@ class App(object):
 
     def setWidth(self, value):
         self._width = value
-        self.onResize()
+        self.internalOnResize()
 
     width = property(getWidth, setWidth)
 
@@ -948,7 +961,7 @@ class App(object):
 
     def setHeight(self, value):
         self._height = value
-        self.onResize()
+        self.internalOnResize()
 
     height = property(getHeight, setHeight)
 
@@ -1038,6 +1051,8 @@ class App(object):
             with DRAWING_LOCK:
                 had_event = False
                 for event in pygame.event.get():
+                    if (event.type == pygame.WINDOWSIZECHANGED or event.type == pygame.WINDOWRESIZED):
+                        print(event, event.type)
                     had_event = True
                     if not self.stopped:
                         if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
@@ -1074,7 +1089,11 @@ class App(object):
                     elif event.type == pygame.VIDEORESIZE:
                         self._width = event.w
                         self._height = event.h
-                        self.onResize(False)
+                        self.onResize()
+                    elif event.type in (pygame.WINDOWSIZECHANGED, pygame.WINDOWRESIZED):
+                        self._width = event.x
+                        self._height = event.y
+                        self.onResize()
 
                     pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 
