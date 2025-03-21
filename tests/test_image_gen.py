@@ -161,7 +161,7 @@ def screenshotAndExit():
             time.sleep(0.01)
         with cmu_graphics.DRAWING_LOCK:
             raw_app.frameworkRedrew = False
-            raw_app.callUserFn("onMousePress", (200,200))
+            raw_app.callUserFn("onMousePress", (200,200,0))
         while not raw_app.frameworkRedrew:
             time.sleep(0.01)
         raw_app.getScreenshot(%s)
