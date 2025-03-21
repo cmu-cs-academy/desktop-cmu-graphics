@@ -628,8 +628,6 @@ class App(object):
         if fnName is None:
             return
 
-
-
         fn = self.userGlobals[fnName]
         args, kwargs = self.getEventHandlerArgs(enFnName, language, fn, args, kwargs)
 
@@ -895,21 +893,16 @@ class App(object):
 
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
-    def internalOnResize(self):
+    def updateScreenSize(self):
         if self._running:
-            self._screen = pygame.display.set_mode(
-                    (self.width, self.height), pygame.RESIZABLE
-                )
-            self._cairo_surface = cairo.ImageSurface(
-                cairo.FORMAT_ARGB32, self.width, self.height
-            )
-            self._ctx = cairo.Context(self._cairo_surface)
+            self.updateScreen(True)
 
-    def onResize(self):
-        self._cairo_surface = cairo.ImageSurface(
-                cairo.FORMAT_ARGB32, self.width, self.height
-        )
-        self._ctx = cairo.Context(self._cairo_surface)
+    def handleResize(self, newWidth, newHeight):
+        self._width = newWidth
+        self._height = newHeight
+        self.updateScreen(False)
+
+        # Redraw even if onResize is not present in the user's globals
         self.callUserFn('onResize', (), redraw=False)
         if self._isMvc:
             self.redrawAllWrapper()
@@ -927,7 +920,7 @@ class App(object):
 
     def setRight(self, value):
         self._width = value
-        self.internalOnResize()
+        self.updateScreenSize()
 
     right = property(getRight, setRight)
 
@@ -944,7 +937,7 @@ class App(object):
 
     def setBottom(self, value):
         self._height = value
-        self.internalOnResize()
+        self.updateScreenSize()
 
     bottom = property(getBottom, setBottom)
 
@@ -953,7 +946,7 @@ class App(object):
 
     def setWidth(self, value):
         self._width = value
-        self.internalOnResize()
+        self.updateScreenSize()
 
     width = property(getWidth, setWidth)
 
@@ -962,7 +955,7 @@ class App(object):
 
     def setHeight(self, value):
         self._height = value
-        self.internalOnResize()
+        self.updateScreenSize()
 
     height = property(getHeight, setHeight)
 
@@ -1085,14 +1078,8 @@ class App(object):
                         key = App.getKey(event.key, event.mod)
                         if key == 'ctrl':
                             self.isCtrlKeyDown = event.type == pygame.KEYDOWN
-                    elif event.type == pygame.VIDEORESIZE:
-                        self._width = event.w
-                        self._height = event.h
-                        self.onResize()
-                    elif event.type in (pygame.WINDOWSIZECHANGED, pygame.WINDOWRESIZED):
-                        self._width = event.x
-                        self._height = event.y
-                        self.onResize()
+                    elif event.type == pygame.WINDOWSIZECHANGED:
+                        self.handleResize(event.x, event.y)
 
                     pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 
