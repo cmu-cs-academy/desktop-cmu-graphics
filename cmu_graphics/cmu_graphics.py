@@ -443,6 +443,7 @@ APP_FN_NAMES = [
     'onMouseDrag',
     'onMouseRelease',
     'onMouseMove',
+    'onResize',
     'onStep',
     'redrawAll',
 ]
@@ -620,12 +621,18 @@ class App(object):
 
     @_safeMethod
     def callUserFn(self, enFnName, args, kwargs=None, redraw=True):
+        if enFnName != "onStep":
+            print("calling user function ", enFnName)
+
+
         if kwargs is None:
             kwargs = dict()
 
         fnName, language = self.getFnNameAndLanguage(enFnName)
         if fnName is None:
             return
+
+
 
         fn = self.userGlobals[fnName]
         args, kwargs = self.getEventHandlerArgs(enFnName, language, fn, args, kwargs)
