@@ -11,7 +11,8 @@ def get(path):
            'Connection': 'keep-alive'
     }
     request = urllib.request.Request(path, headers=headers)
-    cafile_path = os.path.join(os.path.dirname(__file__), 'certifi_2025_01_cacert.pem')
+    # This is the January 2025 certifi cacert.pem
+    cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
     context = ssl.create_default_context(cafile=cafile_path)
     response = urllib.request.urlopen(request, context=context)
     return response
