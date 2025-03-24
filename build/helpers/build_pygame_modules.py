@@ -4,11 +4,14 @@
 import subprocess
 
 links = {
-    'pygame_mac_312': 'https://files.pythonhosted.org/packages/48/05/5fc3ee405cee85308f1dd5c0fb7bd0835256969a22b18a55698ffaf498ac/pygame-2.5.2-cp312-cp312-macosx_10_9_x86_64.whl',
-    'pygame_mac_arm_312': 'https://files.pythonhosted.org/packages/4c/0b/90b489ae7fc363020d6d18d3e4522b6021f4e0e84fbdd28c1d468c8a8e31/pygame-2.5.2-cp312-cp312-macosx_11_0_arm64.whl',
-    'pygame_win_32_312': 'https://files.pythonhosted.org/packages/05/28/5ca545423d6bb55f7ba9d09904c963ced15178f072551629a46b5499d105/pygame-2.5.2-cp312-cp312-win32.whl',
-    'pygame_win_64_312': 'https://files.pythonhosted.org/packages/66/57/1311ff5bbd64093795f64c66910bbc12b7c5d83ca95766cce7ba501ff7e7/pygame-2.5.2-cp312-cp312-win_amd64.whl',
+    'pygame_mac_314': 'fill me in',
+    'pygame_mac_arm_314': 'fill me in',
+    'pygame_win_32_314': 'fill me in',
+    'pygame_win_64_314': 'fill me in',
 }
+
+# Links come from the pypi "download files" page and look like
+# https://files.pythonhosted.org/packages/7e/11/17f7f319ca91824b86557e9303e3b7a71991ef17fd45286bf47d7f0a38e6/pygame-2.6.1-cp313-cp313-win_amd64.whl
 
 def run_command(args):
     subprocess.Popen(args).wait()
