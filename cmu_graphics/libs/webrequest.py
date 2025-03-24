@@ -5,6 +5,7 @@ from . import certifi
 import certifi
 ### END PYPI VERSION ###
 
+import ssl
 import urllib.request
 
 def get(path):
@@ -16,5 +17,6 @@ def get(path):
            'Connection': 'keep-alive'
     }
     request = urllib.request.Request(path, headers=headers)
-    response = urllib.request.urlopen(request, cafile=certifi.where())
+    context = ssl.create_default_context(cafile=certifi.where())
+    response = urllib.request.urlopen(request, context=context)
     return response
