@@ -5,8 +5,8 @@ import struct
 import platform
 import os
 
-min_minor_version = 8
-max_minor_version = 12
+min_minor_version = 9
+max_minor_version = 13
 
 ### ZIPFILE VERSION ###
 def get_platform_string():
