@@ -1,11 +1,8 @@
-from typing import Tuple, Union, List, Optional, TypeVar, Sequence
+from typing import Any, Dict, Sequence, Tuple
 
-from pygame.color import Color
 from pygame.surface import Surface
 
-_ColorValue = Union[
-    Color, Tuple[int, int, int], List[int], int, Tuple[int, int, int, int]
-]
+from ._common import ColorValue
 
 class PixelArray:
     surface: Surface
@@ -13,26 +10,32 @@ class PixelArray:
     ndim: int
     shape: Tuple[int, ...]
     strides: Tuple[int, ...]
+    # possibly going to be deprecated/removed soon, in which case these
+    # typestubs must be removed too
+    __array_interface__: Dict[str, Any]
+    __array_struct__: Any
     def __init__(self, surface: Surface) -> None: ...
+    def __enter__(self) -> PixelArray: ...
+    def __exit__(self, *args, **kwargs) -> None: ...
     def make_surface(self) -> Surface: ...
     def replace(
         self,
-        color: _ColorValue,
-        repcolor: _ColorValue,
-        distance: Optional[float] = 0,
-        weights: Optional[Sequence[float]] = (0.299, 0.587, 0.114),
+        color: ColorValue,
+        repcolor: ColorValue,
+        distance: float = 0,
+        weights: Sequence[float] = (0.299, 0.587, 0.114),
     ) -> None: ...
     def extract(
         self,
-        color: _ColorValue,
-        distance: Optional[float] = 0,
-        weights: Optional[Sequence[float]] = (0.299, 0.587, 0.114),
+        color: ColorValue,
+        distance: float = 0,
+        weights: Sequence[float] = (0.299, 0.587, 0.114),
     ) -> PixelArray: ...
     def compare(
         self,
         array: PixelArray,
-        distance: Optional[float] = 0,
-        weights: Optional[Sequence[float]] = (0.299, 0.587, 0.114),
+        distance: float = 0,
+        weights: Sequence[float] = (0.299, 0.587, 0.114),
     ) -> PixelArray: ...
     def transpose(self) -> PixelArray: ...
     def close(self) -> PixelArray: ...

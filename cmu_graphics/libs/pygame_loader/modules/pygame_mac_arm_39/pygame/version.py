@@ -65,8 +65,8 @@ class SDLVersion(SoftwareVersion):
 
 _sdl_tuple = get_sdl_version()
 SDL = SDLVersion(_sdl_tuple[0], _sdl_tuple[1], _sdl_tuple[2])
-ver = "2.1.2"  # pylint: disable=invalid-name
-vernum = PygameVersion(2, 1, 2)
+ver = "2.6.1"  # pylint: disable=invalid-name
+vernum = PygameVersion(2, 6, 1)
 rev = ""  # pylint: disable=invalid-name
 
 __all__ = ["SDL", "ver", "vernum", "rev"]

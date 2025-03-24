@@ -28,19 +28,27 @@ releases. (hmm, until we get to versions > 10)
 """
 from pygame.base import get_sdl_version
 
+###############
+# This file is generated with version.py.in
+##
+
 class SoftwareVersion(tuple):
     """
     A class for storing data about software versions.
     """
     __slots__ = ()
-    fields = 'major', 'minor', 'patch'
+    fields = "major", "minor", "patch"
+
     def __new__(cls, major, minor, patch):
         return tuple.__new__(cls, (major, minor, patch))
+
     def __repr__(self):
-        fields = ('{}={}'.format(fld, val) for fld, val in zip(self.fields, self))
-        return '{}({})'.format(str(self.__class__.__name__), ', '.join(fields))
+        fields = (f"{fld}={val}" for fld, val in zip(self.fields, self))
+        return f"{str(self.__class__.__name__)}({', '.join(fields)})"
+
     def __str__(self):
-        return '{}.{}.{}'.format(*self)
+        return f"{self.major}.{self.minor}.{self.patch}"
+
     major = property(lambda self: self[0])
     minor = property(lambda self: self[1])
     patch = property(lambda self: self[2])
@@ -57,8 +65,8 @@ class SDLVersion(SoftwareVersion):
 
 _sdl_tuple = get_sdl_version()
 SDL = SDLVersion(_sdl_tuple[0], _sdl_tuple[1], _sdl_tuple[2])
-ver = "2.0.0"  # pylint: disable=invalid-name
-vernum = PygameVersion(2, 0, 0)
+ver = "2.6.1"  # pylint: disable=invalid-name
+vernum = PygameVersion(2, 6, 1)
 rev = ""  # pylint: disable=invalid-name
 
 __all__ = ["SDL", "ver", "vernum", "rev"]

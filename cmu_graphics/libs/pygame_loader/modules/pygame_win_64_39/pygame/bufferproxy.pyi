@@ -1,13 +1,15 @@
-from typing import Any, overload, Optional, TypeVar, Text
+from typing import Any, Dict, overload
 
-AnyStr = TypeVar("AnyStr", Text, bytes)
-
-class BufferProxy(object):
+class BufferProxy:
     parent: Any
     length: int
-    raw: AnyStr
+    raw: bytes
+    # possibly going to be deprecated/removed soon, in which case these
+    # typestubs must be removed too
+    __array_interface__: Dict[str, Any]
+    __array_struct__: Any
     @overload
     def __init__(self) -> None: ...
     @overload
     def __init__(self, parent: Any) -> None: ...
-    def write(self, buffer: bytes, offset: Optional[int] = 0) -> None: ...
+    def write(self, buffer: bytes, offset: int = 0) -> None: ...

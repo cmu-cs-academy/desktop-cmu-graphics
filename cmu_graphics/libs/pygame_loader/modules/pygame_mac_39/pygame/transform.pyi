@@ -1,50 +1,58 @@
-from typing import Tuple, List, Union, Optional, Sequence
-from pygame.surface import Surface
-from pygame.math import Vector2
+from typing import Literal, Optional, Sequence, Union
+
 from pygame.color import Color
-from pygame.rect import Rect
+from pygame.surface import Surface
 
-_Coordinate = Union[Tuple[float, float], List[float], Vector2]
-_ColorValue = Union[
-    Color, Tuple[int, int, int], List[int], int, Tuple[int, int, int, int]
-]
-_RectValue = Union[
-    Rect,
-    Union[Tuple[int, int, int, int], List[int]],
-    Union[Tuple[_Coordinate, _Coordinate], List[_Coordinate]],
-]
+from ._common import ColorValue, Coordinate, RectValue
 
-def flip(surface: Surface, xbool: bool, ybool: bool) -> Surface: ...
+def flip(
+    surface: Surface,
+    flip_x: bool | Literal[0] | Literal[1],
+    flip_y: bool | Literal[0] | Literal[1],
+) -> Surface: ...
 def scale(
     surface: Surface,
-    size: Union[Tuple[int, int], List[int]],
+    size: Coordinate,
+    dest_surface: Optional[Surface] = None,
+) -> Surface: ...
+def scale_by(
+    surface: Surface,
+    factor: Union[float, Sequence[float]],
     dest_surface: Optional[Surface] = None,
 ) -> Surface: ...
 def rotate(surface: Surface, angle: float) -> Surface: ...
 def rotozoom(surface: Surface, angle: float, scale: float) -> Surface: ...
 def scale2x(surface: Surface, dest_surface: Optional[Surface] = None) -> Surface: ...
+def grayscale(surface: Surface, dest_surface: Optional[Surface] = None) -> Surface: ...
 def smoothscale(
     surface: Surface,
-    size: Union[Tuple[int, int], List[int]],
+    size: Coordinate,
+    dest_surface: Optional[Surface] = None,
+) -> Surface: ...
+def smoothscale_by(
+    surface: Surface,
+    factor: Union[float, Sequence[float]],
     dest_surface: Optional[Surface] = None,
 ) -> Surface: ...
 def get_smoothscale_backend() -> str: ...
-def set_smoothscale_backend(value: str) -> None: ...
-def chop(surface: Surface, rect: _RectValue) -> Surface: ...
-def laplacian(surface: Surface, dest_surface: Surface) -> Surface: ...
+def set_smoothscale_backend(backend: str) -> None: ...
+def chop(surface: Surface, rect: RectValue) -> Surface: ...
+def laplacian(surface: Surface, dest_surface: Optional[Surface] = None) -> Surface: ...
 def average_surfaces(
     surfaces: Sequence[Surface],
     dest_surface: Optional[Surface] = None,
-    palette_colors: Optional[Union[bool, int]] = 1,
+    palette_colors: Union[bool, int] = 1,
 ) -> Surface: ...
-def average_color(surface: Surface, rect: Optional[_RectValue]) -> Color: ...
+def average_color(
+    surface: Surface, rect: Optional[RectValue] = None, consider_alpha: bool = False
+) -> Color: ...
 def threshold(
-    dest_surface: Surface,
-    surf: Surface,
-    search_color: _ColorValue,
-    threshold: Optional[_ColorValue] = (0, 0, 0, 0),
-    set_color: Optional[_ColorValue] = (0, 0, 0, 0),
-    set_behavior: Optional[int] = 1,
+    dest_surface: Optional[Surface],
+    surface: Surface,
+    search_color: Optional[ColorValue],
+    threshold: ColorValue = (0, 0, 0, 0),
+    set_color: Optional[ColorValue] = (0, 0, 0, 0),
+    set_behavior: int = 1,
     search_surf: Optional[Surface] = None,
-    inverse_set: Optional[bool] = False,
+    inverse_set: bool = False,
 ) -> int: ...
