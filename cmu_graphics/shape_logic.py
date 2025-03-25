@@ -545,7 +545,7 @@ def cairoSurfaceFromPilImage(image):
     return surface
 
 def cairoSurfaceFromPygameSurface(pygameSurface):
-    a = array.array('B', pygame.image.tobytes(pygameSurface, 'RGBA'))
+    a = array.array('B', pygame.image.tostring(pygameSurface, 'RGBA'))
     surface = cairo.ImageSurface.create_for_data(
         a, cairo.FORMAT_ARGB32, *pygameSurface.get_size()
     )
