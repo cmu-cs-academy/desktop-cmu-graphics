@@ -47,6 +47,7 @@ for:
 
     install:
       - export HOMEBREW_NO_INSTALL_CLEANUP=1
+      - export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
       # Force install xorgproto, which is a dependency of cairo but can't be linked by
       # homebrew because of a conflicting file.
       - brew install -f --overwrite xorgproto

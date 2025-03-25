@@ -27,7 +27,6 @@ setuptools.setup(
     install_requires=[
         'pygame>=2',
         'Pillow>=7.2',
-        'certifi>=2020.6.20',
         'pycairo>=1.20',
     ],
     packages=['cmu_graphics', 'cmu_graphics.samples', 'cmu_graphics.libs'],
