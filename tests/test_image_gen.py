@@ -206,7 +206,7 @@ Thread(target=screenshotAndExit, daemon=True).start()
                     threshold = 2500
                 # The newer version of cairo we're compiling with in Python 3.13+
                 # has slightly different kerning in inspector labels
-                if int(python_minor) >= 13: 
+                elif int(python_minor) >= 13: 
                     threshold = 150
                 else:
                     threshold = 50
