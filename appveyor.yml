@@ -46,7 +46,6 @@ for:
         - job_name: macOS Tests
 
     install:
-      - export HOMEBREW_NO_AUTO_UPDATE=1
       - export HOMEBREW_NO_INSTALL_CLEANUP=1
       # Force install xorgproto, which is a dependency of cairo but can't be linked by
       # homebrew because of a conflicting file.
