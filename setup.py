@@ -26,7 +26,6 @@ setuptools.setup(
     ],
     install_requires=[
         'pygame>=2',
-        'Pillow>=7.2',
         'certifi>=2020.6.20',
         'pycairo>=1.20',
     ],

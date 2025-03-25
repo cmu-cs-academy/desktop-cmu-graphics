@@ -1,27 +1,23 @@
 import math
 import copy
-import os
 from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import cairo_loader as cairo
-from cmu_graphics.libs import pil_image_loader as Image
-
+from cmu_graphics.libs import pygame_loader as pygame
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import cairo
-from PIL import Image
-
+import pygame
 ### END PYPI VERSION ###
+
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
 import sys
 import traceback
 import atexit
-import subprocess
-import json
 import unicodedata
 import uuid
 import re
@@ -540,7 +536,7 @@ def getAlignAttrs(align):
     return [xattr, yattr]
 
 
-def surfaceFromImage(image):
+def cairoSurfaceFromPilImage(image):
     image = image.convert('RGBA')  # ensure we have the correct number of channels
     a = array.array('B', image.tobytes('raw', 'RGBA'))
     surface = cairo.ImageSurface.create_for_data(
@@ -548,6 +544,12 @@ def surfaceFromImage(image):
     )
     return surface
 
+def cairoSurfaceFromPygameSurface(pygameSurface):
+    a = array.array('B', pygame.image.tobytes(pygameSurface, 'RGBA'))
+    surface = cairo.ImageSurface.create_for_data(
+        a, cairo.FORMAT_ARGB32, *pygameSurface.get_size()
+    )
+    return surface
 
 class PILWrapper(object):
     def __init__(self, image):
@@ -557,7 +559,7 @@ class PILWrapper(object):
 
     def get_surface(self):
         if self._surface is None:
-            self._surface = surfaceFromImage(self.image)
+            self._surface = cairoSurfaceFromPilImage(self.image)
         return self._surface
 
     surface = property(get_surface, None)
@@ -574,25 +576,29 @@ def loadImageFromStringReference(reference):
         # reference is a url
         try:
             response = webrequest.get(reference)
-            image = Image.open(response)
+            image = pygame.image.load(BytesIO(response.read()))
         except Exception:
             pyThrow(t('Failed to load image data'))
     else:
         # reference is a path
-        image = Image.open(reference)
-    return PILWrapper(image)
+        image = pygame.image.load(reference)
+    return image
 
 
 def loadImage(reference):
-    if isinstance(reference, PILWrapper):
-        image = reference
+    referenceHash = hashReference(reference)
+
+    if referenceHash not in activeDrawing.images:
+        if isinstance(reference, PILWrapper):
+            cairoSurface = reference.surface
+        else:
+            pygameSurface = loadImageFromStringReference(reference)
+            cairoSurface = cairoSurfaceFromPygameSurface(pygameSurface)
+        activeDrawing.images[hashReference(reference)] = cairoSurface
     else:
-        image = loadImageFromStringReference(reference)
-
-    surface = image.surface
-    activeDrawing.images[hashReference(reference)] = surface
-
-    return {'width': surface.get_width(), 'height': surface.get_height()}
+        cairoSurface = activeDrawing.images[referenceHash]
+    
+    return {'width': cairoSurface.get_width(), 'height': cairoSurface.get_height()}
 
 
 shapeAttrs = dict()
