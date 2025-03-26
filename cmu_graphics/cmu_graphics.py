@@ -1031,6 +1031,8 @@ class App(object):
 
     @_safeMethod
     def run(self):
+        global SET_ACTIVE_SCREEN
+
         pygame.init()
         pygame.display.set_caption(self.title)
 
@@ -1070,7 +1072,7 @@ class App(object):
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
                             self.handleKeyRelease(event.key, event.mod)
-                        elif event.type == app.SET_ACTIVE_SCREEN:
+                        elif event.type == SET_ACTIVE_SCREEN:
                             app._app.activeScreen = event.newScreen
                             app._app.callUserFn(f'{event.newScreen}_onScreenActivate', ())
                         elif event.type == pygame.WINDOWSIZECHANGED:
@@ -1213,6 +1215,8 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
 
 def setActiveScreen(screen):
+    global SET_ACTIVE_SCREEN
+
     if not app._app._isMvc:
         raise Exception(
             'You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().'
@@ -1222,12 +1226,10 @@ def setActiveScreen(screen):
     redrawAllFnName = f'{screen}_redrawAll'
     if redrawAllFnName not in app._app.userGlobals:
         raise Exception(f'Screen {screen} requires {redrawAllFnName}()')
-    pygame.event.post(pygame.event.Event(app.SET_ACTIVE_SCREEN, newScreen=screen))
+    pygame.event.post(pygame.event.Event(SET_ACTIVE_SCREEN, newScreen=screen))
 
 
 def runAppWithScreens(initialScreen, *args, **kwargs):
-    app.SET_ACTIVE_SCREEN = pygame.event.custom_type()
-
     userGlobals = app._app.userGlobals
 
     def checkForAppFns():
@@ -1560,6 +1562,7 @@ t = sli.t
 SHAPES_CREATED = 0
 MAINLOOP_RUN = False
 
+SET_ACTIVE_SCREEN = pygame.event.custom_type()
 
 # Checks to see if a user created shapes but did not call
 # cmu_graphics.run()
