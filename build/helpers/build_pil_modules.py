@@ -1,13 +1,16 @@
-# Each link should point to a wheel for this version of the module
 # This script should be run from the pil_image_loader folder
 
 import subprocess
 
+# Each link should point to a wheel for this version of the module
+# Note: Make sure you're not using the `-t` version of these builds.
+# Our guess is that these are for free-threaded Python builds, but if you're
+# not using a free-threaded build, the `-t` binaries don't work.
 links = {
-    'pil_mac_312': 'https://files.pythonhosted.org/packages/37/d5/2c00228ace73a7855a52053a92fdd6cea9b22393fbf3961125c11829dcd2/pillow-10.2.0-cp312-cp312-macosx_10_10_x86_64.whl',
-    'pil_mac_arm_312': 'https://files.pythonhosted.org/packages/9d/a0/28756da34d6b58c3c5f6c1d5589e4e8f4e73472b55875524ae9d6e7e98fe/pillow-10.2.0-cp312-cp312-macosx_11_0_arm64.whl',
-    'pil_win_32_312': 'https://files.pythonhosted.org/packages/ce/a7/11a539c1e12dfb9d67c35e5d3d99c7a6853face9083e6483360f4d9cd1d8/pillow-10.2.0-cp312-cp312-win32.whl',
-    'pil_win_64_312': 'https://files.pythonhosted.org/packages/51/07/7e9266a59bb267b56c1f432f6416653b9a78dda771c57740d064a8aa2a44/pillow-10.2.0-cp312-cp312-win_amd64.whl',
+    'pil_mac_313': 'https://files.pythonhosted.org/packages/b3/31/9ca79cafdce364fd5c980cd3416c20ce1bebd235b470d262f9d24d810184/pillow-11.1.0-cp313-cp313-macosx_10_13_x86_64.whl',
+    'pil_mac_arm_313': 'https://files.pythonhosted.org/packages/ac/0f/ff07ad45a1f172a497aa393b13a9d81a32e1477ef0e869d030e3c1532521/pillow-11.1.0-cp313-cp313-macosx_11_0_arm64.whl',
+    'pil_win_32_313': 'https://files.pythonhosted.org/packages/33/48/19c2cbe7403870fbe8b7737d19eb013f46299cdfe4501573367f6396c775/pillow-11.1.0-cp313-cp313-win32.whl',
+    'pil_win_64_313': 'https://files.pythonhosted.org/packages/3b/ad/285c556747d34c399f332ba7c1a595ba245796ef3e22eae190f5364bb62b/pillow-11.1.0-cp313-cp313-win_amd64.whl',
 }
 
 def run_command(args):
