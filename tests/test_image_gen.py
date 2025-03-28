@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import time
+import platform
 
 import imageio.v2 as imageio
 from PIL import Image
@@ -199,9 +200,14 @@ Thread(target=screenshotAndExit, daemon=True).start()
             continue
         else:
             threshold = 25
+            _, python_minor, _ = platform.python_version_tuple()
             if 'Label' in source_code or 'Rótulo' in source_code:
                 if sys.platform == 'win32':
                     threshold = 2500
+                # The newer version of cairo we're compiling with in Python 3.13+
+                # has slightly different kerning in inspector labels
+                elif int(python_minor) >= 13: 
+                    threshold = 150
                 else:
                     threshold = 50
             if not compare_images(correct_path, output_path, test_name, i,

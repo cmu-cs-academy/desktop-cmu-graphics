@@ -38,7 +38,7 @@ to the version of Python you'd like to build for. This creates a virtual environ
 python3 -m pip install --upgrade virtualenv
 python3 -m virtualenv ../venv -p python3
 source ../venv/bin/activate
-python3 -m pip install --upgrade setuptools wheel delocate
+python3 -m pip install --upgrade build delocate
 ```
 
 Run these lines from the "build" directory. This downlods the pycairo source and moves to the commit we've picked for consistency.
@@ -46,8 +46,7 @@ Run these lines from the "build" directory. This downlods the pycairo source and
 ```
 git clone https://github.com/pygobject/pycairo.git
 cd pycairo
-export PYCAIRO_COMMIT=27c0d7c074f52aabd28ec652a6727ffeacb81125
-git checkout $PYCAIRO_COMMIT
+git checkout 625613c7cf7a1bea76252fdfe97f7ca0b0d86af2
 ```
 
 By default, setup.py will try to compile a universal2 binary. This is probably something good to do in the long run, but we're not set up to use universal binaries right now, and delocating those binaries may require some extra work.
@@ -97,11 +96,8 @@ Note that Homebrew installs into `/opt` on arm machines, and `/usr` on x86 machi
 Compile the wheel:
 
 ```
-python3 setup.py sdist bdist_wheel
+python3 -m build -w
 ```
-
-setup.py may be claiming to be building a universal2 wheel even if you've specified
-a particular architecture. That seems to be a lie, so it's ok to disregard.
 
 The wheel is built and placed in the "dist" directory. Next, move to the dist
 directory and unzip the wheel:
@@ -118,7 +114,7 @@ we will need to delocate.
 
 You'll need to pick an appropriate folder name for the delocated binaries.
 Our convention is to use e.g. "cpython-311-darwin_dylibs"
-for an so file named "_cairo.cpython-311-darwin.so". Take the middle of the
+for an .so file named "_cairo.cpython-311-darwin.so". Take the middle of the
 binary name (after _cairo. and before .so) and add "_dylibs" to the end.
 
 The following command should be run from `dist`. You want to delocate
@@ -127,8 +123,7 @@ the "cairo" directory, which contains the file like
 "cpython-311-darwin_dylibs" in "dist/cairo" which has many .dylib files inside.
 
 ```
-export libpath="cpython-311-darwin_dylibs"
-delocate-path --lib-path=$libpath cairo
+delocate-path --lib-path="cpython-311-darwin_dylibs" cairo
 ```
 
 Once you've done this, you can move the .so file and the dylibs directory
