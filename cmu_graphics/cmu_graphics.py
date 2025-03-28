@@ -1,5 +1,4 @@
 import inspect
-import types
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
@@ -1031,8 +1030,6 @@ class App(object):
 
     @_safeMethod
     def run(self):
-        global SET_ACTIVE_SCREEN
-
         pygame.init()
         pygame.display.set_caption(self.title)
 
@@ -1215,8 +1212,6 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
 
 def setActiveScreen(screen):
-    global SET_ACTIVE_SCREEN
-
     if not app._app._isMvc:
         raise Exception(
             'You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().'
@@ -1561,7 +1556,6 @@ t = sli.t
 
 SHAPES_CREATED = 0
 MAINLOOP_RUN = False
-
 SET_ACTIVE_SCREEN = pygame.event.custom_type()
 
 # Checks to see if a user created shapes but did not call
