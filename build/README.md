@@ -1,7 +1,6 @@
 # Build Scripts
 
 * To update bundled pygame, run `python3 ../../../build/helpers/build_pygame_modules.py` from `cmu_graphics/libs/pygame_loader`. Then run `python3 helpers/replace_images.py` from `build` to replace the Pygame logo with the CMU Graphics icon.
-* To update bundled pil, run `python3 ../../../build/helpers/build_pil_modules.py` from `cmu_graphics/libs/pil_image_loader`.
 * To update bundled cairo, follow the instructions in build_cairo_binaries.md
 * Sign and notarize binaries with `notarize.py`
 
