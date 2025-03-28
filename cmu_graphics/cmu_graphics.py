@@ -443,6 +443,7 @@ APP_FN_NAMES = [
     'onMouseDrag',
     'onMouseRelease',
     'onMouseMove',
+    'onResize',
     'onStep',
     'redrawAll',
 ]
@@ -892,10 +893,16 @@ class App(object):
 
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
-    def onResize(self, newScreen=True):
-        if not self._running:
-            return
-        self.updateScreen(newScreen)
+    def updateScreenSize(self):
+        if self._running:
+            self.updateScreen(True)
+
+    def handleResize(self, newWidth, newHeight):
+        self._width = newWidth
+        self._height = newHeight
+        self.updateScreen(False)
+
+        # Redraw even if onResize is not present in the user's globals
         self.callUserFn('onResize', (), redraw=False)
         if self._isMvc:
             self.redrawAllWrapper()
@@ -913,7 +920,7 @@ class App(object):
 
     def setRight(self, value):
         self._width = value
-        self.onResize()
+        self.updateScreenSize()
 
     right = property(getRight, setRight)
 
@@ -930,7 +937,7 @@ class App(object):
 
     def setBottom(self, value):
         self._height = value
-        self.onResize()
+        self.updateScreenSize()
 
     bottom = property(getBottom, setBottom)
 
@@ -939,7 +946,7 @@ class App(object):
 
     def setWidth(self, value):
         self._width = value
-        self.onResize()
+        self.updateScreenSize()
 
     width = property(getWidth, setWidth)
 
@@ -948,7 +955,7 @@ class App(object):
 
     def setHeight(self, value):
         self._height = value
-        self.onResize()
+        self.updateScreenSize()
 
     height = property(getHeight, setHeight)
 
@@ -1071,10 +1078,8 @@ class App(object):
                         key = App.getKey(event.key, event.mod)
                         if key == 'ctrl':
                             self.isCtrlKeyDown = event.type == pygame.KEYDOWN
-                    elif event.type == pygame.VIDEORESIZE:
-                        self._width = event.w
-                        self._height = event.h
-                        self.onResize(False)
+                    elif event.type == pygame.WINDOWSIZECHANGED:
+                        self.handleResize(event.x, event.y)
 
                     pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 

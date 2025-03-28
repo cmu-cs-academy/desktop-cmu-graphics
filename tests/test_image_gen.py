@@ -162,7 +162,7 @@ def screenshotAndExit():
             time.sleep(0.01)
         with cmu_graphics.DRAWING_LOCK:
             raw_app.frameworkRedrew = False
-            raw_app.callUserFn("onMousePress", (200,200))
+            raw_app.callUserFn("onMousePress", (200,200,0))
         while not raw_app.frameworkRedrew:
             time.sleep(0.01)
         raw_app.getScreenshot(%s)
@@ -196,7 +196,7 @@ Thread(target=screenshotAndExit, daemon=True).start()
 
         if not os.path.exists(correct_path):
             print('Generating new %s' % correct_path)
-            os.system('cp %s %s' % (output_path, correct_path))
+            shutil.copy(output_path, correct_path)
             continue
         else:
             threshold = 25
