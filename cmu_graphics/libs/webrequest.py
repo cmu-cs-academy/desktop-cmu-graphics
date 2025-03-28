@@ -1,10 +1,5 @@
-### ZIPFILE VERSION ###
-from . import certifi
-### END ZIPFILE VERSION ###
-### PYPI VERSION ###
-import certifi
-### END PYPI VERSION ###
-
+import os
+import ssl
 import urllib.request
 
 def get(path):
@@ -16,5 +11,8 @@ def get(path):
            'Connection': 'keep-alive'
     }
     request = urllib.request.Request(path, headers=headers)
-    response = urllib.request.urlopen(request, cafile=certifi.where())
+    # This is the January 2025 certifi cacert.pem
+    cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
+    context = ssl.create_default_context(cafile=cafile_path)
+    response = urllib.request.urlopen(request, context=context)
     return response
