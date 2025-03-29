@@ -1,5 +1,4 @@
 import inspect
-import types
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
@@ -1070,6 +1069,11 @@ class App(object):
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
                             self.handleKeyRelease(event.key, event.mod)
+                        elif event.type == SET_ACTIVE_SCREEN:
+                            app._app.activeScreen = event.newScreen
+                            app._app.callUserFn(f'{event.newScreen}_onScreenActivate', ())
+                        elif event.type == pygame.WINDOWSIZECHANGED:
+                            self.handleResize(event.x, event.y)
                     if event.type == pygame.QUIT:
                         self._running = False
                     elif event.type == pygame.MOUSEMOTION:
@@ -1078,8 +1082,6 @@ class App(object):
                         key = App.getKey(event.key, event.mod)
                         if key == 'ctrl':
                             self.isCtrlKeyDown = event.type == pygame.KEYDOWN
-                    elif event.type == pygame.WINDOWSIZECHANGED:
-                        self.handleResize(event.x, event.y)
 
                     pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 
@@ -1204,14 +1206,12 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 ****************************************************************************""")
 
     app._app.callUserFn('onAppStart', (), kwargs, redraw=False)
-    if app._app._ranWithScreens:
-        app._app.callUserFn(f'{app._app.activeScreen}_onScreenActivate', ())
     app._app.redrawAllWrapper()  # Draw even if there are no events
 
     run()
 
 
-def setActiveScreen(screen, suppressEvent=False):
+def setActiveScreen(screen):
     if not app._app._isMvc:
         raise Exception(
             'You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().'
@@ -1221,9 +1221,7 @@ def setActiveScreen(screen, suppressEvent=False):
     redrawAllFnName = f'{screen}_redrawAll'
     if redrawAllFnName not in app._app.userGlobals:
         raise Exception(f'Screen {screen} requires {redrawAllFnName}()')
-    app._app.activeScreen = screen
-    if not suppressEvent:
-        app._app.callUserFn(f'{screen}_onScreenActivate', ())
+    pygame.event.post(pygame.event.Event(SET_ACTIVE_SCREEN, newScreen=screen))
 
 
 def runAppWithScreens(initialScreen, *args, **kwargs):
@@ -1276,8 +1274,10 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
         checkForAppFns()
         wrapScreenFns()
         app._app._isMvc = True
-        setActiveScreen(initialScreen, suppressEvent=True)
+        
+        app._app.activeScreen = initialScreen
         runApp(*args, **kwargs)
+        setActiveScreen(initialScreen)
 
     go()
 
@@ -1556,7 +1556,7 @@ t = sli.t
 
 SHAPES_CREATED = 0
 MAINLOOP_RUN = False
-
+SET_ACTIVE_SCREEN = pygame.event.custom_type()
 
 # Checks to see if a user created shapes but did not call
 # cmu_graphics.run()
