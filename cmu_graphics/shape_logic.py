@@ -358,11 +358,20 @@ def checkString(obj, attr, value, isFn):
     if not isinstance(value, str):
         typeError(obj, attr, value, 'string', isFn)
 
+def isPilImage(obj):
+    return (
+        hasattr(obj, '__class__') and
+        any(base.__module__.startswith('PIL.') and base.__name__ == 'Image' 
+            for base in obj.__class__.__mro__)
+    )
 
 def checkUrl(obj, attr, value, isFn):
     if not isinstance(value, str) and not isinstance(value, PILWrapper):
-        typeError(obj, attr, value, 'string-or-CMUImage', isFn)
-
+        if not isPilImage(value):
+            typeError(obj, attr, value, 'string', isFn)
+        else:
+            err = 'TypeError: The first argument to drawImage or Image should be a string or CMUImage, but you passed a PIL image. Did you forget to wrap a PIL image with CMUImage?'
+            pyThrow(err)
 
 def checkBooleanOrArray(obj, attr, value, isFn):
     if not isinstance(value, list) and not isinstance(value, tuple):
@@ -3941,8 +3950,9 @@ class ShapeLogicInterface(object):
         return activeDrawing.appProperties[propName]
 
     def slInitShape(self, clsName, argNames, args, kwargs, isMvc):
+        actualClass = clsName
         if clsName == 'Image':
-            clsName = 'CMUImage'
+            actualClass = 'CMUImage'
         checkArgCount(clsName, None, argNames, args)
         for attr in kwargs:
             if shapeAttrs.get(attr, None) is None:
@@ -3952,7 +3962,7 @@ class ShapeLogicInterface(object):
                         {'attr': attr},
                     )
                 )
-        if kwargs.get('align', None) is not None and clsName == 'Polygon':
+        if kwargs.get('align', None) is not None and actualClass == 'Polygon':
             pyThrow(
                 t(
                     '"{{align}}" is not a valid Polygon constructor argument',
@@ -3965,7 +3975,7 @@ class ShapeLogicInterface(object):
             shapeAttrs[attr].typeCheckFn(clsName, attr, args[i], False)
             constructorArgs[argNames[i]] = args[i]
         constructorArgs['isMvc'] = isMvc
-        shape = self.slNew(clsName, constructorArgs)
+        shape = self.slNew(actualClass, constructorArgs)
         try:
             align = None
             if 'align' in kwargs:
