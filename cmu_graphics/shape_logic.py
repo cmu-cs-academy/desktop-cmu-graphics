@@ -361,8 +361,8 @@ def checkString(obj, attr, value, isFn):
 def isPilImage(obj):
     return (
         hasattr(obj, '__class__') and
-        obj.__class__.__name__ == 'Image' and
-        obj.__class__.__module__ == 'PIL.Image'
+        any(base.__module__.startswith('PIL.') and base.__name__ == 'Image' 
+            for base in obj.__class__.__mro__)
     )
 
 def checkUrl(obj, attr, value, isFn):
