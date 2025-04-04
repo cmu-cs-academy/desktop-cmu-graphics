@@ -22,3 +22,4 @@ assertRaises(
     lambda: drawImages(PILSampleImage),
     'TypeError: The first argument to drawImage or Image should be a string or CMUImage, but you passed a PIL image. Did you forget to wrap a PIL image with CMUImage?'
 )
+assert getImageSize('sample2.png') == (400, 200)

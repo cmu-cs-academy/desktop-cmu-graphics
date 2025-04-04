@@ -1285,9 +1285,9 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
 
 
 def getImageSize(url):
-    with NoMvc():
-        image = Image(url, 0, 0, visible=False)
-        return (image.width, image.height)
+    imageData = shape_logic.loadImage(url)
+    width, height = imageData['width'], imageData['height']
+    return width, height
 
 
 def setupMvc():
