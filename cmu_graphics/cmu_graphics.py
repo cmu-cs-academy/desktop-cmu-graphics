@@ -1,4 +1,7 @@
 import inspect
+import os
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
@@ -1283,9 +1286,9 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
 
 
 def getImageSize(url):
-    with NoMvc():
-        image = Image(url, 0, 0, visible=False)
-        return (image.width, image.height)
+    imageData = shape_logic.loadImage(url)
+    width, height = imageData['width'], imageData['height']
+    return width, height
 
 
 def setupMvc():
@@ -1421,7 +1424,6 @@ class CSAcademyConsole(InteractiveConsole):
         cleanAndClose()
 
 
-import os
 import sys
 import io
 from datetime import datetime
@@ -1517,7 +1519,6 @@ def print_debug_info():
 if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
     print_debug_info()
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 import math
 
 ### ZIPFILE VERSION ###
@@ -1533,7 +1534,6 @@ from cmu_graphics.utils import *
 import atexit
 import threading
 import traceback
-import copy
 
 DRAWING_LOCK = threading.RLock()
 
