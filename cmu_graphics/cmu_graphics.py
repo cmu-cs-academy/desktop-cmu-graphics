@@ -852,7 +852,7 @@ class App(object):
         self.isCtrlKeyDown = False
 
         self._isMvc = False
-        self._ranWithScreens = False
+        self._initialScreen = None
 
     def get_group(self):
         return self._tlg
@@ -908,6 +908,10 @@ class App(object):
         self.callUserFn('onResize', (), redraw=False)
         if self._isMvc:
             self.redrawAllWrapper()
+
+    def handleSetActiveScreen(self, newScreen, redraw=True):
+        self.activeScreen = newScreen
+        self.callUserFn(f'{newScreen}_onScreenActivate', (), redraw=redraw)
 
     def getLeft(self):
         return 0
@@ -1073,8 +1077,7 @@ class App(object):
                         elif event.type == pygame.KEYUP:
                             self.handleKeyRelease(event.key, event.mod)
                         elif event.type == SET_ACTIVE_SCREEN:
-                            app._app.activeScreen = event.newScreen
-                            app._app.callUserFn(f'{event.newScreen}_onScreenActivate', ())
+                            self.handleSetActiveScreen(event.newScreen)
                         elif event.type == pygame.WINDOWSIZECHANGED:
                             self.handleResize(event.x, event.y)
                     if event.type == pygame.QUIT:
@@ -1182,7 +1185,8 @@ class AppWrapper(object):
 
 
 def runApp(width=400, height=400, **kwargs):
-    if not app._app._ranWithScreens:
+    # If we didn't call runAppWithScreens
+    if app._app._initialScreen is None:
         for appFnName in APP_FN_NAMES:
             screenAppSuffix = f'_{appFnName}'
             for globalVarName in app._app.userGlobals:
@@ -1208,13 +1212,20 @@ If you'd like to use CS3 Mode, please use drawing functions
 Otherwise, please call cmu_graphics.run() in place of runApp.
 ****************************************************************************""")
 
+    # Don't redraw on either of these calls to callUserFn, because we will
+    # instead redraw below
     app._app.callUserFn('onAppStart', (), kwargs, redraw=False)
-    app._app.redrawAllWrapper()  # Draw even if there are no events
+    if app._app._initialScreen is not None:
+        setActiveScreen(app._app._initialScreen, fromRunApp=True)
+
+    # Guarantee at least one call to redrawAll. For example, if your app
+    # just sets up variables and draws a static image.
+    app._app.redrawAllWrapper()
 
     run()
 
 
-def setActiveScreen(screen):
+def setActiveScreen(screen, fromRunApp=False):
     if not app._app._isMvc:
         raise Exception(
             'You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().'
@@ -1224,7 +1235,10 @@ def setActiveScreen(screen):
     redrawAllFnName = f'{screen}_redrawAll'
     if redrawAllFnName not in app._app.userGlobals:
         raise Exception(f'Screen {screen} requires {redrawAllFnName}()')
-    pygame.event.post(pygame.event.Event(SET_ACTIVE_SCREEN, newScreen=screen))
+    if fromRunApp:
+        app._app.handleSetActiveScreen(screen, redraw=False)
+    else:
+        pygame.event.post(pygame.event.Event(SET_ACTIVE_SCREEN, newScreen=screen))
 
 
 def runAppWithScreens(initialScreen, *args, **kwargs):
@@ -1273,14 +1287,11 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
                 userGlobals[appFnName] = makeAppFnWrapper(appFnName)
 
     def go():
-        app._app._ranWithScreens = True
         checkForAppFns()
         wrapScreenFns()
+        app._app._initialScreen = initialScreen
         app._app._isMvc = True
-        
-        app._app.activeScreen = initialScreen
         runApp(*args, **kwargs)
-        setActiveScreen(initialScreen)
 
     go()
 
