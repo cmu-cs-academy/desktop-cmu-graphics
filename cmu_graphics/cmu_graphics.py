@@ -850,6 +850,7 @@ class App(object):
         self.shouldPrintCtrlWarning = True
         self.alwaysShowInspector = False
         self.isCtrlKeyDown = False
+        self.showFontWarnings = True
 
         self._isMvc = False
         self._ranWithScreens = False
@@ -969,6 +970,15 @@ class App(object):
         self._inspectorEnabled = value
 
     inspectorEnabled = property(get_inspectorEnabled, set_inspectorEnabled)
+
+    def get_showFontWarnings(self):
+        return shape_logic.SHOW_FONT_WARNINGS
+
+    def set_showFontWarnings(self, value):
+        shape_logic.SHOW_FONT_WARNINGS = value
+    
+    showFontWarnings = property(get_showFontWarnings, set_showFontWarnings)
+
 
     def stop(self):
         self._stopped = True
@@ -1146,6 +1156,7 @@ class AppWrapper(object):
             'beatsPerMinute',
             'maxShapeCount',
             'inspectorEnabled',
+            'showFontWarnings',
         ]
     )
     allAttrs = readOnlyAttrs | readWriteAttrs
