@@ -2243,7 +2243,7 @@ def getFont(baseFontName, isBold=False, isItalic=False):
 
 def maybe_show_font_warning(fontName):
     if SHOW_FONT_WARNINGS and FONTS_SHOW_WARNING.get(fontName.lower()):
-        FONTS_SHOW_WARNING[fontName] = False
+        FONTS_SHOW_WARNING[fontName.lower()] = False
         print(f"INFO: Your code drew a Label using a font ('{fontName}')")
         print("that is available on the CMU CS Academy website but may not be")
         print("available on your computer. You could change this font to any")
