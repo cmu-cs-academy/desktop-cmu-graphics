@@ -26,6 +26,7 @@ def a_onScreenActivate(app):
     app.function_call_count['a_onScreenActivate'] += 1
 
 def b_onScreenActivate(app):
+    assert app._app.activeScreen == 'b'
     assert app.function_call_count['a_redrawAll'] == 2
     app.function_call_count['b_onScreenActivate'] += 1
 
@@ -47,5 +48,6 @@ def a_redrawAll(app):
     drawRect(0,0,200,200,fill='blue')
 
 def b_redrawAll(app):
+    assert app._app.activeScreen == 'b'
     assert app.function_call_count['b_onScreenActivate'] == 1
     drawRect(200,200,200,200,fill='red')
