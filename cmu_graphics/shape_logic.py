@@ -2207,6 +2207,14 @@ class Group(Shape):
 fontCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
 
 
+SHOW_FONT_WARNINGS = True
+
+# This is a list of fonts that are available on the CMU CS Academy website but may not be
+# available on the user's computer. We show a warning the first time a font is used.
+FONTS_SHOW_WARNING = {
+    'caveat', 'cinzel', 'montserrat', 'grenze', 'sacramento', 'orbitron', 'symbols',
+    }
+
 def getFont(baseFontName, isBold=False, isItalic=False):
     if 'mono' in baseFontName or 'courier' in baseFontName:
         fontName = 'Courier New'
@@ -2228,6 +2236,14 @@ def getFont(baseFontName, isBold=False, isItalic=False):
 
     return (fontName, italic, bold)
 
+def maybe_show_font_warning(fontName):
+    if SHOW_FONT_WARNINGS and fontName.lower() in FONTS_SHOW_WARNING:
+        FONTS_SHOW_WARNING.remove(fontName.lower())
+        print(f"INFO: Your code drew a Label using a font ('{fontName}')")
+        print("that is available on the CMU CS Academy website but may not be")
+        print("available on your computer. You could change this font to any")
+        print(f"font installed on your system, or install ('{fontName}').")
+        print("To stop showing this warning, set app.showFontWarnings = False.\n")
 
 class Label(Shape):
     def __init__(self, attrs):
@@ -2384,6 +2400,7 @@ class Label(Shape):
         return self.get('font')
 
     def set_font(self, v):
+        maybe_show_font_warning(v)
         self.set({'font': v})
         self.setDims()
         return v
