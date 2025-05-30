@@ -1293,7 +1293,6 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
             
     app._app._isMvc = True
     app._app._initialScreen = initialScreen
-    setActiveScreen(initialScreen, fromRunApp=True)
     runApp(*args, **kwargs)
 
 
