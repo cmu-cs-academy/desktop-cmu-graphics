@@ -436,8 +436,7 @@ SHAPES = [
     Star,
 ]
 
-APP_FN_NAMES = [
-    'onAppStart',
+enEventHandlerNamesMinusOnAppStart = [
     'onKeyPress',
     'onKeyHold',
     'onKeyRelease',
@@ -449,6 +448,24 @@ APP_FN_NAMES = [
     'onStep',
     'redrawAll',
 ]
+
+eventHandlerTranslationsMinusOnAppStart = list(
+        enEventHandlerNamesMinusOnAppStart
+) # Make a copy
+
+onAppStartTranslations = ['onAppStart']
+
+for language, translations in shape_logic.TRANSLATED_USER_FUNCTION_NAMES.items():
+    if language == 'keys':
+        continue
+    for appFnName in enEventHandlerNamesMinusOnAppStart:
+        for appFnNameTranslation in translations.get(appFnName, []):
+            if appFnNameTranslation not in eventHandlerTranslationsMinusOnAppStart:
+                eventHandlerTranslationsMinusOnAppStart.append(appFnNameTranslation)
+
+    for onAppStartTranslation in translations.get('onAppStart', []):
+        if onAppStartTranslation not in onAppStartTranslations:
+            onAppStartTranslations.append(onAppStartTranslation)
 
 
 class NoMvc:
@@ -566,39 +583,50 @@ class App(object):
         fn_code = fn.__code__
         return 'control' in fn_code.co_consts
 
-    def getFnNameAndLanguage(self, enFnName):
+    def getFnNameAndLanguage(self, enFnName, useActiveScreen):
         if enFnName in self.userGlobals:
             return enFnName, 'en'
+        
+        if app._app._initialScreen is not None and useActiveScreen:
+            screenFnName = f'{self.activeScreen}_{enFnName}'
+            if screenFnName in self.userGlobals:
+                return screenFnName, 'en'
 
-        for language in shape_logic.TRANSLATED_USER_FUNCTION_NAMES:
+        for language, translations in shape_logic.TRANSLATED_USER_FUNCTION_NAMES.items():
             if language == 'keys':
                 continue
-            if enFnName in shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language]:
-                fnTranslations = shape_logic.TRANSLATED_USER_FUNCTION_NAMES[language][
-                    enFnName
-                ]
-                for fnTranslation in fnTranslations:
-                    if fnTranslation in self.userGlobals:
-                        return fnTranslation, language
+
+            for fnTranslation in translations.get(enFnName, []):
+                # We always use the non-screen version of the function first if
+                # it exists in the code. This is ok, because non-screen
+                # functions are not allowed when you're running an app with
+                # screens (except for onAppStart)
+                if fnTranslation in self.userGlobals:
+                    return fnTranslation, language
+
+                if app._app._initialScreen is not None and useActiveScreen:
+                    screenFnName = f'{self.activeScreen}_{fnTranslation}'
+                    if screenFnName in self.userGlobals:
+                        return screenFnName, language
 
         return None, None
 
-    def translateEventHandlerArgs(self, enFnName, language, args):
-        if enFnName == 'onKeyHold':
+    def translateEventHandlerArgs(self, baseFnName, language, args):
+        if baseFnName == 'onKeyHold':
             args = ([translateKeyName(x, language) for x in args[0]],)
-        elif enFnName in ('onKeyPress', 'onKeyRelease'):
+        elif baseFnName in ('onKeyPress', 'onKeyRelease'):
             args = (translateKeyName(args[0], language), args[1])
 
         return args
 
-    def getEventHandlerArgs(self, enFnName, language, fn, args, kwargs):
+    def getEventHandlerArgs(self, baseFnName, language, fn, args, kwargs):
         if language != 'en':
-            args = self.translateEventHandlerArgs(enFnName, language, args)
+            args = self.translateEventHandlerArgs(baseFnName, language, args)
 
         if self._isMvc:
             args = (self._wrapper,) + args
 
-        if enFnName in (
+        if baseFnName in (
             'onKeyPress',
             'onKeyRelease',
             'onKeyHold',
@@ -609,7 +637,7 @@ class App(object):
             if self.getPosArgCount(fn) < len(args):
                 args = args[:-1]
             elif (
-                enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold')
+                baseFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold')
                 and self.shouldPrintCtrlWarning
                 and self.usesControl(fn)
             ):
@@ -622,20 +650,20 @@ class App(object):
         return args, kwargs
 
     @_safeMethod
-    def callUserFn(self, enFnName, args, kwargs=None, redraw=True):
+    def callUserFn(self, baseFnName, args, kwargs=None, redraw=True, useActiveScreen=True):
         if kwargs is None:
             kwargs = dict()
 
-        fnName, language = self.getFnNameAndLanguage(enFnName)
+        fnName, language = self.getFnNameAndLanguage(baseFnName, useActiveScreen)
         if fnName is None:
             return
 
         fn = self.userGlobals[fnName]
-        args, kwargs = self.getEventHandlerArgs(enFnName, language, fn, args, kwargs)
+        args, kwargs = self.getEventHandlerArgs(baseFnName, language, fn, args, kwargs)
 
         fn(*args, **kwargs)
 
-        if redraw and self._isMvc and enFnName != 'redrawAll':
+        if redraw and self._isMvc and baseFnName != 'redrawAll':
             self.redrawAllWrapper()
 
     def redrawAllWrapper(self):
@@ -912,7 +940,7 @@ class App(object):
 
     def handleSetActiveScreen(self, newScreen, redraw=True):
         self.activeScreen = newScreen
-        self.callUserFn(f'{newScreen}_onScreenActivate', (), redraw=redraw)
+        self.callUserFn('onScreenActivate', (), redraw=redraw, useActiveScreen=True)
 
     def getLeft(self):
         return 0
@@ -1198,7 +1226,7 @@ class AppWrapper(object):
 def runApp(width=400, height=400, **kwargs):
     # If we didn't call runAppWithScreens
     if app._app._initialScreen is None:
-        for appFnName in APP_FN_NAMES:
+        for appFnName in (eventHandlerTranslationsMinusOnAppStart + onAppStartTranslations):
             screenAppSuffix = f'_{appFnName}'
             for globalVarName in app._app.userGlobals:
                 if globalVarName.endswith(screenAppSuffix):
@@ -1225,8 +1253,16 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
     # Don't redraw on either of these calls to callUserFn, because we will
     # instead redraw below
-    app._app.callUserFn('onAppStart', (), kwargs, redraw=False)
+    app._app.callUserFn('onAppStart', (), kwargs, redraw=False, useActiveScreen=False)            
+
     if app._app._initialScreen is not None:
+        sortedGlobals = sorted(app._app.userGlobals)
+        for onAppStartTranslation in onAppStartTranslations:
+            for globalVarName in sortedGlobals:
+                if globalVarName.endswith(f'_{onAppStartTranslation}'):
+                    screenFn = app._app.userGlobals[globalVarName]
+                    screenFn(app, **kwargs)
+
         setActiveScreen(app._app._initialScreen, fromRunApp=True)
 
     # Guarantee at least one call to redrawAll. For example, if your app
@@ -1255,56 +1291,13 @@ def setActiveScreen(screen, fromRunApp=False):
 def runAppWithScreens(initialScreen, *args, **kwargs):
     userGlobals = app._app.userGlobals
 
-    def checkForAppFns():
-        for appFnName in APP_FN_NAMES:
-            if appFnName != 'onAppStart' and appFnName in userGlobals:
+    for appFnName in eventHandlerTranslationsMinusOnAppStart:
+            if appFnName in userGlobals:
                 raise Exception(f'Do not define {appFnName} when using screens')
-
-    def getScreenFnNames(appFnName):
-        screenFnNames = []
-        for globalVarName in userGlobals:
-            screenAppSuffix = f'_{appFnName}'
-            if globalVarName.endswith(screenAppSuffix):
-                screenFnNames.append(globalVarName)
-        return screenFnNames
-
-    def makeAppFnWrapper(appFnName):
-        if appFnName == 'onAppStart':
-            origOnAppStart = userGlobals.get('onAppStart')
-
-            def onAppStartWrapper(app):
-                if origOnAppStart:
-                    origOnAppStart(app)
-                for screenFnName in sorted(getScreenFnNames('onAppStart')):
-                    screenFn = userGlobals[screenFnName]
-                    screenFn(app)
-
-            return onAppStartWrapper
-        else:
-
-            def appFnWrapper(*args):
-                screen = app._app.activeScreen
-                screenFnName = f'{screen}_{appFnName}'
-                if screenFnName in userGlobals:
-                    screenFn = userGlobals[screenFnName]
-                    return screenFn(*args)
-
-            return appFnWrapper
-
-    def wrapScreenFns():
-        for appFnName in APP_FN_NAMES:
-            screenFnNames = getScreenFnNames(appFnName)
-            if (screenFnNames != []) or (appFnName == 'onAppStart'):
-                userGlobals[appFnName] = makeAppFnWrapper(appFnName)
-
-    def go():
-        checkForAppFns()
-        wrapScreenFns()
-        app._app._initialScreen = initialScreen
-        app._app._isMvc = True
-        runApp(*args, **kwargs)
-
-    go()
+            
+    app._app._isMvc = True
+    app._app._initialScreen = initialScreen
+    runApp(*args, **kwargs)
 
 
 def getImageSize(url):
