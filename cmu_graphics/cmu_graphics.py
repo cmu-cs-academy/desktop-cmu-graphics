@@ -597,6 +597,10 @@ class App(object):
                 continue
 
             for fnTranslation in translations.get(enFnName, []):
+                # We always use the non-screen version of the function first if
+                # it exists in the code. This is ok, because non-screen
+                # functions are not allowed when you're running an app with
+                # screens (except for onAppStart)
                 if fnTranslation in self.userGlobals:
                     return fnTranslation, language
 
