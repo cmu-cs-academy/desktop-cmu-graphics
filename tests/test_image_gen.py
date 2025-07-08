@@ -231,7 +231,7 @@ def run_cs3_exception_tests():
         (
             'drawRect(0,0,200,200)',
             'runApp()',
-            'You called drawRect (a CS3 Mode function) outside of redrawAll.'
+            'You called drawRect (a CPCS Mode function) outside of redrawAll.'
         ),
         ('''\
 def onAppStart(app):
@@ -252,7 +252,7 @@ def redrawAll(app):
     drawRect(0,0,200,200)
 ''',
         'cmu_graphics.run()',
-        "You defined the event handler redrawAll which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?"
+        "You defined the event handler redrawAll which works with CPCS Mode, and then called cmu_graphics.run(), which doesn't work with CPCS Mode. Did you mean to call runApp instead?"
         )
     ]
 

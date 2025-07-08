@@ -127,7 +127,7 @@ class Shape(object, metaclass=_ShapeMetaclass):
         if app is not None and app._app._isMvc:
             shapeName = self.__class__.__name__
             raise NotImplementedError(
-                f'Whoops! {shapeName} objects are not available in CS3 Mode. Did you want draw{shapeName}?'
+                f'Whoops! {shapeName} objects are not available in CPCS Mode. Did you want draw{shapeName}?'
             )
 
         global SHAPES_CREATED
@@ -311,7 +311,7 @@ class Group(Shape):
     def __init__(self, *args, **kwargs):
         if app is not None and app._app._isMvc:
             raise NotImplementedError(
-                'Whoops! Group objects are not available in CS3 Mode.'
+                'Whoops! Group objects are not available in CPCS Mode.'
             )
         super().__init__('Group', [], [], kwargs)
         for shape in args:
@@ -481,7 +481,7 @@ def makeDrawFn(shape):
     def drawFn(*args, **kwargs):
         if not app._app._isMvc:
             raise Exception(
-                f'You called draw{shape.__name__} (a CS3 Mode function) outside of redrawAll.'
+                f'You called draw{shape.__name__} (a CPCS Mode function) outside of redrawAll.'
             )
         if not app._app.inRedrawAll:
             raise MvcException('Cannot draw (modify the view) outside of redrawAll')
@@ -496,7 +496,7 @@ def makeInvisibleConstructor(shape):
     def constructor(*args, **kwargs):
         if not app._app._isMvc:
             raise Exception(
-                f'You called {shape.__name__}Shape (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp().'
+                f'You called {shape.__name__}Shape (a CPCS Mode function) outside of CPCS Mode. To run your app in CPCS Mode, use runApp().'
             )
         with NoMvc():
             result = shape(*args, **kwargs)
@@ -1231,7 +1231,7 @@ def runApp(width=400, height=400, **kwargs):
             for globalVarName in app._app.userGlobals:
                 if globalVarName.endswith(screenAppSuffix):
                     raise Exception(
-                        f'The name of your function "{globalVarName}" ends with "{screenAppSuffix}", which is only allowed if you are using "screens" in CS3 Mode. To run an app with screens, call runAppWithScreens() instead of runApp().'
+                        f'The name of your function "{globalVarName}" ends with "{screenAppSuffix}", which is only allowed if you are using "screens" in CPCS Mode. To run an app with screens, call runAppWithScreens() instead of runApp().'
                     )
 
     setupMvc()
@@ -1243,9 +1243,9 @@ def runApp(width=400, height=400, **kwargs):
 ****************************************************************************
 Your code created a shape object (Rect, Oval, etc.) before calling runApp().
 
-runApp (CS3 Mode) is not compatible with shape objects.
+runApp (CPCS Mode) is not compatible with shape objects.
 
-If you'd like to use CS3 Mode, please use drawing functions
+If you'd like to use CPCS Mode, please use drawing functions
 (drawRect, drawOval, etc) in redrawAll.
 
 Otherwise, please call cmu_graphics.run() in place of runApp.
@@ -1275,7 +1275,7 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 def setActiveScreen(screen, fromRunApp=False):
     if not app._app._isMvc:
         raise Exception(
-            'You called setActiveScreen (a CS3 Mode function) outside of CS3 Mode. To run your app in CS3 Mode, use runApp() or runAppWithScreens().'
+            'You called setActiveScreen (a CPCS Mode function) outside of CPCS Mode. To run your app in CPCS Mode, use runApp() or runAppWithScreens().'
         )
     if (screen in [None, '']) or (not isinstance(screen, str)):
         raise Exception(f'{repr(screen)} is not a valid screen')
@@ -1376,7 +1376,7 @@ def run():
         for cs3ModeHandler in ['redrawAll']:
             if cs3ModeHandler in __main__.__dict__:
                 raise Exception(
-                    f"You defined the event handler {cs3ModeHandler} which works with CS3 mode, and then called cmu_graphics.run(), which doesn't work with CS3 mode. Did you mean to call runApp instead?"
+                    f"You defined the event handler {cs3ModeHandler} which works with CPCS Mode, and then called cmu_graphics.run(), which doesn't work with CPCS Mode. Did you mean to call runApp instead?"
                 )
 
     global MAINLOOP_RUN
