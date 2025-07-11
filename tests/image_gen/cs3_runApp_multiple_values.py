@@ -102,3 +102,34 @@ assertRaises(
     "runApp() got multiple values for argument 'altura'",
 )
 
+# Unlike web, the language used for runApp() in the error message depends on the
+# cmuGraphicsLanguage variable, so calling ejecutaApp() will raise the same error as runApp().
+assertRaises(
+    lambda: ejecutaApp(100, 200, altura=250),
+    "runApp() got multiple values for argument 'altura'",
+)
+
+assertRaises(
+    lambda: ejecutaApp(100, 200, hoehe=250),
+    "runApp() got multiple values for argument 'hoehe'",
+)
+
+assertRaises(
+    lambda: ejecutaApp(width=100, ancho=150, height=200, altura=250),
+    "runApp() got multiple values for argument 'ancho'",
+)
+
+assertRaises(
+    lambda: ejecutaApp(altura=200, height=250, ancho=100, width=150),
+    "runApp() got multiple values for argument 'height'",
+)
+
+assertRaises(
+    lambda: ejecutaApp(100, width=150, height=200),
+    "runApp() got multiple values for argument 'width'",
+)
+
+assertRaises(
+    lambda: ejecutaApp(100, 200, altura=250, width=300),
+    "runApp() got multiple values for argument 'altura'",
+)
