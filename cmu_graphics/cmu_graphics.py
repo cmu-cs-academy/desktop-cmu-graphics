@@ -538,6 +538,8 @@ def translateKeyName(keyName, originalLanguage):
 
 def cleanAndClose():
     try:
+        # This is mainly used for cleaning up resources like temporary files.
+        # Since you can't leak resources on web, this doesn't have a web equivalent.
         app._app.callUserFn('onAppStop', (), redraw=False)
     except Exception:
         pass

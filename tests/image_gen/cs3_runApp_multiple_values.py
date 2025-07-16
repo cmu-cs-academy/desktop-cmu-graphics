@@ -110,8 +110,8 @@ assertRaises(
 )
 
 assertRaises(
-    lambda: ejecutaApp(100, 200, hoehe=250),
-    "runApp() got multiple values for argument 'hoehe'",
+    lambda: ejecutaApp(100, 200, höhe=250),
+    "runApp() got multiple values for argument 'höhe'",
 )
 
 assertRaises(
