@@ -3882,7 +3882,6 @@ class ShapeLogicInterface(object):
     def setLanguage(self, language):
         global cmuGraphicsLanguage
         if language in supportedLanguages:
-            print('Setting language to', language)
             cmuGraphicsLanguage = language
 
     def rgb(self, r, g, b):

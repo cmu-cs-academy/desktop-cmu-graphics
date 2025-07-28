@@ -1225,47 +1225,47 @@ class AppWrapper(object):
         return super().__setattr__(attr, value)
 
 def processRunAppArgs(args, kwargs):
-        # Extract width and height (and their translations) from kwargs
-        width = 400
-        height = 400
+    # Extract width and height (and their translations) from kwargs
+    width = 400
+    height = 400
 
-        set_width = False
-        set_height = False
+    set_width = False
+    set_height = False
 
-        remaining_kwargs = {}
+    remaining_kwargs = {}
 
-        # Handle positional arguments for width and height
-        if len(args) >= 1:
-            width = args[0]
+    # Handle positional arguments for width and height
+    if len(args) >= 1:
+        width = args[0]
+        set_width = True
+    if len(args) >= 2:
+        height = args[1]
+        set_height = True
+    if len(args) > 2:
+        raise TypeError(
+            f'{t("runApp")}() takes from 0 to 2 positional arguments but {len(args)} were given'
+        )
+
+    for param, value in kwargs.items():
+        if toEnglish(param, 'shape-attr') == 'width':
+            if set_width:
+                raise TypeError(
+                    f"{t('runApp')}() got multiple values for argument '{param}'"
+                )
+            width = value
             set_width = True
-        if len(args) >= 2:
-            height = args[1]
+        elif toEnglish(param, 'shape-attr') == 'height':
+            if set_height:
+                raise TypeError(
+                    f"{t('runApp')}() got multiple values for argument '{param}'"
+                )
+            height = value
             set_height = True
-        if len(args) > 2:
-            raise TypeError(
-                f'{t("runApp")}() takes from 0 to 2 positional arguments but {len(args)} were given'
-            )
+        else:
+            # Pass through any other keyword arguments to onAppStart
+            remaining_kwargs[param] = value
 
-        for param, value in kwargs.items():
-            if toEnglish(param, 'shape-attr') == 'width':
-                if set_width:
-                    raise TypeError(
-                        f"{t('runApp')}() got multiple values for argument '{param}'"
-                    )
-                width = value
-                set_width = True
-            elif toEnglish(param, 'shape-attr') == 'height':
-                if set_height:
-                    raise TypeError(
-                        f"{t('runApp')}() got multiple values for argument '{param}'"
-                    )
-                height = value
-                set_height = True
-            else:
-                # Pass through any other keyword arguments to onAppStart
-                remaining_kwargs[param] = value
-
-        return width, height, remaining_kwargs
+    return width, height, remaining_kwargs
 
 def runApp(*args, **kwargs):
     width, height, remaining_kwargs = processRunAppArgs(args, kwargs)
