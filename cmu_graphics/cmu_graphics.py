@@ -251,8 +251,68 @@ class Line(Shape):
 
 
 class Polygon(Shape):
-    _js_attrs = Shape._js_attrs | {'addPoint', 'pointList'}
+    _js_attrs = Shape._js_attrs | {'addPoint', 'pointList', 'setCoord'}
     _init_attrs = Shape._init_attrs - {'align'}
+
+    def isCoordName(self, attr):
+        return (
+            len(attr) >= 2 and (attr[0] == 'x' or attr[0] == 'y') and attr[1:].isdigit()
+        )
+
+    def validatePointIndex(self, attr):
+        pointList = super().__getattr__('pointList')
+        pointIndex = int(attr[1:]) - 1
+        if pointIndex < 0:
+            raise AttributeError(
+                t(
+                    "Polygon object cannot access '{{attr}}' because point numbers start from 1",
+                    {'attr': attr},
+                ),
+                name=attr,
+                obj=self,
+            )
+        if pointIndex >= len(pointList):
+            if len(pointList) == 1:
+                error = t(
+                    "Polygon object cannot access '{{attr}}' because it only has 1 point",
+                    {'attr': attr},
+                )
+            else:
+                error = t(
+                    "Polygon object cannot access '{{attr}}' because it only has {{numPoints}} points",
+                    {'attr': attr, 'numPoints': len(pointList)},
+                )
+            raise AttributeError(
+                error,
+                name=attr,
+                obj=self,
+            )
+
+    def getCoord(self, attr):
+        self.validatePointIndex(attr)
+        pointList = list(super().__getattr__('pointList'))
+        pointIndex = int(attr[1:]) - 1
+        varIndex = 0 if attr[0] == 'x' else 1
+        return pointList[pointIndex][varIndex]
+
+    def setCoord(self, attr, val):
+        self.validatePointIndex(attr)
+        pointIndex = int(attr[1:]) - 1
+        varIndex = 0 if attr[0] == 'x' else 1
+        setCoordFn = super().__getattr__('setCoord')
+        return setCoordFn(attr, varIndex, pointIndex, val)
+
+    def __getattr__(self, attr):
+        if self.isCoordName(attr):
+            return self.getCoord(attr)
+        else:
+            return super().__getattr__(attr)
+
+    def __setattr__(self, attr, val):
+        if self.isCoordName(attr):
+            self.setCoord(attr, val)
+        else:
+            super().__setattr__(attr, val)
 
     def __init__(self, *args, **kwargs):
         super().__init__('Polygon', ['initialPoints'], [args], kwargs)
@@ -450,8 +510,8 @@ enEventHandlerNamesMinusOnAppStart = [
 ]
 
 eventHandlerTranslationsMinusOnAppStart = list(
-        enEventHandlerNamesMinusOnAppStart
-) # Make a copy
+    enEventHandlerNamesMinusOnAppStart
+)  # Make a copy
 
 onAppStartTranslations = ['onAppStart']
 
@@ -586,13 +646,16 @@ class App(object):
     def getFnNameAndLanguage(self, enFnName, useActiveScreen):
         if enFnName in self.userGlobals:
             return enFnName, 'en'
-        
+
         if app._app._initialScreen is not None and useActiveScreen:
             screenFnName = f'{self.activeScreen}_{enFnName}'
             if screenFnName in self.userGlobals:
                 return screenFnName, 'en'
 
-        for language, translations in shape_logic.TRANSLATED_USER_FUNCTION_NAMES.items():
+        for (
+            language,
+            translations,
+        ) in shape_logic.TRANSLATED_USER_FUNCTION_NAMES.items():
             if language == 'keys':
                 continue
 
@@ -650,7 +713,9 @@ class App(object):
         return args, kwargs
 
     @_safeMethod
-    def callUserFn(self, baseFnName, args, kwargs=None, redraw=True, useActiveScreen=True):
+    def callUserFn(
+        self, baseFnName, args, kwargs=None, redraw=True, useActiveScreen=True
+    ):
         if kwargs is None:
             kwargs = dict()
 
@@ -1008,9 +1073,8 @@ class App(object):
 
     def set_showFontWarnings(self, value):
         shape_logic.SHOW_FONT_WARNINGS = value
-    
-    showFontWarnings = property(get_showFontWarnings, set_showFontWarnings)
 
+    showFontWarnings = property(get_showFontWarnings, set_showFontWarnings)
 
     def stop(self):
         self._stopped = True
@@ -1226,7 +1290,9 @@ class AppWrapper(object):
 def runApp(width=400, height=400, **kwargs):
     # If we didn't call runAppWithScreens
     if app._app._initialScreen is None:
-        for appFnName in (eventHandlerTranslationsMinusOnAppStart + onAppStartTranslations):
+        for appFnName in (
+            eventHandlerTranslationsMinusOnAppStart + onAppStartTranslations
+        ):
             screenAppSuffix = f'_{appFnName}'
             for globalVarName in app._app.userGlobals:
                 if globalVarName.endswith(screenAppSuffix):
@@ -1253,7 +1319,7 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
     # Don't redraw on either of these calls to callUserFn, because we will
     # instead redraw below
-    app._app.callUserFn('onAppStart', (), kwargs, redraw=False, useActiveScreen=False)            
+    app._app.callUserFn('onAppStart', (), kwargs, redraw=False, useActiveScreen=False)
 
     if app._app._initialScreen is not None:
         sortedGlobals = sorted(app._app.userGlobals)
@@ -1292,9 +1358,9 @@ def runAppWithScreens(initialScreen, *args, **kwargs):
     userGlobals = app._app.userGlobals
 
     for appFnName in eventHandlerTranslationsMinusOnAppStart:
-            if appFnName in userGlobals:
-                raise Exception(f'Do not define {appFnName} when using screens')
-            
+        if appFnName in userGlobals:
+            raise Exception(f'Do not define {appFnName} when using screens')
+
     app._app._isMvc = True
     app._app._initialScreen = initialScreen
     runApp(*args, **kwargs)
@@ -1572,6 +1638,7 @@ t = sli.t
 SHAPES_CREATED = 0
 MAINLOOP_RUN = False
 SET_ACTIVE_SCREEN = pygame.event.custom_type()
+
 
 # Checks to see if a user created shapes but did not call
 # cmu_graphics.run()

@@ -6,6 +6,7 @@ from cmu_graphics import utils
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import cairo_loader as cairo
 from cmu_graphics.libs import pygame_loader as pygame
+
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import cairo
@@ -358,12 +359,13 @@ def checkString(obj, attr, value, isFn):
     if not isinstance(value, str):
         typeError(obj, attr, value, 'string', isFn)
 
+
 def isPilImage(obj):
-    return (
-        hasattr(obj, '__class__') and
-        any(base.__module__.startswith('PIL.') and base.__name__ == 'Image' 
-            for base in obj.__class__.__mro__)
+    return hasattr(obj, '__class__') and any(
+        base.__module__.startswith('PIL.') and base.__name__ == 'Image'
+        for base in obj.__class__.__mro__
     )
+
 
 def checkUrl(obj, attr, value, isFn):
     if not isinstance(value, str) and not isinstance(value, PILWrapper):
@@ -372,6 +374,7 @@ def checkUrl(obj, attr, value, isFn):
         else:
             err = 'TypeError: The first argument to drawImage or Image should be a string or CMUImage, but you passed a PIL image. Did you forget to wrap a PIL image with CMUImage?'
             pyThrow(err)
+
 
 def checkBooleanOrArray(obj, attr, value, isFn):
     if not isinstance(value, list) and not isinstance(value, tuple):
@@ -553,12 +556,14 @@ def cairoSurfaceFromPilImage(image):
     )
     return surface
 
+
 def cairoSurfaceFromPygameSurface(pygameSurface):
     a = array.array('B', pygame.image.tostring(pygameSurface, 'RGBA'))
     surface = cairo.ImageSurface.create_for_data(
         a, cairo.FORMAT_ARGB32, *pygameSurface.get_size()
     )
     return surface
+
 
 class PILWrapper(object):
     def __init__(self, image):
@@ -606,7 +611,7 @@ def loadImage(reference):
         activeDrawing.images[hashReference(reference)] = cairoSurface
     else:
         cairoSurface = activeDrawing.images[referenceHash]
-    
+
     return {'width': cairoSurface.get_width(), 'height': cairoSurface.get_height()}
 
 
@@ -2212,8 +2217,15 @@ SHOW_FONT_WARNINGS = True
 # This is a list of fonts that are available on the CMU CS Academy website but may not be
 # available on the user's computer. We show a warning the first time a font is used.
 FONTS_SHOW_WARNING = {
-    'caveat', 'cinzel', 'montserrat', 'grenze', 'sacramento', 'orbitron', 'symbols',
-    }
+    'caveat',
+    'cinzel',
+    'montserrat',
+    'grenze',
+    'sacramento',
+    'orbitron',
+    'symbols',
+}
+
 
 def getFont(baseFontName, isBold=False, isItalic=False):
     if 'mono' in baseFontName or 'courier' in baseFontName:
@@ -2236,14 +2248,16 @@ def getFont(baseFontName, isBold=False, isItalic=False):
 
     return (fontName, italic, bold)
 
+
 def maybe_show_font_warning(fontName):
     if SHOW_FONT_WARNINGS and fontName.lower() in FONTS_SHOW_WARNING:
         FONTS_SHOW_WARNING.remove(fontName.lower())
         print(f"INFO: Your code drew a Label using a font ('{fontName}')")
-        print("that is available on the CMU CS Academy website but may not be")
-        print("available on your computer. You could change this font to any")
+        print('that is available on the CMU CS Academy website but may not be')
+        print('available on your computer. You could change this font to any')
         print(f"font installed on your system, or install ('{fontName}').")
-        print("To stop showing this warning, set app.showFontWarnings = False.\n")
+        print('To stop showing this warning, set app.showFontWarnings = False.\n')
+
 
 class Label(Shape):
     def __init__(self, attrs):
@@ -2491,6 +2505,11 @@ class Polygon(Shape):
         checkNumber(t('addPoint'), t('x'), x, False)
         checkNumber(t('addPoint'), t('y'), y, False)
         self.pointList.append([x, y])
+        self.pointList = self.pointList  # alert to change
+
+    def setCoord(self, attrName, varIndex, pointIndex, newVal):
+        checkNumber(t('Polygon'), attrName, newVal, False)
+        self.pointList[pointIndex][varIndex] = newVal
         self.pointList = self.pointList  # alert to change
 
     def makePath(self, ctx):
@@ -3580,6 +3599,11 @@ class Inspector(object):
         if self.keyPointsToShapes.get(key, None) is None:
             return ''
 
+        def pointEqualsKey(pt):
+            px = round(pt[0])
+            py = round(pt[1])
+            return kx == px and ky == py
+
         def gradientToString(color):
             result = ''
             for value in color.colors:
@@ -3643,6 +3667,22 @@ class Inspector(object):
                 checkAttrDefaults([['arrowStart', False], ['arrowEnd', False]])
             if not isinstance(shape, Label) and not isinstance(shape, Line):
                 checkAttrDefaults([['borderWidth', 2]])
+            if (
+                isinstance(shape, Polygon)
+                and not isinstance(shape, PolygonWithTransform)
+                and not isinstance(shape, Line)
+                and not isinstance(shape, Rect)
+                and not isinstance(shape, PolygonInCircle)
+            ):
+                pointNum = 1
+                for pt in shape.pointList:
+                    if pointEqualsKey(pt):
+                        break
+                    else:
+                        pointNum += 1
+                if pointNum <= len(shape.pointList):
+                    msgsAdd(t('point number'), str(pointNum))
+
             if isinstance(shape, Star):
                 checkAttrDefaults(
                     [
