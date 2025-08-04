@@ -274,35 +274,22 @@ __all__.extend(
     [
         'setLanguage',
         'cmu_graphics',
-        'runApp',
-        'runAppWithScreens',
         'setActiveScreen',
-        'getImageSize',
         'dcos',
         'dsin',
     ]
 )
 __all__.extend(
     [
-        'drawArc',
         'ArcShape',
-        'drawCircle',
         'CircleShape',
-        'drawImage',
         'ImageShape',
-        'drawLabel',
         'LabelShape',
-        'drawLine',
         'LineShape',
-        'drawOval',
         'OvalShape',
-        'drawPolygon',
         'PolygonShape',
-        'drawRect',
         'RectShape',
-        'drawRegularPolygon',
         'RegularPolygonShape',
-        'drawStar',
         'StarShape',
     ]
 )
