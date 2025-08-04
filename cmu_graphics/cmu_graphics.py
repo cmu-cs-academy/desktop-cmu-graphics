@@ -267,9 +267,7 @@ class Polygon(Shape):
                 t(
                     "Polygon object cannot access '{{attr}}' because point numbers start from 1",
                     {'attr': attr},
-                ),
-                name=attr,
-                obj=self,
+                )
             )
         if pointIndex >= len(pointList):
             if len(pointList) == 1:
@@ -282,11 +280,7 @@ class Polygon(Shape):
                     "Polygon object cannot access '{{attr}}' because it only has {{numPoints}} points",
                     {'attr': attr, 'numPoints': len(pointList)},
                 )
-            raise AttributeError(
-                error,
-                name=attr,
-                obj=self,
-            )
+            raise AttributeError(error)
 
     def getCoord(self, attr):
         self.validatePointIndex(attr)
