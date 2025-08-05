@@ -263,18 +263,18 @@ from random import (
 
 from cmu_graphics.shape_logic import (
     TRANSLATED_GLOBALS,
+    TRANSLATED_CPCS_GLOBALS,
     TRANSLATED_BOOLEANS,
     TRANSLATED_KEY_NAMES,
     accentCombinations,
     PILWrapper as CMUImage,
 )
 
-__all__ = TRANSLATED_GLOBALS['keys']
+__all__ = TRANSLATED_GLOBALS['keys'] + TRANSLATED_CPCS_GLOBALS['keys']
 __all__.extend(
     [
         'setLanguage',
         'cmu_graphics',
-        'setActiveScreen',
         'dcos',
         'dsin',
     ]
