@@ -303,6 +303,14 @@ for language in TRANSLATED_GLOBALS:
                     g[accent_combination] = g[en_name]
                     __all__.append(accent_combination)
 
+for language in TRANSLATED_CPCS_GLOBALS:
+    if language != 'keys':
+        for en_name, trans_name in TRANSLATED_CPCS_GLOBALS[language].items():
+            if trans_name and trans_name != en_name and en_name in g:
+                for accent_combination in accentCombinations(trans_name):
+                    g[accent_combination] = g[en_name]
+                    __all__.append(accent_combination)
+
 for language in TRANSLATED_BOOLEANS:
     if language != 'keys':
         for en_name, trans_name in TRANSLATED_BOOLEANS[language].items():
