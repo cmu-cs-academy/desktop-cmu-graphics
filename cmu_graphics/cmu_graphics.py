@@ -1292,7 +1292,7 @@ def setActiveScreen(screen, fromRunApp=False):
                             redrawAllInCorrectLanguage = redrawAllTranslation
 
     if not any(f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames):
-        raise Exception(f'Screen {screen} requires {redrawAllInCorrectLanguage}()')
+        raise Exception(f"Screen '{screen}' requires '{redrawAllInCorrectLanguage}()'")
     if fromRunApp:
         app._app.handleSetActiveScreen(screen, redraw=False)
     else:
