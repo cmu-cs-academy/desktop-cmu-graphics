@@ -1335,7 +1335,7 @@ def setActiveScreen(screen, fromRunApp=False):
             if redrawAllTranslation not in redrawAllFnNames:
                 redrawAllFnNames.append(redrawAllTranslation)
                 if language == shape_logic.cmuGraphicsLanguage:
-                            redrawAllInCorrectLanguage = redrawAllTranslation
+                        redrawAllInCorrectLanguage = redrawAllTranslation
 
     if not any(f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames):
         raise Exception(f"Screen '{screen}' requires '{redrawAllInCorrectLanguage}()'")
