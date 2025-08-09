@@ -147,7 +147,7 @@ def run_test(test_name, all_source_code):
             test += source_code_pieces[piece_i]
             run_fn = 'runApp()'
 
-        if test_name.endswith('_screens'):
+        if '_screens' in test_name:
             run_fn = "runAppWithScreens('a')"
 
         screenshot_thread = '''
