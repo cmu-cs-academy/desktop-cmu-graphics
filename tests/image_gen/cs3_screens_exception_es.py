@@ -8,7 +8,7 @@ def b_enInicioDeApp(app):
     pass
 
 def a_enRatónPresionado(app, mouseX, mouseY):
-    assertRaises(lambda: establecePantallaActiva('b'), "Screen 'b' requires 'b_redibujaTodo()'")
+    assertRaises(lambda: establecePantallaActiva('b'), "Pantalla 'b' requiere 'b_redibujaTodo()'")
 
 def a_redrawAll(app):
     dibujaRect(0, 0, 400, 400, fill='verdeBosque')
