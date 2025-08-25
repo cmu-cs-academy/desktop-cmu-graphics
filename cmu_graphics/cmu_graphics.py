@@ -1385,9 +1385,26 @@ def setActiveScreen(screen, fromRunApp=False):
         )
     if (screen in [None, '']) or (not isinstance(screen, str)):
         raise Exception(f'{repr(screen)} is not a valid screen')
-    redrawAllFnName = f'{screen}_redrawAll'
-    if redrawAllFnName not in app._app.userGlobals:
-        raise Exception(f'Screen {screen} requires {redrawAllFnName}()')
+    
+    redrawAllFnNames = ['redrawAll']
+    redrawAllInCorrectLanguage = 'redrawAll'
+    for language, translations in shape_logic.TRANSLATED_USER_FUNCTION_NAMES.items():
+        if language == 'keys':
+            continue
+        for redrawAllTranslation in translations.get('redrawAll', []):
+            if redrawAllTranslation not in redrawAllFnNames:
+                redrawAllFnNames.append(redrawAllTranslation)
+                if language == shape_logic.cmuGraphicsLanguage:
+                        redrawAllInCorrectLanguage = redrawAllTranslation
+
+    if not any(f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames):
+        raise Exception(t(
+            "Screen '{{screen}}' requires '{{screen}}_{{redrawAllInCorrectLanguage}}()'",
+            {
+                'screen': screen,
+                'redrawAllInCorrectLanguage': redrawAllInCorrectLanguage,
+            }
+        ))
     if fromRunApp:
         app._app.handleSetActiveScreen(screen, redraw=False)
     else:
