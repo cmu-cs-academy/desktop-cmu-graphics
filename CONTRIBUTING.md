@@ -32,11 +32,7 @@ Inside of `desktop-cmu-graphics` you will find the following...
 There are a number of dependencies that need to be installed:
 
         cd <path/to/desktop-cmu-graphics>
-        python -m venv venv
-        .\venv\Scripts\activate (if on Windows)
-        source venv/bin/activate     (otherwise)
-        pip install twine build tox pre-commit
-        pre-commit install
+        uv run pre-commit install --install-hooks
 
 
 # Running a Build
@@ -44,7 +40,7 @@ There are a number of dependencies that need to be installed:
 To build the installer zip file, run...
 
 ```
-python build/build.py
+uv run build/build.py
 ```
 
 # Testing
@@ -54,22 +50,19 @@ Before creating a new pull request, you should run the test suite to make sure y
 ## Setup for Testing
 
 - Build the library as described above in "Running a Build"
-- Install testing dependencies:
-
-      pip install psutil pillow imageio numpy
 
 ## Running the test cases
 
 Run tox:
 
 ```
-tox
+uv run tox
 ```
 
 This will run the tests using a bunch of different versions of python. The tests will fail for particular "environments" if you don't have the necessary version of python already installed. After running tox once for all environments, you can run it for just a single environment so that it is much faster. Pick an environment that succeeded the first time, e.g. `py310-pip` and pass that to tox:
 
 ```
-tox -e py310-pip
+uv run tox -e py310-pip
 ```
 
 ## Using the test output

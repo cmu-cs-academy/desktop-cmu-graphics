@@ -39,6 +39,11 @@ def split_versions(zip_dest, pypi_dest, dots):
     print(f"Copying cmu_graphics package to {zip_dest} ...")
     shutil.copytree(dots + "cmu_graphics", dots + f"{zip_dest}/cmu_graphics")
 
+    print(f"Copying cmu_cpcs_utils to {pypi_dest} ...")
+    shutil.copy(dots + "cmu_cpcs_utils.py", dots + f"{pypi_dest}/")
+    print(f"Copying cmu_cpcs_utils to {zip_dest} ...")
+    shutil.copy(dots + "cmu_cpcs_utils.py", dots + f"{zip_dest}/")
+
     print(f"Copying sample files to {pypi_dest}/cmu_graphics ...")
     shutil.copytree(dots + "samples", dots + f"{pypi_dest}/cmu_graphics/samples")
     print(f"Copying sample files to {zip_dest} ...")
@@ -47,7 +52,7 @@ def split_versions(zip_dest, pypi_dest, dots):
     # Meta files and docs
     for path in ["LICENSE", "INSTRUCTIONS.pdf"]:
         shutil.copy2(dots + path, dots + f"{zip_dest}/{os.path.basename(path)}")
-    for path in ["LICENSE", "README.md", "setup.py", "pyproject.toml"]:
+    for path in ["LICENSE", "README.md", "pyproject.toml"]:
         shutil.copy2(dots + path, dots + f"{pypi_dest}/{os.path.basename(path)}")
 
     apply_regex_to_dirs([
