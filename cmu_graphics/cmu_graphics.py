@@ -909,7 +909,7 @@ class App(object):
             self.paused or self.alwaysShowInspector or self.isCtrlKeyDown
         )
 
-    def __init__(self, width = 400, height = 400):
+    def __init__(self):
         self.userGlobals = __main__.__dict__
         try:
             self.title, _ = os.path.splitext(
@@ -1132,8 +1132,6 @@ class App(object):
             cairo.FORMAT_ARGB32, self.width, self.height
         )
         self._ctx = cairo.Context(self._cairo_surface)
-        self._ctx.set_source_rgba(1, 1, 1, 1)  # white, fully opaque
-        self._ctx.paint()
 
     @_safeMethod
     def run(self):
@@ -1227,6 +1225,7 @@ class App(object):
 
         pygame.quit()
         cleanAndClose()
+
 
 
 class MvcException(Exception):
@@ -1636,7 +1635,9 @@ def check_for_update():
             print(
                 f'\n\nYou are running cmu-graphics version {version}, but a newer version {most_recent_version} is available.'
             )
-            
+            ### ZIPFILE VERSION ###
+            print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
+            ### END ZIPFILE VERSION ###
             ### PYPI VERSION ###
             print('Run "pip install --upgrade cmu-graphics" to upgrade.')
             ### END PYPI VERSION ###
@@ -1670,7 +1671,10 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 import math
 
+### ZIPFILE VERSION ###
+from cmu_graphics.libs import cairo_loader as cairo
 
+### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import cairo
 
@@ -1683,7 +1687,10 @@ import traceback
 
 DRAWING_LOCK = threading.RLock()
 
+### ZIPFILE VERSION ###
+from cmu_graphics.libs import pygame_loader as pygame
 
+### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import pygame
 ### END PYPI VERSION ###
@@ -1736,6 +1743,7 @@ def check_for_exit_without_run():
         print(
             ' ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n'
         )
+
 
 app = None
 app = AppWrapper(App())
