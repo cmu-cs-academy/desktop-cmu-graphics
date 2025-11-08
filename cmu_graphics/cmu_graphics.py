@@ -909,7 +909,7 @@ class App(object):
             self.paused or self.alwaysShowInspector or self.isCtrlKeyDown
         )
 
-    def __init__(self):
+    def __init__(self, width = 400, height = 400):
         self.userGlobals = __main__.__dict__
         try:
             self.title, _ = os.path.splitext(
@@ -1132,10 +1132,11 @@ class App(object):
             cairo.FORMAT_ARGB32, self.width, self.height
         )
         self._ctx = cairo.Context(self._cairo_surface)
+        self._ctx.set_source_rgba(1, 1, 1, 1)  # white, fully opaque
+        self._ctx.paint()
 
     @_safeMethod
     def run(self):
-        pygame.init()
         pygame.display.set_caption(self.title)
 
         self._screen = None
@@ -1147,54 +1148,66 @@ class App(object):
         while self._running:
             sys.stdout.flush()
             with DRAWING_LOCK:
+
                 had_event = False
-                for event in pygame.event.get():
-                    had_event = True
-                    if not self.stopped:
-                        if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
-                            self.callUserFn(
-                                'onMousePress', (*event.pos, event.button - 1)
-                            )
-                        elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
-                            self.callUserFn(
-                                'onMouseRelease', (*event.pos, event.button - 1)
-                            )
-                        elif event.type == pygame.MOUSEMOTION:
-                            if event.buttons == (0, 0, 0):
-                                self.callUserFn('onMouseMove', event.pos)
-                            else:
-                                self.callUserFn(
-                                    'onMouseDrag',
-                                    (
-                                        *event.pos,
-                                        [i for i in range(3) if event.buttons[i] != 0],
-                                    ),
-                                )
-                        elif event.type == pygame.KEYDOWN:
-                            self.handleKeyPress(event.key, event.mod)
-                        elif event.type == pygame.KEYUP:
-                            self.handleKeyRelease(event.key, event.mod)
-                        elif event.type == SET_ACTIVE_SCREEN:
-                            self.handleSetActiveScreen(event.newScreen)
-                        elif event.type == pygame.WINDOWSIZECHANGED:
-                            self.handleResize(event.x, event.y)
-                    if event.type == pygame.QUIT:
-                        self._running = False
-                    elif event.type == pygame.MOUSEMOTION:
-                        self.inspector.setMousePosition(*event.pos)
-                    elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
-                        key = App.getKey(event.key, event.mod)
-                        if key == 'ctrl':
-                            self.isCtrlKeyDown = event.type == pygame.KEYDOWN
-
-                    pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
-
-                should_redraw = had_event
-
                 msPassed = pygame.time.get_ticks() - lastTick
                 if 1000 / self.stepsPerSecond - msPassed < 1:
                     lastTick = pygame.time.get_ticks()
                     if not (self.paused or self.stopped):
+                        all_events = pygame.event.get()
+                        mousemotion_events = [event for event in all_events if event.type == pygame.MOUSEMOTION]
+                        if len(mousemotion_events) > 0:
+                            compressed_event = mousemotion_events[-1]
+                            for event in mousemotion_events:
+                                if event.buttons != (0, 0, 0):
+                                    compressed_event.buttons = event.buttons
+                            all_events = [event for event in all_events if event.type != pygame.MOUSEMOTION]
+                            all_events.append(compressed_event)
+
+                        for event in all_events:
+                            had_event = True
+                            if not self.stopped:
+                                if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
+                                    self.callUserFn(
+                                        'onMousePress', (*event.pos, event.button - 1)
+                                    )
+                                elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
+                                    self.callUserFn(
+                                        'onMouseRelease', (*event.pos, event.button - 1)
+                                    )
+                                elif event.type == pygame.MOUSEMOTION:
+                                    if event.buttons == (0, 0, 0):
+                                        self.callUserFn('onMouseMove', event.pos)
+                                    else:
+                                        print("DRAG")
+                                        self.callUserFn(
+                                            'onMouseDrag',
+                                            (
+                                                *event.pos,
+                                                [i for i in range(3) if event.buttons[i] != 0],
+                                            ),
+                                        )
+                                elif event.type == pygame.KEYDOWN:
+                                    self.handleKeyPress(event.key, event.mod)
+                                elif event.type == pygame.KEYUP:
+                                    self.handleKeyRelease(event.key, event.mod)
+                                elif event.type == SET_ACTIVE_SCREEN:
+                                    self.handleSetActiveScreen(event.newScreen)
+                                elif event.type == pygame.WINDOWSIZECHANGED:
+                                    self.handleResize(event.x, event.y)
+                            if event.type == pygame.QUIT:
+                                self._running = False
+                            elif event.type == pygame.MOUSEMOTION:
+                                self.inspector.setMousePosition(*event.pos)
+                            elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
+                                key = App.getKey(event.key, event.mod)
+                                if key == 'ctrl':
+                                    self.isCtrlKeyDown = event.type == pygame.KEYDOWN
+
+                            pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
+
+                        should_redraw = had_event
+
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn(
@@ -1204,9 +1217,9 @@ class App(object):
                         onStepEvent.send_robust(self.callUserFn, self._wrapper)
                         should_redraw = True
 
-                if should_redraw:
-                    self.inspector.clearCache()
-                    self.redrawAll(self._screen, self._cairo_surface, self._ctx)
+                        if should_redraw:
+                            self.inspector.clearCache()
+                            self.redrawAll(self._screen, self._cairo_surface, self._ctx)
 
                 onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
 
@@ -1623,9 +1636,7 @@ def check_for_update():
             print(
                 f'\n\nYou are running cmu-graphics version {version}, but a newer version {most_recent_version} is available.'
             )
-            ### ZIPFILE VERSION ###
-            print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
-            ### END ZIPFILE VERSION ###
+            
             ### PYPI VERSION ###
             print('Run "pip install --upgrade cmu-graphics" to upgrade.')
             ### END PYPI VERSION ###
@@ -1659,10 +1670,7 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 import math
 
-### ZIPFILE VERSION ###
-from cmu_graphics.libs import cairo_loader as cairo
 
-### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import cairo
 
@@ -1675,10 +1683,7 @@ import traceback
 
 DRAWING_LOCK = threading.RLock()
 
-### ZIPFILE VERSION ###
-from cmu_graphics.libs import pygame_loader as pygame
 
-### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import pygame
 ### END PYPI VERSION ###
@@ -1731,7 +1736,6 @@ def check_for_exit_without_run():
         print(
             ' ** To run your animation, add cmu_graphics.run() to the bottom of your file **\n'
         )
-
 
 app = None
 app = AppWrapper(App())
