@@ -10,6 +10,7 @@ if mode == 'zip':
     cmd = f"{sys.executable} -m zipfile -e {os.path.join(base_path, 'cmu_graphics_installer.zip')} ."
     subprocess.run(cmd, check=True, shell=True)
     shutil.move(os.path.join('cmu_graphics_installer', 'cmu_graphics'), '.')
+    shutil.move(os.path.join('cmu_graphics_installer', 'cmu_cpcs_utils.py'), '.')
     shutil.rmtree('cmu_graphics_installer')
 else:
     # Remove any old version installed
