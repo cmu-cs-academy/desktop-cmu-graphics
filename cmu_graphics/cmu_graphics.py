@@ -1182,8 +1182,8 @@ class App(object):
                 should_redraw = had_event
 
                 msPassed = pygame.time.get_ticks() - lastTick
-                lastTick = pygame.time.get_ticks()
                 if 1000 / self.stepsPerSecond - msPassed < 1:
+                    lastTick = pygame.time.get_ticks()
                     mousemotion_events = [
                         event
                         for event in all_events
