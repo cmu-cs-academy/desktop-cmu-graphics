@@ -1135,6 +1135,7 @@ class App(object):
 
     @_safeMethod
     def run(self):
+        pygame.init()
         pygame.display.set_caption(self.title)
 
         self._screen = None
@@ -1146,66 +1147,69 @@ class App(object):
         while self._running:
             sys.stdout.flush()
             with DRAWING_LOCK:
-
                 had_event = False
+                all_events = pygame.event.get()
+                for event in all_events:
+                    had_event = True
+                    if not self.stopped:
+                        if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
+                            self.callUserFn(
+                                'onMousePress', (*event.pos, event.button - 1)
+                            )
+                        elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
+                            self.callUserFn(
+                                'onMouseRelease', (*event.pos, event.button - 1)
+                            )
+                        elif event.type == pygame.KEYDOWN:
+                            self.handleKeyPress(event.key, event.mod)
+                        elif event.type == pygame.KEYUP:
+                            self.handleKeyRelease(event.key, event.mod)
+                        elif event.type == SET_ACTIVE_SCREEN:
+                            self.handleSetActiveScreen(event.newScreen)
+                        elif event.type == pygame.WINDOWSIZECHANGED:
+                            self.handleResize(event.x, event.y)
+                    if event.type == pygame.QUIT:
+                        self._running = False
+                    elif event.type == pygame.MOUSEMOTION:
+                        self.inspector.setMousePosition(*event.pos)
+                    elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
+                        key = App.getKey(event.key, event.mod)
+                        if key == 'ctrl':
+                            self.isCtrlKeyDown = event.type == pygame.KEYDOWN
+
+                    pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
+
+                should_redraw = had_event
+
                 msPassed = pygame.time.get_ticks() - lastTick
+                lastTick = pygame.time.get_ticks()
                 if 1000 / self.stepsPerSecond - msPassed < 1:
-                    lastTick = pygame.time.get_ticks()
+                    mousemotion_events = [
+                        event
+                        for event in all_events
+                        if event.type == pygame.MOUSEMOTION
+                    ]
+                    if len(mousemotion_events) > 0:
+                        compressed_event = mousemotion_events[-1]
+                        for event in mousemotion_events:
+                            if event.buttons != (0, 0, 0):
+                                compressed_event.buttons = event.buttons
+
+                        if compressed_event.buttons == (0, 0, 0):
+                            self.callUserFn('onMouseMove', compressed_event.pos)
+                        else:
+                            self.callUserFn(
+                                'onMouseDrag',
+                                (
+                                    *compressed_event.pos,
+                                    [
+                                        i
+                                        for i in range(3)
+                                        if compressed_event.buttons[i] != 0
+                                    ],
+                                ),
+                            )
                     if not (self.paused or self.stopped):
-                        all_events = pygame.event.get()
-                        mousemotion_events = [event for event in all_events if event.type == pygame.MOUSEMOTION]
-                        if len(mousemotion_events) > 0:
-                            compressed_event = mousemotion_events[-1]
-                            for event in mousemotion_events:
-                                if event.buttons != (0, 0, 0):
-                                    compressed_event.buttons = event.buttons
-                            all_events = [event for event in all_events if event.type != pygame.MOUSEMOTION]
-                            all_events.append(compressed_event)
-
-                        for event in all_events:
-                            had_event = True
-                            if not self.stopped:
-                                if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
-                                    self.callUserFn(
-                                        'onMousePress', (*event.pos, event.button - 1)
-                                    )
-                                elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
-                                    self.callUserFn(
-                                        'onMouseRelease', (*event.pos, event.button - 1)
-                                    )
-                                elif event.type == pygame.MOUSEMOTION:
-                                    if event.buttons == (0, 0, 0):
-                                        self.callUserFn('onMouseMove', event.pos)
-                                    else:
-                                        print("DRAG")
-                                        self.callUserFn(
-                                            'onMouseDrag',
-                                            (
-                                                *event.pos,
-                                                [i for i in range(3) if event.buttons[i] != 0],
-                                            ),
-                                        )
-                                elif event.type == pygame.KEYDOWN:
-                                    self.handleKeyPress(event.key, event.mod)
-                                elif event.type == pygame.KEYUP:
-                                    self.handleKeyRelease(event.key, event.mod)
-                                elif event.type == SET_ACTIVE_SCREEN:
-                                    self.handleSetActiveScreen(event.newScreen)
-                                elif event.type == pygame.WINDOWSIZECHANGED:
-                                    self.handleResize(event.x, event.y)
-                            if event.type == pygame.QUIT:
-                                self._running = False
-                            elif event.type == pygame.MOUSEMOTION:
-                                self.inspector.setMousePosition(*event.pos)
-                            elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
-                                key = App.getKey(event.key, event.mod)
-                                if key == 'ctrl':
-                                    self.isCtrlKeyDown = event.type == pygame.KEYDOWN
-
-                            pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
-
-                        should_redraw = had_event
-
                         self.callUserFn('onStep', ())
                         if len(self._allKeysDown) > 0:
                             self.callUserFn(
@@ -1215,9 +1219,9 @@ class App(object):
                         onStepEvent.send_robust(self.callUserFn, self._wrapper)
                         should_redraw = True
 
-                        if should_redraw:
-                            self.inspector.clearCache()
-                            self.redrawAll(self._screen, self._cairo_surface, self._ctx)
+                if should_redraw:
+                    self.inspector.clearCache()
+                    self.redrawAll(self._screen, self._cairo_surface, self._ctx)
 
                 onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
 
@@ -1225,7 +1229,6 @@ class App(object):
 
         pygame.quit()
         cleanAndClose()
-
 
 
 class MvcException(Exception):
@@ -1294,6 +1297,7 @@ class AppWrapper(object):
             return self._app.__setattr__(attr, value)
         return super().__setattr__(attr, value)
 
+
 def processRunAppArgs(args, kwargs):
     # Extract width and height (and their translations) from kwargs
     width = 400
@@ -1337,6 +1341,7 @@ def processRunAppArgs(args, kwargs):
 
     return width, height, remaining_kwargs
 
+
 def runApp(*args, **kwargs):
     width, height, remaining_kwargs = processRunAppArgs(args, kwargs)
 
@@ -1371,7 +1376,9 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
     # Don't redraw on either of these calls to callUserFn, because we will
     # instead redraw below
-    app._app.callUserFn('onAppStart', (), remaining_kwargs, redraw=False, useActiveScreen=False)            
+    app._app.callUserFn(
+        'onAppStart', (), remaining_kwargs, redraw=False, useActiveScreen=False
+    )
 
     if app._app._initialScreen is not None:
         sortedGlobals = sorted(app._app.userGlobals)
@@ -1397,7 +1404,7 @@ def setActiveScreen(screen, fromRunApp=False):
         )
     if (screen in [None, '']) or (not isinstance(screen, str)):
         raise Exception(f'{repr(screen)} is not a valid screen')
-    
+
     redrawAllFnNames = ['redrawAll']
     redrawAllInCorrectLanguage = 'redrawAll'
     for language, translations in shape_logic.TRANSLATED_USER_FUNCTION_NAMES.items():
@@ -1407,16 +1414,20 @@ def setActiveScreen(screen, fromRunApp=False):
             if redrawAllTranslation not in redrawAllFnNames:
                 redrawAllFnNames.append(redrawAllTranslation)
                 if language == shape_logic.cmuGraphicsLanguage:
-                        redrawAllInCorrectLanguage = redrawAllTranslation
+                    redrawAllInCorrectLanguage = redrawAllTranslation
 
-    if not any(f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames):
-        raise Exception(t(
-            "Screen '{{screen}}' requires '{{screen}}_{{redrawAllInCorrectLanguage}}()'",
-            {
-                'screen': screen,
-                'redrawAllInCorrectLanguage': redrawAllInCorrectLanguage,
-            }
-        ))
+    if not any(
+        f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames
+    ):
+        raise Exception(
+            t(
+                "Screen '{{screen}}' requires '{{screen}}_{{redrawAllInCorrectLanguage}}()'",
+                {
+                    'screen': screen,
+                    'redrawAllInCorrectLanguage': redrawAllInCorrectLanguage,
+                },
+            )
+        )
     if fromRunApp:
         app._app.handleSetActiveScreen(screen, redraw=False)
     else:
