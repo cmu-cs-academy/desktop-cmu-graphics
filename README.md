@@ -7,8 +7,7 @@ students. CMU Graphics and its desktop version are maintained by
 project which develops free-to-use middle and high school computer science
 curriculum.
 
-Desktop CMU Graphics works with **Python 3.6-3.11** and is compatible with
-[Replit](https://replit.com/) (see the "Replit" section below). This package, 
+This package,
 including its documentation, is licensed under the
 [BSD 3-Clause license](https://github.com/cmu-cs-academy/desktop-cmu-graphics/blob/master/LICENSE).
 
@@ -85,12 +84,3 @@ there are plenty of resources to help you get started with
 the framework. Students can reach out to their teachers for questions about
 CMU Graphics, and a full reference documentation for the graphics
 framework is available on our [documentation page](https://academy.cs.cmu.edu/docs).
-
-
-## Replit
-
-Desktop CMU Graphics is compatible with [Replit](https://replit.com/). To use
-the package on the Replit website:
-
-1. Create a new repl. Choose "Python-CMUGraphics" as the language.
-1. Run your code!
