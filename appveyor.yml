@@ -52,7 +52,7 @@ for:
       # Force install xorgproto, which is a dependency of cairo but can't be linked by
       # homebrew because of a conflicting file.
       - brew install -f --overwrite xorgproto
-      - brew install cairo pkg-config python@3.13
+      - brew install cairo pkg-config python@3.13 python@3.14
       - export PYBIN=~/venv3.11/bin/python
       - $PYBIN -m pip install -U pip
       - $PYBIN -m pip install tox twine build

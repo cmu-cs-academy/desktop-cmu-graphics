@@ -6,7 +6,7 @@ import platform
 import os
 
 min_minor_version = 11
-max_minor_version = 13
+max_minor_version = 14
 
 ### ZIPFILE VERSION ###
 def get_platform_string():
