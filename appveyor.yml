@@ -32,8 +32,7 @@ for:
       - C:\Python311\python.exe build/build.py
 
     test_script:
-      # We have to skip py310-zip because its version of pycairo has a Windows-specific bug.
-      - set "TOX_SKIP_ENV=py310-zip" && C:\Python311\python.exe -m tox --parallel 2
+      - C:\Python311\python.exe -m tox --parallel 2
 
     # See more info on RDP here:
     #   https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
@@ -64,7 +63,7 @@ for:
       - export PATH=/usr/local/bin:$PATH
 
     before_test:
-      - export PATH=$PATH:~/venv3.8/bin/:~/venv3.9/bin/:~/venv3.10/bin/:~/venv3.11/bin/
+      - export PATH=$PATH:~/venv3.11/bin/
       - export ARCHFLAGS="-arch x86_64"
       - $PYBIN build/build.py
 

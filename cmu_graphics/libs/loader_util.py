@@ -5,7 +5,7 @@ import struct
 import platform
 import os
 
-min_minor_version = 9
+min_minor_version = 11
 max_minor_version = 13
 
 ### ZIPFILE VERSION ###
