@@ -21,7 +21,8 @@ def check_for_shadowing():
 
     # If the __main__ file's directory is in sys.path, consider it for shadowing
     # (When running in the Python 3.13 REPL, __main__.__file__ is not in sys.path.)
-    if main_file := getattr(__main__, '__file__', None):
+    main_file = getattr(__main__, '__file__', None)
+    if main_file:
         main_directory = os.path.dirname(main_file)
         if main_directory in sys.path:
             directories_to_look_for_shadowing.append(main_directory)
