@@ -3,15 +3,14 @@
 
 import subprocess
 
+# Links come from the pypi "download files" page for pygame-ce
+
 links = {
     'pygame_mac_315': 'fill me in',
     'pygame_mac_arm_315': 'fill me in',
     'pygame_win_32_315': 'fill me in',
     'pygame_win_64_315': 'fill me in',
 }
-
-# Links come from the pypi "download files" page and look like
-# https://files.pythonhosted.org/packages/7e/11/17f7f319ca91824b86557e9303e3b7a71991ef17fd45286bf47d7f0a38e6/pygame-2.6.1-cp313-cp313-win_amd64.whl
 
 def run_command(args):
     print(f'Running command: {" ".join(args)}')
