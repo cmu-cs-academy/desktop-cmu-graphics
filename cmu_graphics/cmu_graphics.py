@@ -1133,17 +1133,14 @@ class App(object):
         )
         self._ctx = cairo.Context(self._cairo_surface)
 
-    def throttleFnCall(self, fn, args, delay, lastMouseTick, lastMousePos):
+    def throttleMouseEvent(self, fn, args, delay, lastMouseTick, lastMousePos):
         now = pygame.time.get_ticks()
         if (now - lastMouseTick > delay):
             newMousePos = self.inspector.getMousePosition()
             if (newMousePos != lastMousePos):
-                print("going", now)
                 self.callUserFn(fn, args)
                 return now, newMousePos
-            return now, lastMousePos
-        else:
-            return lastMouseTick, lastMousePos
+        return lastMouseTick, lastMousePos
 
     @_safeMethod
     def run(self):
@@ -1177,11 +1174,11 @@ class App(object):
                             )
                         elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
-                                newMoveTick, newMovePos = self.throttleFnCall('onMouseMove', event.pos, 30, lastMoveTick, lastMovePos)
+                                newMoveTick, newMovePos = self.throttleMouseEvent('onMouseMove', event.pos, 30, lastMoveTick, lastMovePos)
                                 lastMoveTick = newMoveTick
                                 lastMovePos = newMovePos
                             else:
-                                newDragTick, newDragPos = self.throttleFnCall(
+                                newDragTick, newDragPos = self.throttleMouseEvent(
                                     'onMouseDrag', 
                                     (
                                         *event.pos,
