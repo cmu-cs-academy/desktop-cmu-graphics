@@ -1133,6 +1133,15 @@ class App(object):
         )
         self._ctx = cairo.Context(self._cairo_surface)
 
+    def throttleMouseEvent(self, fn, args, delay, lastMouseTick, lastMousePos):
+        now = pygame.time.get_ticks()
+        if (now - lastMouseTick > delay):
+            newMousePos = self.inspector.getMousePosition()
+            if (newMousePos != lastMousePos):
+                self.callUserFn(fn, args)
+                return now, newMousePos
+        return lastMouseTick, lastMousePos
+
     @_safeMethod
     def run(self):
         pygame.init()
@@ -1142,6 +1151,10 @@ class App(object):
         self.updateScreen(True)
 
         lastTick = 0
+        lastMoveTick = 0
+        lastMovePos = self.inspector.getMousePosition()
+        lastDragTick = 0
+        lastDragPos = self.inspector.getMousePosition()
         self._running = True
 
         while self._running:
@@ -1161,15 +1174,21 @@ class App(object):
                             )
                         elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
-                                self.callUserFn('onMouseMove', event.pos)
+                                newMoveTick, newMovePos = self.throttleMouseEvent('onMouseMove', event.pos, 30, lastMoveTick, lastMovePos)
+                                lastMoveTick = newMoveTick
+                                lastMovePos = newMovePos
                             else:
-                                self.callUserFn(
-                                    'onMouseDrag',
+                                newDragTick, newDragPos = self.throttleMouseEvent(
+                                    'onMouseDrag', 
                                     (
                                         *event.pos,
                                         [i for i in range(3) if event.buttons[i] != 0],
                                     ),
-                                )
+                                    30,
+                                    lastDragTick,
+                                    lastDragPos)
+                                lastDragTick = newDragTick
+                                lastDragPos = newDragPos
                         elif event.type == pygame.KEYDOWN:
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
