@@ -14,15 +14,10 @@ g = Group(
     Rect(125, 225, 100, 100, fill='orange'),
     Rect(225, 75, 50, 50, fill='purple'),
     Rect(275, 75, 50, 50, fill='pink'),
+    db = "points"
 )
 si = Polygon(20, 300, 170, 300, 38, 375, 90, 205, 130, 370, 35, 225, fill='magenta')
 g.add(si)
-
-g.db = "points"
-
-# -
-
-g.db = ""
 
 def checkPoint(x, y, inGroup):
     c = Circle(x, y, 10, fill='lightGreen' if inGroup else 'red')
