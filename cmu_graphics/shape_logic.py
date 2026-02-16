@@ -6,6 +6,7 @@ from cmu_graphics import utils
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import cairo_loader as cairo
 from cmu_graphics.libs import pygame_loader as pygame
+from cmu_graphics.libs.martinez import contour, point, polygon, boolean
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
@@ -1432,9 +1433,7 @@ class Shape(object):
                 edges.append((x2, y2, x1, y1))
         return edges
 
-    def edgesIntersect(self, shape):
-        edges1 = self.getEdges()
-        edges2 = shape.getEdges()
+    def edgesIntersect(self, edges1, edges2):
         return utils.edgesIntersect(edges1, edges2)
 
     def containsShape(self, *arguments):
@@ -1452,7 +1451,7 @@ class Shape(object):
         # the targetShape are inside this shape
         x = targetShape.centerX
         y = targetShape.centerY
-        return not self.edgesIntersect(targetShape) and self.contains(x, y)
+        return not self.edgesIntersect(self.getEdges(), targetShape.getEdges()) and self.contains(x, y)
 
     def getBounds(self):
         return {
@@ -1497,7 +1496,7 @@ class Shape(object):
 
         for i in range(len(myShapes)):
             for j in range(len(targetShapes)):
-                if utils.edgesIntersect(myShapesEdges[i], targetShapesEdges[j]):
+                if self.edgesIntersect(myShapesEdges[i], targetShapesEdges[j]):
                     return True
 
         targetApproxPoints = [shape.getApproxPoints() for shape in targetShapes]
@@ -1859,8 +1858,85 @@ class Group(Shape):
     def contains(self, x, y):
         return any(shape.contains(x, y) for shape in self._shapes)
 
+    def getSinglePointFromShape(self, target):
+        if (isinstance(target, Group)):
+            if (len(target._shapes) > 0):
+                return self.getSinglePointFromShape(target._shapes[0])
+            return None
+        else:
+            return target.getApproxPoints()[0]
+
+    # wraps up a list of points into right format for union algorithm
+    def formatShape(self, points):
+        return polygon.Polygon([contour.Contour(list(map(lambda p: point.Point(p[0], p[1]), points)), [], True)])
+
+    # unwraps result from union algorithm
+    def unformatShapeDebug(self, poly):
+        return list(map(lambda c: {"points": list(map(lambda p: [p.x, p.y], c.points)), "holes": c.holes, "external": c.is_external}, poly.contours))
+    # holes array indicates the contours in the polygon list that are the shape's holes, internal vs. external dictates whether somethings a hole or not
+
+    def getApproxGroupPoints(self, group):
+        numShapes = len(group._shapes)
+        finalShape = None
+        if (numShapes > 0):
+            firstShape = group._shapes[0]
+            if (isinstance(firstShape, Group)):
+                finalShape = self.getApproxGroupPoints(firstShape)
+            else:
+                finalShape = copy.deepcopy(firstShape.getApproxPoints())
+                finalShape = self.formatShape(finalShape)
+        else:
+            return polygon.Polygon([])
+        
+        if (numShapes > 1):
+            for i in range(1, numShapes):
+                shape = group._shapes[i]
+                currentShape = None
+                if (isinstance(shape, Group)):
+                    currentShape = self.getApproxGroupPoints(shape)
+                else:
+                    currentShape = copy.deepcopy(shape.getApproxPoints())
+                    currentShape = self.formatShape(currentShape)
+                finalShape = boolean.compute(finalShape, currentShape, boolean.OperationType.UNION)
+        return finalShape
+
+    # helper method to ensure boolean.compute only gets called once
+    def containsShapeFromPoints(self, target, groupPoints):
+        if (isinstance(target, Group)):
+            return all([self.containsShapeFromPoints(shape, groupPoints) for shape in target._shapes])
+        targetPoints = target.getApproxPoints()
+        groupNum = len(groupPoints)
+
+        # getApproxGroupPoints returns array of possibly multiple shapes in the group after unioning
+        for i in range(groupNum):
+            groupShape = groupPoints[i]
+            # for a polygon, the first argument is the outline and the remaining are holes in the shape, if they exist
+            shapeNum = len(groupShape)
+            for i in range(shapeNum):
+                if (self.edgesIntersect(groupShape[i], targetPoints)):
+                    return False
+
+        return self.contains(targetPoints[0][0], targetPoints[0][1])
+
     def containsShape(self, target):
-        return any(shape.containsShape(target) for shape in self._shapes)
+        # Computing the group union in getApproxGroupPoints can be slow, so we
+        # try two simpler methods first to see if they give an answer.
+
+        # 1: If there is a point in target that is not contained by this group,
+        #    we can return false.
+        samplePoint = self.getSinglePointFromShape(target)
+        if (samplePoint and not self.contains(samplePoint[0], samplePoint[1])):
+            return False
+
+        # 2: If the target is fully contained within a single one of the shapes,
+        #    we can return true.
+        if (any([shape.containsShape(target) for shape in self._shapes])):
+            return True
+
+        groupShape = self.getApproxGroupPoints(self)
+        print(self.unformatShapeDebug(groupShape))
+        return True
+        # return self.containsShapeFromPoints(target, groupPoints)
 
     def addx(self, dx):
         for shape in self._shapes:
