@@ -1420,21 +1420,20 @@ class Shape(object):
         checkNumber(t('hits(x, y)'), t('y'), y, True)
         return self._hits(x, y)
 
-    def getEdges(self):
+    def getEdgesFromPoints(self, points):
         edges = []
-        approxPoints = self.getApproxPoints()
-        for i in range(len(approxPoints)):
-            x1, y1 = approxPoints[i]
-            k = (i + 1) % (len(approxPoints))
-            x2, y2 = approxPoints[k]
+        for i in range(len(points)):
+            x1, y1 = points[i]
+            k = (i + 1) % (len(points))
+            x2, y2 = points[k]
             if x1 < x2:
                 edges.append((x1, y1, x2, y2))
             else:
                 edges.append((x2, y2, x1, y1))
         return edges
 
-    def edgesIntersect(self, edges1, edges2):
-        return utils.edgesIntersect(edges1, edges2)
+    def getEdges(self):
+        return self.getEdgesFromPoints(self.getApproxPoints())
 
     def containsShape(self, *arguments):
         checkArgCount(
@@ -1451,7 +1450,7 @@ class Shape(object):
         # the targetShape are inside this shape
         x = targetShape.centerX
         y = targetShape.centerY
-        return not self.edgesIntersect(self.getEdges(), targetShape.getEdges()) and self.contains(x, y)
+        return not utils.edgesIntersect(self.getEdges(), targetShape.getEdges()) and self.contains(x, y)
 
     def getBounds(self):
         return {
@@ -1496,7 +1495,7 @@ class Shape(object):
 
         for i in range(len(myShapes)):
             for j in range(len(targetShapes)):
-                if self.edgesIntersect(myShapesEdges[i], targetShapesEdges[j]):
+                if utils.edgesIntersect(myShapesEdges[i], targetShapesEdges[j]):
                     return True
 
         targetApproxPoints = [shape.getApproxPoints() for shape in targetShapes]
@@ -1870,18 +1869,32 @@ class Group(Shape):
     def formatShape(self, points):
         return polygon.Polygon([contour.Contour(list(map(lambda p: point.Point(p[0], p[1]), points)), [], True)])
 
+    def unwrapPoints(self, points):
+        return list(map(lambda p: (p.x, p.y), points))
+
+    def unformatShape(self, poly):
+        finalPoints = []
+        contours = poly.contours
+        for c in contours:
+            if c.is_external:
+                outlinePoints = [self.unwrapPoints(c.points)]
+                if len(c.holes) > 0:
+                    holePoints = list(map(lambda i: self.unwrapPoints(contours[i].points), c.holes))
+                    outlinePoints.extend(holePoints)
+                finalPoints.append(outlinePoints)
+        return finalPoints
+
     # unwraps result from union algorithm
     def unformatShapeDebug(self, poly):
-        return list(map(lambda c: {"points": list(map(lambda p: [p.x, p.y], c.points)), "holes": c.holes, "external": c.is_external}, poly.contours))
-    # holes array indicates the contours in the polygon list that are the shape's holes, internal vs. external dictates whether somethings a hole or not
+        return list(map(lambda c: {"points": self.unwrapPoints(c.points), "holes": c.holes, "external": c.is_external}, poly.contours))
 
-    def getApproxGroupPoints(self, group):
+    def getApproxGroupShape(self, group):
         numShapes = len(group._shapes)
         finalShape = None
         if (numShapes > 0):
             firstShape = group._shapes[0]
             if (isinstance(firstShape, Group)):
-                finalShape = self.getApproxGroupPoints(firstShape)
+                finalShape = self.getApproxGroupShape(firstShape)
             else:
                 finalShape = copy.deepcopy(firstShape.getApproxPoints())
                 finalShape = self.formatShape(finalShape)
@@ -1893,7 +1906,7 @@ class Group(Shape):
                 shape = group._shapes[i]
                 currentShape = None
                 if (isinstance(shape, Group)):
-                    currentShape = self.getApproxGroupPoints(shape)
+                    currentShape = self.getApproxGroupShape(shape)
                 else:
                     currentShape = copy.deepcopy(shape.getApproxPoints())
                     currentShape = self.formatShape(currentShape)
@@ -1907,19 +1920,18 @@ class Group(Shape):
         targetPoints = target.getApproxPoints()
         groupNum = len(groupPoints)
 
-        # getApproxGroupPoints returns array of possibly multiple shapes in the group after unioning
         for i in range(groupNum):
             groupShape = groupPoints[i]
             # for a polygon, the first argument is the outline and the remaining are holes in the shape, if they exist
             shapeNum = len(groupShape)
             for i in range(shapeNum):
-                if (self.edgesIntersect(groupShape[i], targetPoints)):
+                if (utils.edgesIntersect(self.getEdgesFromPoints(groupShape[i]), self.getEdgesFromPoints(targetPoints))):
                     return False
 
         return self.contains(targetPoints[0][0], targetPoints[0][1])
 
     def containsShape(self, target):
-        # Computing the group union in getApproxGroupPoints can be slow, so we
+        # Computing the group union in getApproxGroupShape can be slow, so we
         # try two simpler methods first to see if they give an answer.
 
         # 1: If there is a point in target that is not contained by this group,
@@ -1933,10 +1945,9 @@ class Group(Shape):
         if (any([shape.containsShape(target) for shape in self._shapes])):
             return True
 
-        groupShape = self.getApproxGroupPoints(self)
-        print(self.unformatShapeDebug(groupShape))
-        return True
-        # return self.containsShapeFromPoints(target, groupPoints)
+        groupShape = self.getApproxGroupShape(self)
+        groupPoints = self.unformatShape(groupShape)
+        return self.containsShapeFromPoints(target, groupPoints)
 
     def addx(self, dx):
         for shape in self._shapes:
