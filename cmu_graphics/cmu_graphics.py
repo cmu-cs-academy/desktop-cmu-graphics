@@ -1172,7 +1172,8 @@ class App(object):
         self.updateScreen(True)
 
         lastTick = 0
-        throttleMouseEvent = self.throttleEvent(self.callUserFn, 30)
+        throttleMouseMove = self.throttleEvent(lambda arg: self.callUserFn("onMouseMove", arg), 30)
+        throttleMouseDrag = self.throttleEvent(lambda arg: self.callUserFn("onMouseDrag", arg), 30)
         self._running = True
 
         while self._running:
@@ -1192,15 +1193,15 @@ class App(object):
                             )
                         elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
-                                throttleMouseEvent('onMouseMove', event.pos)
+                                throttleMouseMove(event.pos)
                             else:
-                                throttleMouseEvent(
-                                    'onMouseDrag', 
+                                throttleMouseDrag(
                                     (
                                         *event.pos,
                                         [i for i in range(3) if event.buttons[i] != 0],
                                     ))
-                            throttleMouseEvent.flush()
+                            throttleMouseMove.flush()
+                            throttleMouseDrag.flush()
                         elif event.type == pygame.KEYDOWN:
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
