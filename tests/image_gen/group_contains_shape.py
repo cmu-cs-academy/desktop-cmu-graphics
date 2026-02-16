@@ -18,6 +18,12 @@ g = Group(
 si = Polygon(20, 300, 170, 300, 38, 375, 90, 205, 130, 370, 35, 225, fill='magenta')
 g.add(si)
 
+g.db = "points"
+
+# -
+
+g.db = ""
+
 def checkPoint(x, y, inGroup):
     c = Circle(x, y, 10, fill='lightGreen' if inGroup else 'red')
     if inGroup:

@@ -1709,16 +1709,16 @@ class Shape(object):
                 self.drawImage(ctx)
             ctx.restore()
 
-            db = self.db
-            if db != '' and isinstance(db, str):
-                if db == 'all' or 'points' in db:
-                    self.drawDbPoints(ctx)
-                if db == 'all' or 'box' in db:
-                    self.drawDbBox(ctx)
-                if db == 'all' or 'center' in db:
-                    self.drawDbCenter(ctx)
-                if db == 'all' or 'centroid' in db:
-                    self.drawDbCentroid(ctx)
+        db = self.db
+        if db != '' and isinstance(db, str):
+            if db == 'all' or 'points' in db:
+                self.drawDbPoints(ctx)
+            if db == 'all' or 'box' in db:
+                self.drawDbBox(ctx)
+            if db == 'all' or 'center' in db:
+                self.drawDbCenter(ctx)
+            if db == 'all' or 'centroid' in db:
+                self.drawDbCentroid(ctx)
 
 
 def countShapesInGroup(shape):
@@ -1948,6 +1948,31 @@ class Group(Shape):
         groupShape = self.getApproxGroupShape(self)
         groupPoints = self.unformatShape(groupShape)
         return self.containsShapeFromPoints(target, groupPoints)
+
+    def drawDbPoints(self, ctx):
+        groupShape = self.getApproxGroupShape(self)
+        groupPoints = self.unformatShape(groupShape)
+        ctx.save()
+        r = 4
+        # dots at corners
+        for shapeList in groupPoints:
+            for shape in shapeList:
+                for pt in shape:
+                    x, y = pt
+                    self.setFillOrStrokeStyle(ctx, 'magenta')
+                    ctx.new_path()
+                    ctx.arc(x, y, r, 0, 2 * math.pi)
+                    ctx.close_path()
+                    ctx.fill()
+                # now connect the dots
+                ctx.new_path
+                utils.makePolygonPath(shape, ctx)
+                ctx.close_path()
+                ctx.set_line_width(3)
+                self.setFillOrStrokeStyle(ctx, 'magenta')
+                ctx.set_dash([7, 7])
+                ctx.stroke()
+                ctx.restore()
 
     def addx(self, dx):
         for shape in self._shapes:
