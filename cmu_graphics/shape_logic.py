@@ -3756,9 +3756,6 @@ class Inspector(object):
         self.keyPoints = self.keyPointsToShapes = None
         self.bestX = self.bestY = None
 
-    def getMousePosition(self):
-        return (self.mouseX, self.mouseY)
-
     def setMousePosition(self, x, y):
         self.mouseX = x
         self.mouseY = y
