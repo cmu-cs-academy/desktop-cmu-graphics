@@ -24,7 +24,6 @@ def get_platform_string():
     return plat
 
 def verify_os():
-    return
     if sys.platform not in ["darwin", "win32"]:
         print("""\
 It looks like your computer is using a(n) %(os)s operating system.
