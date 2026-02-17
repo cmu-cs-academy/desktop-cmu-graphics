@@ -1152,13 +1152,16 @@ class App(object):
             nonlocal lastCall, prevArgs
 
             if prevArgs is None:
-                return
+                return False
 
             now = pygame.time.get_ticks()
             if now - lastCall >= delay:
                 lastCall = now
                 fn(*prevArgs)
                 prevArgs = None
+                return True
+            
+            return False
 
         throttle.flush = flush
         return throttle
@@ -1200,8 +1203,6 @@ class App(object):
                                         *event.pos,
                                         [i for i in range(3) if event.buttons[i] != 0],
                                     ))
-                            throttleMouseMove.flush()
-                            throttleMouseDrag.flush()
                         elif event.type == pygame.KEYDOWN:
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
@@ -1221,6 +1222,8 @@ class App(object):
 
                     pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 
+                didMove = throttleMouseMove.flush()
+                didDrag = throttleMouseDrag.flush()
                 should_redraw = had_event
 
                 msPassed = pygame.time.get_ticks() - lastTick
@@ -1236,7 +1239,7 @@ class App(object):
                         onStepEvent.send_robust(self.callUserFn, self._wrapper)
                         should_redraw = True
 
-                if should_redraw:
+                if should_redraw or didMove or didDrag:
                     self.inspector.clearCache()
                     self.redrawAll(self._screen, self._cairo_surface, self._ctx)
 
