@@ -1222,9 +1222,9 @@ class App(object):
 
                     pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 
-                didMove = throttleMouseMove.flush()
-                didDrag = throttleMouseDrag.flush()
-                should_redraw = had_event
+                did_move = throttleMouseMove.flush()
+                did_drag = throttleMouseDrag.flush()
+                should_redraw = had_event or did_move or did_drag
 
                 msPassed = pygame.time.get_ticks() - lastTick
                 if 1000 / self.stepsPerSecond - msPassed < 1:
@@ -1239,7 +1239,7 @@ class App(object):
                         onStepEvent.send_robust(self.callUserFn, self._wrapper)
                         should_redraw = True
 
-                if should_redraw or didMove or didDrag:
+                if should_redraw:
                     self.inspector.clearCache()
                     self.redrawAll(self._screen, self._cairo_surface, self._ctx)
 
