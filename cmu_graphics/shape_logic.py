@@ -12,6 +12,7 @@ from cmu_graphics.libs.martinez import contour, point, polygon, boolean
 ### PYPI VERSION ###
 import cairo
 import pygame
+from martinez import contour, point, polygon, boolean
 ### END PYPI VERSION ###
 
 from cmu_graphics.libs import webrequest
