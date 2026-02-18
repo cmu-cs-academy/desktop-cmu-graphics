@@ -5,18 +5,10 @@
 - [Rust](https://rustup.rs/)
 - [uv](https://docs.astral.sh/uv/)
 
-## Setup
-
-Build and install the package in development mode:
+## (Compiling and) Running
 
 ```
-uv run maturin develop
+uv run test.py
 ```
 
-## Running
-
-```
-uv run python test.py
-```
-
-After making changes to the Rust code, re-run `uv run maturin develop` before running again.
+This will automatically compile the latest version of the Rust code.

@@ -11,7 +11,7 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::window::{Window, WindowId};
 
 use softbuffer;
-use skia_safe::{surfaces, ImageInfo, Color, ColorSpace, Paint};
+use skia_safe::{surfaces, ColorType, ImageInfo, Color, ColorSpace, Paint};
 
 #[pyclass(unsendable, module="wyvern")]
 struct Canvas {
@@ -22,7 +22,9 @@ struct Canvas {
 impl Canvas {
     fn draw_circle(&mut self, cx: f32, cy: f32, r: f32) {
         let canvas = self.skia_surface.canvas();
-        canvas.draw_circle((cx, cy), r, &Paint::default());
+        let mut paint = Paint::default();
+        paint.set_anti_alias(true);
+        canvas.draw_circle((cx, cy), r, &paint);
     }
 
     fn clear(&mut self) {
@@ -67,7 +69,6 @@ impl App {
 struct AppInternals {
     window: Rc<Window>,
     softbuffer_surface: softbuffer::Surface<Rc<Window>, Rc<Window>>,
-    skia_buffer: Vec<u32>,
 }
 
 struct WinitApp {
@@ -81,39 +82,20 @@ struct WinitApp {
     error: Option<PyErr>,
 }
 
-fn get_skia_surface_and_buffer(window: &Window) -> (skia_safe::Surface, Vec<u32>) {
-    let (width, height) = {
-        let size = window.inner_size();
-        (size.width as i32, size.height as i32)
-    };
-    let mut skia_buffer: Vec<u32> = vec![0; (width * height).try_into().expect("Screen is too large")];
+fn create_skia_surface(width: i32, height: i32, scale_factor: f64) -> skia_safe::Surface {
+    let image_info = ImageInfo::new(
+        (width, height),
+        ColorType::BGRA8888,
+        skia_safe::AlphaType::Premul,
+        ColorSpace::new_srgb(),
+    );
 
-    let image_info = {
-        let color_space = ColorSpace::new_srgb();
-        ImageInfo::new_n32(
-            (width, height),
-            skia_safe::AlphaType::Premul,
-            color_space,
-        )
-    };
-
-    let pixel_bytes: &mut [u8] = unsafe {
-        std::slice::from_raw_parts_mut(
-            skia_buffer.as_mut_ptr() as *mut u8,
-            skia_buffer.len() * std::mem::size_of::<u32>(),
-        )
-    };
-
-    let mut skia_surface = surfaces::wrap_pixels(
-        &image_info,
-        pixel_bytes,
-        (width * 4) as usize,
-        None,
-    )
-    .unwrap();
-    skia_surface.canvas().clear(Color::WHITE);
-
-    (skia_surface.clone(), skia_buffer)
+    let mut surface = surfaces::raster(&image_info, None, None)
+        .expect("Failed to create Skia raster surface");
+    let scale = scale_factor as f32;
+    surface.canvas().scale((scale, scale));
+    surface.canvas().clear(Color::WHITE);
+    surface
 }
 
 impl WinitApp {
@@ -160,16 +142,18 @@ impl ApplicationHandler for WinitApp {
             softbuffer::Surface::new(&context, window.clone()).unwrap()
         };
 
-        let (skia_surface, skia_buffer) =  get_skia_surface_and_buffer(&window);
+        let scale_factor = window.scale_factor();
+        let (phys_width, phys_height) = {
+            let size = window.inner_size();
+            (size.width, size.height)
+        };
+        let logical_width = (phys_width as f64 / scale_factor) as u32;
+        let logical_height = (phys_height as f64 / scale_factor) as u32;
+        let skia_surface = create_skia_surface(phys_width as i32, phys_height as i32, scale_factor);
 
         Python::with_gil(|py| -> PyResult<()> {
-            let (width, height) = {
-                let size = window.inner_size();
-                (size.width, size.height)
-            };
-
-            let py_canvas = Py::new(py, Canvas { skia_surface: skia_surface.clone() })?;
-            let user_app = self.user_class.call1(py, (py_canvas.bind(py), width, height))?;
+            let py_canvas = Py::new(py, Canvas { skia_surface })?;
+            let user_app = self.user_class.call1(py, (py_canvas.bind(py), logical_width, logical_height))?;
 
             self.py_canvas = Some(py_canvas);
             self.user_app = Some(user_app);
@@ -182,7 +166,7 @@ impl ApplicationHandler for WinitApp {
         self.call_event_handler(event_loop, "init", ());
 
         self.internals = Some(AppInternals {
-            window, softbuffer_surface, skia_buffer
+            window, softbuffer_surface
         });
 
     }
@@ -210,7 +194,6 @@ impl ApplicationHandler for WinitApp {
         let AppInternals {
             window,
             softbuffer_surface,
-            skia_buffer
         } = app_internals;
 
         match event {
@@ -220,34 +203,48 @@ impl ApplicationHandler for WinitApp {
                 let new_height = NonZero::new(new_size.height).unwrap();
                 softbuffer_surface.resize(new_width, new_height).expect("Failed to resize window buffer");
 
-                let (skia_surface, skia_buffer) = get_skia_surface_and_buffer(&window);
+                let skia_surface = create_skia_surface(new_size.width as i32, new_size.height as i32, window.scale_factor());
                 Python::with_gil(|py| {
                     let mut canvas_ref = py_canvas.borrow_mut(py);
                     canvas_ref.skia_surface = skia_surface;
                 });
-                app_internals.skia_buffer = skia_buffer;
             }
             WindowEvent::CursorMoved { device_id: _, position } => {
                 if self.last_mouse.elapsed() < Duration::from_millis(1000 / 60) {
                     return;
                 }
                 self.cursor_position = position;
-                self.call_event_handler(event_loop, "mouse_moved", (position.x, position.y));
+                let scale = window.scale_factor();
+                self.call_event_handler(event_loop, "mouse_moved", (position.x / scale, position.y / scale));
                 self.last_mouse = Instant::now();
             }
             WindowEvent::MouseInput { device_id: _, state, button: _ } => {
+                let scale = window.scale_factor();
                 match state {
                     winit::event::ElementState::Pressed => {
-                        self.call_event_handler(event_loop, "mouse_pressed", (self.cursor_position.x, self.cursor_position.y));
+                        self.call_event_handler(event_loop, "mouse_pressed", (self.cursor_position.x / scale, self.cursor_position.y / scale));
                     }
                     winit::event::ElementState::Released => {
-                        self.call_event_handler(event_loop, "mouse_released", (self.cursor_position.x, self.cursor_position.y));
+                        self.call_event_handler(event_loop, "mouse_released", (self.cursor_position.x / scale, self.cursor_position.y / scale));
                     }
                 }
             }
             WindowEvent::RedrawRequested => {
                 let mut buffer = softbuffer_surface.buffer_mut().expect("Unable to access screen memory");
-                buffer.copy_from_slice(&skia_buffer);
+                Python::with_gil(|py| {
+                    let mut canvas_ref = py_canvas.borrow_mut(py);
+                    if let Some(pixmap) = canvas_ref.skia_surface.peek_pixels() {
+                        if let Some(bytes) = pixmap.bytes() {
+                            let pixels: &[u32] = unsafe {
+                                std::slice::from_raw_parts(
+                                    bytes.as_ptr() as *const u32,
+                                    bytes.len() / 4,
+                                )
+                            };
+                            buffer.copy_from_slice(pixels);
+                        }
+                    }
+                });
                 buffer.present().expect("Error drawing to the screen");
             }
             WindowEvent::KeyboardInput { device_id: _, event, is_synthetic: _, } => {
