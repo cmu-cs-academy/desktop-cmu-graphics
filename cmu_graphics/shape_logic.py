@@ -13,12 +13,7 @@ import cairo
 import pygame
 ### END PYPI VERSION ###
 
-from cmu_graphics.libs.martinez import (
-    contour as mContour,
-    point as mPoint,
-    polygon as mPolygon,
-    boolean as mBoolean,
-)
+import cmu_graphics.libs._martinez as martinez
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
@@ -1874,10 +1869,10 @@ class Group(Shape):
 
     # wraps up a list of points into right format for union algorithm
     def formatShape(self, points):
-        return mPolygon.Polygon(
+        return martinez.Polygon(
             [
-                mContour.Contour(
-                    list(map(lambda p: mPoint.Point(p[0], p[1]), points)), [], True
+                martinez.Contour(
+                    list(map(lambda p: martinez.Point(p[0], p[1]), points)), [], True
                 )
             ]
         )
@@ -1910,7 +1905,7 @@ class Group(Shape):
                 finalShape = copy.deepcopy(firstShape.getApproxPoints())
                 finalShape = self.formatShape(finalShape)
         else:
-            return mPolygon.Polygon([])
+            return martinez.Polygon([])
 
         if numShapes > 1:
             for i in range(1, numShapes):
@@ -1921,8 +1916,8 @@ class Group(Shape):
                 else:
                     currentShape = copy.deepcopy(shape.getApproxPoints())
                     currentShape = self.formatShape(currentShape)
-                finalShape = mBoolean.compute(
-                    finalShape, currentShape, mBoolean.OperationType.UNION
+                finalShape = martinez.compute(
+                    finalShape, currentShape, martinez.OperationType.UNION
                 )
         return finalShape
 
