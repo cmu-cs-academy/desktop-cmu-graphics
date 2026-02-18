@@ -13,6 +13,7 @@ import cairo
 import pygame
 ### END PYPI VERSION ###
 
+import cmu_graphics.libs._martinez as martinez
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
@@ -1419,23 +1420,20 @@ class Shape(object):
         checkNumber(t('hits(x, y)'), t('y'), y, True)
         return self._hits(x, y)
 
-    def getEdges(self):
+    def getEdgesFromPoints(self, points):
         edges = []
-        approxPoints = self.getApproxPoints()
-        for i in range(len(approxPoints)):
-            x1, y1 = approxPoints[i]
-            k = (i + 1) % (len(approxPoints))
-            x2, y2 = approxPoints[k]
+        for i in range(len(points)):
+            x1, y1 = points[i]
+            k = (i + 1) % (len(points))
+            x2, y2 = points[k]
             if x1 < x2:
                 edges.append((x1, y1, x2, y2))
             else:
                 edges.append((x2, y2, x1, y1))
         return edges
 
-    def edgesIntersect(self, shape):
-        edges1 = self.getEdges()
-        edges2 = shape.getEdges()
-        return utils.edgesIntersect(edges1, edges2)
+    def getEdges(self):
+        return self.getEdgesFromPoints(self.getApproxPoints())
 
     def containsShape(self, *arguments):
         checkArgCount(
@@ -1452,7 +1450,9 @@ class Shape(object):
         # the targetShape are inside this shape
         x = targetShape.centerX
         y = targetShape.centerY
-        return not self.edgesIntersect(targetShape) and self.contains(x, y)
+        return not utils.edgesIntersect(
+            self.getEdges(), targetShape.getEdges()
+        ) and self.contains(x, y)
 
     def getBounds(self):
         return {
@@ -1711,16 +1711,16 @@ class Shape(object):
                 self.drawImage(ctx)
             ctx.restore()
 
-            db = self.db
-            if db != '' and isinstance(db, str):
-                if db == 'all' or 'points' in db:
-                    self.drawDbPoints(ctx)
-                if db == 'all' or 'box' in db:
-                    self.drawDbBox(ctx)
-                if db == 'all' or 'center' in db:
-                    self.drawDbCenter(ctx)
-                if db == 'all' or 'centroid' in db:
-                    self.drawDbCentroid(ctx)
+        db = self.db
+        if db != '' and isinstance(db, str):
+            if db == 'all' or 'points' in db:
+                self.drawDbPoints(ctx)
+            if db == 'all' or 'box' in db:
+                self.drawDbBox(ctx)
+            if db == 'all' or 'center' in db:
+                self.drawDbCenter(ctx)
+            if db == 'all' or 'centroid' in db:
+                self.drawDbCentroid(ctx)
 
 
 def countShapesInGroup(shape):
@@ -1859,8 +1859,136 @@ class Group(Shape):
     def contains(self, x, y):
         return any(shape.contains(x, y) for shape in self._shapes)
 
+    def getSinglePointFromShape(self, target):
+        if isinstance(target, Group):
+            if len(target._shapes) > 0:
+                return self.getSinglePointFromShape(target._shapes[0])
+            return None
+        else:
+            return target.getApproxPoints()[0]
+
+    # wraps up a list of points into right format for union algorithm
+    def formatShape(self, points):
+        return martinez.Polygon(
+            [
+                martinez.Contour(
+                    list(map(lambda p: martinez.Point(p[0], p[1]), points)), [], True
+                )
+            ]
+        )
+
+    def unwrapPoints(self, points):
+        return list(map(lambda p: (p.x, p.y), points))
+
+    def unformatShape(self, poly):
+        finalPoints = []
+        contours = poly.contours
+        for c in contours:
+            if c.is_external:
+                outlinePoints = [self.unwrapPoints(c.points)]
+                if len(c.holes) > 0:
+                    holePoints = list(
+                        map(lambda i: self.unwrapPoints(contours[i].points), c.holes)
+                    )
+                    outlinePoints.extend(holePoints)
+                finalPoints.append(outlinePoints)
+        return finalPoints
+
+    def getApproxGroupShape(self, group):
+        numShapes = len(group._shapes)
+        finalShape = None
+        if numShapes > 0:
+            firstShape = group._shapes[0]
+            if isinstance(firstShape, Group):
+                finalShape = self.getApproxGroupShape(firstShape)
+            else:
+                finalShape = copy.deepcopy(firstShape.getApproxPoints())
+                finalShape = self.formatShape(finalShape)
+        else:
+            return martinez.Polygon([])
+
+        if numShapes > 1:
+            for i in range(1, numShapes):
+                shape = group._shapes[i]
+                currentShape = None
+                if isinstance(shape, Group):
+                    currentShape = self.getApproxGroupShape(shape)
+                else:
+                    currentShape = copy.deepcopy(shape.getApproxPoints())
+                    currentShape = self.formatShape(currentShape)
+                finalShape = martinez.compute(
+                    finalShape, currentShape, martinez.OperationType.UNION
+                )
+        return finalShape
+
+    # helper method to ensure mBoolean.compute only gets called once
+    def containsShapeFromPoints(self, target, groupPoints):
+        if isinstance(target, Group):
+            return all(
+                [
+                    self.containsShapeFromPoints(shape, groupPoints)
+                    for shape in target._shapes
+                ]
+            )
+        targetPoints = target.getApproxPoints()
+        groupNum = len(groupPoints)
+
+        for i in range(groupNum):
+            groupShape = groupPoints[i]
+            # for a polygon, the first argument is the outline and the remaining are holes in the shape, if they exist
+            shapeNum = len(groupShape)
+            for i in range(shapeNum):
+                if utils.edgesIntersect(
+                    self.getEdgesFromPoints(groupShape[i]),
+                    self.getEdgesFromPoints(targetPoints),
+                ):
+                    return False
+
+        return self.contains(targetPoints[0][0], targetPoints[0][1])
+
     def containsShape(self, target):
-        return any(shape.containsShape(target) for shape in self._shapes)
+        # Computing the group union in getApproxGroupShape can be slow, so we
+        # try two simpler methods first to see if they give an answer.
+
+        # 1: If there is a point in target that is not contained by this group,
+        #    we can return false.
+        samplePoint = self.getSinglePointFromShape(target)
+        if samplePoint and not self.contains(samplePoint[0], samplePoint[1]):
+            return False
+
+        # 2: If the target is fully contained within a single one of the shapes,
+        #    we can return true.
+        if any([shape.containsShape(target) for shape in self._shapes]):
+            return True
+
+        groupShape = self.getApproxGroupShape(self)
+        groupPoints = self.unformatShape(groupShape)
+        return self.containsShapeFromPoints(target, groupPoints)
+
+    def drawDbPoints(self, ctx):
+        groupShape = self.getApproxGroupShape(self)
+        groupPoints = self.unformatShape(groupShape)
+        ctx.save()
+        r = 4
+        # dots at corners
+        for shapeList in groupPoints:
+            for shape in shapeList:
+                for pt in shape:
+                    x, y = pt
+                    self.setFillOrStrokeStyle(ctx, 'magenta')
+                    ctx.new_path()
+                    ctx.arc(x, y, r, 0, 2 * math.pi)
+                    ctx.close_path()
+                    ctx.fill()
+                # now connect the dots
+                ctx.new_path
+                utils.makePolygonPath(shape, ctx)
+                ctx.close_path()
+                ctx.set_line_width(3)
+                self.setFillOrStrokeStyle(ctx, 'magenta')
+                ctx.set_dash([7, 7])
+                ctx.stroke()
+                ctx.restore()
 
     def addx(self, dx):
         for shape in self._shapes:
