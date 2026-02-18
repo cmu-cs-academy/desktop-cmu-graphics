@@ -13,7 +13,12 @@ import cairo
 import pygame
 ### END PYPI VERSION ###
 
-from cmu_graphics.libs.martinez import mContour, mPoint, mPolygon, mBoolean
+from cmu_graphics.libs.martinez import (
+    contour as mContour,
+    point as mPoint,
+    polygon as mPolygon,
+    boolean as mBoolean,
+)
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
