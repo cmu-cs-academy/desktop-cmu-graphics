@@ -1894,19 +1894,6 @@ class Group(Shape):
                 finalPoints.append(outlinePoints)
         return finalPoints
 
-    # unwraps result from union algorithm
-    def unformatShapeDebug(self, poly):
-        return list(
-            map(
-                lambda c: {
-                    'points': self.unwrapPoints(c.points),
-                    'holes': c.holes,
-                    'external': c.is_external,
-                },
-                poly.contours,
-            )
-        )
-
     def getApproxGroupShape(self, group):
         numShapes = len(group._shapes)
         finalShape = None
