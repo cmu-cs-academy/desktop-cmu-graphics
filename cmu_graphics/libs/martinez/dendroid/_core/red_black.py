@@ -4,7 +4,7 @@ import copy
 import weakref
 from collections.abc import Iterable
 from reprlib import recursive_repr
-from typing import Any, Generic, Self, cast, overload, override
+from typing import Any, Generic, Self, cast, overload
 
 from cmu_graphics.libs.martinez.reprit.base import generate_repr
 
@@ -221,15 +221,12 @@ class Tree(abcs.Tree[KeyT, ValueT]):
         return cast(type[Tree[KeyT, ValueT]], cls)(complex_root)
 
     @property
-    @override
     def root(self, /) -> Node[KeyT, ValueT] | Nil:
         return self._root
 
-    @override
     def clear(self, /) -> None:
         self._root = NIL
 
-    @override
     def predecessor(
         self, node: abcs.Node[KeyT, ValueT], /
     ) -> Node[KeyT, ValueT] | Nil:
@@ -244,7 +241,6 @@ class Tree(abcs.Tree[KeyT, ValueT]):
                 result = result.right
         return result
 
-    @override
     def successor(
         self, node: abcs.Node[KeyT, ValueT], /
     ) -> Node[KeyT, ValueT] | Nil:
@@ -259,7 +255,6 @@ class Tree(abcs.Tree[KeyT, ValueT]):
                 result = result.left
         return result
 
-    @override
     def insert(self, key: KeyT, value: ValueT, /) -> Node[KeyT, ValueT]:
         parent = self._root
         if parent is NIL:
@@ -283,7 +278,6 @@ class Tree(abcs.Tree[KeyT, ValueT]):
         self._restore(node)
         return node
 
-    @override
     def remove(self, node: abcs.Node[KeyT, ValueT], /) -> None:
         assert isinstance(node, Node), node
         successor, is_node_black = node, node.is_black
@@ -453,7 +447,6 @@ class Tree(abcs.Tree[KeyT, ValueT]):
 
     __slots__ = ('_root',)
 
-    @override
     def __copy__(self, /) -> Self:
         return type(self)(copy.deepcopy(self._root))
 

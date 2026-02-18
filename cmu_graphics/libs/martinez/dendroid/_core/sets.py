@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import Any, Generic, Self, override
+from typing import Any, Generic, Self
 
 from cmu_graphics.libs.martinez.reprit.base import generate_repr
 
@@ -75,15 +75,12 @@ class BaseSet(TreeWrapper[Any, ValueT], MutableSet[ValueT]):
 
 class Set(HasCustomRepr, BaseSet[ValueT]):
     @property
-    @override
     def _tree(self, /) -> Tree[Any, ValueT]:
         return self.__tree
 
-    @override
     def add(self, value: ValueT, /) -> None:
         self.__tree.insert(value, value)
 
-    @override
     def ceil(self, value: ValueT, /) -> ValueT:
         node = self.__tree.supremum(value)
         if node is NIL:
@@ -92,25 +89,21 @@ class Set(HasCustomRepr, BaseSet[ValueT]):
             )
         return node.value
 
-    @override
     def discard(self, value: ValueT, /) -> None:
         node = self.__tree.find(value)
         if node is NIL:
             return
         self.__tree.remove(node)
 
-    @override
     def floor(self, value: ValueT, /) -> ValueT:
         node = self.__tree.infimum(value)
         if node is NIL:
             raise ValueError(f'No value found less than or equal to {value!r}')
         return node.value
 
-    @override
     def from_iterable(self, value: Iterable[KeyT], /) -> Set[KeyT]:
         return Set(self.__tree.from_components(value))
 
-    @override
     def next(self, value: ValueT, /) -> ValueT:
         node = self.__tree.find(value)
         if node is NIL:
@@ -120,7 +113,6 @@ class Set(HasCustomRepr, BaseSet[ValueT]):
             raise ValueError('Corresponds to maximum')
         return node.value
 
-    @override
     def prev(self, value: ValueT, /) -> ValueT:
         node = self.__tree.find(value)
         if node is NIL:
@@ -130,7 +122,6 @@ class Set(HasCustomRepr, BaseSet[ValueT]):
             raise ValueError('Corresponds to minimum')
         return node.value
 
-    @override
     def remove(self, value: ValueT, /) -> None:
         node = self.__tree.pop(value)
         if node is NIL:
@@ -156,7 +147,6 @@ class KeyedSet(HasCustomRepr, Generic[KeyT, ValueT], BaseSet[ValueT]):
         return self._key
 
     @property
-    @override
     def _tree(self, /) -> Tree[KeyT, ValueT]:
         return self.__tree
 
