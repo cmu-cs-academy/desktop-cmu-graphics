@@ -1175,8 +1175,8 @@ class App(object):
         self.updateScreen(True)
 
         lastTick = 0
-        throttleMouseMove = self.throttleEvent(lambda arg: self.callUserFn("onMouseMove", arg), 30)
-        throttleMouseDrag = self.throttleEvent(lambda arg: self.callUserFn("onMouseDrag", arg), 30)
+        throttledMouseMove = self.throttleEvent(lambda arg: self.callUserFn("onMouseMove", arg), 30)
+        throttledMouseDrag = self.throttleEvent(lambda arg: self.callUserFn("onMouseDrag", arg), 30)
         self._running = True
 
         while self._running:
@@ -1196,9 +1196,9 @@ class App(object):
                             )
                         elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
-                                throttleMouseMove(event.pos)
+                                throttledMouseMove(event.pos)
                             else:
-                                throttleMouseDrag(
+                                throttledMouseDrag(
                                     (
                                         *event.pos,
                                         [i for i in range(3) if event.buttons[i] != 0],
@@ -1222,8 +1222,8 @@ class App(object):
 
                     pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 
-                did_move = throttleMouseMove.flush()
-                did_drag = throttleMouseDrag.flush()
+                did_move = throttledMouseMove.flush()
+                did_drag = throttledMouseDrag.flush()
                 should_redraw = had_event or did_move or did_drag
 
                 msPassed = pygame.time.get_ticks() - lastTick
