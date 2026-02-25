@@ -1905,9 +1905,7 @@ class Group(Shape):
                     currentPoints = self.pointsToTuples(currentPoints)
                     self.closeShapes([currentPoints])
                     currentPoints = [[currentPoints]]
-                finalPoints.extend(currentPoints)
-                print(finalPoints)
-                finalPoints = martinez.union(finalPoints)
+                finalPoints = martinez.union(finalPoints, currentPoints)
         return finalPoints
 
     # helper method to ensure union only gets called once
