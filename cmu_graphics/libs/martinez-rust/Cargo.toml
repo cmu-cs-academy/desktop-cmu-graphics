@@ -1,0 +1,15 @@
+[package]
+name = "martinez"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "martinez"
+crate-type = ["cdylib"]
+
+[dependencies]
+geo = "0.32.0"
+geo-booleanop = "0.3.2"
+geo-types = "0.7.18"
+pyo3 = "0.27.0"

@@ -13,7 +13,7 @@ import cairo
 import pygame
 ### END PYPI VERSION ###
 
-import cmu_graphics.libs._martinez as martinez
+import martinez
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
@@ -1867,61 +1867,50 @@ class Group(Shape):
         else:
             return target.getApproxPoints()[0]
 
-    # wraps up a list of points into right format for union algorithm
-    def formatShape(self, points):
-        return martinez.Polygon(
-            [
-                martinez.Contour(
-                    list(map(lambda p: martinez.Point(p[0], p[1]), points)), [], True
-                )
-            ]
-        )
+    def closeShapes(self, shapes):
+        for shape in shapes:
+            shape.append(shape[0])
 
-    def unwrapPoints(self, points):
-        return list(map(lambda p: (p.x, p.y), points))
-
-    def unformatShape(self, poly):
+    def pointsToTuples(self, points):
         finalPoints = []
-        contours = poly.contours
-        for c in contours:
-            if c.is_external:
-                outlinePoints = [self.unwrapPoints(c.points)]
-                if len(c.holes) > 0:
-                    holePoints = list(
-                        map(lambda i: self.unwrapPoints(contours[i].points), c.holes)
-                    )
-                    outlinePoints.extend(holePoints)
-                finalPoints.append(outlinePoints)
+        for point in points:
+            finalPoints.append((point[0], point[1]))
         return finalPoints
 
-    def getApproxGroupShape(self, group):
+    def getApproxGroupPoints(self, group):
         numShapes = len(group._shapes)
-        finalShape = None
+        finalPoints = []
         if numShapes > 0:
             firstShape = group._shapes[0]
             if isinstance(firstShape, Group):
-                finalShape = self.getApproxGroupShape(firstShape)
+                finalPoints = self.getApproxGroupPoints(firstShape)
             else:
-                finalShape = copy.deepcopy(firstShape.getApproxPoints())
-                finalShape = self.formatShape(finalShape)
+                finalPoints = firstShape.getApproxPoints()
+                finalPoints = self.pointsToTuples(finalPoints)
+                self.closeShapes([finalPoints])
+                finalPoints = [[finalPoints]]
         else:
-            return martinez.Polygon([])
+            return []
 
         if numShapes > 1:
             for i in range(1, numShapes):
                 shape = group._shapes[i]
-                currentShape = None
+                currentPoints = []
                 if isinstance(shape, Group):
-                    currentShape = self.getApproxGroupShape(shape)
+                    currentPoints = self.getApproxGroupPoints(shape)
+                    for shape in currentPoints:
+                        self.closeShapes(shape)
                 else:
-                    currentShape = copy.deepcopy(shape.getApproxPoints())
-                    currentShape = self.formatShape(currentShape)
-                finalShape = martinez.compute(
-                    finalShape, currentShape, martinez.OperationType.UNION
-                )
-        return finalShape
+                    currentPoints = shape.getApproxPoints()
+                    currentPoints = self.pointsToTuples(currentPoints)
+                    self.closeShapes([currentPoints])
+                    currentPoints = [[currentPoints]]
+                finalPoints.extend(currentPoints)
+                print(finalPoints)
+                finalPoints = martinez.union(finalPoints)
+        return finalPoints
 
-    # helper method to ensure mBoolean.compute only gets called once
+    # helper method to ensure union only gets called once
     def containsShapeFromPoints(self, target, groupPoints):
         if isinstance(target, Group):
             return all(
@@ -1961,13 +1950,11 @@ class Group(Shape):
         if any([shape.containsShape(target) for shape in self._shapes]):
             return True
 
-        groupShape = self.getApproxGroupShape(self)
-        groupPoints = self.unformatShape(groupShape)
+        groupPoints = self.getApproxGroupPoints(self)
         return self.containsShapeFromPoints(target, groupPoints)
 
     def drawDbPoints(self, ctx):
-        groupShape = self.getApproxGroupShape(self)
-        groupPoints = self.unformatShape(groupShape)
+        groupPoints = self.getApproxGroupPoints(self)
         ctx.save()
         r = 4
         # dots at corners
