@@ -3,7 +3,7 @@ requires = ["maturin>=1.12,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "martinez"
+name = "cmu_graphics_rust"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
