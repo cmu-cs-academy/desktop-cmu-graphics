@@ -13,12 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.2
+      - name: Build wheels with maturin
+        uses: PyO3/maturin-action@v1
         with:
-          working-directory: ./cmu_graphics-rust
+          working-directory: cmu_graphics-rust
+          manylinux: auto
+          args: --release
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ./cmu_graphics-rust/wheelhouse/*.whl
+          name: wheels-${{ matrix.os }}
+          path: cmu_graphics-rust/wheelhouse/*.whl
