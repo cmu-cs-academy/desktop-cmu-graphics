@@ -13,7 +13,7 @@ import cairo
 import pygame
 ### END PYPI VERSION ###
 
-import martinez
+import cmu_graphics_rust
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
@@ -1905,7 +1905,7 @@ class Group(Shape):
     #                 currentPoints = self.pointsToTuples(currentPoints)
     #                 self.closeShapes([currentPoints])
     #                 currentPoints = [[currentPoints]]
-    #             finalPoints = martinez.union(finalPoints, currentPoints)
+    #             finalPoints = cmu_graphics_rust.union(finalPoints, currentPoints)
     #     return finalPoints
 
     def getApproxGroupPoints(self, group):
@@ -1920,7 +1920,8 @@ class Group(Shape):
             for groups in groupPoints:
                 for group in groups:
                     self.closeShapes(group)
-            return martinez.union_alt(groupPoints)
+            print('groupPoints', groupPoints)
+            return cmu_graphics_rust.union_alt(groupPoints)
         else:
             return []
 

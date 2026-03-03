@@ -11,3 +11,10 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
+dependencies = [
+    "cibuildwheel>=2.23.3",
+    "maturin>=1.12.6",
+]
+
+[tool.cibuildwheel]
+before-all = "ver -a"

@@ -12,4 +12,7 @@ crate-type = ["cdylib"]
 geo = "0.32.0"
 geo-booleanop = "0.3.2"
 geo-types = "0.7.18"
-pyo3 = "0.27.0"
+
+[dependencies.pyo3]
+version = "0.28.2"
+features = ["extension-module", "abi3-py37"]
