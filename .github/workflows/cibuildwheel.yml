@@ -24,4 +24,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}
-          path: cmu_graphics-rust/wheelhouse/*.whl
+          path: cmu_graphics-rust/target/wheels/*.whl
