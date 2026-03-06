@@ -14,7 +14,7 @@ jobs:
           - os: windows-latest
             target: i686-pc-windows-msvc
           - os: macos-latest
-            target: x86_64-apple-darwin
+            target: x86_64h-apple-darwin
           - os: macos-14-arm64
             target: aarch64-apple-darwin
 
@@ -28,7 +28,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           working-directory: cmu_graphics-rust
-          target: $${{ matrix.target }}
+          target: ${{ matrix.target }}
           args: --release
 
       - name: Upload wheels
