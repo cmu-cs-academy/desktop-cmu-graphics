@@ -11,8 +11,8 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-          - os: windows-latest
-            target: i686-pc-windows-msvc
+          # - os: windows-latest
+          #   target: i686-pc-windows-msvc
           - os: macos-latest
             target: x86_64-apple-darwin
           - os: macos-14-arm64
@@ -20,11 +20,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          architecture: ${{ matrix.target == 'i686-pc-windows-msvc' && 'x86' || 'x64' }}
 
       - name: Install Rust target
         run: rustup target add ${{ matrix.target }}
