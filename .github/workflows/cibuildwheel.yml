@@ -17,6 +17,7 @@ jobs:
             target: x86_64-apple-darwin
           - os: macos-latest
             target: aarch64-apple-darwin
+          - os: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +29,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           working-directory: cmu_graphics-rust
+          manylinux: auto
           target: ${{ matrix.target }}
           args: --release
 
