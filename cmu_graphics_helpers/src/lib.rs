@@ -70,7 +70,7 @@ fn union_alt(ps: Vec<Vec<Vec<Vec<(f64, f64)>>>>) -> PyResult<Vec<Vec<Vec<(f64, f
 }
 
 #[pymodule]
-fn cmu_graphics_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(union, m)?)?;
     m.add_function(wrap_pyfunction!(union_alt, m)?)?;
     Ok(())

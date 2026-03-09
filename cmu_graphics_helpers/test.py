@@ -1,6 +1,6 @@
 # In order for the tests to work, you should first run `maturin develop` in the cmu_graphics_rust directory and then run this file using uv
 import unittest
-import cmu_graphics_rust
+import cmu_graphics_helpers
 
 # simple: a square with no holes
 square = [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]]
@@ -247,24 +247,24 @@ result = [
 class TestUnion(unittest.TestCase):
     def test_union(self):
         self.assertEqual(
-            cmu_graphics_rust.union(square, square),
+            cmu_graphics_helpers.union(square, square),
             [[[(0.0, 1.0), (0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]]],
         )
 
         unionResult = bigMulti[0]
         for i in range(1, len(bigMulti)):
-            unionResult = cmu_graphics_rust.union(unionResult, bigMulti[i])
+            unionResult = cmu_graphics_helpers.union(unionResult, bigMulti[i])
         self.assertEqual(unionResult, result)
 
 
 class TestUnionAlt(unittest.TestCase):
     def test_union_alt(self):
         self.assertEqual(
-            cmu_graphics_rust.union_alt([square]),
+            cmu_graphics_helpers.union_alt([square]),
             [[[(0.0, 1.0), (0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]]],
         )
 
-        unionResult = cmu_graphics_rust.union_alt(bigMulti)
+        unionResult = cmu_graphics_helpers.union_alt(bigMulti)
         self.assertEqual(unionResult, result)
 
 
