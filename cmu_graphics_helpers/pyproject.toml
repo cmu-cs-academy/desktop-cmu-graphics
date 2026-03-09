@@ -4,17 +4,10 @@ build-backend = "maturin"
 
 [project]
 name = "cmu-graphics-helpers"
-requires-python = ">=3.8"
+requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
-dependencies = [
-    "cibuildwheel>=2.23.3",
-    "maturin>=1.12.6",
-]
-
-[tool.cibuildwheel]
-before-all = "ver -a"
