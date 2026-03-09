@@ -247,24 +247,11 @@ result = [
 class TestUnion(unittest.TestCase):
     def test_union(self):
         self.assertEqual(
-            cmu_graphics_helpers.union(square, square),
+            cmu_graphics_helpers.union([square]),
             [[[(0.0, 1.0), (0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]]],
         )
 
-        unionResult = bigMulti[0]
-        for i in range(1, len(bigMulti)):
-            unionResult = cmu_graphics_helpers.union(unionResult, bigMulti[i])
-        self.assertEqual(unionResult, result)
-
-
-class TestUnionAlt(unittest.TestCase):
-    def test_union_alt(self):
-        self.assertEqual(
-            cmu_graphics_helpers.union_alt([square]),
-            [[[(0.0, 1.0), (0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]]],
-        )
-
-        unionResult = cmu_graphics_helpers.union_alt(bigMulti)
+        unionResult = cmu_graphics_helpers.union(bigMulti)
         self.assertEqual(unionResult, result)
 
 

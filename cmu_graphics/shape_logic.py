@@ -13,7 +13,7 @@ import cairo
 import pygame
 ### END PYPI VERSION ###
 
-import cmu_graphics_rust
+import cmu_graphics_helpers
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
@@ -1877,37 +1877,6 @@ class Group(Shape):
             finalPoints.append((point[0], point[1]))
         return finalPoints
 
-    # def getApproxGroupPoints(self, group):
-    #     numShapes = len(group._shapes)
-    #     finalPoints = []
-    #     if numShapes > 0:
-    #         firstShape = group._shapes[0]
-    #         if isinstance(firstShape, Group):
-    #             finalPoints = self.getApproxGroupPoints(firstShape)
-    #         else:
-    #             finalPoints = firstShape.getApproxPoints()
-    #             finalPoints = self.pointsToTuples(finalPoints)
-    #             self.closeShapes([finalPoints])
-    #             finalPoints = [[finalPoints]]
-    #     else:
-    #         return []
-
-    #     if numShapes > 1:
-    #         for i in range(1, numShapes):
-    #             shape = group._shapes[i]
-    #             currentPoints = []
-    #             if isinstance(shape, Group):
-    #                 currentPoints = self.getApproxGroupPoints(shape)
-    #                 for shape in currentPoints:
-    #                     self.closeShapes(shape)
-    #             else:
-    #                 currentPoints = shape.getApproxPoints()
-    #                 currentPoints = self.pointsToTuples(currentPoints)
-    #                 self.closeShapes([currentPoints])
-    #                 currentPoints = [[currentPoints]]
-    #             finalPoints = cmu_graphics_rust.union(finalPoints, currentPoints)
-    #     return finalPoints
-
     def getApproxGroupPoints(self, group):
         shapes = group._shapes
         if len(shapes) > 0:
@@ -1920,8 +1889,7 @@ class Group(Shape):
             for groups in groupPoints:
                 for group in groups:
                     self.closeShapes(group)
-            print('groupPoints', groupPoints)
-            return cmu_graphics_rust.union_alt(groupPoints)
+            return cmu_graphics_helpers.union(groupPoints)
         else:
             return []
 

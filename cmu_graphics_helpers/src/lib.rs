@@ -18,35 +18,9 @@ fn from_poly(poly : &Polygon<f64>) -> Vec<Vec<(f64, f64)>> {
     exterior
 }
 
-// takes two MultiPolygons (represent via GeoJSON representation), produces union between the two
-#[pyfunction]
-fn union(g1: Vec<Vec<Vec<(f64, f64)>>>, g2: Vec<Vec<Vec<(f64, f64)>>>) -> PyResult<Vec<Vec<Vec<(f64, f64)>>>> {
-    let polygons1: Vec<Polygon<f64>> = g1
-        .iter()
-        .map(to_poly)
-        .collect();
-    let polygons2: Vec<Polygon<f64>> = g2
-        .iter()
-        .map(to_poly)
-        .collect();
-
-    let multi1 = MultiPolygon::new(polygons1);
-    let multi2 = MultiPolygon::new(polygons2);
-
-    let result: MultiPolygon<f64> = multi1.union(&multi2);
-
-    let output: Vec<Vec<Vec<(f64, f64)>>> = result
-        .0
-        .iter()
-        .map(from_poly)
-        .collect();
-
-    Ok(output)
-}
-
 // takes vector of MultiPolygons, returns union of all of them
 #[pyfunction]
-fn union_alt(ps: Vec<Vec<Vec<Vec<(f64, f64)>>>>) -> PyResult<Vec<Vec<Vec<(f64, f64)>>>> {
+fn union(ps: Vec<Vec<Vec<Vec<(f64, f64)>>>>) -> PyResult<Vec<Vec<Vec<(f64, f64)>>>> {
     let multis: Vec<MultiPolygon<f64>> = ps
         .iter()
         .map(|g| {
@@ -72,6 +46,5 @@ fn union_alt(ps: Vec<Vec<Vec<Vec<(f64, f64)>>>>) -> PyResult<Vec<Vec<Vec<(f64, f
 #[pymodule]
 fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(union, m)?)?;
-    m.add_function(wrap_pyfunction!(union_alt, m)?)?;
     Ok(())
 }

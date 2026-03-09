@@ -11,8 +11,6 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-          # - os: windows-latest
-          #   target: i686-pc-windows-msvc
           - os: macos-latest
             target: x86_64-apple-darwin
           - os: macos-latest
@@ -60,6 +58,7 @@ jobs:
         path: cmu_graphics_helpers/target/wheels/*.tar.gz
 
   upload_all:
+    name: Upload to PyPi
     needs: [build_wheels, make_sdist]
     environment: testpypi
     permissions:
