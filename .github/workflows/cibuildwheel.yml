@@ -58,7 +58,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: cibw-sdist
-        path: dist/*.tar.gz
+        path: cmu_graphics-rust/target/wheels/*.tar.gz
 
   upload_all:
     needs: [build_wheels, make_sdist]
