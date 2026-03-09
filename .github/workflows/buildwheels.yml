@@ -29,7 +29,7 @@ jobs:
       - name: Build wheels with maturin
         uses: PyO3/maturin-action@v1
         with:
-          working-directory: cmu_graphics-rust
+          working-directory: cmu_graphics_helpers
           manylinux: auto
           target: ${{ matrix.target }}
           args: --release
@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.target }}
-          path: cmu_graphics-rust/target/wheels/*.whl
+          path: cmu_graphics_helpers/target/wheels/*.whl
 
   make_sdist:
     name: Make SDist
@@ -51,13 +51,13 @@ jobs:
     - name: Build SDist
       uses: PyO3/maturin-action@v1
       with:
-        working-directory: cmu_graphics-rust
+        working-directory: cmu_graphics_helpers
         manylinux: auto
         args: --sdist
 
     - uses: actions/upload-artifact@v4
       with:
-        path: cmu_graphics-rust/target/wheels/*.tar.gz
+        path: cmu_graphics_helpers/target/wheels/*.tar.gz
 
   upload_all:
     needs: [build_wheels, make_sdist]
