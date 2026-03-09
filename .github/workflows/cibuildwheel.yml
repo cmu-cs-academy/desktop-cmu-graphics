@@ -53,7 +53,6 @@ jobs:
       with:
         working-directory: cmu_graphics-rust
         manylinux: auto
-        target: ubuntu-latest
         args: --sdist
 
     - uses: actions/upload-artifact@v4
