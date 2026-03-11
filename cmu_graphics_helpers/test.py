@@ -1,4 +1,3 @@
-# In order for the tests to work, you should first run `maturin develop` in the cmu_graphics_rust directory and then run this file using uv
 import unittest
 import cmu_graphics_helpers
 
