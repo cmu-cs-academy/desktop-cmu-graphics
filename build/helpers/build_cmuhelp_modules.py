@@ -6,9 +6,9 @@ import subprocess
 # Links come from the pypi "download files" page for cmu_graphics_helpers-ce
 
 links = {
-    'cmu_graphics_helpers_mac_37+': 'fill me in',
-    'cmu_graphics_helpers_mac_arm_37+': 'fill me in',
-    'cmu_graphics_helpers_win_64_37+': 'fill me in',
+    'cmu_graphics_helpers_mac': 'fill me in',
+    'cmu_graphics_helpers_mac_arm': 'fill me in',
+    'cmu_graphics_helpers_win_64': 'fill me in',
 }
 
 def run_command(args):
