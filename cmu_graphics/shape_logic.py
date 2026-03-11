@@ -6,14 +6,15 @@ from cmu_graphics import utils
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import cairo_loader as cairo
 from cmu_graphics.libs import pygame_loader as pygame
+from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import cairo
 import pygame
+import cmu_graphics_helpers
 ### END PYPI VERSION ###
 
-import cmu_graphics_helpers
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
