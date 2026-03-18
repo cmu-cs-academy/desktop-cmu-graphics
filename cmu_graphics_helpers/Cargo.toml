@@ -16,3 +16,11 @@ geo-types = "0.7.18"
 [dependencies.pyo3]
 version = "0.28.2"
 features = ["extension-module", "abi3-py37"]
+
+[lints.clippy]
+panic = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+unreachable = "deny"
+todo = "deny"
