@@ -24,10 +24,8 @@ def make_module(module_name):
     run_command(['mkdir', 'cmu_graphics_helpers'])
     run_command(['unzip', 'cmu_graphics_helpers.zip', '-d', 'cmu_graphics_helpers'])
     run_command(['mkdir', f'modules/{module_name}'])
-    run_command(['mv', 'cmu_graphics_helpers/cmu_graphics_helpers', f'modules/{module_name}/cmu_graphics_helpers'])
-    run_command(['rm', '-rf', f'modules/{module_name}/cmu_graphics_helpers/docs'])
-    run_command(['rm', '-rf', f'modules/{module_name}/cmu_graphics_helpers/examples'])
-    run_command(['rm', '-rf', f'modules/{module_name}/cmu_graphics_helpers/tests'])
+    run_command(['rm', '-rf', f'modules/{module_name}/cmu_graphics_helpers'])
+    run_command(['mv', 'cmu_graphics_helpers/cmu_graphics_helpers', f'modules/{module_name}'])
     run_command(['rm', '-rf', 'cmu_graphics_helpers'])
     run_command(['rm', 'cmu_graphics_helpers.zip'])
 
