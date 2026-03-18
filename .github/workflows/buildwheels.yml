@@ -1,0 +1,75 @@
+name: Build rust wheels
+
+on: workflow_dispatch
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }} (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust target
+        if: ${{ matrix.os != 'ubuntu-latest' }}
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build wheels with maturin
+        uses: PyO3/maturin-action@v1
+        with:
+          working-directory: cmu_graphics_helpers
+          manylinux: auto
+          target: ${{ matrix.target }}
+          args: --release
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v6
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.target }}
+          path: cmu_graphics_helpers/target/wheels/*.whl
+
+  make_sdist:
+    name: Make SDist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false # Highly recommended as a good security practice to not store credentials in disk, unless you need this for your specific use case
+
+    - name: Build SDist
+      uses: PyO3/maturin-action@v1
+      with:
+        working-directory: cmu_graphics_helpers
+        manylinux: auto
+        args: --sdist
+
+    - uses: actions/upload-artifact@v6
+      with:
+        path: cmu_graphics_helpers/target/wheels/*.tar.gz
+
+  upload_all:
+    name: Upload to PyPi
+    needs: [build_wheels, make_sdist]
+    environment: pypi
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v5
+      with:
+        path: dist
+        merge-multiple: true
+
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://pypi.org/
