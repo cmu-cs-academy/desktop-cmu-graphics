@@ -60,7 +60,7 @@ impl App {
 
     #[getter]
     fn canvas(&self) -> PyResult<Py<Canvas>> {
-        Python::with_gil(|py| -> PyResult<Py<Canvas>> {
+        Python::attach(|py| -> PyResult<Py<Canvas>> {
             Ok(self.canvas.clone_ref(py))
         })
     }
@@ -108,7 +108,7 @@ impl WinitApp {
             None => return
         };
 
-        let handler_result = Python::with_gil(|py| -> PyResult<()> {
+        let handler_result = Python::attach(|py| -> PyResult<()> {
             let bound_app = user_app.bind(py);
 
             if bound_app.hasattr(handler_name)? {
@@ -151,7 +151,7 @@ impl ApplicationHandler for WinitApp {
         let logical_height = (phys_height as f64 / scale_factor) as u32;
         let skia_surface = create_skia_surface(phys_width as i32, phys_height as i32, scale_factor);
 
-        Python::with_gil(|py| -> PyResult<()> {
+        Python::attach(|py| -> PyResult<()> {
             let py_canvas = Py::new(py, Canvas { skia_surface })?;
             let user_app = self.user_class.call1(py, (py_canvas.bind(py), logical_width, logical_height))?;
 
@@ -204,7 +204,7 @@ impl ApplicationHandler for WinitApp {
                 softbuffer_surface.resize(new_width, new_height).expect("Failed to resize window buffer");
 
                 let skia_surface = create_skia_surface(new_size.width as i32, new_size.height as i32, window.scale_factor());
-                Python::with_gil(|py| {
+                Python::attach(|py| {
                     let mut canvas_ref = py_canvas.borrow_mut(py);
                     canvas_ref.skia_surface = skia_surface;
                 });
@@ -231,7 +231,7 @@ impl ApplicationHandler for WinitApp {
             }
             WindowEvent::RedrawRequested => {
                 let mut buffer = softbuffer_surface.buffer_mut().expect("Unable to access screen memory");
-                Python::with_gil(|py| {
+                Python::attach(|py| {
                     let mut canvas_ref = py_canvas.borrow_mut(py);
                     if let Some(pixmap) = canvas_ref.skia_surface.peek_pixels() {
                         if let Some(bytes) = pixmap.bytes() {
