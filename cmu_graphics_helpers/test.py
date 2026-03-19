@@ -250,6 +250,43 @@ class TestUnion(unittest.TestCase):
         unionResult = cmu_graphics_helpers.union(bigMulti)
         self.assertEqual(unionResult, result)
 
+    def test_weird_args(self):
+        with self.assertRaisesRegex(
+            ValueError, 'must be given at least one MultiPolygon'
+        ):
+            cmu_graphics_helpers.union([])
+        self.assertEqual(cmu_graphics_helpers.union([[]]), [])
+        self.assertEqual(cmu_graphics_helpers.union([[[]]]), [[[]]])
+
+        for value in (
+            [[[[(1), (2), (3)]]]],
+            [[[(1)]]],
+            [[[(1, 2, 3)]]],
+        ):
+            with self.assertRaises(TypeError):
+                print('testing', value)
+                cmu_graphics_helpers.union(value)
+
+        for value in (
+            [[[[(1,), (2,), (3,)]]]],
+            [
+                [
+                    [
+                        [
+                            (
+                                1,
+                                2,
+                                3,
+                            )
+                        ]
+                    ]
+                ]
+            ],
+        ):
+            with self.assertRaises(ValueError):
+                print('testing', value)
+                cmu_graphics_helpers.union(value)
+
 
 if __name__ == '__main__':
     unittest.main()
