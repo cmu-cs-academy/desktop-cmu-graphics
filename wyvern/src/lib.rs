@@ -1,112 +1,24 @@
-use pyo3::call::PyCallArgs;
-use pyo3::exceptions::{PyOSError, PyRuntimeError};
+// use pyo3::call::PyCallArgs;
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
-use winit::dpi::PhysicalPosition;
+use pyo3::types::PyByteArray;
+// use winit::dpi::PhysicalPosition;
 
-use std::num::NonZero;
-use std::rc::Rc;
-use std::time::{Duration, Instant};
-use winit::application::ApplicationHandler;
-use winit::event::WindowEvent;
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::window::{Window, WindowId};
+// use std::any::Any;
+// use std::num::NonZero;
+// use std::rc::Rc;
+// use std::time::{Duration, Instant};
+// use winit::application::ApplicationHandler;
+// use winit::event::WindowEvent;
+// use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+// use winit::window::{Window, WindowId};
 
-use skia_safe::{surfaces, Color, ColorSpace, ColorType, ImageInfo, Paint};
+use skia_safe::{Color, ColorSpace, ColorType, Font, FontMgr, FontStyle, ImageInfo, Paint, Path, PathBuilder, Point, RRect, Rect, Typeface, TextBlob, Vector, surfaces};
 
-#[pyclass(unsendable, module = "wyvern")]
-struct Canvas {
-    skia_surface: skia_safe::Surface,
-}
-
-#[pymethods]
-impl Canvas {
-    fn draw_circle(&mut self, cx: f32, cy: f32, r: f32) {
-        let canvas = self.skia_surface.canvas();
-        let mut paint = Paint::default();
-        paint.set_anti_alias(true);
-        canvas.draw_circle((cx, cy), r, &paint);
-    }
-
-    fn clear(&mut self) {
-        let canvas = self.skia_surface.canvas();
-        canvas.clear(Color::WHITE);
-    }
-}
-
-#[pyclass(module = "wyvern", subclass)]
-struct App {
-    width: u32,
-    height: u32,
-    canvas: Py<Canvas>,
-}
-
-#[pymethods]
-impl App {
-    #[new]
-    fn new(canvas: Py<Canvas>, width: u32, height: u32) -> Self {
-        App {
-            canvas,
-            width,
-            height,
-        }
-    }
-
-    #[getter]
-    fn width(&self) -> PyResult<u32> {
-        Ok(self.width)
-    }
-
-    #[getter]
-    fn height(&self) -> PyResult<u32> {
-        Ok(self.height)
-    }
-
-    #[getter]
-    fn canvas(&self) -> PyResult<Py<Canvas>> {
-        Python::attach(|py| -> PyResult<Py<Canvas>> { Ok(self.canvas.clone_ref(py)) })
-    }
-}
-
-/* cmu_graphics Apps methods that depend on pygame/cairo
-  - getScreenshot
-  - translateEventHandlerArgs(?)
-  - getEventHanderArgs(?)
-  - callUserFn(?)
-  - redrawAllWrapper(?)
-  - getKey
-  - drawErrorScreen
-  - getModifiers
-  - handleKeyPress
-  - handleKeyRelease*
-  - redrawAll
-  - updateScreen
-  - run
-*/
-
-struct AppInternals {
-    window: Option<Rc<Window>>,
-    softbuffer_surface: Option<softbuffer::Surface<Rc<Window>, Rc<Window>>>,
-    error: Option<PyErr>,
-}
-
-struct WinitApp {
-    internals: Option<AppInternals>,
-    last_tick: Instant,
-    last_mouse: Instant,
-    cursor_position: PhysicalPosition<f64>,
-    py_canvas: Option<Py<Canvas>>,
-    user_app: Option<Py<PyAny>>,
-    user_class: Py<PyAny>,
-    error: Option<PyErr>,
-}
-
-fn create_skia_surface(
-    width: i32,
-    height: i32,
-    scale_factor: f64,
-) -> Result<skia_safe::Surface, PyErr> {
+fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
     let image_info = ImageInfo::new(
         (width, height),
+        // only one kind of format is used in Python code, but this can be made more modular
         ColorType::BGRA8888,
         skia_safe::AlphaType::Premul,
         ColorSpace::new_srgb(),
@@ -120,369 +32,568 @@ fn create_skia_surface(
             ))
         }
     };
-    let scale = scale_factor as f32;
-    surface.canvas().scale((scale, scale));
     surface.canvas().clear(Color::WHITE);
     Ok(surface)
 }
 
-impl WinitApp {
-    fn call_event_handler<A>(&mut self, event_loop: &ActiveEventLoop, handler_name: &str, args: A)
-    where
-        A: for<'py> PyCallArgs<'py>,
-    {
-        let user_app = match self.user_app.as_ref() {
-            Some(user_app) => user_app,
-            None => return,
-        };
+unsafe fn create_surface_for_data(
+    data: &mut [u8],
+    width: i32,
+    height: i32,
+) -> PyResult<skia_safe::Surface> {
+    let image_info = ImageInfo::new(
+        (width, height),
+        // only one kind of format is used in Python code, but this can be made more modular
+        ColorType::BGRA8888,
+        skia_safe::AlphaType::Premul,
+        ColorSpace::new_srgb(),
+    );
 
-        let handler_result = Python::attach(|py| -> PyResult<()> {
-            let bound_app = user_app.bind(py);
+    let mut surface = match surfaces::wrap_pixels(&image_info, data, None, None) {
+        Some(s) => s,
+        None => {
+            return Err(PyRuntimeError::new_err(
+                "Failed to create Skia raster surface",
+            ))
+        }
+    };
+    surface.canvas().clear(Color::WHITE);
+    Ok(surface.release())
+}
 
-            if bound_app.hasattr(handler_name)? {
-                let handler = bound_app.getattr(handler_name)?;
-                handler.call1(args)?;
-            }
+#[pyclass(unsendable, module = "wyvern")]
+#[derive(Clone)]
+struct Canvas {
+    skia_surface: skia_safe::Surface,
+    path: Option<skia_safe::Path>,
+    font: Option<skia_safe::Font>,
+}
 
-            match &self.internals {
-                Some(internals) => match &internals.error {
-                    Some(err) => Err(err.clone_ref(py)),
-                    None => Ok(()),
-                },
-                None => Ok(()),
-            }
-        });
+impl Canvas {
+    fn save(mut self) -> PyResult<Self> {
+        self.skia_surface.canvas().save();
+        Ok(Canvas{ skia_surface: self.skia_surface, path: self.path, font: self.font })
+    }
 
-        match handler_result.err() {
-            Some(err) => {
-                self.error = Some(err);
-                event_loop.exit();
-            }
+    fn restore(mut self) -> PyResult<Self> {
+        self.skia_surface.canvas().restore();
+        Ok(Canvas{ skia_surface: self.skia_surface, path: self.path, font: self.font })
+    }
+
+    fn new_path(self) -> PyResult<Self> {
+        let path = Path::new();
+        Ok(Canvas{ skia_surface: self.skia_surface, path: Some(path), font: self.font })
+    }
+
+    fn move_to(self, p : Point) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let mut path_builder = PathBuilder::new_path(path);
+                let new_path = path_builder.move_to(p);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            },
             None => {
-                if let Some(internals) = &self.internals {
-                    match &internals.window {
-                        Some(window) => window.request_redraw(),
-                        None => {
-                            self.error = Some(PyOSError::new_err("Unable to create winit window"));
-                            event_loop.exit()
+                let path = Path::new();
+                let mut path_builder = PathBuilder::new_path(&path);
+                let new_path = path_builder.move_to(p);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            }
+        }
+    }
+
+    fn line_to(self, p : Point) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let mut path_builder = PathBuilder::new_path(path);
+                let new_path = path_builder.line_to(p);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            },
+            None => {
+                let path = Path::new();
+                let mut path_builder = PathBuilder::new_path(&path);
+                let new_path = path_builder.line_to(p);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            }
+        }
+    }
+
+    fn rel_line_to(self, v: Vector) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let mut path_builder = PathBuilder::new_path(path);
+                let new_path = path_builder.r_line_to(v);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            },
+            None => Err(PyRuntimeError::new_err("Path does not exist for rel_line_to"))
+        }
+    }
+
+    fn rel_curve_to(self, p1: Vector, p2: Vector, p3: Vector) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let mut path_builder = PathBuilder::new_path(path);
+                let new_path = path_builder.r_cubic_to(p1, p2, p3);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            },
+            None => Err(PyRuntimeError::new_err("Path does not exist for rel_curve_to"))
+        }
+    }
+
+    fn rectangle(self, r: Rect) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let mut path_builder = PathBuilder::new_path(path);
+                let new_path = path_builder.add_rect(r, None, None);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            },
+            None => {
+                let path = Path::new();
+                let mut path_builder = PathBuilder::new_path(&path);
+                let new_path = path_builder.add_rect(r, None, None);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            }
+        }
+    }
+
+    fn round_rectangle(self, r: RRect) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let mut path_builder = PathBuilder::new_path(path);
+                let new_path = path_builder.add_rrect(r, None, None);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            },
+            None => {
+                let path = Path::new();
+                let mut path_builder = PathBuilder::new_path(&path);
+                let new_path = path_builder.add_rrect(r, None, None);
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            }
+        }
+    }
+
+    fn close_path(self) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let mut path_builder = PathBuilder::new_path(path);
+                let new_path = path_builder.close();
+                Ok(Canvas { skia_surface: self.skia_surface, path: Some(new_path.detach()), font: self.font })
+            },
+            None => Ok(self)
+        }
+    }
+
+    fn set_source_rgba(mut self, a: u8, r: u8, g: u8, b: u8) -> PyResult<Self> {
+        let canvas = self.skia_surface.canvas();
+        let mut paint = Paint::default();
+        paint.set_argb(a, r, g, b);
+        canvas.draw_paint(&paint);
+        Ok(Canvas { skia_surface: self.skia_surface, path: self.path, font: self.font })
+    }
+
+    fn set_line_width(mut self, width: f32) -> PyResult<Self> {
+        let canvas = self.skia_surface.canvas();
+        let mut paint = Paint::default();
+        paint.set_stroke_width(width);
+        canvas.draw_paint(&paint);
+        Ok(Canvas { skia_surface: self.skia_surface, path: self.path, font: self.font })
+    }
+
+    fn select_font_face(self, typeface: Typeface) -> PyResult<Self> {
+        match &self.font {
+            Some(font) => {
+                let new_font = Font::from_typeface(typeface, font.size());
+                Ok(Canvas { skia_surface: self.skia_surface, path: self.path, font: Some(new_font) })
+            },
+            None => {
+                Ok(Canvas { skia_surface: self.skia_surface, path: self.path, font: Some(Font::from_typeface(typeface, None)) })
+            }
+        }
+    }
+
+    fn set_font_size(self, size: f32) -> PyResult<Self> {
+        match &self.font {
+            Some(font) => {
+                let new_font = Font::from_typeface(font.typeface(), size);
+                Ok(Canvas { skia_surface: self.skia_surface, path: self.path, font: Some(new_font) })
+            },
+            None => Err(PyRuntimeError::new_err("Font face required for set_font_size"))
+        }
+    }
+
+    fn text_extents(&mut self, str: String) -> PyResult<(f32, f32, f32, f32, f32, f32)> {
+        match &self.font {
+            Some(font) => {
+                let text_blob = TextBlob::new(str, font);
+                match text_blob {
+                    Some(blob) => {
+                        let bounds = blob.bounds();
+                        // may need to change this in case i misunderstood what these params are
+                        Ok((bounds.left(), bounds.top(), bounds.width(), bounds.height(), bounds.right(), bounds.bottom()))
+                    },
+                    None => Err(PyRuntimeError::new_err("Issue with creating text blob for text_extents"))
+                }
+            },
+            None => Err(PyRuntimeError::new_err("Font face required for text_extents"))
+        }
+    }
+
+    fn text_path(mut self, str: String) -> PyResult<Self> {
+        match &self.font {
+            Some(font) => {
+                let canvas = self.skia_surface.canvas();
+                let paint = Paint::default();
+                match &self.path {
+                    Some(path) => {
+                        match path.last_pt() {
+                            Some(point) => {
+                                canvas.draw_str(str, point, font, &paint);
+                                Ok(Canvas { skia_surface: self.skia_surface, path: self.path, font: self.font })
+                            },
+                            None => {
+                                canvas.draw_str(str, Point::new(0.0, 0.0), font, &paint);
+                                Ok(Canvas { skia_surface: self.skia_surface, path: self.path, font: self.font })
+                            }
                         }
+                    },
+                    None => {
+                        canvas.draw_str(str, Point::new(0.0, 0.0), font, &paint);
+                        Ok(Canvas { skia_surface: self.skia_surface, path: self.path, font: self.font })
                     }
                 }
-            }
+            },
+            None => Err(PyRuntimeError::new_err("Font face required for text_path"))
+        }
+    }
+
+    fn clip(mut self) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let canvas = self.skia_surface.canvas();
+                canvas.clip_path(path, None, true);
+                Ok(Canvas { skia_surface: self.skia_surface, path: None, font: self.font })
+            },
+            None => Err(PyRuntimeError::new_err("Path does not exist for clip"))
+        }
+    }
+
+    fn stroke(mut self) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let canvas = self.skia_surface.canvas();
+                let mut paint = Paint::default();
+                paint.set_stroke(true);
+                // not sure whether I need this
+                paint.set_anti_alias(true);
+                canvas.draw_path(path, &paint);
+                Ok(Canvas { skia_surface: self.skia_surface, path: None, font: self.font })
+            },
+            None => Err(PyRuntimeError::new_err("Path does not exist for stroke"))
+        }
+    }
+
+    // not sure about this
+    fn fill(mut self) -> PyResult<Self> {
+        match &self.path {
+            Some(path) => {
+                let canvas = self.skia_surface.canvas();
+                let mut paint = Paint::default();
+                paint.set_stroke(false);
+                paint.set_anti_alias(true);
+                canvas.draw_path(path, &paint);
+                Ok(Canvas { skia_surface: self.skia_surface, path: None, font: self.font })
+            },
+            None => Err(PyRuntimeError::new_err("Path does not exist for stroke"))
         }
     }
 }
 
-impl ApplicationHandler for WinitApp {
-    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let window = match event_loop.create_window(Window::default_attributes()) {
-            Ok(window) => Rc::new(window),
-            Err(_) => {
-                let pyerr = PyOSError::new_err("Unable to create winit window");
-                self.internals = Some(AppInternals {
-                    window: None,
-                    softbuffer_surface: None,
-                    error: Some(pyerr),
-                });
-                return;
-            }
-        };
-        let softbuffer_surface = {
-            let context = softbuffer::Context::new(window.clone());
-            match context {
-                Ok(context) => softbuffer::Surface::new(&context, window.clone())
-                    .map_err(|_| PyOSError::new_err("Issue with creating softbuffer surface")),
-                Err(_) => Err(PyOSError::new_err("Issue with creating softbuffer context")),
-            }
-        };
-
-        let scale_factor = window.scale_factor();
-        let (phys_width, phys_height) = {
-            let size = window.inner_size();
-            (size.width, size.height)
-        };
-        let logical_width = (phys_width as f64 / scale_factor) as u32;
-        let logical_height = (phys_height as f64 / scale_factor) as u32;
-        let skia_surface = create_skia_surface(phys_width as i32, phys_height as i32, scale_factor);
-
-        if let Some(err) = Python::attach(|py| -> PyResult<()> {
-            let py_canvas = match skia_surface {
-                Ok(skia_surface) => Py::new(py, Canvas { skia_surface })?,
-                Err(pyerr) => return Err(pyerr),
-            };
-            let user_app = self
-                .user_class
-                .call1(py, (py_canvas.bind(py), logical_width, logical_height))?;
-
-            self.py_canvas = Some(py_canvas);
-            self.user_app = Some(user_app);
-            Ok(())
-        })
-        .err()
-        {
-            self.error = Some(err);
-            event_loop.exit();
-        };
-
-        self.call_event_handler(event_loop, "init", ());
-
-        match softbuffer_surface {
-            Ok(softbuffer_surface) => {
-                self.internals = Some(AppInternals {
-                    window: Some(window),
-                    softbuffer_surface: Some(softbuffer_surface),
-                    error: None,
-                })
-            }
-            Err(pyerr) => {
-                self.internals = Some(AppInternals {
-                    window: Some(window),
-                    softbuffer_surface: None,
-                    error: Some(pyerr),
-                })
-            }
-        }
-    }
-
-    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        let fps = 60;
-        let elapsed = self.last_tick.elapsed();
-        if elapsed >= Duration::from_millis(1000 / fps) {
-            let py_seconds = (elapsed.as_millis() as f64) / 1000.0;
-            self.call_event_handler(event_loop, "tick", (py_seconds,));
-            self.last_tick = Instant::now();
-        }
-    }
-
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
-        let app_internals = match self.internals.as_mut() {
-            Some(app_internals) => app_internals,
-            None => return,
-        };
-        let py_canvas = match self.py_canvas.as_mut() {
-            Some(py_canvas) => py_canvas,
-            None => return,
-        };
-
-        let AppInternals {
-            window,
-            softbuffer_surface,
-            error: _,
-        } = app_internals;
-
-        match event {
-            WindowEvent::CloseRequested => {
-                event_loop.exit();
-            }
-            WindowEvent::Resized(new_size) => {
-                let new_width = match NonZero::new(new_size.width) {
-                    Some(new_width) => new_width,
-                    None => {
-                        self.error =
-                            Some(PyOSError::new_err("Issue with resizing width of canvas"));
-                        event_loop.exit();
-                        return;
-                    }
-                };
-                let new_height = match NonZero::new(new_size.height) {
-                    Some(new_height) => new_height,
-                    None => {
-                        self.error =
-                            Some(PyOSError::new_err("Issue with resizing height of canvas"));
-                        event_loop.exit();
-                        return;
-                    }
-                };
-                match softbuffer_surface {
-                    Some(softbuffer_surface) => match softbuffer_surface
-                        .resize(new_width, new_height)
-                    {
-                        Ok(()) => (),
-                        Err(_) => {
-                            self.error = Some(PyOSError::new_err("Failed to resize window buffer"));
-                            event_loop.exit()
-                        }
-                    },
-                    None => {
-                        self.error =
-                            Some(PyOSError::new_err("Issue with creation of window buffer"));
-                        event_loop.exit()
-                    }
-                }
-
-                let skia_surface = match window {
-                    Some(window) => create_skia_surface(
-                        new_size.width as i32,
-                        new_size.height as i32,
-                        window.scale_factor(),
-                    ),
-                    None => Err(PyOSError::new_err("Unable to create winit window")),
-                };
-                Python::attach(|py| {
-                    match skia_surface {
-                        Ok(skia_surface) => {
-                            let mut canvas_ref = py_canvas.borrow_mut(py);
-                            canvas_ref.skia_surface = skia_surface
-                        }
-                        // would it be better for this to error out/panic in some way?
-                        Err(err) => {
-                            self.error = Some(err);
-                            event_loop.exit()
-                        }
-                    }
-                });
-            }
-            WindowEvent::CursorMoved {
-                device_id: _,
-                position,
-            } => {
-                if self.last_mouse.elapsed() < Duration::from_millis(1000 / 60) {
-                    return;
-                }
-                self.cursor_position = position;
-                let scale = match window {
-                    Some(window) => Ok(window.scale_factor()),
-                    None => Err(PyOSError::new_err("Unable to create winit window")),
-                };
-                match scale {
-                    Ok(scale) => {
-                        self.call_event_handler(
-                            event_loop,
-                            "mouse_moved",
-                            (position.x / scale, position.y / scale),
-                        );
-                        self.last_mouse = Instant::now();
-                    }
-                    Err(err) => {
-                        self.error = Some(err);
-                        event_loop.exit()
-                    }
-                }
-            }
-            WindowEvent::MouseInput {
-                device_id: _,
-                state,
-                button: _,
-            } => {
-                let scale = match window {
-                    Some(window) => Ok(window.scale_factor()),
-                    None => Err(PyOSError::new_err("Unable to create winit window")),
-                };
-                match scale {
-                    Ok(scale) => match state {
-                        winit::event::ElementState::Pressed => {
-                            self.call_event_handler(
-                                event_loop,
-                                "mouse_pressed",
-                                (
-                                    self.cursor_position.x / scale,
-                                    self.cursor_position.y / scale,
-                                ),
-                            );
-                        }
-                        winit::event::ElementState::Released => {
-                            self.call_event_handler(
-                                event_loop,
-                                "mouse_released",
-                                (
-                                    self.cursor_position.x / scale,
-                                    self.cursor_position.y / scale,
-                                ),
-                            );
-                        }
-                    },
-                    Err(err) => {
-                        self.error = Some(err);
-                        event_loop.exit()
-                    }
-                }
-            }
-            WindowEvent::RedrawRequested => {
-                let mut buffer = match softbuffer_surface {
-                    Some(softbuffer_surface) => softbuffer_surface
-                        .buffer_mut()
-                        .map_err(|_| PyOSError::new_err("Issue with creation of window buffer")),
-                    None => Err(PyOSError::new_err("Failed to resize window buffer")),
-                };
-                Python::attach(|py| {
-                    let mut canvas_ref = py_canvas.borrow_mut(py);
-                    if let Some(pixmap) = canvas_ref.skia_surface.peek_pixels() {
-                        if let Some(bytes) = pixmap.bytes() {
-                            let pixels: &[u32] = unsafe {
-                                std::slice::from_raw_parts(
-                                    bytes.as_ptr() as *const u32,
-                                    bytes.len() / 4,
-                                )
-                            };
-                            let _ = buffer.as_mut().map(|b| b.copy_from_slice(pixels));
-                        }
-                        let buffer_error = PyOSError::new_err("Error drawing to the screen");
-                        match buffer {
-                            Ok(b) => match b.present() {
-                                Ok(()) => (),
-                                Err(_) => {
-                                    self.error = Some(buffer_error);
-                                    event_loop.exit()
-                                }
-                            },
-                            Err(_) => {
-                                self.error = Some(buffer_error);
-                                event_loop.exit()
-                            }
-                        }
-                    }
-                });
-            }
-            WindowEvent::KeyboardInput {
-                device_id: _,
-                event,
-                is_synthetic: _,
-            } => {
-                if let Some(key) = event.logical_key.to_text() {
-                    match event.state {
-                        winit::event::ElementState::Pressed => {
-                            self.call_event_handler(event_loop, "key_pressed", (key,));
-                        }
-                        winit::event::ElementState::Released => {
-                            self.call_event_handler(event_loop, "key_released", (key,));
-                        }
-                    }
-                }
-            }
-            _ => (),
-        }
-    }
+// these are wrappers to work with the Py reference version of the Canvas, which is what is accessible in the Python code
+#[pyfunction]
+fn save(ctx: Py<Canvas>) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.save()?)
+    })
 }
 
 #[pyfunction]
-fn run(user_class: Py<PyAny>) -> PyResult<()> {
-    let mut app = WinitApp {
-        internals: None,
-        last_tick: Instant::now(),
-        last_mouse: Instant::now(),
-        cursor_position: PhysicalPosition { x: 0.0, y: 0.0 },
-        py_canvas: None,
-        user_class,
-        user_app: None,
-        error: None,
-    };
+fn restore(ctx: Py<Canvas>) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.restore()?)
+    })
+}
 
-    let event_loop = match EventLoop::new() {
-        Ok(event_loop) => event_loop,
-        Err(_) => return Err(PyOSError::new_err("Unable to start event loop")),
-    };
-    event_loop.set_control_flow(ControlFlow::Poll);
-    let _ = event_loop.run_app(&mut app);
+#[pyfunction]
+fn new_path(ctx: Py<Canvas>) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.new_path()?)
+    })
+}
 
-    match app.error {
-        None => Ok(()),
-        Some(err) => Err(err),
+#[pyfunction]
+fn move_to(ctx: Py<Canvas>, x: f32, y: f32) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        let point = Point::new(x, y);
+        Py::new(py, ctx.extract::<Canvas>(py)?.move_to(point)?)
+    })
+}
+
+#[pyfunction]
+fn line_to(ctx: Py<Canvas>, x: f32, y: f32) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        let point = Point::new(x, y);
+        Py::new(py, ctx.extract::<Canvas>(py)?.line_to(point)?)
+    })
+}
+
+#[pyfunction]
+fn rel_line_to(ctx: Py<Canvas>, x: f32, y: f32) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        let vector = Vector::new(x, y);
+        Py::new(py, ctx.extract::<Canvas>(py)?.rel_line_to(vector)?)
+    })
+}
+
+#[pyfunction]
+fn rel_curve_to(ctx: Py<Canvas>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        let p1 = Vector::new(x1, y1);
+        let p2 = Vector::new(x2, y2);
+        let p3 = Vector::new(x3, y3);
+        Py::new(py, ctx.extract::<Canvas>(py)?.rel_curve_to(p1, p2, p3)?)
+    })
+}
+
+#[pyfunction]
+fn rectangle(ctx: Py<Canvas>, left: f32, top: f32, width: f32, height: f32) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        let r = Rect::new(left, top, left + width, top + height);
+        Py::new(py, ctx.extract::<Canvas>(py)?.rectangle(r)?)
+    })
+}
+
+#[pyfunction]
+fn round_rectangle(ctx: Py<Canvas>, left: f32, top: f32, width: f32, height: f32) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        let r = Rect::new(left, top, left + width, top + height);
+        let rr = RRect::new_rect(r);
+        Py::new(py, ctx.extract::<Canvas>(py)?.round_rectangle(rr)?)
+    })
+}
+
+#[pyfunction]
+fn close_path(ctx: Py<Canvas>) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.close_path()?)
+    })
+}
+
+#[pyfunction]
+fn set_source_rgba(ctx: Py<Canvas>, r: u8, g: u8, b: u8, a: u8) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.set_source_rgba(a, r, g, b)?)
+    })
+}
+
+#[pyfunction]
+fn set_line_width(ctx: Py<Canvas>, width: f32) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.set_line_width(width)?)
+    })
+}
+
+#[pyfunction]
+fn select_font_face(ctx: Py<Canvas>, family_name: String) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        let font_mgr = FontMgr::new();
+        // making it just normal for now, maybe can modulate it in the future
+        match font_mgr.match_family_style(family_name, FontStyle::normal()) {
+            Some(typeface) => Py::new(py, ctx.extract::<Canvas>(py)?.select_font_face(typeface)?),
+            None => Err(PyRuntimeError::new_err("Font family could not be found"))
+        }
+    })
+}
+
+#[pyfunction]
+fn set_font_size(ctx: Py<Canvas>, size: f32) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.set_font_size(size)?)
+    })
+}
+
+#[pyfunction]
+fn text_path(ctx: Py<Canvas>, str: String) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.text_path(str)?)
+    })
+}
+
+#[pyfunction]
+fn text_extents(ctx: Py<Canvas>, str: String) -> PyResult<(f32, f32, f32, f32, f32, f32)> {
+    Python::attach(|py| {
+        ctx.extract::<Canvas>(py)?.text_extents(str)
+    })
+}
+
+#[pyfunction]
+fn stroke(ctx: Py<Canvas>) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.stroke()?)
+    })
+}
+
+#[pyfunction]
+fn clip(ctx: Py<Canvas>) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.clip()?)
+    })
+}
+
+#[pyfunction]
+fn fill(ctx: Py<Canvas>) -> PyResult<Py<Canvas>> {
+    Python::attach(|py| {
+        Py::new(py, ctx.extract::<Canvas>(py)?.fill()?)
+    })
+}
+
+#[pyclass(module = "wyvern", subclass)]
+struct ImageSurface {
+    width: i32,
+    height: i32,
+    canvas: Py<Canvas>,
+    data: Py<PyByteArray>,
+}
+
+#[pymethods]
+impl ImageSurface {
+    #[new]
+    fn create(width: i32, height: i32) -> PyResult<Self> {
+        Python::attach(|py| {
+            let mut skia_surface = create_skia_surface(width, height)?;
+            let data = PyByteArray::new(
+                py,
+                skia_surface
+                    .peek_pixels()
+                    .ok_or(PyRuntimeError::new_err(
+                        "Could not read pixel data from canvas",
+                    ))?
+                    .bytes()
+                    .ok_or(PyRuntimeError::new_err(
+                        "Could not read pixel data from canvas",
+                    ))?,
+            )
+            .unbind();
+            let canvas = Py::new(py, Canvas { skia_surface, path: None, font: None })?;
+            Ok(ImageSurface {
+                width,
+                height,
+                canvas,
+                data,
+            })
+        })
+    }
+
+    #[getter]
+    fn width(&self) -> PyResult<i32> {
+        Ok(self.width)
+    }
+
+    #[getter]
+    fn height(&self) -> PyResult<i32> {
+        Ok(self.height)
+    }
+
+    #[getter]
+    fn canvas(&self) -> PyResult<Py<Canvas>> {
+        Python::attach(|py| -> PyResult<Py<Canvas>> { Ok(self.canvas.clone_ref(py)) })
+    }
+
+    #[getter]
+    fn data(&self) -> PyResult<Py<PyByteArray>> {
+        Python::attach(|py| Ok(self.data.clone_ref(py)))
+    }
+
+    #[staticmethod]
+    unsafe fn create_for_data(
+        data: Bound<'_, PyByteArray>,
+        width: i32,
+        height: i32,
+    ) -> PyResult<Self> {
+        Python::attach(|py| {
+            let mut skia_surface = create_surface_for_data(data.as_bytes_mut(), width, height)?;
+            let data = PyByteArray::new(
+                py,
+                skia_surface
+                    .peek_pixels()
+                    .ok_or(PyRuntimeError::new_err(
+                        "Could not read pixel data from canvas",
+                    ))?
+                    .bytes()
+                    .ok_or(PyRuntimeError::new_err(
+                        "Could not read pixel data from canvas",
+                    ))?,
+            )
+            .unbind();
+            let canvas = Py::new(py, Canvas { skia_surface, path: None, font: None })?;
+            Ok(ImageSurface {
+                width,
+                height,
+                canvas,
+                data,
+            })
+        })
     }
 }
 
+// #[pyclass(unsendable, module = "wyvern")]
+// struct Time {
+//     init_tick: Instant,
+// }
+
+// impl Time {
+//     fn new() -> Self {
+//         Time { init_tick: Instant::now() }
+//     }
+
+//     fn get_ticks(&mut self) -> u128 {
+//         Instant::elapsed(&self.init_tick).as_millis()
+//     }
+// }
+
+// #[pyclass(module = "wyvern", subclass)]
+// struct Game {
+//     time: Py<Time>,
+// }
+
+// impl Game {
+//     fn init() -> PyResult<Self> {
+//         Python::attach(|py| {
+//             let time = Py::new(py, Time::new())?;
+//             Ok(Game { time })
+//         })
+//     }
+// }
+
 #[pymodule]
 fn wyvern(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<App>()?;
-    m.add_function(wrap_pyfunction!(run, m)?)?;
+    m.add_class::<ImageSurface>()?;
+    m.add_function(wrap_pyfunction!(save, m)?)?;
+    m.add_function(wrap_pyfunction!(restore, m)?)?;
+    m.add_function(wrap_pyfunction!(new_path, m)?)?;
+    m.add_function(wrap_pyfunction!(move_to, m)?)?;
+    m.add_function(wrap_pyfunction!(line_to, m)?)?;
+    m.add_function(wrap_pyfunction!(rel_line_to, m)?)?;
+    m.add_function(wrap_pyfunction!(rel_curve_to, m)?)?;
+    m.add_function(wrap_pyfunction!(rectangle, m)?)?;
+    m.add_function(wrap_pyfunction!(round_rectangle, m)?)?;
+    m.add_function(wrap_pyfunction!(close_path, m)?)?;
+    m.add_function(wrap_pyfunction!(set_source_rgba, m)?)?;
+    m.add_function(wrap_pyfunction!(set_line_width, m)?)?;
+    m.add_function(wrap_pyfunction!(select_font_face, m)?)?;
+    m.add_function(wrap_pyfunction!(set_font_size, m)?)?;
+    m.add_function(wrap_pyfunction!(text_path, m)?)?;
+    m.add_function(wrap_pyfunction!(text_extents, m)?)?;
+    m.add_function(wrap_pyfunction!(stroke, m)?)?;
+    m.add_function(wrap_pyfunction!(clip, m)?)?;
+    m.add_function(wrap_pyfunction!(fill, m)?)?;
     Ok(())
 }
