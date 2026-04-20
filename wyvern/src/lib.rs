@@ -42,6 +42,7 @@ struct Canvas {
     skia_surface: skia_safe::Surface,
     path: Option<skia_safe::PathBuilder>,
     font: Option<skia_safe::Font>,
+    paint: Paint,
 }
 
 #[pymethods]
@@ -97,15 +98,11 @@ impl Canvas {
     }
 
     fn set_source_rgba(&mut self, r: u8, g: u8, b: u8, a: u8) {
-        let mut paint = Paint::default();
-        paint.set_argb(a, r, g, b);
-        self.skia_surface.canvas().draw_paint(&paint);
+        self.paint.set_argb(a, r, g, b);
     }
 
     fn set_line_width(&mut self, width: f32) {
-        let mut paint = Paint::default();
-        paint.set_stroke_width(width);
-        self.skia_surface.canvas().draw_paint(&paint);
+        self.paint.set_stroke_width(width);
     }
 
     fn select_font_face(&mut self, family_name: String) -> PyResult<()> {
@@ -143,7 +140,10 @@ impl Canvas {
         let point = self.path.as_ref()
             .and_then(|pb| pb.snapshot().last_pt())
             .unwrap_or_else(|| Point::new(0.0, 0.0));
-        self.skia_surface.canvas().draw_str(&text, point, font, &Paint::default());
+        let mut paint = self.paint.clone();
+        paint.set_stroke(false);
+        paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_str(&text, point, font, &paint);
         Ok(())
     }
 
@@ -159,7 +159,7 @@ impl Canvas {
         let path = self.path.take()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for stroke"))?
             .detach();
-        let mut paint = Paint::default();
+        let mut paint = self.paint.clone();
         paint.set_stroke(true);
         paint.set_anti_alias(true);
         self.skia_surface.canvas().draw_path(&path, &paint);
@@ -170,7 +170,7 @@ impl Canvas {
         let path = self.path.take()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for fill"))?
             .detach();
-        let mut paint = Paint::default();
+        let mut paint = self.paint.clone();
         paint.set_stroke(false);
         paint.set_anti_alias(true);
         self.skia_surface.canvas().draw_path(&path, &paint);
@@ -299,7 +299,6 @@ struct ImageSurface {
     width: i32,
     height: i32,
     canvas: Py<Canvas>,
-    data: Py<PyByteArray>,
 }
 
 #[pymethods]
@@ -307,18 +306,12 @@ impl ImageSurface {
     #[new]
     fn create(width: i32, height: i32) -> PyResult<Self> {
         Python::attach(|py| {
-            let mut skia_surface = create_skia_surface(width, height)?;
-            let data = PyByteArray::new(
+            let skia_surface = create_skia_surface(width, height)?;
+            let canvas = Py::new(
                 py,
-                skia_surface
-                    .peek_pixels()
-                    .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?
-                    .bytes()
-                    .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?,
-            )
-            .unbind();
-            let canvas = Py::new(py, Canvas { skia_surface, path: None, font: None })?;
-            Ok(ImageSurface { width, height, canvas, data })
+                Canvas { skia_surface, path: None, font: None, paint: Paint::default() },
+            )?;
+            Ok(ImageSurface { width, height, canvas })
         })
     }
 
@@ -334,25 +327,24 @@ impl ImageSurface {
     }
 
     #[getter]
-    fn data(&self, py: Python<'_>) -> Py<PyByteArray> {
-        self.data.clone_ref(py)
+    fn data(&self, py: Python<'_>) -> PyResult<Py<PyByteArray>> {
+        let mut canvas_ref = self.canvas.bind(py).borrow_mut();
+        let pixmap = canvas_ref.skia_surface.peek_pixels()
+            .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
+        let bytes = pixmap.bytes()
+            .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
+        Ok(PyByteArray::new(py, bytes).unbind())
     }
 
     #[staticmethod]
     unsafe fn create_for_data(data: Bound<'_, PyByteArray>, width: i32, height: i32) -> PyResult<Self> {
         Python::attach(|py| {
-            let mut skia_surface = create_surface_for_data(data.as_bytes_mut(), width, height)?;
-            let data = PyByteArray::new(
+            let skia_surface = create_surface_for_data(data.as_bytes_mut(), width, height)?;
+            let canvas = Py::new(
                 py,
-                skia_surface
-                    .peek_pixels()
-                    .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?
-                    .bytes()
-                    .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?,
-            )
-            .unbind();
-            let canvas = Py::new(py, Canvas { skia_surface, path: None, font: None })?;
-            Ok(ImageSurface { width, height, canvas, data })
+                Canvas { skia_surface, path: None, font: None, paint: Paint::default() },
+            )?;
+            Ok(ImageSurface { width, height, canvas })
         })
     }
 }

@@ -172,7 +172,7 @@ class TextBox(object):
             )
             left = min(cursorX, anchorX)
             right = max(cursorX, anchorX)
-            ctx = wyvern.set_source_rgba(ctx, 255, 217, 179)
+            ctx = wyvern.set_source_rgba(ctx, 255, 217, 179, 255)
             ctx = wyvern.rectangle(
                 ctx, left, cursorTop, right - left, cursorBottom - cursorTop
             )
@@ -453,7 +453,7 @@ class TextBoxModal(object):
         ctx = self.draw(ctx)
         data_string = wyvern_surface.data
         pygame_surface = pygame.image.frombuffer(
-            data_string, (int(self.width), int(self.height)), 'RGBA'
+            data_string, (int(self.width), int(self.height)), 'BGRA'
         )
         screen.blit(pygame_surface, (0, 0))
 
