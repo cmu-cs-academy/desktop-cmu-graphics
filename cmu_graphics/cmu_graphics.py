@@ -1004,7 +1004,8 @@ class App(object):
 
         # Redraw even if onScreenActivate is not present in the user's globals
         self.callUserFn('onScreenActivate', (), redraw=False, useActiveScreen=True)
-        self.redrawAllWrapper()
+        if redraw:
+            self.redrawAllWrapper()
 
     def getLeft(self):
         return 0
@@ -1144,7 +1145,7 @@ class App(object):
             nonlocal lastCall, prevArgs
 
             now = pygame.time.get_ticks()
-            if (now - lastCall >= delay):
+            if now - lastCall >= delay:
                 lastCall = now
                 fn(*args)
                 prevArgs = None
@@ -1163,7 +1164,7 @@ class App(object):
                 fn(*prevArgs)
                 prevArgs = None
                 return True
-            
+
             return False
 
         throttle.flush = flush
@@ -1178,8 +1179,12 @@ class App(object):
         self.updateScreen(True)
 
         lastTick = 0
-        throttledMouseMove = self.throttleEvent(lambda arg: self.callUserFn("onMouseMove", arg), 30)
-        throttledMouseDrag = self.throttleEvent(lambda arg: self.callUserFn("onMouseDrag", arg), 30)
+        throttledMouseMove = self.throttleEvent(
+            lambda arg: self.callUserFn('onMouseMove', arg), 30
+        )
+        throttledMouseDrag = self.throttleEvent(
+            lambda arg: self.callUserFn('onMouseDrag', arg), 30
+        )
         self._running = True
 
         while self._running:
@@ -1205,7 +1210,8 @@ class App(object):
                                     (
                                         *event.pos,
                                         [i for i in range(3) if event.buttons[i] != 0],
-                                    ))
+                                    )
+                                )
                         elif event.type == pygame.KEYDOWN:
                             self.handleKeyPress(event.key, event.mod)
                         elif event.type == pygame.KEYUP:
@@ -1320,6 +1326,7 @@ class AppWrapper(object):
             return self._app.__setattr__(attr, value)
         return super().__setattr__(attr, value)
 
+
 def processRunAppArgs(args, kwargs):
     # Extract width and height (and their translations) from kwargs
     width = 400
@@ -1363,6 +1370,7 @@ def processRunAppArgs(args, kwargs):
 
     return width, height, remaining_kwargs
 
+
 def runApp(*args, **kwargs):
     width, height, remaining_kwargs = processRunAppArgs(args, kwargs)
 
@@ -1397,7 +1405,9 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
     # Don't redraw on either of these calls to callUserFn, because we will
     # instead redraw below
-    app._app.callUserFn('onAppStart', (), remaining_kwargs, redraw=False, useActiveScreen=False)            
+    app._app.callUserFn(
+        'onAppStart', (), remaining_kwargs, redraw=False, useActiveScreen=False
+    )
 
     if app._app._initialScreen is not None:
         sortedGlobals = sorted(app._app.userGlobals)
@@ -1423,7 +1433,7 @@ def setActiveScreen(screen, fromRunApp=False):
         )
     if (screen in [None, '']) or (not isinstance(screen, str)):
         raise Exception(f'{repr(screen)} is not a valid screen')
-    
+
     redrawAllFnNames = ['redrawAll']
     redrawAllInCorrectLanguage = 'redrawAll'
     for language, translations in shape_logic.TRANSLATED_USER_FUNCTION_NAMES.items():
@@ -1433,16 +1443,20 @@ def setActiveScreen(screen, fromRunApp=False):
             if redrawAllTranslation not in redrawAllFnNames:
                 redrawAllFnNames.append(redrawAllTranslation)
                 if language == shape_logic.cmuGraphicsLanguage:
-                        redrawAllInCorrectLanguage = redrawAllTranslation
+                    redrawAllInCorrectLanguage = redrawAllTranslation
 
-    if not any(f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames):
-        raise Exception(t(
-            "Screen '{{screen}}' requires '{{screen}}_{{redrawAllInCorrectLanguage}}()'",
-            {
-                'screen': screen,
-                'redrawAllInCorrectLanguage': redrawAllInCorrectLanguage,
-            }
-        ))
+    if not any(
+        f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames
+    ):
+        raise Exception(
+            t(
+                "Screen '{{screen}}' requires '{{screen}}_{{redrawAllInCorrectLanguage}}()'",
+                {
+                    'screen': screen,
+                    'redrawAllInCorrectLanguage': redrawAllInCorrectLanguage,
+                },
+            )
+        )
     if fromRunApp:
         app._app.handleSetActiveScreen(screen, redraw=False)
     else:
