@@ -1001,7 +1001,11 @@ class App(object):
 
     def handleSetActiveScreen(self, newScreen, redraw=True):
         self.activeScreen = newScreen
-        self.callUserFn('onScreenActivate', (), redraw=redraw, useActiveScreen=True)
+        
+        # Redraw even if onScreenActivate is not present in the user's globals
+        self.callUserFn('onScreenActivate', (), redraw=False, useActiveScreen=True)
+        if self._isMvc:
+            self.redrawAllWrapper()
 
     def getLeft(self):
         return 0
