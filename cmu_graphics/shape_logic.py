@@ -983,9 +983,11 @@ class Gradient(object, metaclass=_ShapeMetaclass):
     def getRGBColors(self):
         return list(
             map(
-                lambda v: v
-                if isinstance(v, RGB)
-                else CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()],
+                lambda v: (
+                    v
+                    if isinstance(v, RGB)
+                    else CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()]
+                ),
                 self.colors,
             )
         )
@@ -2555,7 +2557,7 @@ class Label(Shape):
     italic = shape_property(get_italic, set_italic)
 
     def toString(self):
-        return f"{t('Label')}({self.value}, {self.centerX}, {self.centerY})"
+        return f'{t("Label")}({self.value}, {self.centerX}, {self.centerY})'
 
 
 class Polygon(Shape):
