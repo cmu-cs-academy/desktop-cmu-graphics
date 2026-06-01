@@ -1355,9 +1355,7 @@ def processRunAppArgs(args, kwargs):
             set_width = True
         elif toEnglish(param, 'shape-attr') == 'height':
             if set_height:
-                raise TypeError(
-                    f"{t('runApp')}() got multiple values for argument '{param}'"
-                )
+                raise TypeError(                    f"{t('runApp')}() got multiple values for argument '{param}'"                )
             height = value
             set_height = True
         else:
