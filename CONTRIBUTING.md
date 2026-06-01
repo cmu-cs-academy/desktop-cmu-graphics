@@ -59,10 +59,10 @@ Run tox:
 uv run tox
 ```
 
-This will run the tests using a bunch of different versions of python. The tests will fail for particular "environments" if you don't have the necessary version of python already installed. After running tox once for all environments, you can run it for just a single environment so that it is much faster. Pick an environment that succeeded the first time, e.g. `py310-pip` and pass that to tox:
+This will run the tests using a bunch of different versions of python. The tests will fail for particular "environments" if you don't have the necessary version of python already installed. After running tox once for all environments, you can run it for just a single environment so that it is much faster. Pick an environment that succeeded the first time, e.g. `py314-pip` and pass that to tox:
 
 ```
-uv run tox -e py310-pip
+uv run tox -e py314-pip
 ```
 
 ## Using the test output
@@ -73,9 +73,9 @@ If tox gives an error, it can be helpful to run the specific test that failed wi
 - `tests/test_sound.py`
 - `tests/test_image_gen.py`
 
-To run a test in isolation, run (change py310-pip to the name of the tox environment you want to use)...
+To run a test in isolation, run (change py314-pip to the name of the tox environment you want to use)...
 
-    cd /path/to/desktop-cmu-graphics/.tox/py310-pip/tmp
+    cd /path/to/desktop-cmu-graphics/.tox/py314-pip/tmp
     source ../bin/activate
     rm -rf image_gen
     python /path/to/desktop-cmu-graphics/tests/<test_name.py>
