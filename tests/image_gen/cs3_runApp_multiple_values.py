@@ -102,7 +102,7 @@ assertRaises(
     "runApp() got multiple values for argument 'altura'",
 )
 
-# The language used for runApp() in the error message depends on the cmuGraphicsLanguage 
+# The language used for runApp() in the error message depends on the cmuGraphicsLanguage
 # variable, so calling ejecutaApp() will raise the same error as runApp().
 assertRaises(
     lambda: ejecutaApp(100, 200, altura=250),
