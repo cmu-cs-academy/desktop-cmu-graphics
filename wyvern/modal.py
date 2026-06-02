@@ -133,12 +133,12 @@ class TextBox(object):
     def draw(self, ctx):
         if not self.active:
             ctx = wyvern.rectangle(ctx, self.left, self.top, self.width, self.height)
-            ctx = wyvern.set_source_rgba(ctx, 179, 179, 179, 255)
+            ctx = wyvern.set_source_rgba(ctx, 0.7, 0.7, 0.7, 1.0)
             ctx = wyvern.set_line_width(ctx, 1)
             ctx = wyvern.stroke(ctx)
         else:
             ctx = roundedrec(ctx, self.left, self.top, self.width, self.height, 3, 3)
-            ctx = wyvern.set_source_rgba(ctx, 230, 153, 102, 255)
+            ctx = wyvern.set_source_rgba(ctx, 0.9, 0.6, 0.4, 1.0)
             ctx = wyvern.set_line_width(ctx, 3)
             ctx = wyvern.stroke(ctx)
 
@@ -172,14 +172,14 @@ class TextBox(object):
             )
             left = min(cursorX, anchorX)
             right = max(cursorX, anchorX)
-            ctx = wyvern.set_source_rgba(ctx, 255, 217, 179)
+            ctx = wyvern.set_source_rgba(ctx, 1.0, 0.85, 0.7)
             ctx = wyvern.rectangle(
                 ctx, left, cursorTop, right - left, cursorBottom - cursorTop
             )
             ctx = wyvern.fill(ctx)
 
         elif self.active and self.cursorActive:
-            ctx = wyvern.set_source_rgba(ctx, 0, 0, 0, 255)
+            ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
             ctx = wyvern.set_line_width(ctx, 1)
             ctx = wyvern.move_to(ctx, cursorX, cursorBottom)
             ctx = wyvern.line_to(ctx, cursorX, cursorTop)
@@ -191,7 +191,7 @@ class TextBox(object):
         ctx = wyvern.select_font_face(ctx, self.font)
         ctx = wyvern.set_font_size(ctx, self.textSize)
         ctx = wyvern.text_path(ctx, ''.join(self.buf))
-        ctx = wyvern.set_source_rgba(ctx, 0, 0, 0, 255)
+        ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
         ctx = wyvern.fill(ctx)
         ctx = wyvern.restore(ctx)
         # NEW
@@ -363,8 +363,8 @@ class Button(object):
         self.width = self.height * 1.2
         self.left = self.centerX - (self.width / 2)
         self.right = self.centerX + (self.width / 2)
-        self.baseColor = (179, 153, 89, 255)
-        self.hoverColor = (191, 179, 128, 255)
+        self.baseColor = (0.7, 0.6, 0.35, 1.0)
+        self.hoverColor = (0.75, 0.7, 0.5, 1.0)
         self.color = self.baseColor
         self.font = 'Arial'
         self.textSize = 15
@@ -381,7 +381,7 @@ class Button(object):
         # Draw the label
         ctx = wyvern.select_font_face(ctx, self.font)
         ctx = wyvern.set_font_size(ctx, self.textSize)
-        ctx = wyvern.set_source_rgba(ctx, 255, 255, 255, 255)
+        ctx = wyvern.set_source_rgba(ctx, 1.0, 1.0, 1.0, 1.0)
         _, _, textWidth, textHeight, _, _ = wyvern.text_extents(ctx, self.text)
         yPadding = (self.height - textHeight) / 2
         xPadding = (self.width - textWidth) / 2
@@ -471,7 +471,7 @@ class TextBoxModal(object):
         return ctx
 
     def drawDivider(self, ctx):
-        ctx = wyvern.set_source_rgba(ctx, 204, 204, 204, 255)
+        ctx = wyvern.set_source_rgba(ctx, 0.8, 0.8, 0.8, 1.0)
         ctx = wyvern.move_to(ctx, self.left, self.dividerY)
         ctx = wyvern.line_to(ctx, self.right, self.dividerY)
         ctx = wyvern.set_line_width(ctx, 1)
@@ -480,7 +480,7 @@ class TextBoxModal(object):
         return ctx
 
     def drawBox(self, ctx):
-        ctx = wyvern.set_source_rgba(ctx, 255, 255, 255, 255)
+        ctx = wyvern.set_source_rgba(ctx, 1.0, 1.0, 1.0, 1.0)
         ctx = roundedrec(ctx, self.left, self.top, self.width, self.height, 0, 0)
         ctx = wyvern.fill(ctx)
 
@@ -514,7 +514,7 @@ class TextBoxModal(object):
 
             if not simulate:
                 ctx = wyvern.text_path(ctx, word)
-                ctx = wyvern.set_source_rgba(ctx, 0, 0, 0, 255)
+                ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
                 ctx = wyvern.fill(ctx)
 
             currLeft += xAdvance
