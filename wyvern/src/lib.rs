@@ -3,8 +3,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyByteArray;
 
 use skia_safe::{
-    Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, ImageInfo, Paint, PathBuilder,
-    Point, RRect, Rect, TextBlob, Vector, surfaces,
+    Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, ImageInfo, Paint, Path, PathBuilder,
+    Point, RRect, Rect, Vector, surfaces,
 };
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
@@ -127,14 +127,23 @@ impl Canvas {
         let font = self.font.as_ref().ok_or_else(|| {
             PyRuntimeError::new_err("Font face required for text_extents")
         })?;
-        let blob = TextBlob::new(&text, font).ok_or_else(|| {
-            PyRuntimeError::new_err("Issue with creating text blob for text_extents")
-        })?;
-        let b = blob.bounds();
-        Ok((b.left(), b.top(), b.width(), b.height(), b.right(), b.bottom()))
+        let (width, rect) = Font::measure_str(font, text, Some(&self.paint));
+        Ok((rect.left(), rect.top(), width, rect.height(), rect.right(), rect.bottom()))
     }
 
     fn text_path(&mut self, text: String) -> PyResult<()> {
+        let font = self.font.as_ref().ok_or_else(|| {
+            PyRuntimeError::new_err("Font face required for text_path")
+        })?;
+        let point = self.path.as_ref()
+            .and_then(|pb| pb.snapshot().last_pt())
+            .unwrap_or_else(|| Point::new(0.0, 0.0));
+        let text_path = Path::from_str(&text, point, font);
+        self.path.get_or_insert(PathBuilder::new_path(&text_path)).add_path(&text_path);
+        Ok(())
+    }
+
+    fn show_text(&mut self, text: String) -> PyResult<()> {
         let font = self.font.as_ref().ok_or_else(|| {
             PyRuntimeError::new_err("Font face required for text_path")
         })?;
@@ -274,6 +283,12 @@ fn text_path(ctx: Py<Canvas>, text: String, py: Python<'_>) -> PyResult<Py<Canva
 }
 
 #[pyfunction]
+fn show_text(ctx: Py<Canvas>, text: String, py: Python<'_>) -> PyResult<Py<Canvas>> {
+    ctx.bind(py).borrow_mut().show_text(text)?;
+    Ok(ctx)
+}
+
+#[pyfunction]
 fn text_extents(ctx: Py<Canvas>, text: String, py: Python<'_>) -> PyResult<(f32, f32, f32, f32, f32, f32)> {
     ctx.bind(py).borrow_mut().text_extents(text)
 }
@@ -370,6 +385,7 @@ fn wyvern(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(set_font_size, m)?)?;
     m.add_function(wrap_pyfunction!(text_path, m)?)?;
     m.add_function(wrap_pyfunction!(text_extents, m)?)?;
+    m.add_function(wrap_pyfunction!(show_text, m)?)?;
     m.add_function(wrap_pyfunction!(stroke, m)?)?;
     m.add_function(wrap_pyfunction!(clip, m)?)?;
     m.add_function(wrap_pyfunction!(fill, m)?)?;
