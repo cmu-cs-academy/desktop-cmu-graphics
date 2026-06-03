@@ -5,8 +5,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyByteArray;
 
 use skia_safe::{
-    Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, font_style, ImageInfo, Matrix, PaintJoin, Paint, Path, PathBuilder,
-    PathEffect, Point, RRect, Rect, Vector, surfaces,
+    font_style, surfaces, Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle,
+    ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, Vector,
 };
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
@@ -44,20 +44,20 @@ unsafe fn create_surface_for_data(
 enum LineJoin {
     Miter,
     Round,
-    Bevel
+    Bevel,
 }
 
 #[pyclass(from_py_object)]
 #[derive(Clone)]
 enum FontWeight {
     BOLD,
-    NORMAL
+    NORMAL,
 }
 
-fn py_to_skia_weight (weight: FontWeight) -> font_style::Weight {
+fn py_to_skia_weight(weight: FontWeight) -> font_style::Weight {
     match weight {
         FontWeight::BOLD => font_style::Weight::BOLD,
-        FontWeight::NORMAL => font_style::Weight::NORMAL
+        FontWeight::NORMAL => font_style::Weight::NORMAL,
     }
 }
 
@@ -66,14 +66,14 @@ fn py_to_skia_weight (weight: FontWeight) -> font_style::Weight {
 enum FontSlant {
     ITALIC,
     NORMAL,
-    OBLIQUE
+    OBLIQUE,
 }
 
-fn py_to_skia_slant (slant: FontSlant) -> font_style::Slant {
+fn py_to_skia_slant(slant: FontSlant) -> font_style::Slant {
     match slant {
         FontSlant::ITALIC => font_style::Slant::Italic,
         FontSlant::NORMAL => font_style::Slant::Upright,
-        FontSlant::OBLIQUE => font_style::Slant::Oblique
+        FontSlant::OBLIQUE => font_style::Slant::Oblique,
     }
 }
 
@@ -100,11 +100,23 @@ impl Canvas {
     }
 
     fn rotate(&mut self, angle: f32) {
-        self.skia_surface.canvas().rotate(angle * (180.0 / PI), None);
+        self.skia_surface
+            .canvas()
+            .rotate(angle * (180.0 / PI), None);
     }
 
-    fn transform(&mut self, scale_x: f32, skew_y: f32, skew_x: f32, scale_y: f32, trans_x: f32, trans_y: f32) {
-        let matrix = Matrix::new_all(scale_x, skew_x, trans_x, skew_y, scale_y, trans_y, 0.0, 0.0, 1.0);
+    fn transform(
+        &mut self,
+        scale_x: f32,
+        skew_y: f32,
+        skew_x: f32,
+        scale_y: f32,
+        trans_x: f32,
+        trans_y: f32,
+    ) {
+        let matrix = Matrix::new_all(
+            scale_x, skew_x, trans_x, skew_y, scale_y, trans_y, 0.0, 0.0, 1.0,
+        );
         self.skia_surface.canvas().concat(&matrix);
     }
 
@@ -113,44 +125,74 @@ impl Canvas {
     }
 
     fn move_to(&mut self, x: f32, y: f32) {
-        self.path.get_or_insert_with(PathBuilder::new).move_to(Point::new(x, y));
+        self.path
+            .get_or_insert_with(PathBuilder::new)
+            .move_to(Point::new(x, y));
     }
 
     fn line_to(&mut self, x: f32, y: f32) {
-        self.path.get_or_insert_with(PathBuilder::new).line_to(Point::new(x, y));
+        self.path
+            .get_or_insert_with(PathBuilder::new)
+            .line_to(Point::new(x, y));
     }
 
     fn rel_line_to(&mut self, x: f32, y: f32) -> PyResult<()> {
-        self.path.as_mut()
+        self.path
+            .as_mut()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for rel_line_to"))?
             .r_line_to(Vector::new(x, y));
         Ok(())
     }
 
     fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
-        self.path.get_or_insert_with(PathBuilder::new).cubic_to(Vector::new(x1, y1), Vector::new(x2, y2), Vector::new(x3, y3));
+        self.path.get_or_insert_with(PathBuilder::new).cubic_to(
+            Vector::new(x1, y1),
+            Vector::new(x2, y2),
+            Vector::new(x3, y3),
+        );
     }
 
-    fn rel_curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) -> PyResult<()> {
-        self.path.as_mut()
+    fn rel_curve_to(
+        &mut self,
+        x1: f32,
+        y1: f32,
+        x2: f32,
+        y2: f32,
+        x3: f32,
+        y3: f32,
+    ) -> PyResult<()> {
+        self.path
+            .as_mut()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for rel_curve_to"))?
-            .r_cubic_to(Vector::new(x1, y1), Vector::new(x2, y2), Vector::new(x3, y3));
+            .r_cubic_to(
+                Vector::new(x1, y1),
+                Vector::new(x2, y2),
+                Vector::new(x3, y3),
+            );
         Ok(())
     }
 
     fn rectangle(&mut self, left: f32, top: f32, width: f32, height: f32) {
         let r = Rect::new(left, top, left + width, top + height);
-        self.path.get_or_insert_with(PathBuilder::new).add_rect(r, None, None);
+        self.path
+            .get_or_insert_with(PathBuilder::new)
+            .add_rect(r, None, None);
     }
 
     fn round_rectangle(&mut self, left: f32, top: f32, width: f32, height: f32) {
         let r = Rect::new(left, top, left + width, top + height);
-        self.path.get_or_insert_with(PathBuilder::new).add_rrect(RRect::new_rect(r), None, None);
+        self.path
+            .get_or_insert_with(PathBuilder::new)
+            .add_rrect(RRect::new_rect(r), None, None);
     }
 
     fn arc(&mut self, xc: f32, yc: f32, radius: f32, angle1: f32, angle2: f32) {
         let r = Rect::new(xc - radius, yc - radius, xc + radius, yc + radius);
-        self.path.get_or_insert_with(PathBuilder::new).add_arc(r, angle1 * (180.0 / PI), angle2 * (180.0 / PI));
+        self.path.get_or_insert_with(PathBuilder::new).add_arc(
+            r,
+            angle1 * (180.0 / PI),
+            angle2 * (180.0 / PI),
+        );
     }
 
     fn close_path(&mut self) {
@@ -161,7 +203,8 @@ impl Canvas {
 
     fn set_source_rgba(&mut self, r: f32, g: f32, b: f32, a: Option<f32>) {
         let color_space = self.skia_surface.image_info().color_space();
-        self.paint.set_color4f(Color4f::new(r, g, b, a.unwrap_or(1.0)), &color_space);
+        self.paint
+            .set_color4f(Color4f::new(r, g, b, a.unwrap_or(1.0)), &color_space);
     }
 
     fn set_line_width(&mut self, width: f32) {
@@ -181,8 +224,17 @@ impl Canvas {
         self.paint.set_path_effect(path_effect);
     }
 
-    fn select_font_face(&mut self, family_name: String, weight: FontWeight, slant: FontSlant) -> PyResult<()> {
-        let style = FontStyle::new(py_to_skia_weight(weight), font_style::Width::NORMAL, py_to_skia_slant(slant));
+    fn select_font_face(
+        &mut self,
+        family_name: String,
+        weight: FontWeight,
+        slant: FontSlant,
+    ) -> PyResult<()> {
+        let style = FontStyle::new(
+            py_to_skia_weight(weight),
+            font_style::Width::NORMAL,
+            py_to_skia_slant(slant),
+        );
         let typeface = FontMgr::new()
             .match_family_style(&family_name, style)
             .ok_or_else(|| PyRuntimeError::new_err("Font family could not be found"))?;
@@ -192,44 +244,63 @@ impl Canvas {
     }
 
     fn set_font_size(&mut self, size: f32) -> PyResult<()> {
-        let font = self.font.take().ok_or_else(|| {
-            PyRuntimeError::new_err("Font face required for set_font_size")
-        })?;
+        let font = self
+            .font
+            .take()
+            .ok_or_else(|| PyRuntimeError::new_err("Font face required for set_font_size"))?;
         self.font = Some(Font::from_typeface(font.typeface(), size));
         Ok(())
     }
 
     fn text_extents(&mut self, text: String) -> PyResult<(f32, f32, f32, f32, f32, f32)> {
-        let font = self.font.as_ref().ok_or_else(|| {
-            PyRuntimeError::new_err("Font face required for text_extents")
-        })?;
+        let font = self
+            .font
+            .as_ref()
+            .ok_or_else(|| PyRuntimeError::new_err("Font face required for text_extents"))?;
         let (width, rect) = Font::measure_str(font, text, Some(&self.paint));
-        Ok((rect.left(), rect.top(), width, rect.height(), rect.right(), rect.bottom()))
+        Ok((
+            rect.left(),
+            rect.top(),
+            width,
+            rect.height(),
+            rect.right(),
+            rect.bottom(),
+        ))
     }
 
     fn text_path(&mut self, text: String) -> PyResult<()> {
-        let font = self.font.as_ref().ok_or_else(|| {
-            PyRuntimeError::new_err("Font face required for text_path")
-        })?;
-        let point = self.path.as_ref()
+        let font = self
+            .font
+            .as_ref()
+            .ok_or_else(|| PyRuntimeError::new_err("Font face required for text_path"))?;
+        let point = self
+            .path
+            .as_ref()
             .and_then(|pb| pb.snapshot().last_pt())
             .unwrap_or_else(|| Point::new(0.0, 0.0));
         let text_path = Path::from_str(&text, point, font);
-        self.path.get_or_insert(PathBuilder::new_path(&text_path)).add_path(&text_path);
+        self.path
+            .get_or_insert(PathBuilder::new_path(&text_path))
+            .add_path(&text_path);
         Ok(())
     }
 
     fn show_text(&mut self, text: String) -> PyResult<()> {
-        let font = self.font.as_ref().ok_or_else(|| {
-            PyRuntimeError::new_err("Font face required for text_path")
-        })?;
-        let point = self.path.as_ref()
+        let font = self
+            .font
+            .as_ref()
+            .ok_or_else(|| PyRuntimeError::new_err("Font face required for text_path"))?;
+        let point = self
+            .path
+            .as_ref()
             .and_then(|pb| pb.snapshot().last_pt())
             .unwrap_or_else(|| Point::new(0.0, 0.0));
         let mut paint = self.paint.clone();
         paint.set_stroke(false);
         paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_str(&text, point, font, &paint);
+        self.skia_surface
+            .canvas()
+            .draw_str(&text, point, font, &paint);
         Ok(())
     }
 
@@ -240,7 +311,9 @@ impl Canvas {
     }
 
     fn clip_preserve(&mut self) -> PyResult<()> {
-        let path = self.path.take()
+        let path = self
+            .path
+            .take()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for clip"))?
             .detach();
         self.skia_surface.canvas().clip_path(&path, None, true);
@@ -254,7 +327,9 @@ impl Canvas {
     }
 
     fn stroke_preserve(&mut self) -> PyResult<()> {
-        let path = self.path.take()
+        let path = self
+            .path
+            .take()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for stroke"))?
             .detach();
         let mut paint = self.paint.clone();
@@ -271,7 +346,9 @@ impl Canvas {
     }
 
     fn fill_preserve(&mut self) -> PyResult<()> {
-        let path = self.path.take()
+        let path = self
+            .path
+            .take()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for fill_preserve"))?
             .detach();
         let mut paint = self.paint.clone();
@@ -317,7 +394,16 @@ fn rotate(ctx: Py<Canvas>, angle: f32, py: Python<'_>) -> Py<Canvas> {
 
 #[pyfunction]
 #[pyo3(signature = (ctx, xx = 1.0, yx = 0.0, xy = 0.0, yy = 1.0, x0 = 0.0, y0 = 0.0))]
-fn transform(ctx: Py<Canvas>, xx: f32, yx: f32, xy: f32, yy: f32, x0: f32, y0: f32, py: Python<'_>) -> Py<Canvas> {
+fn transform(
+    ctx: Py<Canvas>,
+    xx: f32,
+    yx: f32,
+    xy: f32,
+    yy: f32,
+    x0: f32,
+    y0: f32,
+    py: Python<'_>,
+) -> Py<Canvas> {
     ctx.bind(py).borrow_mut().transform(xx, yx, xy, yy, x0, y0);
     ctx
 }
@@ -347,32 +433,80 @@ fn rel_line_to(ctx: Py<Canvas>, x: f32, y: f32, py: Python<'_>) -> PyResult<Py<C
 }
 
 #[pyfunction]
-fn curve_to(ctx: Py<Canvas>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, py: Python<'_>) -> Py<Canvas> {
+fn curve_to(
+    ctx: Py<Canvas>,
+    x1: f32,
+    y1: f32,
+    x2: f32,
+    y2: f32,
+    x3: f32,
+    y3: f32,
+    py: Python<'_>,
+) -> Py<Canvas> {
     ctx.bind(py).borrow_mut().curve_to(x1, y1, x2, y2, x3, y3);
     ctx
 }
 
 #[pyfunction]
-fn rel_curve_to(ctx: Py<Canvas>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, py: Python<'_>) -> PyResult<Py<Canvas>> {
-    ctx.bind(py).borrow_mut().rel_curve_to(x1, y1, x2, y2, x3, y3)?;
+fn rel_curve_to(
+    ctx: Py<Canvas>,
+    x1: f32,
+    y1: f32,
+    x2: f32,
+    y2: f32,
+    x3: f32,
+    y3: f32,
+    py: Python<'_>,
+) -> PyResult<Py<Canvas>> {
+    ctx.bind(py)
+        .borrow_mut()
+        .rel_curve_to(x1, y1, x2, y2, x3, y3)?;
     Ok(ctx)
 }
 
 #[pyfunction]
-fn rectangle(ctx: Py<Canvas>, left: f32, top: f32, width: f32, height: f32, py: Python<'_>) -> Py<Canvas> {
-    ctx.bind(py).borrow_mut().rectangle(left, top, width, height);
+fn rectangle(
+    ctx: Py<Canvas>,
+    left: f32,
+    top: f32,
+    width: f32,
+    height: f32,
+    py: Python<'_>,
+) -> Py<Canvas> {
+    ctx.bind(py)
+        .borrow_mut()
+        .rectangle(left, top, width, height);
     ctx
 }
 
 #[pyfunction]
-fn round_rectangle(ctx: Py<Canvas>, left: f32, top: f32, width: f32, height: f32, py: Python<'_>) -> Py<Canvas> {
-    ctx.bind(py).borrow_mut().round_rectangle(left, top, width, height);
+fn round_rectangle(
+    ctx: Py<Canvas>,
+    left: f32,
+    top: f32,
+    width: f32,
+    height: f32,
+    py: Python<'_>,
+) -> Py<Canvas> {
+    ctx.bind(py)
+        .borrow_mut()
+        .round_rectangle(left, top, width, height);
     ctx
 }
 
 #[pyfunction]
-fn arc(ctx: Py<Canvas>, xc: f32, yc: f32, radius: f32, angle1: f32, angle2: f32, py: Python<'_>) -> Py<Canvas> {
-    ctx.bind(py).borrow_mut().arc(xc, yc, radius, angle1, angle2);
+fn arc(
+    ctx: Py<Canvas>,
+    xc: f32,
+    yc: f32,
+    radius: f32,
+    angle1: f32,
+    angle2: f32,
+    py: Python<'_>,
+) -> Py<Canvas> {
+    ctx.bind(py)
+        .borrow_mut()
+        .arc(xc, yc, radius, angle1, angle2);
     ctx
 }
 
@@ -384,17 +518,25 @@ fn close_path(ctx: Py<Canvas>, py: Python<'_>) -> Py<Canvas> {
 
 #[pyfunction]
 #[pyo3(signature = (ctx, r, g, b, a = None))]
-fn set_source_rgba(ctx: Py<Canvas>, r: f32, g: f32, b: f32, a: Option<f32>, py: Python<'_>) -> Py<Canvas> {
+fn set_source_rgba(
+    ctx: Py<Canvas>,
+    r: f32,
+    g: f32,
+    b: f32,
+    a: Option<f32>,
+    py: Python<'_>,
+) -> Py<Canvas> {
     ctx.bind(py).borrow_mut().set_source_rgba(r, g, b, a);
     ctx
 }
 
 #[pyfunction]
 fn set_source_rgb(ctx: Py<Canvas>, r: f32, g: f32, b: f32, py: Python<'_>) -> Py<Canvas> {
-    ctx.bind(py).borrow_mut().set_source_rgba(r, g, b, Some(1.0));
+    ctx.bind(py)
+        .borrow_mut()
+        .set_source_rgba(r, g, b, Some(1.0));
     ctx
 }
-
 
 #[pyfunction]
 fn set_line_width(ctx: Py<Canvas>, width: f32, py: Python<'_>) -> Py<Canvas> {
@@ -416,8 +558,16 @@ fn set_dash(ctx: Py<Canvas>, dashes: Vec<f32>, offset: f32, py: Python<'_>) -> P
 }
 
 #[pyfunction]
-fn select_font_face(ctx: Py<Canvas>, family_name: String, weight: FontWeight, slant: FontSlant, py: Python<'_>) -> PyResult<Py<Canvas>> {
-    ctx.bind(py).borrow_mut().select_font_face(family_name, weight, slant)?;
+fn select_font_face(
+    ctx: Py<Canvas>,
+    family_name: String,
+    weight: FontWeight,
+    slant: FontSlant,
+    py: Python<'_>,
+) -> PyResult<Py<Canvas>> {
+    ctx.bind(py)
+        .borrow_mut()
+        .select_font_face(family_name, weight, slant)?;
     Ok(ctx)
 }
 
@@ -440,7 +590,11 @@ fn show_text(ctx: Py<Canvas>, text: String, py: Python<'_>) -> PyResult<Py<Canva
 }
 
 #[pyfunction]
-fn text_extents(ctx: Py<Canvas>, text: String, py: Python<'_>) -> PyResult<(f32, f32, f32, f32, f32, f32)> {
+fn text_extents(
+    ctx: Py<Canvas>,
+    text: String,
+    py: Python<'_>,
+) -> PyResult<(f32, f32, f32, f32, f32, f32)> {
     ctx.bind(py).borrow_mut().text_extents(text)
 }
 
@@ -501,17 +655,30 @@ impl ImageSurface {
             let skia_surface = create_skia_surface(width, height)?;
             let canvas = Py::new(
                 py,
-                Canvas { skia_surface, path: None, font: None, paint: Paint::default() },
+                Canvas {
+                    skia_surface,
+                    path: None,
+                    font: None,
+                    paint: Paint::default(),
+                },
             )?;
-            Ok(ImageSurface { width, height, canvas })
+            Ok(ImageSurface {
+                width,
+                height,
+                canvas,
+            })
         })
     }
 
     #[getter]
-    fn width(&self) -> i32 { self.width }
+    fn width(&self) -> i32 {
+        self.width
+    }
 
     #[getter]
-    fn height(&self) -> i32 { self.height }
+    fn height(&self) -> i32 {
+        self.height
+    }
 
     #[getter]
     fn canvas(&self, py: Python<'_>) -> Py<Canvas> {
@@ -521,22 +688,38 @@ impl ImageSurface {
     #[getter]
     fn data(&self, py: Python<'_>) -> PyResult<Py<PyByteArray>> {
         let mut canvas_ref = self.canvas.bind(py).borrow_mut();
-        let pixmap = canvas_ref.skia_surface.peek_pixels()
+        let pixmap = canvas_ref
+            .skia_surface
+            .peek_pixels()
             .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
-        let bytes = pixmap.bytes()
+        let bytes = pixmap
+            .bytes()
             .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
         Ok(PyByteArray::new(py, bytes).unbind())
     }
 
     #[staticmethod]
-    unsafe fn create_for_data(data: Bound<'_, PyByteArray>, width: i32, height: i32) -> PyResult<Self> {
+    unsafe fn create_for_data(
+        data: Bound<'_, PyByteArray>,
+        width: i32,
+        height: i32,
+    ) -> PyResult<Self> {
         Python::attach(|py| {
             let skia_surface = create_surface_for_data(data.as_bytes_mut(), width, height)?;
             let canvas = Py::new(
                 py,
-                Canvas { skia_surface, path: None, font: None, paint: Paint::default() },
+                Canvas {
+                    skia_surface,
+                    path: None,
+                    font: None,
+                    paint: Paint::default(),
+                },
             )?;
-            Ok(ImageSurface { width, height, canvas })
+            Ok(ImageSurface {
+                width,
+                height,
+                canvas,
+            })
         })
     }
 }
