@@ -1,10 +1,12 @@
+use std::f32::consts::*;
+
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use pyo3::types::PyByteArray;
 
 use skia_safe::{
-    Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, ImageInfo, Paint, Path, PathBuilder,
-    Point, RRect, Rect, Vector, surfaces,
+    Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, font_style, ImageInfo, Matrix, PaintJoin, Paint, Path, PathBuilder,
+    PathEffect, Point, RRect, Rect, Vector, surfaces,
 };
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
@@ -37,6 +39,44 @@ unsafe fn create_surface_for_data(
     Ok(surface.release())
 }
 
+#[pyclass(from_py_object)]
+#[derive(Clone)]
+enum LineJoin {
+    Miter,
+    Round,
+    Bevel
+}
+
+#[pyclass(from_py_object)]
+#[derive(Clone)]
+enum FontWeight {
+    BOLD,
+    NORMAL
+}
+
+fn py_to_skia_weight (weight: FontWeight) -> font_style::Weight {
+    match weight {
+        FontWeight::BOLD => font_style::Weight::BOLD,
+        FontWeight::NORMAL => font_style::Weight::NORMAL
+    }
+}
+
+#[pyclass(from_py_object)]
+#[derive(Clone)]
+enum FontSlant {
+    ITALIC,
+    NORMAL,
+    OBLIQUE
+}
+
+fn py_to_skia_slant (slant: FontSlant) -> font_style::Slant {
+    match slant {
+        FontSlant::ITALIC => font_style::Slant::Italic,
+        FontSlant::NORMAL => font_style::Slant::Upright,
+        FontSlant::OBLIQUE => font_style::Slant::Oblique
+    }
+}
+
 #[pyclass(unsendable, module = "wyvern")]
 struct Canvas {
     skia_surface: skia_safe::Surface,
@@ -53,6 +93,19 @@ impl Canvas {
 
     fn restore(&mut self) {
         self.skia_surface.canvas().restore();
+    }
+
+    fn translate(&mut self, x: f32, y: f32) {
+        self.skia_surface.canvas().translate(Vector::new(x, y));
+    }
+
+    fn rotate(&mut self, angle: f32) {
+        self.skia_surface.canvas().rotate(angle * (180.0 / PI), None);
+    }
+
+    fn transform(&mut self, scale_x: f32, skew_y: f32, skew_x: f32, scale_y: f32, trans_x: f32, trans_y: f32) {
+        let matrix = Matrix::new_all(scale_x, skew_x, trans_x, skew_y, scale_y, trans_y, 0.0, 0.0, 1.0);
+        self.skia_surface.canvas().concat(&matrix);
     }
 
     fn new_path(&mut self) {
@@ -74,6 +127,10 @@ impl Canvas {
         Ok(())
     }
 
+    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
+        self.path.get_or_insert_with(PathBuilder::new).cubic_to(Vector::new(x1, y1), Vector::new(x2, y2), Vector::new(x3, y3));
+    }
+
     fn rel_curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) -> PyResult<()> {
         self.path.as_mut()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for rel_curve_to"))?
@@ -91,6 +148,11 @@ impl Canvas {
         self.path.get_or_insert_with(PathBuilder::new).add_rrect(RRect::new_rect(r), None, None);
     }
 
+    fn arc(&mut self, xc: f32, yc: f32, radius: f32, angle1: f32, angle2: f32) {
+        let r = Rect::new(xc - radius, yc - radius, xc + radius, yc + radius);
+        self.path.get_or_insert_with(PathBuilder::new).add_arc(r, angle1 * (180.0 / PI), angle2 * (180.0 / PI));
+    }
+
     fn close_path(&mut self) {
         if let Some(pb) = self.path.as_mut() {
             pb.close();
@@ -106,9 +168,23 @@ impl Canvas {
         self.paint.set_stroke_width(width);
     }
 
-    fn select_font_face(&mut self, family_name: String) -> PyResult<()> {
+    fn set_line_join(&mut self, join: LineJoin) {
+        match join {
+            LineJoin::Miter => self.paint.set_stroke_join(PaintJoin::Miter),
+            LineJoin::Round => self.paint.set_stroke_join(PaintJoin::Round),
+            LineJoin::Bevel => self.paint.set_stroke_join(PaintJoin::Bevel),
+        };
+    }
+
+    fn set_dash(&mut self, intervals: Vec<f32>, phase: f32) {
+        let path_effect = PathEffect::dash(&intervals, phase);
+        self.paint.set_path_effect(path_effect);
+    }
+
+    fn select_font_face(&mut self, family_name: String, weight: FontWeight, slant: FontSlant) -> PyResult<()> {
+        let style = FontStyle::new(py_to_skia_weight(weight), font_style::Width::NORMAL, py_to_skia_slant(slant));
         let typeface = FontMgr::new()
-            .match_family_style(&family_name, FontStyle::normal())
+            .match_family_style(&family_name, style)
             .ok_or_else(|| PyRuntimeError::new_err("Font family could not be found"))?;
         let size = self.font.as_ref().map(|f| f.size()).unwrap_or(12.0);
         self.font = Some(Font::from_typeface(typeface, size));
@@ -157,7 +233,13 @@ impl Canvas {
         Ok(())
     }
 
-    fn clip(&mut self) -> PyResult<()> {
+    fn paint_with_alpha(&mut self, a: f32) {
+        let mut paint = self.paint.clone();
+        paint.set_alpha_f(a);
+        self.skia_surface.canvas().draw_paint(&paint);
+    }
+
+    fn clip_preserve(&mut self) -> PyResult<()> {
         let path = self.path.take()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for clip"))?
             .detach();
@@ -165,7 +247,13 @@ impl Canvas {
         Ok(())
     }
 
-    fn stroke(&mut self) -> PyResult<()> {
+    fn clip(&mut self) -> PyResult<()> {
+        self.clip_preserve()?;
+        self.path = None;
+        Ok(())
+    }
+
+    fn stroke_preserve(&mut self) -> PyResult<()> {
         let path = self.path.take()
             .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for stroke"))?
             .detach();
@@ -176,14 +264,26 @@ impl Canvas {
         Ok(())
     }
 
-    fn fill(&mut self) -> PyResult<()> {
+    fn stroke(&mut self) -> PyResult<()> {
+        self.stroke_preserve()?;
+        self.path = None;
+        Ok(())
+    }
+
+    fn fill_preserve(&mut self) -> PyResult<()> {
         let path = self.path.take()
-            .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for fill"))?
+            .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for fill_preserve"))?
             .detach();
         let mut paint = self.paint.clone();
         paint.set_stroke(false);
         paint.set_anti_alias(true);
         self.skia_surface.canvas().draw_path(&path, &paint);
+        Ok(())
+    }
+
+    fn fill(&mut self) -> PyResult<()> {
+        self.fill_preserve()?;
+        self.path = None;
         Ok(())
     }
 }
@@ -200,6 +300,25 @@ fn save(ctx: Py<Canvas>, py: Python<'_>) -> Py<Canvas> {
 #[pyfunction]
 fn restore(ctx: Py<Canvas>, py: Python<'_>) -> Py<Canvas> {
     ctx.bind(py).borrow_mut().restore();
+    ctx
+}
+
+#[pyfunction]
+fn translate(ctx: Py<Canvas>, x: f32, y: f32, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().translate(x, y);
+    ctx
+}
+
+#[pyfunction]
+fn rotate(ctx: Py<Canvas>, angle: f32, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().rotate(angle);
+    ctx
+}
+
+#[pyfunction]
+#[pyo3(signature = (ctx, xx = 1.0, yx = 0.0, xy = 0.0, yy = 1.0, x0 = 0.0, y0 = 0.0))]
+fn transform(ctx: Py<Canvas>, xx: f32, yx: f32, xy: f32, yy: f32, x0: f32, y0: f32, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().transform(xx, yx, xy, yy, x0, y0);
     ctx
 }
 
@@ -228,6 +347,12 @@ fn rel_line_to(ctx: Py<Canvas>, x: f32, y: f32, py: Python<'_>) -> PyResult<Py<C
 }
 
 #[pyfunction]
+fn curve_to(ctx: Py<Canvas>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().curve_to(x1, y1, x2, y2, x3, y3);
+    ctx
+}
+
+#[pyfunction]
 fn rel_curve_to(ctx: Py<Canvas>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, py: Python<'_>) -> PyResult<Py<Canvas>> {
     ctx.bind(py).borrow_mut().rel_curve_to(x1, y1, x2, y2, x3, y3)?;
     Ok(ctx)
@@ -246,6 +371,12 @@ fn round_rectangle(ctx: Py<Canvas>, left: f32, top: f32, width: f32, height: f32
 }
 
 #[pyfunction]
+fn arc(ctx: Py<Canvas>, xc: f32, yc: f32, radius: f32, angle1: f32, angle2: f32, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().arc(xc, yc, radius, angle1, angle2);
+    ctx
+}
+
+#[pyfunction]
 fn close_path(ctx: Py<Canvas>, py: Python<'_>) -> Py<Canvas> {
     ctx.bind(py).borrow_mut().close_path();
     ctx
@@ -259,14 +390,34 @@ fn set_source_rgba(ctx: Py<Canvas>, r: f32, g: f32, b: f32, a: Option<f32>, py: 
 }
 
 #[pyfunction]
+fn set_source_rgb(ctx: Py<Canvas>, r: f32, g: f32, b: f32, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().set_source_rgba(r, g, b, Some(1.0));
+    ctx
+}
+
+
+#[pyfunction]
 fn set_line_width(ctx: Py<Canvas>, width: f32, py: Python<'_>) -> Py<Canvas> {
     ctx.bind(py).borrow_mut().set_line_width(width);
     ctx
 }
 
 #[pyfunction]
-fn select_font_face(ctx: Py<Canvas>, family_name: String, py: Python<'_>) -> PyResult<Py<Canvas>> {
-    ctx.bind(py).borrow_mut().select_font_face(family_name)?;
+fn set_line_join(ctx: Py<Canvas>, join: LineJoin, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().set_line_join(join);
+    ctx
+}
+
+#[pyfunction]
+#[pyo3(signature = (ctx, dashes, offset = 0.0))]
+fn set_dash(ctx: Py<Canvas>, dashes: Vec<f32>, offset: f32, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().set_dash(dashes, offset);
+    ctx
+}
+
+#[pyfunction]
+fn select_font_face(ctx: Py<Canvas>, family_name: String, weight: FontWeight, slant: FontSlant, py: Python<'_>) -> PyResult<Py<Canvas>> {
+    ctx.bind(py).borrow_mut().select_font_face(family_name, weight, slant)?;
     Ok(ctx)
 }
 
@@ -294,6 +445,12 @@ fn text_extents(ctx: Py<Canvas>, text: String, py: Python<'_>) -> PyResult<(f32,
 }
 
 #[pyfunction]
+fn paint_with_alpha(ctx: Py<Canvas>, a: f32, py: Python<'_>) -> Py<Canvas> {
+    ctx.bind(py).borrow_mut().paint_with_alpha(a);
+    ctx
+}
+
+#[pyfunction]
 fn stroke(ctx: Py<Canvas>, py: Python<'_>) -> PyResult<Py<Canvas>> {
     ctx.bind(py).borrow_mut().stroke()?;
     Ok(ctx)
@@ -308,6 +465,24 @@ fn clip(ctx: Py<Canvas>, py: Python<'_>) -> PyResult<Py<Canvas>> {
 #[pyfunction]
 fn fill(ctx: Py<Canvas>, py: Python<'_>) -> PyResult<Py<Canvas>> {
     ctx.bind(py).borrow_mut().fill()?;
+    Ok(ctx)
+}
+
+#[pyfunction]
+fn stroke_preserve(ctx: Py<Canvas>, py: Python<'_>) -> PyResult<Py<Canvas>> {
+    ctx.bind(py).borrow_mut().stroke_preserve()?;
+    Ok(ctx)
+}
+
+#[pyfunction]
+fn clip_preserve(ctx: Py<Canvas>, py: Python<'_>) -> PyResult<Py<Canvas>> {
+    ctx.bind(py).borrow_mut().clip_preserve()?;
+    Ok(ctx)
+}
+
+#[pyfunction]
+fn fill_preserve(ctx: Py<Canvas>, py: Python<'_>) -> PyResult<Py<Canvas>> {
+    ctx.bind(py).borrow_mut().fill_preserve()?;
     Ok(ctx)
 }
 
@@ -369,25 +544,40 @@ impl ImageSurface {
 #[pymodule]
 fn wyvern(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ImageSurface>()?;
+    m.add_class::<LineJoin>()?;
+    m.add_class::<FontWeight>()?;
+    m.add_class::<FontSlant>()?;
     m.add_function(wrap_pyfunction!(save, m)?)?;
     m.add_function(wrap_pyfunction!(restore, m)?)?;
+    m.add_function(wrap_pyfunction!(translate, m)?)?;
+    m.add_function(wrap_pyfunction!(rotate, m)?)?;
+    m.add_function(wrap_pyfunction!(transform, m)?)?;
     m.add_function(wrap_pyfunction!(new_path, m)?)?;
     m.add_function(wrap_pyfunction!(move_to, m)?)?;
     m.add_function(wrap_pyfunction!(line_to, m)?)?;
     m.add_function(wrap_pyfunction!(rel_line_to, m)?)?;
+    m.add_function(wrap_pyfunction!(curve_to, m)?)?;
     m.add_function(wrap_pyfunction!(rel_curve_to, m)?)?;
     m.add_function(wrap_pyfunction!(rectangle, m)?)?;
     m.add_function(wrap_pyfunction!(round_rectangle, m)?)?;
+    m.add_function(wrap_pyfunction!(arc, m)?)?;
     m.add_function(wrap_pyfunction!(close_path, m)?)?;
     m.add_function(wrap_pyfunction!(set_source_rgba, m)?)?;
+    m.add_function(wrap_pyfunction!(set_source_rgb, m)?)?;
     m.add_function(wrap_pyfunction!(set_line_width, m)?)?;
+    m.add_function(wrap_pyfunction!(set_line_join, m)?)?;
+    m.add_function(wrap_pyfunction!(set_dash, m)?)?;
     m.add_function(wrap_pyfunction!(select_font_face, m)?)?;
     m.add_function(wrap_pyfunction!(set_font_size, m)?)?;
     m.add_function(wrap_pyfunction!(text_path, m)?)?;
     m.add_function(wrap_pyfunction!(text_extents, m)?)?;
     m.add_function(wrap_pyfunction!(show_text, m)?)?;
+    m.add_function(wrap_pyfunction!(paint_with_alpha, m)?)?;
     m.add_function(wrap_pyfunction!(stroke, m)?)?;
     m.add_function(wrap_pyfunction!(clip, m)?)?;
     m.add_function(wrap_pyfunction!(fill, m)?)?;
+    m.add_function(wrap_pyfunction!(stroke_preserve, m)?)?;
+    m.add_function(wrap_pyfunction!(clip_preserve, m)?)?;
+    m.add_function(wrap_pyfunction!(fill_preserve, m)?)?;
     Ok(())
 }

@@ -96,7 +96,7 @@ class TextBox(object):
         self.cursorActive = True
         self.cursorTimer = pygame.time.get_ticks()
         self.blinkDelay = 400
-        self.font = 'Arial'
+        self.font = ('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         self.textSize = 15
         self.padding = 4
         self.textAnchor = [
@@ -188,7 +188,7 @@ class TextBox(object):
         ctx = wyvern.move_to(
             ctx, self.textAnchor[0] + self.textOffset, self.textAnchor[1]
         )
-        ctx = wyvern.select_font_face(ctx, self.font)
+        ctx = wyvern.select_font_face(ctx, *self.font)
         ctx = wyvern.set_font_size(ctx, self.textSize)
         ctx = wyvern.text_path(ctx, ''.join(self.buf))
         ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
@@ -222,7 +222,7 @@ class TextBox(object):
             return 0
         ctx = self.modal.measureCtx
         ctx = wyvern.save(ctx)
-        ctx = wyvern.select_font_face(ctx, self.font)
+        ctx = wyvern.select_font_face(ctx, *self.font)
         ctx = wyvern.set_font_size(ctx, self.textSize)
         _, _, _, _, xAdvance, _ = wyvern.text_extents(ctx, text)
         ctx = wyvern.restore(ctx)
@@ -366,7 +366,7 @@ class Button(object):
         self.baseColor = (0.7, 0.6, 0.35, 1.0)
         self.hoverColor = (0.75, 0.7, 0.5, 1.0)
         self.color = self.baseColor
-        self.font = 'Arial'
+        self.font = ('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         self.textSize = 15
         self.text = 'OK'
 
@@ -379,7 +379,7 @@ class Button(object):
         ctx = wyvern.fill(ctx)
 
         # Draw the label
-        ctx = wyvern.select_font_face(ctx, self.font)
+        ctx = wyvern.select_font_face(ctx, *self.font)
         ctx = wyvern.set_font_size(ctx, self.textSize)
         ctx = wyvern.set_source_rgba(ctx, 1.0, 1.0, 1.0, 1.0)
         _, _, textWidth, textHeight, _, _ = wyvern.text_extents(ctx, self.text)
@@ -489,7 +489,9 @@ class TextBoxModal(object):
         return ctx
 
     def drawPrompt(self, ctx, simulate=False):
-        ctx = wyvern.select_font_face(ctx, 'Arial')
+        ctx = wyvern.select_font_face(
+            ctx, 'Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL
+        )
         ctx = wyvern.set_font_size(ctx, self.textSize)
 
         promptWords = self.prompt.split()
