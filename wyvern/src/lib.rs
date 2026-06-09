@@ -39,12 +39,18 @@ unsafe fn create_surface_for_data(
     Ok(surface.release())
 }
 
+fn new_path_and_move(p : Point) -> PathBuilder {
+    let mut new_path = PathBuilder::new();
+    new_path.move_to(p);
+    new_path
+}
+
 #[pyclass(from_py_object)]
 #[derive(Clone)]
 enum LineJoin {
-    Miter,
-    Round,
-    Bevel,
+    MITER,
+    ROUND,
+    BEVEL,
 }
 
 #[pyclass(from_py_object)]
@@ -125,15 +131,17 @@ impl Canvas {
     }
 
     fn move_to(&mut self, x: f32, y: f32) {
+        let point = Point::new(x, y);
         self.path
-            .get_or_insert_with(PathBuilder::new)
-            .move_to(Point::new(x, y));
+            .get_or_insert_with(|| new_path_and_move(point))
+            .move_to(point);
     }
 
     fn line_to(&mut self, x: f32, y: f32) {
+        let point = Point::new(x, y);
         self.path
-            .get_or_insert_with(PathBuilder::new)
-            .line_to(Point::new(x, y));
+            .get_or_insert_with(|| new_path_and_move(point))
+            .line_to(point);
     }
 
     fn rel_line_to(&mut self, x: f32, y: f32) -> PyResult<()> {
@@ -145,8 +153,9 @@ impl Canvas {
     }
 
     fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
-        self.path.get_or_insert_with(PathBuilder::new).cubic_to(
-            Vector::new(x1, y1),
+        let first_point = Point::new(x1, y1);
+        self.path.get_or_insert_with(|| new_path_and_move(first_point)).cubic_to(
+            first_point,
             Vector::new(x2, y2),
             Vector::new(x3, y3),
         );
@@ -175,23 +184,29 @@ impl Canvas {
     fn rectangle(&mut self, left: f32, top: f32, width: f32, height: f32) {
         let r = Rect::new(left, top, left + width, top + height);
         self.path
-            .get_or_insert_with(PathBuilder::new)
+            .get_or_insert_with(|| new_path_and_move(r.tl()))
             .add_rect(r, None, None);
     }
 
     fn round_rectangle(&mut self, left: f32, top: f32, width: f32, height: f32) {
         let r = Rect::new(left, top, left + width, top + height);
         self.path
-            .get_or_insert_with(PathBuilder::new)
+            .get_or_insert_with(|| new_path_and_move(r.tl()))
             .add_rrect(RRect::new_rect(r), None, None);
     }
 
-    fn arc(&mut self, xc: f32, yc: f32, radius: f32, angle1: f32, angle2: f32) {
+    fn arc(&mut self, xc: f32, yc: f32, radius: f32, angle1: f32, mut angle2: f32) {
         let r = Rect::new(xc - radius, yc - radius, xc + radius, yc + radius);
-        self.path.get_or_insert_with(PathBuilder::new).add_arc(
+        let start_point =  Point::new(xc + (radius * angle1.cos()), yc + (radius * angle1.sin()));
+        while angle2 < angle1 {
+            angle2 += 2.0 * PI
+        }
+        self.path.get_or_insert_with(|| new_path_and_move(start_point))
+        .line_to(start_point)
+        .add_arc(
             r,
             angle1 * (180.0 / PI),
-            angle2 * (180.0 / PI),
+            (angle2 - angle1) * (180.0 / PI),
         );
     }
 
@@ -213,9 +228,9 @@ impl Canvas {
 
     fn set_line_join(&mut self, join: LineJoin) {
         match join {
-            LineJoin::Miter => self.paint.set_stroke_join(PaintJoin::Miter),
-            LineJoin::Round => self.paint.set_stroke_join(PaintJoin::Round),
-            LineJoin::Bevel => self.paint.set_stroke_join(PaintJoin::Bevel),
+            LineJoin::MITER => self.paint.set_stroke_join(PaintJoin::Miter),
+            LineJoin::ROUND => self.paint.set_stroke_join(PaintJoin::Round),
+            LineJoin::BEVEL => self.paint.set_stroke_join(PaintJoin::Bevel),
         };
     }
 
@@ -313,8 +328,8 @@ impl Canvas {
     fn clip_preserve(&mut self) -> PyResult<()> {
         let path = self
             .path
-            .take()
-            .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for clip"))?
+            .clone()
+            .ok_or(PyRuntimeError::new_err("Path does not exist for clip"))?
             .detach();
         self.skia_surface.canvas().clip_path(&path, None, true);
         Ok(())
@@ -329,8 +344,8 @@ impl Canvas {
     fn stroke_preserve(&mut self) -> PyResult<()> {
         let path = self
             .path
-            .take()
-            .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for stroke"))?
+            .clone()
+            .ok_or(PyRuntimeError::new_err("Path does not exist for stroke"))?
             .detach();
         let mut paint = self.paint.clone();
         paint.set_stroke(true);
@@ -348,8 +363,8 @@ impl Canvas {
     fn fill_preserve(&mut self) -> PyResult<()> {
         let path = self
             .path
-            .take()
-            .ok_or_else(|| PyRuntimeError::new_err("Path does not exist for fill_preserve"))?
+            .clone()
+            .ok_or(PyRuntimeError::new_err("Path does not exist for fill"))?
             .detach();
         let mut paint = self.paint.clone();
         paint.set_stroke(false);
