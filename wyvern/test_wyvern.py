@@ -88,6 +88,18 @@ class SandboxModal(object):
         ctx = wyvern.transform(ctx, 0, 1, 1, 0, 0, 0)
         ctx = wyvern.stroke(ctx)
 
+        gradient = wyvern.Gradient.LinearGradient(300, 300, 400, 400)
+
+        ctx = wyvern.add_color_stops_rgba(
+            ctx,
+            [0.0, 0.5, 1.0],
+            [(1.0, 0.0, 0.0, 1.0), (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)],
+        )
+
+        ctx = wyvern.set_source_gradient(ctx, gradient)
+        ctx = wyvern.rectangle(ctx, 300, 300, 100, 100)
+        ctx = wyvern.fill(ctx)
+
         ctx = wyvern.restore(ctx)
         # NEW
         return ctx

@@ -90,6 +90,17 @@ class SandboxModal(object):
         ctx.rectangle(50, 400, 100, 50)
         ctx.stroke()
 
+        gradient = cairo.LinearGradient(300, 300, 400, 400)
+
+        # Add color stops (offset, r, g, b, alpha)
+        gradient.add_color_stops_rgba(0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
+        gradient.add_color_stops_rgba(0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
+        gradient.add_color_stops_rgba(1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
+
+        ctx.set_source(gradient)
+        ctx.rectangle(300, 300, 100, 100)
+        ctx.fill()
+
         ctx.restore()
 
     def run(self):

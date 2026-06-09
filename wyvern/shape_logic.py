@@ -12,7 +12,6 @@ import __main__
 ### PYPI VERSION ###
 import wyvern
 import pygame
-import cairo
 ### END PYPI VERSION ###
 
 from cmu_graphics.libs import webrequest
@@ -1538,11 +1537,12 @@ class Shape(object):
         if self.group is not None:
             self.group._toBack(self)
 
-    # REVISIT
     def setFillOrStrokeStyle(self, ctx, fillOrBorder):
-        style = self.getFillOrStrokeStyle(fillOrBorder)
-        if isinstance(style, cairo.Gradient):
-            ctx.set_source(style)
+        style, stops = self.getFillOrStrokeStyle(fillOrBorder)
+        if isinstance(style, wyvern.Gradient):
+            offsets, colors = stops
+            ctx = wyvern.set_color_stops_rgba(ctx, offsets, colors)
+            ctx = wyvern.set_source_gradient(ctx, style)
         else:
             ctx = wyvern.set_source_rgba(ctx, *style)
         return ctx
@@ -1557,17 +1557,16 @@ class Shape(object):
             for i in range(n):
                 color = gradient.colors[i]
                 g.add_color_stop_rgba(i / (n - 1), *self.getFillOrStrokeStyle(color))
-            return g
+            return g, ([i / (n - 1) for i in range(n)], gradient.colors)
         if isinstance(fillOrBorder, str):
             fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
-        # Flips RGBA to BGRA because Cairo is going to flip it back
         rgba = (
-            fillOrBorder.blue / 255,
-            fillOrBorder.green / 255,
             fillOrBorder.red / 255,
+            fillOrBorder.green / 255,
+            fillOrBorder.blue / 255,
             self.opacity / 100,
         )
-        return rgba
+        return rgba, None
 
     def setDashes(self, ctx):
         if isinstance(self.dashes, bool):
@@ -1630,7 +1629,6 @@ class Shape(object):
         ctx = utils.makePolygonPath(pts, ctx)
         ctx = wyvern.close_path(ctx)
         ctx = wyvern.set_line_width(ctx, 3)
-        # REVISIT
         ctx = self.setFillOrStrokeStyle(ctx, 'magenta')
         ctx = wyvern.set_dash(ctx, [7, 7])
         ctx = wyvern.stroke(ctx)
@@ -2342,7 +2340,7 @@ class Label(Shape):
             [[cx, cy]] = utils.rotatePoints(
                 [[cx, cy]], -self.rotateAngle, targetX, targetY
             )
-            return cairo.RadialGradient(cx, cy, 0, cx, cy, r)
+            return wyvern.Gradient.RadialGradient(cx, cy, r)
 
         startToPointIndex = {
             'left-top': 0,
@@ -2367,7 +2365,7 @@ class Label(Shape):
                 [[x0, y0], [x1, y1]], -self.rotateAngle, targetX, targetY
             )
 
-        return cairo.LinearGradient(x0, y0, x1, y1)
+        return wyvern.Gradient.LinearGradient(x0, y0, x1, y1)
 
     def get_width(self):
         return self.get('width')
@@ -2660,10 +2658,7 @@ class Polygon(Shape):
             if isinstance(self, Star):
                 r *= 0.8
 
-            return cairo.RadialGradient(
-                rotateAnchor[0],
-                rotateAnchor[1],
-                0,
+            return wyvern.Gradient.RadialGradient(
                 rotateAnchor[0],
                 rotateAnchor[1],
                 r,
@@ -2718,7 +2713,7 @@ class Polygon(Shape):
                 [[x0, y0], [x1, y1]], self.rotateAngle, rotateAnchor[0], rotateAnchor[1]
             )
 
-        return cairo.LinearGradient(x0, y0, x1, y1)
+        return wyvern.Gradient.LinearGradient(x0, y0, x1, y1)
 
 
 class Rect(Polygon):

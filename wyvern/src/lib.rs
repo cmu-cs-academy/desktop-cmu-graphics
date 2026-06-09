@@ -5,8 +5,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyByteArray;
 
 use skia_safe::{
-    font_style, surfaces, Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle,
-    ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, Vector,
+    Color, Color4f, ColorSpace, ColorType, gradient, Font, FontMgr, FontStyle, ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, Vector, font_style, surfaces
 };
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
@@ -83,15 +82,23 @@ fn py_to_skia_slant(slant: FontSlant) -> font_style::Slant {
     }
 }
 
+#[pyclass(from_py_object)]
+#[derive(Clone)]
+enum Gradient {
+    LinearGradient(f32, f32, f32, f32),
+    RadialGradient(f32, f32, f32),
+}
+
 #[pyclass(unsendable, module = "wyvern")]
 struct Canvas {
     skia_surface: skia_safe::Surface,
     path: Option<skia_safe::PathBuilder>,
     font: Option<skia_safe::Font>,
+    gradient_colors: Option<Vec<Color4f>>,
+    gradient_offsets: Option<Vec<f32>>,
     paint: Paint,
 }
 
-#[pymethods]
 impl Canvas {
     fn save(&mut self) {
         self.skia_surface.canvas().save();
@@ -378,6 +385,36 @@ impl Canvas {
         self.path = None;
         Ok(())
     }
+
+    fn add_color_stops_rgba(&mut self, offsets: Vec<f32>, colors: Vec<Color4f>) {
+        self.gradient_offsets = Some(offsets);
+        self.gradient_colors = Some(colors);
+    }
+
+    fn set_source_linear_gradient(&mut self, x0: f32, y0: f32, x1: f32, y1: f32) -> PyResult<()> {
+        let colors = &self.gradient_colors.clone().ok_or(PyRuntimeError::new_err("Colors have not been set for gradient"))?;
+        let offsets = &self.gradient_offsets.clone().ok_or(PyRuntimeError::new_err("Offsets have not been set for gradient"))?;
+        let gradient = gradient::Gradient::new(gradient::Colors::new(colors, Some(offsets), skia_safe::TileMode::Clamp, None), gradient::Interpolation::default());
+        let shader = gradient::shaders::linear_gradient((Point::new(x0, y0), Point::new(x1, y1)), &gradient, None).ok_or(PyRuntimeError::new_err("Issue with creating linear gradient shader"))?;
+        self.paint.set_shader(shader);
+        Ok(())
+    }
+
+    fn set_source_radial_gradient(&mut self, xc: f32, yc: f32, radius: f32) -> PyResult<()> {
+        let colors = &self.gradient_colors.clone().ok_or(PyRuntimeError::new_err("Colors have not been set for gradient"))?;
+        let offsets = &self.gradient_offsets.clone().ok_or(PyRuntimeError::new_err("Offsets have not been set for gradient"))?;
+        let gradient = gradient::Gradient::new(gradient::Colors::new(colors, Some(offsets), skia_safe::TileMode::Clamp, None), gradient::Interpolation::default());
+        let shader = gradient::shaders::radial_gradient((Point::new(xc, yc), radius), &gradient, None).ok_or(PyRuntimeError::new_err("Issue with creating radial gradient shader"))?;
+        self.paint.set_shader(shader);
+        Ok(())
+    }
+
+    fn set_source_gradient(&mut self, g: Gradient) -> PyResult<()> {
+        match g {
+            Gradient::LinearGradient(x0, y0, x1, y1) => self.set_source_linear_gradient(x0, y0, x1, y1),
+            Gradient::RadialGradient(xc, yc, radius) => self.set_source_radial_gradient(xc, yc, radius),
+        }
+    }
 }
 
 // Module-level function wrappers so modal.py can use wyvern.save(ctx) style calls.
@@ -655,6 +692,19 @@ fn fill_preserve(ctx: Py<Canvas>, py: Python<'_>) -> PyResult<Py<Canvas>> {
     Ok(ctx)
 }
 
+#[pyfunction]
+fn add_color_stops_rgba(ctx: Py<Canvas>, offsets: Vec<f32>, colors: Vec<(f32, f32, f32, f32)>, py: Python<'_>) -> Py<Canvas> {
+    let colors4f = colors.into_iter().map(|(r, g, b, a)| Color4f::new(r, g, b, a)).collect();
+    ctx.bind(py).borrow_mut().add_color_stops_rgba(offsets, colors4f);
+    ctx
+}
+
+#[pyfunction]
+fn set_source_gradient(ctx: Py<Canvas>, g: Gradient, py: Python<'_>) -> PyResult<Py<Canvas>> {
+    ctx.bind(py).borrow_mut().set_source_gradient(g)?;
+    Ok(ctx)
+}
+
 #[pyclass(module = "wyvern", subclass)]
 struct ImageSurface {
     width: i32,
@@ -674,6 +724,8 @@ impl ImageSurface {
                     skia_surface,
                     path: None,
                     font: None,
+                    gradient_colors: None,
+                    gradient_offsets: None,
                     paint: Paint::default(),
                 },
             )?;
@@ -727,6 +779,8 @@ impl ImageSurface {
                     skia_surface,
                     path: None,
                     font: None,
+                    gradient_colors: None,
+                    gradient_offsets: None,
                     paint: Paint::default(),
                 },
             )?;
@@ -745,6 +799,7 @@ fn wyvern(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LineJoin>()?;
     m.add_class::<FontWeight>()?;
     m.add_class::<FontSlant>()?;
+    m.add_class::<Gradient>()?;
     m.add_function(wrap_pyfunction!(save, m)?)?;
     m.add_function(wrap_pyfunction!(restore, m)?)?;
     m.add_function(wrap_pyfunction!(translate, m)?)?;
@@ -777,5 +832,7 @@ fn wyvern(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(stroke_preserve, m)?)?;
     m.add_function(wrap_pyfunction!(clip_preserve, m)?)?;
     m.add_function(wrap_pyfunction!(fill_preserve, m)?)?;
+    m.add_function(wrap_pyfunction!(add_color_stops_rgba, m)?)?;
+    m.add_function(wrap_pyfunction!(set_source_gradient, m)?)?;
     Ok(())
 }
