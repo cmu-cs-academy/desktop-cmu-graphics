@@ -5,7 +5,9 @@ use pyo3::prelude::*;
 use pyo3::types::PyByteArray;
 
 use skia_safe::{
-    Color, Color4f, ColorSpace, ColorType, gradient, Font, FontMgr, FontStyle, ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, Vector, font_style, surfaces
+    font_style, gradient, surfaces, Color, Color4f, ColorSpace, ColorType, Font, FontMgr,
+    FontStyle, ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect,
+    Rect, Vector,
 };
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
@@ -38,7 +40,7 @@ unsafe fn create_surface_for_data(
     Ok(surface.release())
 }
 
-fn new_path_and_move(p : Point) -> PathBuilder {
+fn new_path_and_move(p: Point) -> PathBuilder {
     let mut new_path = PathBuilder::new();
     new_path.move_to(p);
     new_path
@@ -94,8 +96,8 @@ struct Canvas {
     skia_surface: skia_safe::Surface,
     path: Option<skia_safe::PathBuilder>,
     font: Option<skia_safe::Font>,
-    gradient_colors: Option<Vec<Color4f>>,
-    gradient_offsets: Option<Vec<f32>>,
+    gradient_colors: Vec<Color4f>,
+    gradient_offsets: Vec<f32>,
     paint: Paint,
 }
 
@@ -161,11 +163,9 @@ impl Canvas {
 
     fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
         let first_point = Point::new(x1, y1);
-        self.path.get_or_insert_with(|| new_path_and_move(first_point)).cubic_to(
-            first_point,
-            Vector::new(x2, y2),
-            Vector::new(x3, y3),
-        );
+        self.path
+            .get_or_insert_with(|| new_path_and_move(first_point))
+            .cubic_to(first_point, Vector::new(x2, y2), Vector::new(x3, y3));
     }
 
     fn rel_curve_to(
@@ -204,17 +204,14 @@ impl Canvas {
 
     fn arc(&mut self, xc: f32, yc: f32, radius: f32, angle1: f32, mut angle2: f32) {
         let r = Rect::new(xc - radius, yc - radius, xc + radius, yc + radius);
-        let start_point =  Point::new(xc + (radius * angle1.cos()), yc + (radius * angle1.sin()));
+        let start_point = Point::new(xc + (radius * angle1.cos()), yc + (radius * angle1.sin()));
         while angle2 < angle1 {
             angle2 += 2.0 * PI
         }
-        self.path.get_or_insert_with(|| new_path_and_move(start_point))
-        .line_to(start_point)
-        .add_arc(
-            r,
-            angle1 * (180.0 / PI),
-            (angle2 - angle1) * (180.0 / PI),
-        );
+        self.path
+            .get_or_insert_with(|| new_path_and_move(start_point))
+            .line_to(start_point)
+            .add_arc(r, angle1 * (180.0 / PI), (angle2 - angle1) * (180.0 / PI));
     }
 
     fn close_path(&mut self) {
@@ -386,34 +383,87 @@ impl Canvas {
         Ok(())
     }
 
-    fn add_color_stops_rgba(&mut self, offsets: Vec<f32>, colors: Vec<Color4f>) {
-        self.gradient_offsets = Some(offsets);
-        self.gradient_colors = Some(colors);
+    fn add_color_stop_rgba(&mut self, offset: f32, color: Color4f) {
+        self.gradient_offsets.push(offset);
+        self.gradient_colors.push(color);
     }
 
     fn set_source_linear_gradient(&mut self, x0: f32, y0: f32, x1: f32, y1: f32) -> PyResult<()> {
-        let colors = &self.gradient_colors.clone().ok_or(PyRuntimeError::new_err("Colors have not been set for gradient"))?;
-        let offsets = &self.gradient_offsets.clone().ok_or(PyRuntimeError::new_err("Offsets have not been set for gradient"))?;
-        let gradient = gradient::Gradient::new(gradient::Colors::new(colors, Some(offsets), skia_safe::TileMode::Clamp, None), gradient::Interpolation::default());
-        let shader = gradient::shaders::linear_gradient((Point::new(x0, y0), Point::new(x1, y1)), &gradient, None).ok_or(PyRuntimeError::new_err("Issue with creating linear gradient shader"))?;
+        let colors = &self.gradient_colors.clone();
+        let offsets = &self.gradient_offsets.clone();
+        let gradient = gradient::Gradient::new(
+            gradient::Colors::new(colors, Some(offsets), skia_safe::TileMode::Clamp, None),
+            gradient::Interpolation::default(),
+        );
+        let shader = gradient::shaders::linear_gradient(
+            (Point::new(x0, y0), Point::new(x1, y1)),
+            &gradient,
+            None,
+        )
+        .ok_or(PyRuntimeError::new_err(
+            "Issue with creating linear gradient shader (did you add color stops?)",
+        ))?;
         self.paint.set_shader(shader);
         Ok(())
     }
 
     fn set_source_radial_gradient(&mut self, xc: f32, yc: f32, radius: f32) -> PyResult<()> {
-        let colors = &self.gradient_colors.clone().ok_or(PyRuntimeError::new_err("Colors have not been set for gradient"))?;
-        let offsets = &self.gradient_offsets.clone().ok_or(PyRuntimeError::new_err("Offsets have not been set for gradient"))?;
-        let gradient = gradient::Gradient::new(gradient::Colors::new(colors, Some(offsets), skia_safe::TileMode::Clamp, None), gradient::Interpolation::default());
-        let shader = gradient::shaders::radial_gradient((Point::new(xc, yc), radius), &gradient, None).ok_or(PyRuntimeError::new_err("Issue with creating radial gradient shader"))?;
+        let colors = &self.gradient_colors.clone();
+        let offsets = &self.gradient_offsets.clone();
+        let gradient = gradient::Gradient::new(
+            gradient::Colors::new(colors, Some(offsets), skia_safe::TileMode::Clamp, None),
+            gradient::Interpolation::default(),
+        );
+        let shader =
+            gradient::shaders::radial_gradient((Point::new(xc, yc), radius), &gradient, None)
+                .ok_or(PyRuntimeError::new_err(
+                    "Issue with creating radial gradient shader (did you add color stops?)",
+                ))?;
         self.paint.set_shader(shader);
         Ok(())
     }
 
     fn set_source_gradient(&mut self, g: Gradient) -> PyResult<()> {
         match g {
-            Gradient::LinearGradient(x0, y0, x1, y1) => self.set_source_linear_gradient(x0, y0, x1, y1),
-            Gradient::RadialGradient(xc, yc, radius) => self.set_source_radial_gradient(xc, yc, radius),
+            Gradient::LinearGradient(x0, y0, x1, y1) => {
+                self.set_source_linear_gradient(x0, y0, x1, y1)?
+            }
+            Gradient::RadialGradient(xc, yc, radius) => {
+                self.set_source_radial_gradient(xc, yc, radius)?
+            }
         }
+        self.gradient_offsets = Vec::new();
+        self.gradient_colors = Vec::new();
+        Ok(())
+    }
+
+    fn set_source_image(
+        &mut self,
+        data: &mut [u8],
+        width: i32,
+        height: i32,
+        row_bytes: usize,
+        x: f32,
+        y: f32,
+    ) -> PyResult<()> {
+        let image_info = ImageInfo::new(
+            (width, height),
+            ColorType::BGRA8888,
+            skia_safe::AlphaType::Premul,
+            ColorSpace::new_srgb(),
+        );
+        let image = skia_safe::images::raster_from_data(
+            &image_info,
+            skia_safe::Data::new_copy(data),
+            row_bytes,
+        )
+        .ok_or(PyRuntimeError::new_err(
+            "Issue with creating image from data",
+        ))?;
+        self.skia_surface
+            .canvas()
+            .draw_image(image, Point::new(x, y), Some(&self.paint));
+        Ok(())
     }
 }
 
@@ -693,15 +743,47 @@ fn fill_preserve(ctx: Py<Canvas>, py: Python<'_>) -> PyResult<Py<Canvas>> {
 }
 
 #[pyfunction]
-fn add_color_stops_rgba(ctx: Py<Canvas>, offsets: Vec<f32>, colors: Vec<(f32, f32, f32, f32)>, py: Python<'_>) -> Py<Canvas> {
-    let colors4f = colors.into_iter().map(|(r, g, b, a)| Color4f::new(r, g, b, a)).collect();
-    ctx.bind(py).borrow_mut().add_color_stops_rgba(offsets, colors4f);
+fn add_color_stop_rgba(
+    ctx: Py<Canvas>,
+    offset: f32,
+    r: f32,
+    g: f32,
+    b: f32,
+    a: f32,
+    py: Python<'_>,
+) -> Py<Canvas> {
+    let color4f = Color4f::new(r, g, b, a);
+    ctx.bind(py)
+        .borrow_mut()
+        .add_color_stop_rgba(offset, color4f);
     ctx
 }
 
 #[pyfunction]
 fn set_source_gradient(ctx: Py<Canvas>, g: Gradient, py: Python<'_>) -> PyResult<Py<Canvas>> {
     ctx.bind(py).borrow_mut().set_source_gradient(g)?;
+    Ok(ctx)
+}
+
+#[pyfunction]
+unsafe fn set_source_image(
+    ctx: Py<Canvas>,
+    data: Bound<'_, PyByteArray>,
+    width: i32,
+    height: i32,
+    row_bytes: usize,
+    x: f32,
+    y: f32,
+    py: Python<'_>,
+) -> PyResult<Py<Canvas>> {
+    ctx.bind(py).borrow_mut().set_source_image(
+        data.as_bytes_mut(),
+        width,
+        height,
+        row_bytes,
+        x,
+        y,
+    )?;
     Ok(ctx)
 }
 
@@ -724,8 +806,8 @@ impl ImageSurface {
                     skia_surface,
                     path: None,
                     font: None,
-                    gradient_colors: None,
-                    gradient_offsets: None,
+                    gradient_colors: Vec::new(),
+                    gradient_offsets: Vec::new(),
                     paint: Paint::default(),
                 },
             )?;
@@ -779,8 +861,8 @@ impl ImageSurface {
                     skia_surface,
                     path: None,
                     font: None,
-                    gradient_colors: None,
-                    gradient_offsets: None,
+                    gradient_colors: Vec::new(),
+                    gradient_offsets: Vec::new(),
                     paint: Paint::default(),
                 },
             )?;
@@ -832,7 +914,8 @@ fn wyvern(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(stroke_preserve, m)?)?;
     m.add_function(wrap_pyfunction!(clip_preserve, m)?)?;
     m.add_function(wrap_pyfunction!(fill_preserve, m)?)?;
-    m.add_function(wrap_pyfunction!(add_color_stops_rgba, m)?)?;
+    m.add_function(wrap_pyfunction!(add_color_stop_rgba, m)?)?;
     m.add_function(wrap_pyfunction!(set_source_gradient, m)?)?;
+    m.add_function(wrap_pyfunction!(set_source_image, m)?)?;
     Ok(())
 }

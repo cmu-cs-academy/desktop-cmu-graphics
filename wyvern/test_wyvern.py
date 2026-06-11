@@ -90,14 +90,24 @@ class SandboxModal(object):
 
         gradient = wyvern.Gradient.LinearGradient(300, 300, 400, 400)
 
-        ctx = wyvern.add_color_stops_rgba(
-            ctx,
-            [0.0, 0.5, 1.0],
-            [(1.0, 0.0, 0.0, 1.0), (0.0, 1.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)],
-        )
+        # Add color stops (offset, r, g, b, alpha)
+        ctx = wyvern.add_color_stop_rgba(ctx, 0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
+        ctx = wyvern.add_color_stop_rgba(ctx, 0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
+        ctx = wyvern.add_color_stop_rgba(ctx, 1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
 
         ctx = wyvern.set_source_gradient(ctx, gradient)
         ctx = wyvern.rectangle(ctx, 300, 300, 100, 100)
+        ctx = wyvern.fill(ctx)
+
+        gradient = wyvern.Gradient.RadialGradient(475, 100, 100)
+
+        # Add color stops (offset, r, g, b, alpha)
+        ctx = wyvern.add_color_stop_rgba(ctx, 0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
+        ctx = wyvern.add_color_stop_rgba(ctx, 0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
+        ctx = wyvern.add_color_stop_rgba(ctx, 1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
+
+        ctx = wyvern.set_source_gradient(ctx, gradient)
+        ctx = wyvern.arc(ctx, 475, 100, 100, 0, 2 * math.pi)
         ctx = wyvern.fill(ctx)
 
         ctx = wyvern.restore(ctx)

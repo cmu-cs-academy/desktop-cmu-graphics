@@ -551,31 +551,29 @@ def getAlignAttrs(align):
     return [xattr, yattr]
 
 
-def wyvernSurfaceFromPilImage(image):
+def wyvernImageFromPilImage(image):
     image = image.convert('RGBA')  # ensure we have the correct number of channels
     a = array.array('B', image.tobytes('raw', 'RGBA'))
-    surface = wyvern.ImageSurface.create_for_data(a, image.size[0], image.size[1])
-    return surface
+    return (a, image.size[0], image.size[1], image.size[0] * 4)
 
 
-def wyvernSurfaceFromPygameSurface(pygameSurface):
+def wyvernImageFromPygameSurface(pygameSurface):
     a = array.array('B', pygame.image.tostring(pygameSurface, 'RGBA'))
-    surface = wyvern.ImageSurface.create_for_data(a, *pygameSurface.get_size())
-    return surface
+    return (a, *pygameSurface.get_size(), pygameSurface.get_pitch())
 
 
 class PILWrapper(object):
     def __init__(self, image):
         self.image = image
-        self._surface = None
+        self._imageParams = None
         self.uuid = str(uuid.uuid4())
 
-    def get_surface(self):
-        if self._surface is None:
-            self._surface = wyvernSurfaceFromPilImage(self.image)
-        return self._surface
+    def get_params(self):
+        if self._imageParams is None:
+            self._imageParams = wyvernImageFromPilImage(self.image)
+        return self._imageParams
 
-    surface = property(get_surface, None)
+    surface = property(get_params, None)
 
 
 def hashReference(reference):
@@ -603,15 +601,15 @@ def loadImage(reference):
 
     if referenceHash not in activeDrawing.images:
         if isinstance(reference, PILWrapper):
-            wyvernSurface = reference.surface
+            imageParams = reference.params
         else:
             pygameSurface = loadImageFromStringReference(reference)
-            wyvernSurface = wyvernSurfaceFromPygameSurface(pygameSurface)
-        activeDrawing.images[hashReference(reference)] = wyvernSurface
+            imageParams = wyvernImageFromPygameSurface(pygameSurface)
+        activeDrawing.images[hashReference(reference)] = imageParams
     else:
-        wyvernSurface = activeDrawing.images[referenceHash]
+        imageParams = activeDrawing.images[referenceHash]
 
-    return {'width': wyvernSurface.width, 'height': wyvernSurface.height}
+    return {'width': imageParams[1], 'height': imageParams[2]}
 
 
 shapeAttrs = dict()
@@ -3143,9 +3141,8 @@ class CMUImage(PolygonWithTransform):
         mat = self.transformMatrix
         ctx = wyvern.translate(ctx, self.pointList[0][0], self.pointList[0][1])
         ctx = wyvern.transform(ctx, mat[0][0], mat[1][0], mat[0][1], mat[1][1], 0, 0)
-        # REVISIT
-        ctx = wyvern.set_source_surface(
-            ctx, activeDrawing.images[hashReference(self.url)], 0, 0
+        ctx = wyvern.set_source_image(
+            ctx, *activeDrawing.images[hashReference(self.url)], 0, 0
         )
         ctx = wyvern.paint_with_alpha(ctx, self.opacity / 100)
         return ctx
