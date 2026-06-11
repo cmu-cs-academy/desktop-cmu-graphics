@@ -16,7 +16,6 @@ import pygame
 
 from cmu_graphics.libs import webrequest
 from io import BytesIO
-import array
 import sys
 import traceback
 import atexit
@@ -553,13 +552,14 @@ def getAlignAttrs(align):
 
 def wyvernImageFromPilImage(image):
     image = image.convert('RGBA')  # ensure we have the correct number of channels
-    a = array.array('B', image.tobytes('raw', 'RGBA'))
+    a = bytearray(image.tobytes('raw', 'RGBA'))
     return (a, image.size[0], image.size[1], image.size[0] * 4)
 
 
 def wyvernImageFromPygameSurface(pygameSurface):
-    a = array.array('B', pygame.image.tostring(pygameSurface, 'RGBA'))
-    return (a, *pygameSurface.get_size(), pygameSurface.get_pitch())
+    a = pygame.image.tobytes(pygameSurface, 'RGBA')
+    width, height = pygameSurface.get_size()
+    return (bytearray(a), width, height, width * 4)
 
 
 class PILWrapper(object):

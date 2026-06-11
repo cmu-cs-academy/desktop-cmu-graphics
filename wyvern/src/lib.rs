@@ -91,7 +91,13 @@ enum Gradient {
     RadialGradient(f32, f32, f32),
 }
 
-type CanvasSettings = (Option<PathBuilder>, Option<Font>, Vec<Color4f>, Vec<f32>, Paint);
+type CanvasSettings = (
+    Option<PathBuilder>,
+    Option<Font>,
+    Vec<Color4f>,
+    Vec<f32>,
+    Paint,
+);
 
 #[pyclass(unsendable, module = "wyvern")]
 struct Canvas {
@@ -107,12 +113,21 @@ struct Canvas {
 impl Canvas {
     fn save(&mut self) {
         self.skia_surface.canvas().save();
-        self.state_stack.push((self.path.clone(), self.font.clone(), self.gradient_colors.clone(), self.gradient_offsets.clone(), self.paint.clone()));
+        self.state_stack.push((
+            self.path.clone(),
+            self.font.clone(),
+            self.gradient_colors.clone(),
+            self.gradient_offsets.clone(),
+            self.paint.clone(),
+        ));
     }
 
     fn restore(&mut self) {
         self.skia_surface.canvas().restore();
-        let (prev_path, prev_font, prev_gcolor, prev_goff, prev_paint) = self.state_stack.pop().unwrap_or((None, None, Vec::new(), Vec::new(), Paint::default()));
+        let (prev_path, prev_font, prev_gcolor, prev_goff, prev_paint) = self
+            .state_stack
+            .pop()
+            .unwrap_or((None, None, Vec::new(), Vec::new(), Paint::default()));
         self.path = prev_path;
         self.font = prev_font;
         self.gradient_colors = prev_gcolor;
@@ -875,7 +890,7 @@ impl ImageSurface {
                     gradient_colors: Vec::new(),
                     gradient_offsets: Vec::new(),
                     paint: Paint::default(),
-                    state_stack: Vec::new()
+                    state_stack: Vec::new(),
                 },
             )?;
             Ok(ImageSurface {

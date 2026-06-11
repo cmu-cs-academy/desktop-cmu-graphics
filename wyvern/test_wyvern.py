@@ -1,14 +1,28 @@
 import math
 
-### ZIPFILE VERSION ###
-# import libs.pygame_loader as pygame
-
-### END ZIPFILE VERSION ###
-### PYPI VERSION ###
 import wyvern
 import pygame
+from io import BytesIO
+import os
+import ssl
+import urllib.request
 
-### END PYPI VERSION ###
+
+def webrequestget(path):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'Accept-Encoding': 'none',
+        'Accept-Language': 'en-US,en;q=0.8',
+        'Connection': 'keep-alive',
+    }
+    request = urllib.request.Request(path, headers=headers)
+    # This is the October 2025 certifi cacert.pem
+    cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
+    context = ssl.create_default_context(cafile=cafile_path)
+    response = urllib.request.urlopen(request, context=context)
+    return response
 
 
 class SandboxModal(object):
@@ -33,6 +47,24 @@ class SandboxModal(object):
         pygame.init()
 
         self.run()
+
+    def loadImageFromStringReference(self, reference):
+        if reference.startswith('http'):
+            # reference is a url
+            try:
+                response = webrequestget(reference)
+                image = pygame.image.load(BytesIO(response.read()))
+            except Exception:
+                Exception('Failed to load image data')
+        else:
+            # reference is a path
+            image = pygame.image.load(reference)
+        return image
+
+    def wyvernImageFromPygameSurface(self, pygameSurface):
+        a = pygame.image.tobytes(pygameSurface, 'RGBA')
+        width, height = pygameSurface.get_size()
+        return (bytearray(a), width, height, 4 * width)
 
     def redrawAll(self, screen, wyvern_surface, ctx):
         ctx = self.draw(ctx)
@@ -111,6 +143,13 @@ class SandboxModal(object):
         ctx = wyvern.set_source_gradient(ctx, gradient)
         ctx = wyvern.arc(ctx, 475, 100, 100, 0, 2 * math.pi)
         ctx = wyvern.fill(ctx)
+
+        image = self.loadImageFromStringReference(
+            'https://academy.cs.cmu.edu/static/media/project_10.472f439f.jpg'
+        )
+        params = self.wyvernImageFromPygameSurface(image)
+
+        ctx = wyvern.set_source_image(ctx, *params, 400, 400)
 
         ctx = wyvern.restore(ctx)
         # NEW
