@@ -91,6 +91,8 @@ enum Gradient {
     RadialGradient(f32, f32, f32),
 }
 
+type CanvasSettings = (Option<PathBuilder>, Option<Font>, Vec<Color4f>, Vec<f32>, Paint);
+
 #[pyclass(unsendable, module = "wyvern")]
 struct Canvas {
     skia_surface: skia_safe::Surface,
@@ -99,15 +101,23 @@ struct Canvas {
     gradient_colors: Vec<Color4f>,
     gradient_offsets: Vec<f32>,
     paint: Paint,
+    state_stack: Vec<CanvasSettings>,
 }
 
 impl Canvas {
     fn save(&mut self) {
         self.skia_surface.canvas().save();
+        self.state_stack.push((self.path.clone(), self.font.clone(), self.gradient_colors.clone(), self.gradient_offsets.clone(), self.paint.clone()));
     }
 
     fn restore(&mut self) {
         self.skia_surface.canvas().restore();
+        let (prev_path, prev_font, prev_gcolor, prev_goff, prev_paint) = self.state_stack.pop().unwrap_or((None, None, Vec::new(), Vec::new(), Paint::default()));
+        self.path = prev_path;
+        self.font = prev_font;
+        self.gradient_colors = prev_gcolor;
+        self.gradient_offsets = prev_goff;
+        self.paint = prev_paint;
     }
 
     fn translate(&mut self, x: f32, y: f32) {
@@ -165,7 +175,7 @@ impl Canvas {
         let first_point = Point::new(x1, y1);
         self.path
             .get_or_insert_with(|| new_path_and_move(first_point))
-            .cubic_to(first_point, Vector::new(x2, y2), Vector::new(x3, y3));
+            .cubic_to(first_point, Point::new(x2, y2), Point::new(x3, y3));
     }
 
     fn rel_curve_to(
@@ -809,6 +819,7 @@ impl ImageSurface {
                     gradient_colors: Vec::new(),
                     gradient_offsets: Vec::new(),
                     paint: Paint::default(),
+                    state_stack: Vec::new(),
                 },
             )?;
             Ok(ImageSurface {
@@ -864,6 +875,7 @@ impl ImageSurface {
                     gradient_colors: Vec::new(),
                     gradient_offsets: Vec::new(),
                     paint: Paint::default(),
+                    state_stack: Vec::new()
                 },
             )?;
             Ok(ImageSurface {

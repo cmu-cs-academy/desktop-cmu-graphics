@@ -59,6 +59,7 @@ class SandboxModal(object):
         ctx = wyvern.fill(ctx)
         ctx = wyvern.arc(ctx, 125, 100, 20, 0, 2 * math.pi)
         ctx = wyvern.arc(ctx, 175, 100, 20, 0, 3 * math.pi / 4)
+        ctx = wyvern.set_source_rgb(ctx, 1.0, 0.0, 0.5)
         ctx = wyvern.arc(ctx, 175, 100, 20, math.pi, 3 * math.pi / 4)
         # ctx = wyvern.move_to(ctx, 200, 50)
         ctx = wyvern.rectangle(ctx, 200, 50, 20, 20)
@@ -72,6 +73,7 @@ class SandboxModal(object):
         ctx = wyvern.fill(ctx)
 
         # ctx = wyvern.move_to(ctx, 75, 200)
+        ctx = wyvern.set_source_rgb(ctx, 0.5, 0.0, 1.0)
         ctx = wyvern.curve_to(ctx, 75, 200, 175, 250, 275, 200)
         # ctx = wyvern.set_dash(ctx, [7, 7])
         ctx = wyvern.stroke(ctx)
