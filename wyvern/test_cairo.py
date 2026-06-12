@@ -1,14 +1,29 @@
 import math
 
-### ZIPFILE VERSION ###
-# import libs.pygame_loader as pygame
-
-### END ZIPFILE VERSION ###
-### PYPI VERSION ###
 import cairo
 import pygame
+from io import BytesIO
+import os
+import ssl
+import urllib.request
+import array
 
-### END PYPI VERSION ###
+
+def webrequestget(path):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'Accept-Encoding': 'none',
+        'Accept-Language': 'en-US,en;q=0.8',
+        'Connection': 'keep-alive',
+    }
+    request = urllib.request.Request(path, headers=headers)
+    # This is the October 2025 certifi cacert.pem
+    cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
+    context = ssl.create_default_context(cafile=cafile_path)
+    response = urllib.request.urlopen(request, context=context)
+    return response
 
 
 class SandboxModal(object):
@@ -33,6 +48,26 @@ class SandboxModal(object):
         pygame.init()
 
         self.run()
+
+    def loadImageFromStringReference(self, reference):
+        if reference.startswith('http'):
+            # reference is a url
+            try:
+                response = webrequestget(reference)
+                image = pygame.image.load(BytesIO(response.read()))
+            except Exception:
+                Exception('Failed to load image data')
+        else:
+            # reference is a path
+            image = pygame.image.load(reference)
+        return image
+
+    def cairoSurfaceFromPygameSurface(self, pygameSurface):
+        a = array.array('B', pygame.image.tostring(pygameSurface, 'RGBA'))
+        surface = cairo.ImageSurface.create_for_data(
+            a, cairo.FORMAT_ARGB32, *pygameSurface.get_size()
+        )
+        return surface
 
     def redrawAll(self, screen, cairo_surface, ctx):
         self.draw(ctx)
@@ -112,6 +147,14 @@ class SandboxModal(object):
         ctx.set_source(gradient)
         ctx.arc(475, 100, 100, 0, 2 * math.pi)
         ctx.fill()
+
+        image = self.loadImageFromStringReference(
+            'https://academy.cs.cmu.edu/static/media/project_10.472f439f.jpg'
+        )
+        surface = self.cairoSurfaceFromPygameSurface(image)
+
+        ctx.set_source_surface(surface, 400, 400)
+        ctx.paint_with_alpha(10 / 100)
 
         ctx.restore()
 

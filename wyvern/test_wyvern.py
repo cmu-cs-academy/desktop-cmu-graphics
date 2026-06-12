@@ -150,6 +150,7 @@ class SandboxModal(object):
         params = self.wyvernImageFromPygameSurface(image)
 
         ctx = wyvern.set_source_image(ctx, *params, 400, 400)
+        ctx = wyvern.paint_with_alpha(ctx, 10 / 100)
 
         ctx = wyvern.restore(ctx)
         # NEW

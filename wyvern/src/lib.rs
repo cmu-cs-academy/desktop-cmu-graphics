@@ -6,8 +6,8 @@ use pyo3::types::PyByteArray;
 
 use skia_safe::{
     font_style, gradient, surfaces, Color, Color4f, ColorSpace, ColorType, Font, FontMgr,
-    FontStyle, ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect,
-    Rect, Vector,
+    FontStyle, Image, ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point,
+    RRect, Rect, TileMode, Vector,
 };
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
@@ -417,7 +417,7 @@ impl Canvas {
         let colors = &self.gradient_colors.clone();
         let offsets = &self.gradient_offsets.clone();
         let gradient = gradient::Gradient::new(
-            gradient::Colors::new(colors, Some(offsets), skia_safe::TileMode::Clamp, None),
+            gradient::Colors::new(colors, Some(offsets), TileMode::Decal, None),
             gradient::Interpolation::default(),
         );
         let shader = gradient::shaders::linear_gradient(
@@ -436,7 +436,7 @@ impl Canvas {
         let colors = &self.gradient_colors.clone();
         let offsets = &self.gradient_offsets.clone();
         let gradient = gradient::Gradient::new(
-            gradient::Colors::new(colors, Some(offsets), skia_safe::TileMode::Clamp, None),
+            gradient::Colors::new(colors, Some(offsets), TileMode::Decal, None),
             gradient::Interpolation::default(),
         );
         let shader =
@@ -485,9 +485,16 @@ impl Canvas {
         .ok_or(PyRuntimeError::new_err(
             "Issue with creating image from data",
         ))?;
-        self.skia_surface
-            .canvas()
-            .draw_image(image, Point::new(x, y), Some(&self.paint));
+        let shader = Image::to_shader(
+            &image,
+            (TileMode::Decal, TileMode::Decal),
+            skia_safe::SamplingOptions::default(),
+            Some(&Matrix::translate(Point::new(x, y))),
+        )
+        .ok_or(PyRuntimeError::new_err(
+            "Issue with creating shader from image",
+        ))?;
+        self.paint.set_shader(shader);
         Ok(())
     }
 }
