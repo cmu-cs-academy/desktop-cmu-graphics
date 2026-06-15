@@ -11,39 +11,6 @@ import pygame
 ### END PYPI VERSION ###
 import json
 
-
-def roundedrec(ctx, x, y, w, h, radius_x=5, radius_y=5):
-    # from mono moonlight aka mono silverlight
-    # test limits (without using multiplications)
-    # http://graphics.stanford.edu/courses/cs248-98-fall/Final/q1.html
-    ARC_TO_BEZIER = 0.55228475
-    if radius_x > w - radius_x:
-        radius_x = w / 2
-    if radius_y > h - radius_y:
-        radius_y = h / 2
-
-    # approximate (quite close) the arc using a bezier curve
-    c1 = ARC_TO_BEZIER * radius_x
-    c2 = ARC_TO_BEZIER * radius_y
-
-    ctx = wyvern.new_path(ctx)
-    ctx = wyvern.move_to(ctx, x + radius_x, y)
-    ctx = wyvern.rel_line_to(ctx, w - 2 * radius_x, 0.0)
-    ctx = wyvern.rel_curve_to(ctx, c1, 0.0, radius_x, c2, radius_x, radius_y)
-    ctx = wyvern.rel_line_to(ctx, 0, h - 2 * radius_y)
-    ctx = wyvern.rel_curve_to(
-        ctx, 0.0, c2, c1 - radius_x, radius_y, -radius_x, radius_y
-    )
-    ctx = wyvern.rel_line_to(ctx, -w + 2 * radius_x, 0)
-    ctx = wyvern.rel_curve_to(ctx, -c1, 0, -radius_x, -c2, -radius_x, -radius_y)
-    ctx = wyvern.rel_line_to(ctx, 0, -h + 2 * radius_y)
-    ctx = wyvern.rel_curve_to(
-        ctx, 0.0, -c2, radius_x - c1, -radius_y, radius_x, -radius_y
-    )
-    ctx = wyvern.close_path(ctx)
-    return ctx
-
-
 keyNameMap = {
     pygame.K_TAB: 'tab',
     pygame.K_RETURN: 'enter',
@@ -137,7 +104,9 @@ class TextBox(object):
             ctx = wyvern.set_line_width(ctx, 1)
             ctx = wyvern.stroke(ctx)
         else:
-            ctx = roundedrec(ctx, self.left, self.top, self.width, self.height, 3, 3)
+            ctx = wyvern.round_rectangle(
+                ctx, self.left, self.top, self.width, self.height, 3, 3
+            )
             ctx = wyvern.set_source_rgba(ctx, 0.9, 0.6, 0.4, 1.0)
             ctx = wyvern.set_line_width(ctx, 3)
             ctx = wyvern.stroke(ctx)
@@ -481,7 +450,9 @@ class TextBoxModal(object):
 
     def drawBox(self, ctx):
         ctx = wyvern.set_source_rgba(ctx, 1.0, 1.0, 1.0, 1.0)
-        ctx = roundedrec(ctx, self.left, self.top, self.width, self.height, 0, 0)
+        ctx = wyvern.round_rectangle(
+            ctx, self.left, self.top, self.width, self.height, 0, 0
+        )
         ctx = wyvern.fill(ctx)
 
         ctx = self.drawDivider(ctx)

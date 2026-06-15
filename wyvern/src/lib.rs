@@ -217,11 +217,11 @@ impl Canvas {
             .add_rect(r, None, None);
     }
 
-    fn round_rectangle(&mut self, left: f32, top: f32, width: f32, height: f32) {
+    fn round_rectangle(&mut self, left: f32, top: f32, width: f32, height: f32, x_rad: f32, y_rad: f32) {
         let r = Rect::new(left, top, left + width, top + height);
         self.path
             .get_or_insert_with(|| new_path_and_move(r.tl()))
-            .add_rrect(RRect::new_rect(r), None, None);
+            .add_rrect(RRect::new_rect_xy(r, x_rad, y_rad), None, None);
     }
 
     fn arc(&mut self, xc: f32, yc: f32, radius: f32, angle1: f32, mut angle2: f32) {
@@ -617,11 +617,13 @@ fn round_rectangle(
     top: f32,
     width: f32,
     height: f32,
+    x_rad: f32,
+    y_rad: f32,
     py: Python<'_>,
 ) -> Py<Canvas> {
     ctx.bind(py)
         .borrow_mut()
-        .round_rectangle(left, top, width, height);
+        .round_rectangle(left, top, width, height, x_rad, y_rad);
     ctx
 }
 
