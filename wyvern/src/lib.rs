@@ -276,9 +276,10 @@ impl Canvas {
             font_style::Width::NORMAL,
             py_to_skia_slant(slant),
         );
+        let arial = FontMgr::new().match_family_style(&"Arial", style).ok_or(PyRuntimeError::new_err("Issue with getting Arial font"));
         let typeface = FontMgr::new()
             .match_family_style(&family_name, style)
-            .ok_or_else(|| PyRuntimeError::new_err("Font family could not be found"))?;
+            .map_or(arial, |font| Ok(font))?;
         let size = self.font.as_ref().map(|f| f.size()).unwrap_or(12.0);
         self.font = Some(Font::from_typeface(typeface, size));
         Ok(())

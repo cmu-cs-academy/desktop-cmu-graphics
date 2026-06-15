@@ -573,7 +573,7 @@ class PILWrapper(object):
             self._imageParams = wyvernImageFromPilImage(self.image)
         return self._imageParams
 
-    surface = property(get_params, None)
+    params = property(get_params, None)
 
 
 def hashReference(reference):
