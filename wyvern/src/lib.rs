@@ -302,9 +302,9 @@ impl Canvas {
         Ok((
             rect.left(),
             rect.top(),
-            width,
-            rect.height(),
             rect.right(),
+            rect.height(),
+            width,
             rect.bottom(),
         ))
     }
