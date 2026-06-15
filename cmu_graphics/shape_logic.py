@@ -1549,7 +1549,7 @@ class Shape(object):
 
     def getFillOrStrokeStyle(self, fillOrBorder, ctx):
         if fillOrBorder is None:
-            return (0, 0, 0, 1)
+            return (0, 0, 0, 1), ctx
         if isinstance(fillOrBorder, Gradient):
             gradient = fillOrBorder
             g = self.createBaseGradient(gradient)
@@ -1578,7 +1578,8 @@ class Shape(object):
 
     def drawDbPoint(self, ctx, x, y, color):
         ctx = wyvern.save(ctx)
-        color_list, _ = list(self.getFillOrStrokeStyle(color), ctx)
+        style, _ = self.getFillOrStrokeStyle(color, ctx)
+        color_list = list(style)
         color_list[3] = 1  # ignore our own opacity when drawing db points
         ctx = wyvern.set_source_rgba(ctx, *color_list)
         r = 3
@@ -1605,10 +1606,11 @@ class Shape(object):
         ctx = wyvern.rectangle(ctx, self.left, self.top, self.width, self.height)
         ctx = wyvern.close_path(ctx)
         ctx = wyvern.set_line_width(ctx, 2)
-        color_list, _ = list(self.getFillOrStrokeStyle('red'), ctx)
+        style, _ = self.getFillOrStrokeStyle('red', ctx)
+        color_list = list(style)
         color_list[3] = 1  # ignore our own opacity when drawing db points
         ctx = wyvern.set_source_rgba(ctx, *color_list)
-        ctx = wyvern.set_dash([2, 2])
+        ctx = wyvern.set_dash(ctx, [2, 2])
         ctx = wyvern.stroke(ctx)
         ctx = wyvern.restore(ctx)
         return ctx
@@ -1617,7 +1619,7 @@ class Shape(object):
         pts = self.getApproxPoints()
         ctx = wyvern.save(ctx)
         r = 4
-        self.setFillOrStrokeStyle(ctx, 'magenta')
+        ctx = self.setFillOrStrokeStyle(ctx, 'magenta')
         # dots at corners
         for pt in pts:
             x, y = pt
@@ -1701,7 +1703,7 @@ class Shape(object):
                     # @TODO
                     ctx = self.setDashes(ctx)
                     if isinstance(self, Arc):
-                        ctx = wyvern.set_line_join(wyvern.LineJoin.Round)
+                        ctx = wyvern.set_line_join(ctx, wyvern.LineJoin.ROUND)
                     ctx = wyvern.set_line_width(ctx, bw)
                     ctx = wyvern.stroke(ctx)
             if isinstance(self, CMUImage):
@@ -2888,13 +2890,13 @@ class Line(Polygon):
 
     def drawArrows(self, ctx):
         if not self.arrowEnd and not self.arrowStart:
-            return
+            return ctx
 
         dx = self.x2 - self.x1
         dy = self.y2 - self.y1
         dist = math.sqrt(dy * dy + dx * dx)
         if dist < 0.01:
-            return
+            return ctx
         dx /= dist
         dy /= dist
 
