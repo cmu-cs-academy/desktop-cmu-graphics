@@ -1540,16 +1540,14 @@ class Shape(object):
             self.group._toBack(self)
 
     def setFillOrStrokeStyle(self, ctx, fillOrBorder):
-        style, stops = self.getFillOrStrokeStyle(fillOrBorder)
+        style, ctx = self.getFillOrStrokeStyle(fillOrBorder, ctx)
         if isinstance(style, wyvern.Gradient):
-            offsets, colors = stops
-            ctx = wyvern.set_color_stops_rgba(ctx, offsets, colors)
             ctx = wyvern.set_source_gradient(ctx, style)
         else:
             ctx = wyvern.set_source_rgba(ctx, *style)
         return ctx
 
-    def getFillOrStrokeStyle(self, fillOrBorder):
+    def getFillOrStrokeStyle(self, fillOrBorder, ctx):
         if fillOrBorder is None:
             return (0, 0, 0, 1)
         if isinstance(fillOrBorder, Gradient):
@@ -1558,8 +1556,9 @@ class Shape(object):
             n = len(gradient.colors)
             for i in range(n):
                 color = gradient.colors[i]
-                g.add_color_stop_rgba(i / (n - 1), *self.getFillOrStrokeStyle(color))
-            return g, ([i / (n - 1) for i in range(n)], gradient.colors)
+                colorRGB, _ = self.getFillOrStrokeStyle(color, ctx)
+                ctx = wyvern.add_color_stop_rgba(ctx, i / (n - 1), *colorRGB)
+            return g, ctx
         if isinstance(fillOrBorder, str):
             fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
         rgba = (
@@ -1568,7 +1567,7 @@ class Shape(object):
             fillOrBorder.blue / 255,
             self.opacity / 100,
         )
-        return rgba, None
+        return rgba, ctx
 
     def setDashes(self, ctx):
         if isinstance(self.dashes, bool):
@@ -1579,7 +1578,7 @@ class Shape(object):
 
     def drawDbPoint(self, ctx, x, y, color):
         ctx = wyvern.save(ctx)
-        color_list = list(self.getFillOrStrokeStyle(color))
+        color_list, _ = list(self.getFillOrStrokeStyle(color), ctx)
         color_list[3] = 1  # ignore our own opacity when drawing db points
         ctx = wyvern.set_source_rgba(ctx, *color_list)
         r = 3
@@ -1606,7 +1605,7 @@ class Shape(object):
         ctx = wyvern.rectangle(ctx, self.left, self.top, self.width, self.height)
         ctx = wyvern.close_path(ctx)
         ctx = wyvern.set_line_width(ctx, 2)
-        color_list = list(self.getFillOrStrokeStyle('red'))
+        color_list, _ = list(self.getFillOrStrokeStyle('red'), ctx)
         color_list[3] = 1  # ignore our own opacity when drawing db points
         ctx = wyvern.set_source_rgba(ctx, *color_list)
         ctx = wyvern.set_dash([2, 2])
