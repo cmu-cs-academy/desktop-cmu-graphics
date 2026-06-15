@@ -376,7 +376,7 @@ def round2(value):
 def makePolygonPath(pts, ctx):
     ctx = wyvern.new_path(ctx)
     if pts is None or len(pts) == 0:
-        return
+        return ctx
     lastPt = pts[-1]
     ctx = wyvern.move_to(ctx, lastPt[0], lastPt[1])
     for pt in pts:

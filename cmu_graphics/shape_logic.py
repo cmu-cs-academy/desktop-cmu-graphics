@@ -1562,9 +1562,9 @@ class Shape(object):
         if isinstance(fillOrBorder, str):
             fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
         rgba = (
-            fillOrBorder.red / 255,
-            fillOrBorder.green / 255,
             fillOrBorder.blue / 255,
+            fillOrBorder.green / 255,
+            fillOrBorder.red / 255,
             self.opacity / 100,
         )
         return rgba, ctx
@@ -3247,7 +3247,7 @@ class Oval(PolygonWithTransform):
     translation = shape_property(get_translation, set_translation)
 
     def makePath(self, ctx):
-        ctx = wyvern.save(ctx)
+        # ctx = wyvern.save(ctx)
         ctx = wyvern.new_path(ctx)
         ctx = wyvern.translate(ctx, self.translation[0], self.translation[1])
         bp = list(
@@ -3282,7 +3282,7 @@ class Oval(PolygonWithTransform):
             )
 
         ctx = wyvern.close_path(ctx)
-        ctx = wyvern.restore(ctx)
+        # ctx = wyvern.restore(ctx)
         return ctx
 
     def addxy(self, varName, d):
