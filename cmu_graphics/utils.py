@@ -1,5 +1,6 @@
 import decimal
 import math
+import wyvern
 from . import shape_logic
 from collections import defaultdict
 
@@ -373,13 +374,14 @@ def round2(value):
 
 
 def makePolygonPath(pts, ctx):
-    ctx.new_path()
+    ctx = wyvern.new_path(ctx)
     if pts is None or len(pts) == 0:
         return
     lastPt = pts[-1]
-    ctx.move_to(lastPt[0], lastPt[1])
+    ctx = wyvern.move_to(ctx, lastPt[0], lastPt[1])
     for pt in pts:
-        ctx.line_to(pt[0], pt[1])
+        ctx = wyvern.line_to(ctx, pt[0], pt[1])
+    return ctx
 
 
 def getLinePoints(x1, y1, x2, y2, lineWidth):

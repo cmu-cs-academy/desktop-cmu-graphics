@@ -784,8 +784,8 @@ class App(object):
         return keyNameMap.get(keyCode, None)
 
     def drawErrorScreen(self):
-        cairo_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
-        ctx = cairo.Context(cairo_surface)
+        wyvern_surface = wyvern.ImageSurface(self.width, self.height)
+        ctx = wyvern_surface.canvas
 
         with NoMvc():
             Rect(0, 0, self.width, self.height, fill=None, border='red', borderWidth=2)
@@ -817,7 +817,7 @@ class App(object):
                 fill='red',
             )
 
-        self.redrawAll(self._screen, cairo_surface, ctx)
+        self.redrawAll(self._screen, wyvern_surface, ctx)
 
     def getModifiers(self, modifierMask):
         modifiers = list()
@@ -864,7 +864,7 @@ class App(object):
         modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyRelease', (key, modifiers))
 
-    def redrawAll(self, screen, cairo_surface, ctx):
+    def redrawAll(self, screen, wyvern_surface, ctx):
         shape = shape_logic.Rect(
             {
                 'noGroup': True,
@@ -875,23 +875,23 @@ class App(object):
                 'fill': self.background or 'white',
             }
         )
-        shape.draw(ctx)
+        ctx = shape.draw(ctx)
 
-        ctx.save()
+        ctx = wyvern.save(ctx)
         try:
-            self._tlg._shape.draw(ctx)
+            ctx = self._tlg._shape.draw(ctx)
         finally:
-            ctx.restore()
+            ctx = wyvern.restore(ctx)
 
-        ctx.save()
+        ctx = wyvern.save(ctx)
         try:
             if self.shouldDrawInspector():
-                self.inspector.draw(ctx)
+                ctx = self.inspector.draw(ctx)
         finally:
-            ctx.restore()
+            ctx = wyvern.restore(ctx)
 
-        # Get the cairo buffer and convert it from BGRA to RGBA
-        data_string = cairo_surface.get_data()
+        # Get the wyvern buffer and convert it from BGRA to RGBA
+        data_string = wyvern_surface.data
 
         # Create PyGame surface
         pygame_surface = pygame.image.frombuffer(
@@ -1128,10 +1128,8 @@ class App(object):
             self._screen = pygame.display.set_mode(
                 (self.width, self.height), pygame.RESIZABLE
             )
-        self._cairo_surface = cairo.ImageSurface(
-            cairo.FORMAT_ARGB32, self.width, self.height
-        )
-        self._ctx = cairo.Context(self._cairo_surface)
+        self._wyvern_surface = wyvern.ImageSurface(self.width, self.height)
+        self._ctx = self._wyvern_surface.canvas
 
     @_safeMethod
     def run(self):
@@ -1206,7 +1204,7 @@ class App(object):
 
                 if should_redraw:
                     self.inspector.clearCache()
-                    self.redrawAll(self._screen, self._cairo_surface, self._ctx)
+                    self.redrawAll(self._screen, self._wyvern_surface, self._ctx)
 
                 onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
 
@@ -1282,6 +1280,7 @@ class AppWrapper(object):
             return self._app.__setattr__(attr, value)
         return super().__setattr__(attr, value)
 
+
 def processRunAppArgs(args, kwargs):
     # Extract width and height (and their translations) from kwargs
     width = 400
@@ -1325,6 +1324,7 @@ def processRunAppArgs(args, kwargs):
 
     return width, height, remaining_kwargs
 
+
 def runApp(*args, **kwargs):
     width, height, remaining_kwargs = processRunAppArgs(args, kwargs)
 
@@ -1359,7 +1359,9 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
 
     # Don't redraw on either of these calls to callUserFn, because we will
     # instead redraw below
-    app._app.callUserFn('onAppStart', (), remaining_kwargs, redraw=False, useActiveScreen=False)            
+    app._app.callUserFn(
+        'onAppStart', (), remaining_kwargs, redraw=False, useActiveScreen=False
+    )
 
     if app._app._initialScreen is not None:
         sortedGlobals = sorted(app._app.userGlobals)
@@ -1385,7 +1387,7 @@ def setActiveScreen(screen, fromRunApp=False):
         )
     if (screen in [None, '']) or (not isinstance(screen, str)):
         raise Exception(f'{repr(screen)} is not a valid screen')
-    
+
     redrawAllFnNames = ['redrawAll']
     redrawAllInCorrectLanguage = 'redrawAll'
     for language, translations in shape_logic.TRANSLATED_USER_FUNCTION_NAMES.items():
@@ -1395,16 +1397,20 @@ def setActiveScreen(screen, fromRunApp=False):
             if redrawAllTranslation not in redrawAllFnNames:
                 redrawAllFnNames.append(redrawAllTranslation)
                 if language == shape_logic.cmuGraphicsLanguage:
-                        redrawAllInCorrectLanguage = redrawAllTranslation
+                    redrawAllInCorrectLanguage = redrawAllTranslation
 
-    if not any(f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames):
-        raise Exception(t(
-            "Screen '{{screen}}' requires '{{screen}}_{{redrawAllInCorrectLanguage}}()'",
-            {
-                'screen': screen,
-                'redrawAllInCorrectLanguage': redrawAllInCorrectLanguage,
-            }
-        ))
+    if not any(
+        f'{screen}_{fnName}' in app._app.userGlobals for fnName in redrawAllFnNames
+    ):
+        raise Exception(
+            t(
+                "Screen '{{screen}}' requires '{{screen}}_{{redrawAllInCorrectLanguage}}()'",
+                {
+                    'screen': screen,
+                    'redrawAllInCorrectLanguage': redrawAllInCorrectLanguage,
+                },
+            )
+        )
     if fromRunApp:
         app._app.handleSetActiveScreen(screen, redraw=False)
     else:
@@ -1659,12 +1665,8 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 import math
 
-### ZIPFILE VERSION ###
-from cmu_graphics.libs import cairo_loader as cairo
-
-### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
-import cairo
+import wyvern
 
 ### END PYPI VERSION ###
 from random import *

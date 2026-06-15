@@ -92,7 +92,6 @@ enum Gradient {
 }
 
 type CanvasSettings = (
-    Option<PathBuilder>,
     Option<Font>,
     Vec<Color4f>,
     Vec<f32>,
@@ -114,7 +113,6 @@ impl Canvas {
     fn save(&mut self) {
         self.skia_surface.canvas().save();
         self.state_stack.push((
-            self.path.clone(),
             self.font.clone(),
             self.gradient_colors.clone(),
             self.gradient_offsets.clone(),
@@ -124,11 +122,10 @@ impl Canvas {
 
     fn restore(&mut self) {
         self.skia_surface.canvas().restore();
-        let (prev_path, prev_font, prev_gcolor, prev_goff, prev_paint) = self
+        let (prev_font, prev_gcolor, prev_goff, prev_paint) = self
             .state_stack
             .pop()
-            .unwrap_or((None, None, Vec::new(), Vec::new(), Paint::default()));
-        self.path = prev_path;
+            .unwrap_or((None, Vec::new(), Vec::new(), Paint::default()));
         self.font = prev_font;
         self.gradient_colors = prev_gcolor;
         self.gradient_offsets = prev_goff;

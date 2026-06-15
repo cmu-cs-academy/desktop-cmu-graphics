@@ -4,18 +4,16 @@ from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 
 ### ZIPFILE VERSION ###
-from cmu_graphics.libs import cairo_loader as cairo
 from cmu_graphics.libs import pygame_loader as pygame
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
-import cairo
+import wyvern
 import pygame
 ### END PYPI VERSION ###
 
 from cmu_graphics.libs import webrequest
 from io import BytesIO
-import array
 import sys
 import traceback
 import atexit
@@ -552,35 +550,30 @@ def getAlignAttrs(align):
     return [xattr, yattr]
 
 
-def cairoSurfaceFromPilImage(image):
+def wyvernImageFromPilImage(image):
     image = image.convert('RGBA')  # ensure we have the correct number of channels
-    a = array.array('B', image.tobytes('raw', 'RGBA'))
-    surface = cairo.ImageSurface.create_for_data(
-        a, cairo.FORMAT_ARGB32, image.size[0], image.size[1]
-    )
-    return surface
+    a = bytearray(image.tobytes('raw', 'RGBA'))
+    return (a, image.size[0], image.size[1], image.size[0] * 4)
 
 
-def cairoSurfaceFromPygameSurface(pygameSurface):
-    a = array.array('B', pygame.image.tostring(pygameSurface, 'RGBA'))
-    surface = cairo.ImageSurface.create_for_data(
-        a, cairo.FORMAT_ARGB32, *pygameSurface.get_size()
-    )
-    return surface
+def wyvernImageFromPygameSurface(pygameSurface):
+    a = pygame.image.tobytes(pygameSurface, 'RGBA')
+    width, height = pygameSurface.get_size()
+    return (bytearray(a), width, height, width * 4)
 
 
 class PILWrapper(object):
     def __init__(self, image):
         self.image = image
-        self._surface = None
+        self._imageParams = None
         self.uuid = str(uuid.uuid4())
 
-    def get_surface(self):
-        if self._surface is None:
-            self._surface = cairoSurfaceFromPilImage(self.image)
-        return self._surface
+    def get_params(self):
+        if self._imageParams is None:
+            self._imageParams = wyvernImageFromPilImage(self.image)
+        return self._imageParams
 
-    surface = property(get_surface, None)
+    surface = property(get_params, None)
 
 
 def hashReference(reference):
@@ -608,15 +601,15 @@ def loadImage(reference):
 
     if referenceHash not in activeDrawing.images:
         if isinstance(reference, PILWrapper):
-            cairoSurface = reference.surface
+            imageParams = reference.params
         else:
             pygameSurface = loadImageFromStringReference(reference)
-            cairoSurface = cairoSurfaceFromPygameSurface(pygameSurface)
-        activeDrawing.images[hashReference(reference)] = cairoSurface
+            imageParams = wyvernImageFromPygameSurface(pygameSurface)
+        activeDrawing.images[hashReference(reference)] = imageParams
     else:
-        cairoSurface = activeDrawing.images[referenceHash]
+        imageParams = activeDrawing.images[referenceHash]
 
-    return {'width': cairoSurface.get_width(), 'height': cairoSurface.get_height()}
+    return {'width': imageParams[1], 'height': imageParams[2]}
 
 
 shapeAttrs = dict()
@@ -1077,6 +1070,10 @@ def shape_property(getter, setter=None):
         return utils.truncateIntegerFloats(getter(self))
 
     return property(shape_getter, setter)
+
+
+fontSurface = wyvern.ImageSurface(1, 1)
+fontCtx = fontSurface.canvas
 
 
 class Shape(object):
@@ -1543,11 +1540,14 @@ class Shape(object):
             self.group._toBack(self)
 
     def setFillOrStrokeStyle(self, ctx, fillOrBorder):
-        style = self.getFillOrStrokeStyle(fillOrBorder)
-        if isinstance(style, cairo.Gradient):
-            ctx.set_source(style)
+        style, stops = self.getFillOrStrokeStyle(fillOrBorder)
+        if isinstance(style, wyvern.Gradient):
+            offsets, colors = stops
+            ctx = wyvern.set_color_stops_rgba(ctx, offsets, colors)
+            ctx = wyvern.set_source_gradient(ctx, style)
         else:
-            ctx.set_source_rgba(*style)
+            ctx = wyvern.set_source_rgba(ctx, *style)
+        return ctx
 
     def getFillOrStrokeStyle(self, fillOrBorder):
         if fillOrBorder is None:
@@ -1559,168 +1559,168 @@ class Shape(object):
             for i in range(n):
                 color = gradient.colors[i]
                 g.add_color_stop_rgba(i / (n - 1), *self.getFillOrStrokeStyle(color))
-            return g
+            return g, ([i / (n - 1) for i in range(n)], gradient.colors)
         if isinstance(fillOrBorder, str):
             fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
-        # Flips RGBA to BGRA because Cairo is going to flip it back
         rgba = (
-            fillOrBorder.blue / 255,
-            fillOrBorder.green / 255,
             fillOrBorder.red / 255,
+            fillOrBorder.green / 255,
+            fillOrBorder.blue / 255,
             self.opacity / 100,
         )
-        return rgba
+        return rgba, None
 
     def setDashes(self, ctx):
         if isinstance(self.dashes, bool):
-            ctx.set_dash([5, 5] if self.dashes else [])
+            ctx = wyvern.set_dash(ctx, [5, 5] if self.dashes else [])
         else:
-            ctx.set_dash(self.dashes)
-
-    def toFront(self):
-        if self._group:
-            self._group._toFront(self)
-
-    def toBack(self):
-        if self._group:
-            self._group._toBack(self)
+            ctx = wyvern.set_dash(ctx, self.dashes)
+        return ctx
 
     def drawDbPoint(self, ctx, x, y, color):
-        ctx.save()
+        ctx = wyvern.save(ctx)
         color_list = list(self.getFillOrStrokeStyle(color))
         color_list[3] = 1  # ignore our own opacity when drawing db points
-        ctx.set_source_rgba(*color_list)
+        ctx = wyvern.set_source_rgba(ctx, *color_list)
         r = 3
-        ctx.new_path()
-        ctx.arc(x, y, r, 0, 2 * math.pi)
-        ctx.close_path()
-        ctx.fill()
-        ctx.restore()
+        ctx = wyvern.new_path(ctx)
+        ctx = wyvern.arc(ctx, x, y, r, 0, 2 * math.pi)
+        ctx = wyvern.close_path(ctx)
+        ctx = wyvern.fill(ctx)
+        ctx = wyvern.restore(ctx)
+        return ctx
 
     def drawDbCenter(self, ctx):
-        self.drawDbPoint(ctx, self.centerX, self.centerY, 'red')
+        return self.drawDbPoint(ctx, self.centerX, self.centerY, 'red')
 
     def drawDbCentroid(self, ctx):
         if isinstance(self, Polygon):
             centroid = utils.getPolygonCentroid(self.pointList)
-            self.drawDbPoint(ctx, centroid[0], centroid[1], 'magenta')
+            return self.drawDbPoint(ctx, centroid[0], centroid[1], 'magenta')
         else:
-            self.drawDbCenter(ctx)
+            return self.drawDbCenter(ctx)
 
     def drawDbBox(self, ctx):
-        ctx.save()
-        ctx.new_path()
-        ctx.rectangle(self.left, self.top, self.width, self.height)
-        ctx.close_path()
-        ctx.set_line_width(2)
+        ctx = wyvern.save(ctx)
+        ctx = wyvern.new_path(ctx)
+        ctx = wyvern.rectangle(ctx, self.left, self.top, self.width, self.height)
+        ctx = wyvern.close_path(ctx)
+        ctx = wyvern.set_line_width(ctx, 2)
         color_list = list(self.getFillOrStrokeStyle('red'))
         color_list[3] = 1  # ignore our own opacity when drawing db points
-        ctx.set_source_rgba(*color_list)
-        ctx.set_dash([2, 2])
-        ctx.stroke()
-        ctx.restore()
+        ctx = wyvern.set_source_rgba(ctx, *color_list)
+        ctx = wyvern.set_dash([2, 2])
+        ctx = wyvern.stroke(ctx)
+        ctx = wyvern.restore(ctx)
+        return ctx
 
     def drawDbPoints(self, ctx):
         pts = self.getApproxPoints()
-        ctx.save()
+        ctx = wyvern.save(ctx)
         r = 4
         self.setFillOrStrokeStyle(ctx, 'magenta')
         # dots at corners
         for pt in pts:
             x, y = pt
-            ctx.new_path()
-            ctx.arc(x, y, r, 0, 2 * math.pi)
-            ctx.close_path()
-            ctx.fill()
+            ctx = wyvern.new_path(ctx)
+            ctx = wyvern.arc(ctx, x, y, r, 0, 2 * math.pi)
+            ctx = wyvern.close_path(ctx)
+            ctx = wyvern.fill(ctx)
         # now connect the dots
-        ctx.new_path
-        utils.makePolygonPath(pts, ctx)
-        ctx.close_path()
-        ctx.set_line_width(3)
-        self.setFillOrStrokeStyle(ctx, 'magenta')
-        ctx.set_dash([7, 7])
-        ctx.stroke()
-        ctx.restore()
+        ctx = wyvern.new_path(ctx)
+        ctx = utils.makePolygonPath(pts, ctx)
+        ctx = wyvern.close_path(ctx)
+        ctx = wyvern.set_line_width(ctx, 3)
+        ctx = self.setFillOrStrokeStyle(ctx, 'magenta')
+        ctx = wyvern.set_dash(ctx, [7, 7])
+        ctx = wyvern.stroke(ctx)
+        ctx = wyvern.restore(ctx)
+        return ctx
 
     def draw(self, ctx):
-        ctx.save()
+        global fontCtx
+        ctx = wyvern.save(ctx)
         if self.isGroup:
             for s in self._shapes:
-                s.draw(ctx)
+                ctx = s.draw(ctx)
         else:
             bw = self.borderWidth if self.border else 0
             if isinstance(self, Label):
                 if str(self.value) != self.valueStr:
                     self.valueStr = str(self.value)
-                    self.setDims()
+                    fontCtx = self.setDims(fontCtx)
                 [targetX, targetY] = self.getApproxPoints()[
                     6
                 ]  # target start,top of text
                 # rotate around targetX, targetY
                 if self.rotateAngle != 0:
-                    ctx.translate(targetX, targetY)
-                    ctx.rotate(utils.toRadians(self.rotateAngle))
-                    ctx.translate(-targetX, -targetY)
+                    ctx = wyvern.translate(ctx, targetX, targetY)
+                    ctx = wyvern.rotate(ctx, utils.toRadians(self.rotateAngle))
+                    ctx = wyvern.translate(ctx, -targetX, -targetY)
 
-                ctx.select_font_face(*getFont(self.font, self.bold, self.italic))
-                ctx.set_font_size(self.size)
+                ctx = wyvern.select_font_face(
+                    ctx, *getFont(self.font, self.bold, self.italic)
+                )
+                ctx = wyvern.set_font_size(ctx, self.size)
                 text = str(self.value)
 
-                ctx.new_path()
-                ctx.move_to(targetX - self.attrs['xAdjust'], targetY)
+                ctx = wyvern.new_path(ctx)
+                ctx = wyvern.move_to(ctx, targetX - self.attrs['xAdjust'], targetY)
 
-                ctx.text_path(text)
+                ctx = wyvern.text_path(ctx, text)
 
-                self.setFillOrStrokeStyle(ctx, self.fill)
-                ctx.fill_preserve()
+                ctx = self.setFillOrStrokeStyle(ctx, self.fill)
+                ctx = wyvern.fill_preserve(ctx)
                 if bw:
-                    self.setFillOrStrokeStyle(ctx, self.border)
-                    ctx.set_line_width(bw)
-                    ctx.stroke()
+                    ctx = self.setFillOrStrokeStyle(ctx, self.border)
+                    ctx = wyvern.set_line_width(ctx, bw)
+                    ctx = wyvern.stroke(ctx)
             elif isinstance(self, Line):
                 if self.fill:
-                    ctx.new_path()
-                    self.setFillOrStrokeStyle(ctx, self.fill)
-                    self.setDashes(ctx)
-                    ctx.set_line_width(self.lineWidth)
-                    ctx.move_to(self.x1, self.y1)
-                    ctx.line_to(self.x2, self.y2)
-                    ctx.stroke()
+                    ctx = wyvern.new_path(ctx)
+                    ctx = self.setFillOrStrokeStyle(ctx, self.fill)
+                    ctx = self.setDashes(ctx)
+                    ctx = wyvern.set_line_width(ctx, self.lineWidth)
+                    ctx = wyvern.move_to(ctx, self.x1, self.y1)
+                    ctx = wyvern.line_to(ctx, self.x2, self.y2)
+                    ctx = wyvern.stroke(ctx)
 
-                    self.drawArrows(ctx)
+                    ctx = self.drawArrows(ctx)
             else:
-                self.makePath(ctx)
+                ctx = self.makePath(ctx)
                 if self.closed:
-                    ctx.close_path()
+                    ctx = wyvern.close_path(ctx)
                 if self.fill and len(self.pointList) > 2:
-                    self.setFillOrStrokeStyle(ctx, self.fill)
-                    ctx.fill_preserve()
+                    ctx = self.setFillOrStrokeStyle(ctx, self.fill)
+                    ctx = wyvern.fill_preserve(ctx)
                 if bw:
                     # (*note) if there is a border, draw with 2x borderWidth,
                     # but clipped to shape so only 1x inner border is drawn
                     bw *= 2
-                    ctx.clip_preserve()
-                    self.setFillOrStrokeStyle(ctx, self.border)
+                    ctx = wyvern.clip_preserve(ctx)
+                    ctx = self.setFillOrStrokeStyle(ctx, self.border)
                     # @TODO
-                    self.setDashes(ctx)
+                    ctx = self.setDashes(ctx)
                     if isinstance(self, Arc):
-                        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-                    ctx.set_line_width(bw)
-                    ctx.stroke()
+                        ctx = wyvern.set_line_join(wyvern.LineJoin.Round)
+                    ctx = wyvern.set_line_width(ctx, bw)
+                    ctx = wyvern.stroke(ctx)
             if isinstance(self, CMUImage):
-                self.drawImage(ctx)
-            ctx.restore()
+                ctx = self.drawImage(ctx)
+            ctx = wyvern.restore(ctx)
 
             db = self.db
             if db != '' and isinstance(db, str):
                 if db == 'all' or 'points' in db:
-                    self.drawDbPoints(ctx)
+                    ctx = self.drawDbPoints(ctx)
                 if db == 'all' or 'box' in db:
-                    self.drawDbBox(ctx)
+                    ctx = self.drawDbBox(ctx)
                 if db == 'all' or 'center' in db:
-                    self.drawDbCenter(ctx)
+                    ctx = self.drawDbCenter(ctx)
                 if db == 'all' or 'centroid' in db:
-                    self.drawDbCentroid(ctx)
+                    ctx = self.drawDbCentroid(ctx)
+
+        return ctx
 
 
 def countShapesInGroup(shape):
@@ -2213,9 +2213,6 @@ class Group(Shape):
                 shape.scaleToTarget(varName, target)
 
 
-fontCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
-
-
 SHOW_FONT_WARNINGS = True
 
 # This is a list of fonts that are available on the CMU CS Academy website but may not be
@@ -2247,10 +2244,10 @@ def getFont(baseFontName, isBold=False, isItalic=False):
     else:
         fontName = baseFontName
 
-    bold = cairo.FONT_WEIGHT_BOLD if isBold else cairo.FONT_WEIGHT_NORMAL
-    italic = cairo.FONT_SLANT_ITALIC if isItalic else cairo.FONT_SLANT_NORMAL
+    bold = wyvern.FontWeight.BOLD if isBold else wyvern.FontWeight.NORMAL
+    italic = wyvern.FontSlant.ITALIC if isItalic else wyvern.FontSlant.NORMAL
 
-    return (fontName, italic, bold)
+    return (fontName, bold, italic)
 
 
 def maybe_show_font_warning(fontName):
@@ -2265,29 +2262,33 @@ def maybe_show_font_warning(fontName):
 
 class Label(Shape):
     def __init__(self, attrs):
+        global fontCtx
         super().__init__(attrs)
         self.valueStr = None
         if attrs is not None:
-            self.setDims()
+            fontCtx = self.setDims(fontCtx)
 
     def getApproxPoints(self):
         return self.attrs['approxPoints']
 
     def doRotate(self, degrees, cx, cy):
+        global fontCtx
         newCenter = utils.rotatePoint([self.centerX, self.centerY], degrees, cx, cy)
         self.set({'centerX': newCenter[0], 'centerY': newCenter[1]})
-        self.setDims()
+        fontCtx = self.setDims(fontCtx)
 
-    def setDims(self):
-        fontCtx.save()
-        fontCtx.select_font_face(*getFont(self.font, self.bold, self.italic))
-        fontCtx.set_font_size(self.size)
+    def setDims(self, fontCtx):
+        fontCtx = wyvern.save(fontCtx)
+        fontCtx = wyvern.select_font_face(
+            fontCtx, *getFont(self.font, self.bold, self.italic)
+        )
+        fontCtx = wyvern.set_font_size(fontCtx, self.size)
 
         cx = self.attrs['centerX']
         cy = self.attrs['centerY']
         stringValue = utils.convertLabelValue(self.value)
-        xBearing, yBearing, width, height, xAdvance, yAdvance = fontCtx.text_extents(
-            stringValue
+        xBearing, yBearing, width, height, xAdvance, yAdvance = wyvern.text_extents(
+            fontCtx, stringValue
         )
         height = -yBearing
         unrotatedWidth = width
@@ -2318,7 +2319,8 @@ class Label(Shape):
         self.set({'approxPoints': pts, 'xAdjust': 0 if hasOuterSpaces else xBearing})
         box = utils.getBoxDims(pts)
         self.set({'width': box['width'], 'height': box['height']})
-        fontCtx.restore()
+        fontCtx = wyvern.restore(fontCtx)
+        return fontCtx
 
     def get_area(self):
         return self.width * self.height
@@ -2340,7 +2342,7 @@ class Label(Shape):
             [[cx, cy]] = utils.rotatePoints(
                 [[cx, cy]], -self.rotateAngle, targetX, targetY
             )
-            return cairo.RadialGradient(cx, cy, 0, cx, cy, r)
+            return wyvern.Gradient.RadialGradient(cx, cy, r)
 
         startToPointIndex = {
             'left-top': 0,
@@ -2365,7 +2367,7 @@ class Label(Shape):
                 [[x0, y0], [x1, y1]], -self.rotateAngle, targetX, targetY
             )
 
-        return cairo.LinearGradient(x0, y0, x1, y1)
+        return wyvern.Gradient.LinearGradient(x0, y0, x1, y1)
 
     def get_width(self):
         return self.get('width')
@@ -2387,8 +2389,9 @@ class Label(Shape):
         return self.get('centerX')
 
     def set_centerX(self, v):
+        global fontCtx
         self.set({'centerX': v})
-        self.setDims()
+        fontCtx = self.setDims(fontCtx)
         return v
 
     centerX = shape_property(get_centerX, set_centerX)
@@ -2397,8 +2400,9 @@ class Label(Shape):
         return self.get('centerY')
 
     def set_centerY(self, v):
+        global fontCtx
         self.set({'centerY': v})
-        self.setDims()
+        fontCtx = self.setDims(fontCtx)
         return v
 
     centerY = shape_property(get_centerY, set_centerY)
@@ -2407,9 +2411,10 @@ class Label(Shape):
         return self.get('value')
 
     def set_value(self, v):
+        global fontCtx
         self.set({'value': v})
         self.valueStr = str(v)
-        self.setDims()
+        fontCtx = self.setDims(fontCtx)
         return v
 
     value = shape_property(get_value, set_value)
@@ -2418,9 +2423,10 @@ class Label(Shape):
         return self.get('font')
 
     def set_font(self, v):
+        global fontCtx
         maybe_show_font_warning(v)
         self.set({'font': v})
-        self.setDims()
+        fontCtx = self.setDims(fontCtx)
         return v
 
     font = shape_property(get_font, set_font)
@@ -2429,8 +2435,9 @@ class Label(Shape):
         return self.get('size')
 
     def set_size(self, v):
+        global fontCtx
         self.set({'size': v})
-        self.setDims()
+        fontCtx = self.setDims(fontCtx)
         return v
 
     size = shape_property(get_size, set_size)
@@ -2439,8 +2446,9 @@ class Label(Shape):
         return self.get('bold')
 
     def set_bold(self, v):
+        global fontCtx
         self.set({'bold': v})
-        self.setDims()
+        fontCtx = self.setDims(fontCtx)
         return v
 
     bold = shape_property(get_bold, set_bold)
@@ -2449,8 +2457,9 @@ class Label(Shape):
         return self.get('italic')
 
     def set_italic(self, v):
+        global fontCtx
         self.set({'italic': v})
-        self.setDims()
+        fontCtx = self.setDims(fontCtx)
         return v
 
     italic = shape_property(get_italic, set_italic)
@@ -2658,10 +2667,7 @@ class Polygon(Shape):
             if isinstance(self, Star):
                 r *= 0.8
 
-            return cairo.RadialGradient(
-                rotateAnchor[0],
-                rotateAnchor[1],
-                0,
+            return wyvern.Gradient.RadialGradient(
                 rotateAnchor[0],
                 rotateAnchor[1],
                 r,
@@ -2716,7 +2722,7 @@ class Polygon(Shape):
                 [[x0, y0], [x1, y1]], self.rotateAngle, rotateAnchor[0], rotateAnchor[1]
             )
 
-        return cairo.LinearGradient(x0, y0, x1, y1)
+        return wyvern.Gradient.LinearGradient(x0, y0, x1, y1)
 
 
 class Rect(Polygon):
@@ -2900,26 +2906,32 @@ class Line(Polygon):
         arrowWidth = arrowLength / 3
 
         def drawArrow(x, y, dir):
-            ctx.new_path()
-            self.setFillOrStrokeStyle(ctx, self.fill)
-            ctx.set_dash([])
-            ctx.move_to(x, y)
-            ctx.line_to(
+            ctx = wyvern.new_path(ctx)
+            ctx = self.setFillOrStrokeStyle(ctx, self.fill)
+            ctx = wyvern.set_dash(ctx, [])
+            ctx = wyvern.move_to(ctx, x, y)
+            ctx = wyvern.line_to(
+                ctx,
                 x + dir * arrowLength * dx - arrowWidth * normalDx,
                 y + dir * arrowLength * dy - arrowWidth * normalDy,
             )
-            ctx.line_to(
+            ctx = wyvern.line_to(
+                ctx,
                 x + dir * arrowLength * dx + arrowWidth * normalDx,
                 y + dir * arrowLength * dy + arrowWidth * normalDy,
             )
-            ctx.close_path()
-            ctx.fill_preserve()
-            ctx.stroke()
+            ctx = wyvern.close_path(ctx)
+            ctx = wyvern.fill_preserve(ctx)
+            ctx = wyvern.stroke(ctx)
+
+            return ctx
 
         if self.arrowEnd:
-            drawArrow(self.x2, self.y2, -1)
+            ctx = drawArrow(self.x2, self.y2, -1)
         if self.arrowStart:
-            drawArrow(self.x1, self.y1, 1)
+            ctx = drawArrow(self.x1, self.y1, 1)
+
+        return ctx
 
     def isPoint(self):
         return self.x1 == self.x2 and self.y1 == self.y2
@@ -3138,10 +3150,13 @@ class CMUImage(PolygonWithTransform):
 
     def drawImage(self, ctx):
         mat = self.transformMatrix
-        ctx.translate(self.pointList[0][0], self.pointList[0][1])
-        ctx.transform(cairo.Matrix(mat[0][0], mat[1][0], mat[0][1], mat[1][1], 0, 0))
-        ctx.set_source_surface(activeDrawing.images[hashReference(self.url)], 0, 0)
-        ctx.paint_with_alpha(self.opacity / 100)
+        ctx = wyvern.translate(ctx, self.pointList[0][0], self.pointList[0][1])
+        ctx = wyvern.transform(ctx, mat[0][0], mat[1][0], mat[0][1], mat[1][1], 0, 0)
+        ctx = wyvern.set_source_image(
+            ctx, *activeDrawing.images[hashReference(self.url)], 0, 0
+        )
+        ctx = wyvern.paint_with_alpha(ctx, self.opacity / 100)
+        return ctx
 
     def toString(self):
         args = [self.left, self.top, self.width, self.height]
@@ -3233,9 +3248,9 @@ class Oval(PolygonWithTransform):
     translation = shape_property(get_translation, set_translation)
 
     def makePath(self, ctx):
-        ctx.save()
-        ctx.new_path()
-        ctx.translate(self.translation[0], self.translation[1])
+        ctx = wyvern.save(ctx)
+        ctx = wyvern.new_path(ctx)
+        ctx = wyvern.translate(ctx, self.translation[0], self.translation[1])
         bp = list(
             map(
                 (
@@ -3250,14 +3265,15 @@ class Oval(PolygonWithTransform):
             )
         )
         if isinstance(self, Arc):
-            ctx.move_to(0, 0)
-            ctx.line_to(bp[0][0], bp[0][1])
+            ctx = wyvern.move_to(ctx, 0, 0)
+            ctx = wyvern.line_to(ctx, bp[0][0], bp[0][1])
         else:
-            ctx.move_to(bp[0][0], bp[0][1])
+            ctx = wyvern.move_to(ctx, bp[0][0], bp[0][1])
 
         for i in range(0, len(bp) // 4):
             i2 = i * 4
-            ctx.curve_to(
+            ctx = wyvern.curve_to(
+                ctx,
                 bp[i2 + 1][0],
                 bp[i2 + 1][1],
                 bp[i2 + 2][0],
@@ -3266,8 +3282,9 @@ class Oval(PolygonWithTransform):
                 bp[i2 + 3][1],
             )
 
-        ctx.close_path()
-        ctx.restore()
+        ctx = wyvern.close_path(ctx)
+        ctx = wyvern.restore(ctx)
+        return ctx
 
     def addxy(self, varName, d):
         super().addxy(varName, d)
@@ -3787,34 +3804,35 @@ class Inspector(object):
         white = (255, 255, 255)
 
         for pt in self.keyPoints:
-            ctx.new_path()
-            ctx.arc(pt[0], pt[1], 2, 0, 2 * math.pi)
-            ctx.close_path()
-            ctx.set_source_rgba(*black)
-            ctx.set_line_width(2)
-            ctx.stroke_preserve()
-            ctx.set_source_rgba(*gold)
-            ctx.fill()
+            ctx = wyvern.new_path(ctx)
+            ctx = wyvern.arc(ctx, pt[0], pt[1], 2, 0, 2 * math.pi)
+            ctx = wyvern.close_path(ctx)
+            ctx = wyvern.set_source_rgba(ctx, *black)
+            ctx = wyvern.set_line_width(ctx, 2)
+            ctx = wyvern.stroke_preserve(ctx)
+            ctx = wyvern.set_source_rgba(ctx, *gold)
+            ctx = wyvern.fill(ctx)
 
-        ctx.set_source_rgba(*red)
+        ctx = wyvern.set_source_rgba(ctx, *red)
         for r in [5, 4, 3, 2, 1]:
-            ctx.set_source_rgb(*(red if r % 2 == 1 else black))
-            ctx.new_path()
-            ctx.arc(self.bestX, self.bestY, r, 0, 2 * math.pi)
-            ctx.close_path()
-            ctx.fill()
+            ctx = wyvern.set_source_rgb(ctx, *(red if r % 2 == 1 else black))
+            ctx = wyvern.new_path(ctx)
+            ctx = wyvern.arc(ctx, self.bestX, self.bestY, r, 0, 2 * math.pi)
+            ctx = wyvern.close_path(ctx)
+            ctx = wyvern.fill(ctx)
 
         def textWidth(text):
-            return ctx.text_extents(text)[2]
+            return wyvern.text_extents(ctx, text)[2]
 
         def drawCenteredText(text, x, y):
             x, y = int(x), int(y)
-            _, _, width, _, _, _ = ctx.text_extents(text)
-            ctx.move_to(x - width / 2, y)
-            ctx.show_text(text)
+            _, _, width, _, _, _ = wyvern.text_extents(ctx, text)
+            ctx = wyvern.move_to(ctx, x - width / 2, y)
+            ctx = wyvern.show_text(ctx, text)
+            return ctx
 
-        ctx.select_font_face(*getFont('arial'))
-        ctx.set_font_size(12)
+        ctx = wyvern.select_font_face(ctx, *getFont('arial'))
+        ctx = wyvern.set_font_size(ctx, 12)
         pointLabelText = self.getPointStr(self.bestX, self.bestY)
         w = textWidth(pointLabelText)
         h = 12
@@ -3826,14 +3844,18 @@ class Inspector(object):
             self.app.height - margin - h / 2, max(margin + h / 2, self.bestY - 10)
         )
 
-        ctx.set_source_rgba(*white, 0.5)
-        ctx.rectangle(
-            pointLabelCenterX - w / 2 - 2, pointLabelCenterY - h / 2 - 2, w + 4, h + 4
+        ctx = wyvern.set_source_rgba(ctx, *white, 0.5)
+        ctx = wyvern.rectangle(
+            ctx,
+            pointLabelCenterX - w / 2 - 2,
+            pointLabelCenterY - h / 2 - 2,
+            w + 4,
+            h + 4,
         )
-        ctx.fill()
+        ctx = wyvern.fill(ctx)
 
-        ctx.set_source_rgba(*black)
-        drawCenteredText(
+        ctx = wyvern.set_source_rgba(ctx, *black)
+        ctx = drawCenteredText(
             pointLabelText,
             pointLabelCenterX,
             pointLabelCenterY + h / 2 - 2,
@@ -3844,7 +3866,7 @@ class Inspector(object):
             minTop = pointLabelCenterY + margin
         info = self.getKeyPointExtraShapeInfo(self.bestX, self.bestY)
         infoLines = info.split('\n')
-        ctx.set_source_rgba(*white, 0.5)
+        ctx = wyvern.set_source_rgba(ctx, *white, 0.5)
         infoWidth = 0
         newLines = []
         maxWidth = 300
@@ -3872,25 +3894,26 @@ class Inspector(object):
 
         lineHeight = 12
         infoHeight = lineHeight * len(newLines)
-        ctx.rectangle(
+        ctx = wyvern.rectangle(
+            ctx,
             self.app.width - 2 * margin - infoWidth,
             minTop,
             infoWidth + 2 * margin,
             infoHeight + margin,
         )
-        ctx.fill()
-        ctx.set_source_rgba(*black)
+        ctx = wyvern.fill(ctx)
+        ctx = wyvern.set_source_rgba(ctx, *black)
         verticalOffset = 0
         for line in newLines:
             firstword = line[0 : line.find(':') + 1]
             newline = line[line.find(':') + 1 :]
-            ctx.select_font_face(*getFont('arial', isBold=True))
+            ctx = wyvern.select_font_face(ctx, *getFont('arial', isBold=True))
             firstwordWidth = textWidth(firstword)
-            ctx.select_font_face(*getFont('arial'))
+            ctx = wyvern.select_font_face(ctx, *getFont('arial'))
             newlineWidth = textWidth(newline)
-            ctx.select_font_face(*getFont('arial', isBold=True))
+            ctx = wyvern.select_font_face(ctx, *getFont('arial', isBold=True))
 
-            drawCenteredText(
+            ctx = drawCenteredText(
                 firstword,
                 self.app.width
                 - margin
@@ -3900,8 +3923,8 @@ class Inspector(object):
                 minTop + lineHeight + verticalOffset,
             )
 
-            ctx.select_font_face(*getFont('arial'))
-            drawCenteredText(
+            ctx = wyvern.select_font_face(ctx, *getFont('arial'))
+            ctx = drawCenteredText(
                 newline,
                 self.app.width
                 - margin
@@ -3911,6 +3934,8 @@ class Inspector(object):
                 minTop + lineHeight + verticalOffset,
             )
             verticalOffset += lineHeight
+
+        return ctx
 
 
 class ShapeLogicInterface(object):
