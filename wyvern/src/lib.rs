@@ -46,6 +46,12 @@ fn new_path_and_move(p: Point) -> PathBuilder {
     new_path
 }
 
+fn new_path_and_line(p: Point) -> PathBuilder {
+    let mut new_path = PathBuilder::new();
+    new_path.line_to(p);
+    new_path
+}
+
 #[pyclass(from_py_object)]
 #[derive(Clone)]
 enum LineJoin {
@@ -91,12 +97,7 @@ enum Gradient {
     RadialGradient(f32, f32, f32),
 }
 
-type CanvasSettings = (
-    Option<Font>,
-    Vec<Color4f>,
-    Vec<f32>,
-    Paint,
-);
+type CanvasSettings = (Option<Font>, Vec<Color4f>, Vec<f32>, Paint);
 
 #[pyclass(unsendable, module = "wyvern")]
 struct Canvas {
@@ -122,10 +123,10 @@ impl Canvas {
 
     fn restore(&mut self) {
         self.skia_surface.canvas().restore();
-        let (prev_font, prev_gcolor, prev_goff, prev_paint) = self
-            .state_stack
-            .pop()
-            .unwrap_or((None, Vec::new(), Vec::new(), Paint::default()));
+        let (prev_font, prev_gcolor, prev_goff, prev_paint) =
+            self.state_stack
+                .pop()
+                .unwrap_or((None, Vec::new(), Vec::new(), Paint::default()));
         self.font = prev_font;
         self.gradient_colors = prev_gcolor;
         self.gradient_offsets = prev_goff;
@@ -217,7 +218,15 @@ impl Canvas {
             .add_rect(r, None, None);
     }
 
-    fn round_rectangle(&mut self, left: f32, top: f32, width: f32, height: f32, x_rad: f32, y_rad: f32) {
+    fn round_rectangle(
+        &mut self,
+        left: f32,
+        top: f32,
+        width: f32,
+        height: f32,
+        x_rad: f32,
+        y_rad: f32,
+    ) {
         let r = Rect::new(left, top, left + width, top + height);
         self.path
             .get_or_insert_with(|| new_path_and_move(r.tl()))
@@ -231,8 +240,7 @@ impl Canvas {
             angle2 += 2.0 * PI
         }
         self.path
-            .get_or_insert_with(|| new_path_and_move(start_point))
-            .line_to(start_point)
+            .get_or_insert_with(|| new_path_and_line(start_point))
             .add_arc(r, angle1 * (180.0 / PI), (angle2 - angle1) * (180.0 / PI));
     }
 
@@ -276,7 +284,9 @@ impl Canvas {
             font_style::Width::NORMAL,
             py_to_skia_slant(slant),
         );
-        let arial = FontMgr::new().match_family_style(&"Arial", style).ok_or(PyRuntimeError::new_err("Issue with getting Arial font"));
+        let arial = FontMgr::new()
+            .match_family_style(&"Arial", style)
+            .ok_or(PyRuntimeError::new_err("Issue with getting Arial font"));
         let typeface = FontMgr::new()
             .match_family_style(&family_name, style)
             .map_or(arial, |font| Ok(font))?;
@@ -349,6 +359,7 @@ impl Canvas {
     fn paint_with_alpha(&mut self, a: f32) {
         let mut paint = self.paint.clone();
         paint.set_alpha_f(a);
+        paint.set_anti_alias(true);
         self.skia_surface.canvas().draw_paint(&paint);
     }
 
@@ -486,7 +497,10 @@ impl Canvas {
         let shader = Image::to_shader(
             &image,
             (TileMode::Decal, TileMode::Decal),
-            skia_safe::SamplingOptions::default(),
+            skia_safe::SamplingOptions::new(
+                skia_safe::FilterMode::Linear,
+                skia_safe::MipmapMode::Linear,
+            ),
             Some(&Matrix::translate(Point::new(x, y))),
         )
         .ok_or(PyRuntimeError::new_err(

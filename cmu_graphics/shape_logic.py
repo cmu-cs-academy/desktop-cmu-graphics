@@ -2906,7 +2906,7 @@ class Line(Polygon):
         arrowLength = min(50, 10 * math.sqrt(self.lineWidth))
         arrowWidth = arrowLength / 3
 
-        def drawArrow(x, y, dir):
+        def drawArrow(ctx, x, y, dir):
             ctx = wyvern.new_path(ctx)
             ctx = self.setFillOrStrokeStyle(ctx, self.fill)
             ctx = wyvern.set_dash(ctx, [])
@@ -2928,9 +2928,9 @@ class Line(Polygon):
             return ctx
 
         if self.arrowEnd:
-            ctx = drawArrow(self.x2, self.y2, -1)
+            ctx = drawArrow(ctx, self.x2, self.y2, -1)
         if self.arrowStart:
-            ctx = drawArrow(self.x1, self.y1, 1)
+            ctx = drawArrow(ctx, self.x1, self.y1, 1)
 
         return ctx
 
@@ -3249,24 +3249,26 @@ class Oval(PolygonWithTransform):
     translation = shape_property(get_translation, set_translation)
 
     def makePath(self, ctx):
-        # ctx = wyvern.save(ctx)
+        # this code used to use translate, but now performs translation as part of bp calculation
         ctx = wyvern.new_path(ctx)
-        ctx = wyvern.translate(ctx, self.translation[0], self.translation[1])
+        tx, ty = self.translation[0], self.translation[1]
         bp = list(
             map(
                 (
                     lambda p: [
                         self.transformMatrix[0][0] * p[0]
-                        + self.transformMatrix[0][1] * p[1],
+                        + self.transformMatrix[0][1] * p[1]
+                        + tx,
                         self.transformMatrix[1][0] * p[0]
-                        + self.transformMatrix[1][1] * p[1],
+                        + self.transformMatrix[1][1] * p[1]
+                        + ty,
                     ]
                 ),
                 self.bezierPoints,
             )
         )
         if isinstance(self, Arc):
-            ctx = wyvern.move_to(ctx, 0, 0)
+            ctx = wyvern.move_to(ctx, tx, ty)
             ctx = wyvern.line_to(ctx, bp[0][0], bp[0][1])
         else:
             ctx = wyvern.move_to(ctx, bp[0][0], bp[0][1])
@@ -3284,7 +3286,6 @@ class Oval(PolygonWithTransform):
             )
 
         ctx = wyvern.close_path(ctx)
-        # ctx = wyvern.restore(ctx)
         return ctx
 
     def addxy(self, varName, d):
@@ -3797,7 +3798,7 @@ class Inspector(object):
     def draw(self, ctx):
         self.computeBestPoint()
         if self.bestX is None or self.bestY is None:
-            return
+            return ctx
 
         black = (0, 0, 0)
         red = (0, 0, 255)
@@ -3822,10 +3823,10 @@ class Inspector(object):
             ctx = wyvern.close_path(ctx)
             ctx = wyvern.fill(ctx)
 
-        def textWidth(text):
+        def textWidth(ctx, text):
             return wyvern.text_extents(ctx, text)[2]
 
-        def drawCenteredText(text, x, y):
+        def drawCenteredText(ctx, text, x, y):
             x, y = int(x), int(y)
             _, _, width, _, _, _ = wyvern.text_extents(ctx, text)
             ctx = wyvern.move_to(ctx, x - width / 2, y)
@@ -3835,7 +3836,7 @@ class Inspector(object):
         ctx = wyvern.select_font_face(ctx, *getFont('arial'))
         ctx = wyvern.set_font_size(ctx, 12)
         pointLabelText = self.getPointStr(self.bestX, self.bestY)
-        w = textWidth(pointLabelText)
+        w = textWidth(ctx, pointLabelText)
         h = 12
         margin = 10
         pointLabelCenterX = min(
@@ -3857,6 +3858,7 @@ class Inspector(object):
 
         ctx = wyvern.set_source_rgba(ctx, *black)
         ctx = drawCenteredText(
+            ctx,
             pointLabelText,
             pointLabelCenterX,
             pointLabelCenterY + h / 2 - 2,
@@ -3877,11 +3879,11 @@ class Inspector(object):
             return [splitLine.pop(), ''.join(splitLine)]
 
         for line in infoLines:
-            if textWidth(line) < maxWidth:
+            if textWidth(ctx, line) < maxWidth:
                 newLines.append(line)
             else:
                 leftover = ''
-                while textWidth(line) > maxWidth:
+                while textWidth(ctx, line) > maxWidth:
                     lastWord, line = shortenLine(line)
                     if len(leftover) > 0:
                         leftover = ',' + leftover
@@ -3891,7 +3893,7 @@ class Inspector(object):
                 newLines.append(line, leftover)
 
         for line in newLines:
-            infoWidth = max(infoWidth, textWidth(line))
+            infoWidth = max(infoWidth, textWidth(ctx, line))
 
         lineHeight = 12
         infoHeight = lineHeight * len(newLines)
@@ -3909,12 +3911,13 @@ class Inspector(object):
             firstword = line[0 : line.find(':') + 1]
             newline = line[line.find(':') + 1 :]
             ctx = wyvern.select_font_face(ctx, *getFont('arial', isBold=True))
-            firstwordWidth = textWidth(firstword)
+            firstwordWidth = textWidth(ctx, firstword)
             ctx = wyvern.select_font_face(ctx, *getFont('arial'))
-            newlineWidth = textWidth(newline)
+            newlineWidth = textWidth(ctx, newline)
             ctx = wyvern.select_font_face(ctx, *getFont('arial', isBold=True))
 
             ctx = drawCenteredText(
+                ctx,
                 firstword,
                 self.app.width
                 - margin
@@ -3926,6 +3929,7 @@ class Inspector(object):
 
             ctx = wyvern.select_font_face(ctx, *getFont('arial'))
             ctx = drawCenteredText(
+                ctx,
                 newline,
                 self.app.width
                 - margin
