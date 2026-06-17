@@ -1072,10 +1072,6 @@ def shape_property(getter, setter=None):
     return property(shape_getter, setter)
 
 
-fontSurface = wyvern.ImageSurface(1, 1)
-fontCtx = fontSurface.canvas
-
-
 class Shape(object):
     def __init__(self, attrs=None):
         self.id = activeDrawing.nextShapeId
@@ -1102,6 +1098,8 @@ class Shape(object):
             activeDrawing.tlg is not None
         ):
             activeDrawing.tlg.add(self)
+        self.fontSurface = wyvern.ImageSurface(1, 1)
+        self.fontCtx = self.fontSurface.canvas
 
     def get(self, attr):
         if attr in self.attrs:
@@ -1639,7 +1637,6 @@ class Shape(object):
         return ctx
 
     def draw(self, ctx):
-        global fontCtx
         ctx = wyvern.save(ctx)
         if self.isGroup:
             for s in self._shapes:
@@ -1649,7 +1646,7 @@ class Shape(object):
             if isinstance(self, Label):
                 if str(self.value) != self.valueStr:
                     self.valueStr = str(self.value)
-                    fontCtx = self.setDims(fontCtx)
+                    self.setDims()
                 [targetX, targetY] = self.getApproxPoints()[
                     6
                 ]  # target start,top of text
@@ -2263,33 +2260,31 @@ def maybe_show_font_warning(fontName):
 
 class Label(Shape):
     def __init__(self, attrs):
-        global fontCtx
         super().__init__(attrs)
         self.valueStr = None
         if attrs is not None:
-            fontCtx = self.setDims(fontCtx)
+            self.setDims()
 
     def getApproxPoints(self):
         return self.attrs['approxPoints']
 
     def doRotate(self, degrees, cx, cy):
-        global fontCtx
         newCenter = utils.rotatePoint([self.centerX, self.centerY], degrees, cx, cy)
         self.set({'centerX': newCenter[0], 'centerY': newCenter[1]})
-        fontCtx = self.setDims(fontCtx)
+        self.setDims()
 
-    def setDims(self, fontCtx):
-        fontCtx = wyvern.save(fontCtx)
-        fontCtx = wyvern.select_font_face(
-            fontCtx, *getFont(self.font, self.bold, self.italic)
+    def setDims(self):
+        self.fontCtx = wyvern.save(self.fontCtx)
+        self.fontCtx = wyvern.select_font_face(
+            self.fontCtx, *getFont(self.font, self.bold, self.italic)
         )
-        fontCtx = wyvern.set_font_size(fontCtx, self.size)
+        self.fontCtx = wyvern.set_font_size(self.fontCtx, self.size)
 
         cx = self.attrs['centerX']
         cy = self.attrs['centerY']
         stringValue = utils.convertLabelValue(self.value)
         xBearing, yBearing, width, height, xAdvance, yAdvance = wyvern.text_extents(
-            fontCtx, stringValue
+            self.fontCtx, stringValue
         )
         height = -yBearing
         unrotatedWidth = width
@@ -2320,8 +2315,7 @@ class Label(Shape):
         self.set({'approxPoints': pts, 'xAdjust': 0 if hasOuterSpaces else xBearing})
         box = utils.getBoxDims(pts)
         self.set({'width': box['width'], 'height': box['height']})
-        fontCtx = wyvern.restore(fontCtx)
-        return fontCtx
+        self.fontCtx = wyvern.restore(self.fontCtx)
 
     def get_area(self):
         return self.width * self.height
@@ -2390,9 +2384,8 @@ class Label(Shape):
         return self.get('centerX')
 
     def set_centerX(self, v):
-        global fontCtx
         self.set({'centerX': v})
-        fontCtx = self.setDims(fontCtx)
+        self.setDims()
         return v
 
     centerX = shape_property(get_centerX, set_centerX)
@@ -2401,9 +2394,8 @@ class Label(Shape):
         return self.get('centerY')
 
     def set_centerY(self, v):
-        global fontCtx
         self.set({'centerY': v})
-        fontCtx = self.setDims(fontCtx)
+        self.setDims()
         return v
 
     centerY = shape_property(get_centerY, set_centerY)
@@ -2412,10 +2404,9 @@ class Label(Shape):
         return self.get('value')
 
     def set_value(self, v):
-        global fontCtx
         self.set({'value': v})
         self.valueStr = str(v)
-        fontCtx = self.setDims(fontCtx)
+        self.setDims()
         return v
 
     value = shape_property(get_value, set_value)
@@ -2424,10 +2415,9 @@ class Label(Shape):
         return self.get('font')
 
     def set_font(self, v):
-        global fontCtx
         maybe_show_font_warning(v)
         self.set({'font': v})
-        fontCtx = self.setDims(fontCtx)
+        self.setDims()
         return v
 
     font = shape_property(get_font, set_font)
@@ -2436,9 +2426,8 @@ class Label(Shape):
         return self.get('size')
 
     def set_size(self, v):
-        global fontCtx
         self.set({'size': v})
-        fontCtx = self.setDims(fontCtx)
+        self.setDims()
         return v
 
     size = shape_property(get_size, set_size)
@@ -2447,9 +2436,8 @@ class Label(Shape):
         return self.get('bold')
 
     def set_bold(self, v):
-        global fontCtx
         self.set({'bold': v})
-        fontCtx = self.setDims(fontCtx)
+        self.setDims()
         return v
 
     bold = shape_property(get_bold, set_bold)
@@ -2458,9 +2446,8 @@ class Label(Shape):
         return self.get('italic')
 
     def set_italic(self, v):
-        global fontCtx
         self.set({'italic': v})
-        fontCtx = self.setDims(fontCtx)
+        self.setDims()
         return v
 
     italic = shape_property(get_italic, set_italic)
