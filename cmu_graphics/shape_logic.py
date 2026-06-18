@@ -1098,8 +1098,6 @@ class Shape(object):
             activeDrawing.tlg is not None
         ):
             activeDrawing.tlg.add(self)
-        self.fontSurface = wyvern.ImageSurface(1, 1)
-        self.fontCtx = self.fontSurface.canvas
 
     def get(self, attr):
         if attr in self.attrs:
@@ -2274,17 +2272,17 @@ class Label(Shape):
         self.setDims()
 
     def setDims(self):
-        self.fontCtx = wyvern.save(self.fontCtx)
-        self.fontCtx = wyvern.select_font_face(
-            self.fontCtx, *getFont(self.font, self.bold, self.italic)
+        fontCtx = wyvern.ImageSurface(1, 1).canvas
+        fontCtx = wyvern.select_font_face(
+            fontCtx, *getFont(self.font, self.bold, self.italic)
         )
-        self.fontCtx = wyvern.set_font_size(self.fontCtx, self.size)
+        fontCtx = wyvern.set_font_size(fontCtx, self.size)
 
         cx = self.attrs['centerX']
         cy = self.attrs['centerY']
         stringValue = utils.convertLabelValue(self.value)
         xBearing, yBearing, width, height, xAdvance, yAdvance = wyvern.text_extents(
-            self.fontCtx, stringValue
+            fontCtx, stringValue
         )
         height = -yBearing
         unrotatedWidth = width
@@ -2315,7 +2313,6 @@ class Label(Shape):
         self.set({'approxPoints': pts, 'xAdjust': 0 if hasOuterSpaces else xBearing})
         box = utils.getBoxDims(pts)
         self.set({'width': box['width'], 'height': box['height']})
-        self.fontCtx = wyvern.restore(self.fontCtx)
 
     def get_area(self):
         return self.width * self.height
