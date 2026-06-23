@@ -252,6 +252,7 @@ impl Canvas {
 
     fn set_source_rgba(&mut self, r: f32, g: f32, b: f32, a: Option<f32>) {
         let color_space = self.skia_surface.image_info().color_space();
+        self.paint.set_shader(None);
         self.paint
             .set_color4f(Color4f::new(r, g, b, a.unwrap_or(1.0)), &color_space);
     }
@@ -313,7 +314,7 @@ impl Canvas {
         Ok((
             rect.left(),
             rect.top(),
-            rect.right(),
+            rect.right() - rect.left(),
             rect.height(),
             width,
             rect.bottom(),
@@ -426,7 +427,7 @@ impl Canvas {
         let colors = &self.gradient_colors.clone();
         let offsets = &self.gradient_offsets.clone();
         let gradient = gradient::Gradient::new(
-            gradient::Colors::new(colors, Some(offsets), TileMode::Decal, None),
+            gradient::Colors::new(colors, Some(offsets), TileMode::Clamp, None),
             gradient::Interpolation::default(),
         );
         let shader = gradient::shaders::linear_gradient(
@@ -445,7 +446,7 @@ impl Canvas {
         let colors = &self.gradient_colors.clone();
         let offsets = &self.gradient_offsets.clone();
         let gradient = gradient::Gradient::new(
-            gradient::Colors::new(colors, Some(offsets), TileMode::Decal, None),
+            gradient::Colors::new(colors, Some(offsets), TileMode::Clamp, None),
             gradient::Interpolation::default(),
         );
         let shader =
