@@ -5,11 +5,13 @@ from cmu_graphics import utils
 
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import pygame_loader as pygame
+from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import wyvern
 import pygame
+import cmu_graphics_helpers
 ### END PYPI VERSION ###
 
 from cmu_graphics.libs import webrequest
@@ -974,9 +976,11 @@ class Gradient(object, metaclass=_ShapeMetaclass):
     def getRGBColors(self):
         return list(
             map(
-                lambda v: v
-                if isinstance(v, RGB)
-                else CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()],
+                lambda v: (
+                    v
+                    if isinstance(v, RGB)
+                    else CSS3_COLORS_TO_RGB[toEnglish(v, 'color').lower()]
+                ),
                 self.colors,
             )
         )
@@ -1412,23 +1416,20 @@ class Shape(object):
         checkNumber(t('hits(x, y)'), t('y'), y, True)
         return self._hits(x, y)
 
-    def getEdges(self):
+    def getEdgesFromPoints(self, points):
         edges = []
-        approxPoints = self.getApproxPoints()
-        for i in range(len(approxPoints)):
-            x1, y1 = approxPoints[i]
-            k = (i + 1) % (len(approxPoints))
-            x2, y2 = approxPoints[k]
+        for i in range(len(points)):
+            x1, y1 = points[i]
+            k = (i + 1) % (len(points))
+            x2, y2 = points[k]
             if x1 < x2:
                 edges.append((x1, y1, x2, y2))
             else:
                 edges.append((x2, y2, x1, y1))
         return edges
 
-    def edgesIntersect(self, shape):
-        edges1 = self.getEdges()
-        edges2 = shape.getEdges()
-        return utils.edgesIntersect(edges1, edges2)
+    def getEdges(self):
+        return self.getEdgesFromPoints(self.getApproxPoints())
 
     def containsShape(self, *arguments):
         checkArgCount(
@@ -1445,7 +1446,9 @@ class Shape(object):
         # the targetShape are inside this shape
         x = targetShape.centerX
         y = targetShape.centerY
-        return not self.edgesIntersect(targetShape) and self.contains(x, y)
+        return not utils.edgesIntersect(
+            self.getEdges(), targetShape.getEdges()
+        ) and self.contains(x, y)
 
     def getBounds(self):
         return {
@@ -1855,8 +1858,106 @@ class Group(Shape):
     def contains(self, x, y):
         return any(shape.contains(x, y) for shape in self._shapes)
 
+    def getSinglePointFromShape(self, target):
+        if isinstance(target, Group):
+            if len(target._shapes) > 0:
+                return self.getSinglePointFromShape(target._shapes[0])
+            return None
+        else:
+            return target.getApproxPoints()[0]
+
+    def closeShapes(self, shapes):
+        for shape in shapes:
+            shape.append(shape[0])
+
+    def pointsToTuples(self, points):
+        finalPoints = []
+        for point in points:
+            finalPoints.append((point[0], point[1]))
+        return finalPoints
+
+    def getApproxGroupPoints(self, group):
+        shapes = group._shapes
+        if len(shapes) > 0:
+            groupPoints = [
+                self.getApproxGroupPoints(shape)
+                if isinstance(shape, Group)
+                else [[self.pointsToTuples(shape.getApproxPoints())]]
+                for shape in shapes
+            ]
+            for groups in groupPoints:
+                for group in groups:
+                    self.closeShapes(group)
+            return cmu_graphics_helpers.union(groupPoints)
+        else:
+            return []
+
+    # helper method to ensure union only gets called once
+    def containsShapeFromPoints(self, target, groupPoints):
+        if isinstance(target, Group):
+            return all(
+                [
+                    self.containsShapeFromPoints(shape, groupPoints)
+                    for shape in target._shapes
+                ]
+            )
+        targetPoints = target.getApproxPoints()
+        groupNum = len(groupPoints)
+
+        for i in range(groupNum):
+            groupShape = groupPoints[i]
+            # for a polygon, the first argument is the outline and the remaining are holes in the shape, if they exist
+            shapeNum = len(groupShape)
+            for i in range(shapeNum):
+                if utils.edgesIntersect(
+                    self.getEdgesFromPoints(groupShape[i]),
+                    self.getEdgesFromPoints(targetPoints),
+                ):
+                    return False
+
+        return self.contains(targetPoints[0][0], targetPoints[0][1])
+
     def containsShape(self, target):
-        return any(shape.containsShape(target) for shape in self._shapes)
+        # Computing the group union in getApproxGroupShape can be slow, so we
+        # try two simpler methods first to see if they give an answer.
+
+        # 1: If there is a point in target that is not contained by this group,
+        #    we can return false.
+        samplePoint = self.getSinglePointFromShape(target)
+        if samplePoint and not self.contains(samplePoint[0], samplePoint[1]):
+            return False
+
+        # 2: If the target is fully contained within a single one of the shapes,
+        #    we can return true.
+        if any([shape.containsShape(target) for shape in self._shapes]):
+            return True
+
+        groupPoints = self.getApproxGroupPoints(self)
+        return self.containsShapeFromPoints(target, groupPoints)
+
+    def drawDbPoints(self, ctx):
+        groupPoints = self.getApproxGroupPoints(self)
+        ctx.save()
+        r = 4
+        # dots at corners
+        for shapeList in groupPoints:
+            for shape in shapeList:
+                for pt in shape:
+                    x, y = pt
+                    self.setFillOrStrokeStyle(ctx, 'magenta')
+                    ctx.new_path()
+                    ctx.arc(x, y, r, 0, 2 * math.pi)
+                    ctx.close_path()
+                    ctx.fill()
+                # now connect the dots
+                ctx.new_path
+                utils.makePolygonPath(shape, ctx)
+                ctx.close_path()
+                ctx.set_line_width(3)
+                self.setFillOrStrokeStyle(ctx, 'magenta')
+                ctx.set_dash([7, 7])
+                ctx.stroke()
+                ctx.restore()
 
     def addx(self, dx):
         for shape in self._shapes:
@@ -2450,7 +2551,7 @@ class Label(Shape):
     italic = shape_property(get_italic, set_italic)
 
     def toString(self):
-        return f"{t('Label')}({self.value}, {self.centerX}, {self.centerY})"
+        return f'{t("Label")}({self.value}, {self.centerX}, {self.centerY})'
 
 
 class Polygon(Shape):

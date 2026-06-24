@@ -1001,7 +1001,11 @@ class App(object):
 
     def handleSetActiveScreen(self, newScreen, redraw=True):
         self.activeScreen = newScreen
-        self.callUserFn('onScreenActivate', (), redraw=redraw, useActiveScreen=True)
+
+        # Redraw even if onScreenActivate is not present in the user's globals
+        self.callUserFn('onScreenActivate', (), redraw=False, useActiveScreen=True)
+        if redraw:
+            self.redrawAllWrapper()
 
     def getLeft(self):
         return 0
@@ -1131,6 +1135,39 @@ class App(object):
         self._wyvern_surface = wyvern.ImageSurface(self.width, self.height)
         self._ctx = self._wyvern_surface.canvas
 
+    def throttleEvent(self, fn, delay):
+        lastCall = -delay
+        prevArgs = None
+
+        def throttle(*args):
+            nonlocal lastCall, prevArgs
+
+            now = pygame.time.get_ticks()
+            if now - lastCall >= delay:
+                lastCall = now
+                fn(*args)
+                prevArgs = None
+            else:
+                prevArgs = args
+
+        def flush():
+            nonlocal lastCall, prevArgs
+
+            if prevArgs is None:
+                return False
+
+            now = pygame.time.get_ticks()
+            if now - lastCall >= delay:
+                lastCall = now
+                fn(*prevArgs)
+                prevArgs = None
+                return True
+
+            return False
+
+        throttle.flush = flush
+        return throttle
+
     @_safeMethod
     def run(self):
         pygame.init()
@@ -1140,6 +1177,12 @@ class App(object):
         self.updateScreen(True)
 
         lastTick = 0
+        throttledMouseMove = self.throttleEvent(
+            lambda arg: self.callUserFn('onMouseMove', arg), 30
+        )
+        throttledMouseDrag = self.throttleEvent(
+            lambda arg: self.callUserFn('onMouseDrag', arg), 30
+        )
         self._running = True
 
         while self._running:
@@ -1159,14 +1202,13 @@ class App(object):
                             )
                         elif event.type == pygame.MOUSEMOTION:
                             if event.buttons == (0, 0, 0):
-                                self.callUserFn('onMouseMove', event.pos)
+                                throttledMouseMove(event.pos)
                             else:
-                                self.callUserFn(
-                                    'onMouseDrag',
+                                throttledMouseDrag(
                                     (
                                         *event.pos,
                                         [i for i in range(3) if event.buttons[i] != 0],
-                                    ),
+                                    )
                                 )
                         elif event.type == pygame.KEYDOWN:
                             self.handleKeyPress(event.key, event.mod)
@@ -1187,7 +1229,9 @@ class App(object):
 
                     pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
 
-                should_redraw = had_event
+                did_move = throttledMouseMove.flush()
+                did_drag = throttledMouseDrag.flush()
+                should_redraw = had_event or did_move or did_drag
 
                 msPassed = pygame.time.get_ticks() - lastTick
                 if 1000 / self.stepsPerSecond - msPassed < 1:
