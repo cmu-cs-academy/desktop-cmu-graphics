@@ -334,7 +334,7 @@ impl Canvas {
         let text_path = Path::from_str(&text, point, font);
         self.path
             .get_or_insert(PathBuilder::new_path(&text_path))
-            .add_path(&text_path);
+            .add_path(&text_path, None);
         Ok(())
     }
 
