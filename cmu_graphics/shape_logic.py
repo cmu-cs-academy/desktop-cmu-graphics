@@ -1708,16 +1708,16 @@ class Shape(object):
                 ctx = self.drawImage(ctx)
             ctx = wyvern.restore(ctx)
 
-            db = self.db
-            if db != '' and isinstance(db, str):
-                if db == 'all' or 'points' in db:
-                    ctx = self.drawDbPoints(ctx)
-                if db == 'all' or 'box' in db:
-                    ctx = self.drawDbBox(ctx)
-                if db == 'all' or 'center' in db:
-                    ctx = self.drawDbCenter(ctx)
-                if db == 'all' or 'centroid' in db:
-                    ctx = self.drawDbCentroid(ctx)
+        db = self.db
+        if db != '' and isinstance(db, str):
+            if db == 'all' or 'points' in db:
+                ctx = self.drawDbPoints(ctx)
+            if db == 'all' or 'box' in db:
+                ctx = self.drawDbBox(ctx)
+            if db == 'all' or 'center' in db:
+                ctx = self.drawDbCenter(ctx)
+            if db == 'all' or 'centroid' in db:
+                ctx = self.drawDbCentroid(ctx)
 
         return ctx
 
@@ -1937,27 +1937,28 @@ class Group(Shape):
 
     def drawDbPoints(self, ctx):
         groupPoints = self.getApproxGroupPoints(self)
-        ctx.save()
+        ctx = wyvern.save(ctx)
         r = 4
         # dots at corners
         for shapeList in groupPoints:
             for shape in shapeList:
                 for pt in shape:
                     x, y = pt
-                    self.setFillOrStrokeStyle(ctx, 'magenta')
-                    ctx.new_path()
-                    ctx.arc(x, y, r, 0, 2 * math.pi)
-                    ctx.close_path()
-                    ctx.fill()
+                    ctx = self.setFillOrStrokeStyle(ctx, 'magenta')
+                    ctx = wyvern.new_path(ctx)
+                    ctx = wyvern.arc(ctx, x, y, r, 0, 2 * math.pi)
+                    ctx = wyvern.close_path(ctx)
+                    ctx = wyvern.fill(ctx)
                 # now connect the dots
-                ctx.new_path
-                utils.makePolygonPath(shape, ctx)
-                ctx.close_path()
-                ctx.set_line_width(3)
-                self.setFillOrStrokeStyle(ctx, 'magenta')
-                ctx.set_dash([7, 7])
-                ctx.stroke()
-                ctx.restore()
+                ctx = wyvern.new_path(ctx)
+                ctx = utils.makePolygonPath(shape, ctx)
+                ctx = wyvern.close_path(ctx)
+                ctx = wyvern.set_line_width(ctx, 3)
+                ctx = self.setFillOrStrokeStyle(ctx, 'magenta')
+                ctx = wyvern.set_dash(ctx, [7, 7])
+                ctx = wyvern.stroke(ctx)
+                ctx = wyvern.restore(ctx)
+        return ctx
 
     def addx(self, dx):
         for shape in self._shapes:
