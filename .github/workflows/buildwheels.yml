@@ -53,17 +53,19 @@ jobs:
       with:
         persist-credentials: false # Highly recommended as a good security practice to not store credentials in disk, unless you need this for your specific use case
 
-    - name: Install FreeType and Fontconfig dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y pkg-config libfreetype6-dev libfontconfig1-dev
-
     - name: Build SDist
       uses: PyO3/maturin-action@v1
       with:
         working-directory: cmu_graphics_helpers
         manylinux: auto
         args: --sdist
+        before-script-linux: |
+          if command -v yum &> /dev/null; then
+            yum install -y freetype-devel fontconfig-devel
+          elif command -v apt &> /dev/null; then
+            apt update -y
+            apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
+          fi
 
     - uses: actions/upload-artifact@v6
       with:
