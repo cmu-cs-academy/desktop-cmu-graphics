@@ -60,6 +60,11 @@ fn union(py_polys: Vec<PyMultiPolygon>) -> PyResult<PyMultiPolygon> {
 
 #[pymodule]
 fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(union, m)?)?;
+    let pygeo = PyModule::new(m.py(), "pygeo")?;
+    pygeo.add_function(wrap_pyfunction!(union, &pygeo)?)?;
+    m.add_submodule(&pygeo)?;
+    m.py().import("sys")?
+        .getattr("modules")?
+        .set_item("cmu_graphics_helpers.pygeo", pygeo)?;
     Ok(())
 }

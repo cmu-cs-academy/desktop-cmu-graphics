@@ -12,7 +12,7 @@ from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helper
 ### PYPI VERSION ###
 import cairo
 import pygame
-import cmu_graphics_helpers
+from cmu_graphics_helpers import pygeo
 ### END PYPI VERSION ###
 
 from cmu_graphics.libs import webrequest
@@ -1892,7 +1892,7 @@ class Group(Shape):
             for groups in groupPoints:
                 for group in groups:
                     self.closeShapes(group)
-            return cmu_graphics_helpers.union(groupPoints)
+            return pygeo.union(groupPoints)
         else:
             return []
 
@@ -1961,7 +1961,7 @@ class Group(Shape):
                 self.setFillOrStrokeStyle(ctx, 'magenta')
                 ctx.set_dash([7, 7])
                 ctx.stroke()
-                ctx.restore()
+        ctx.restore()
 
     def addx(self, dx):
         for shape in self._shapes:
