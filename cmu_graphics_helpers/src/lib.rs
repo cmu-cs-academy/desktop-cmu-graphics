@@ -1,3 +1,4 @@
+#![allow(unsafe_op_in_unsafe_fn)]
 /* PYGEO */
 use pyo3::Bound;
 use pyo3::exceptions::PyValueError;

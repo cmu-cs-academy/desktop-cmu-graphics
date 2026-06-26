@@ -24,12 +24,6 @@ jobs:
         if: ${{ matrix.os != 'ubuntu-latest' }}
         run: rustup target add ${{ matrix.target }}
 
-      - name: Install FreeType and Fontconfig dependencies
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config libfreetype6-dev libfontconfig1-dev
-
       - name: Build wheels with maturin
         uses: PyO3/maturin-action@v1
         with:
@@ -37,6 +31,13 @@ jobs:
           manylinux: auto
           target: ${{ matrix.target }}
           args: --release
+          before-script-linux: |
+            if command -v yum &> /dev/null; then
+              yum install -y freetype-devel fontconfig-devel
+            elif command -v apt &> /dev/null; then
+              apt update -y
+              apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
+            fi
 
       - name: Upload wheels
         uses: actions/upload-artifact@v6
