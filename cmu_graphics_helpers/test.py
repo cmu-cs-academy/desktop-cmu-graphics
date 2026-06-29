@@ -1,5 +1,5 @@
 import unittest
-import cmu_graphics_helpers
+from cmu_graphics_helpers import pygeo
 
 # simple: a square with no holes
 square = [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]]
@@ -245,18 +245,19 @@ result = [
 
 class TestUnion(unittest.TestCase):
     def test_union(self):
-        self.assertEqual(cmu_graphics_helpers.union([square]), square)
+        self.assertEqual(pygeo.union([square]), square)
 
-        unionResult = cmu_graphics_helpers.union(bigMulti)
+        unionResult = pygeo.union(bigMulti)
+        print(result)
         self.assertEqual(unionResult, result)
 
     def test_weird_args(self):
         with self.assertRaisesRegex(
             ValueError, 'must be given at least one MultiPolygon'
         ):
-            cmu_graphics_helpers.union([])
-        self.assertEqual(cmu_graphics_helpers.union([[]]), [])
-        self.assertEqual(cmu_graphics_helpers.union([[[]]]), [[[]]])
+            pygeo.union([])
+        self.assertEqual(pygeo.union([[]]), [])
+        self.assertEqual(pygeo.union([[[]]]), [[[]]])
 
         for value in (
             [[[[(1), (2), (3)]]]],
@@ -265,7 +266,7 @@ class TestUnion(unittest.TestCase):
         ):
             with self.assertRaises(TypeError):
                 print('testing', value)
-                cmu_graphics_helpers.union(value)
+                pygeo.union(value)
 
         for value in (
             [[[[(1,), (2,), (3,)]]]],
@@ -285,7 +286,7 @@ class TestUnion(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 print('testing', value)
-                cmu_graphics_helpers.union(value)
+                pygeo.union(value)
 
 
 if __name__ == '__main__':
