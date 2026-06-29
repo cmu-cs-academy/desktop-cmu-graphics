@@ -11,7 +11,7 @@ from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helper
 ### PYPI VERSION ###
 import wyvern
 import pygame
-import cmu_graphics_helpers
+from cmu_graphics_helpers import pygeo
 ### END PYPI VERSION ###
 
 from cmu_graphics.libs import webrequest
@@ -1888,7 +1888,7 @@ class Group(Shape):
             for groups in groupPoints:
                 for group in groups:
                     self.closeShapes(group)
-            return cmu_graphics_helpers.union(groupPoints)
+            return pygeo.union(groupPoints)
         else:
             return []
 
@@ -1949,7 +1949,6 @@ class Group(Shape):
                     ctx = wyvern.arc(ctx, x, y, r, 0, 2 * math.pi)
                     ctx = wyvern.close_path(ctx)
                     ctx = wyvern.fill(ctx)
-                # now connect the dots
                 ctx = wyvern.new_path(ctx)
                 ctx = utils.makePolygonPath(shape, ctx)
                 ctx = wyvern.close_path(ctx)
@@ -1957,7 +1956,7 @@ class Group(Shape):
                 ctx = self.setFillOrStrokeStyle(ctx, 'magenta')
                 ctx = wyvern.set_dash(ctx, [7, 7])
                 ctx = wyvern.stroke(ctx)
-                ctx = wyvern.restore(ctx)
+        ctx = wyvern.restore(ctx)
         return ctx
 
     def addx(self, dx):
