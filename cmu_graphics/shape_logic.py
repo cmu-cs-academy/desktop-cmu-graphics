@@ -1454,8 +1454,8 @@ class Shape(object):
         # the targetShape are inside this shape
         x = targetShape.centerX
         y = targetShape.centerY
-        return not utils.edgesIntersect(
-            self.getEdges(), targetShape.getEdges()
+        return not pygeo.edgesIntersect(
+            self.getApproxPoints(), targetShape.getApproxPoints()
         ) and self.contains(x, y)
 
     def getBounds(self):
@@ -1496,12 +1496,12 @@ class Shape(object):
             if any(targetShape.boundsIntersect(myShape) for myShape in myShapes):
                 targetShapes.append(targetShape)
 
-        myShapesEdges = [shape.getEdges() for shape in myShapes]
-        targetShapesEdges = [shape.getEdges() for shape in targetShapes]
+        myShapesPoints = [shape.getApproxPoints() for shape in myShapes]
+        targetShapesPoints = [shape.getApproxPoints() for shape in targetShapes]
 
         for i in range(len(myShapes)):
             for j in range(len(targetShapes)):
-                if utils.edgesIntersect(myShapesEdges[i], targetShapesEdges[j]):
+                if pygeo.edgesIntersect(myShapesPoints[i], targetShapesPoints[j]):
                     return True
 
         targetApproxPoints = [shape.getApproxPoints() for shape in targetShapes]
@@ -1914,9 +1914,9 @@ class Group(Shape):
             # for a polygon, the first argument is the outline and the remaining are holes in the shape, if they exist
             shapeNum = len(groupShape)
             for i in range(shapeNum):
-                if utils.edgesIntersect(
-                    self.getEdgesFromPoints(groupShape[i]),
-                    self.getEdgesFromPoints(targetPoints),
+                if pygeo.edgesIntersect(
+                    groupShape[i],
+                    targetPoints,
                 ):
                     return False
 

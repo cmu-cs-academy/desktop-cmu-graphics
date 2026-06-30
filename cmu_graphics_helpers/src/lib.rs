@@ -1,4 +1,4 @@
-#![allow(unsafe_op_in_unsafe_fn)]
+#![allow(unsafe_op_in_unsafe_fn, non_snake_case)]
 /* PYGEO */
 use pyo3::Bound;
 use pyo3::exceptions::PyValueError;
@@ -59,6 +59,52 @@ fn union(py_polys: Vec<PyMultiPolygon>) -> PyResult<PyMultiPolygon> {
         )),
     }
 }
+
+fn segmentsIntersect(
+    x1: f32,
+    y1: f32,
+    x2: f32,
+    y2: f32,
+    x3: f32,
+    y3: f32,
+    x4: f32,
+    y4: f32,
+) -> bool {
+    let dxa = x2 - x1;
+    let dya = y2 - y1;
+    let dxb = x4 - x3;
+    let dyb = y4 - y3;
+    let s = if (-dxb * dya + dxa * dyb) == 0.0 {
+        f32::INFINITY
+    } else {
+        (-dya * (x1 - x3) + dxa * (y1 - y3)) / (-dxb * dya + dxa * dyb)
+    };
+    let t = if (-dxb * dya + dxa * dyb) == 0.0 {
+        f32::INFINITY
+    } else {
+        (dxb * (y1 - y3) - dyb * (x1 - x3)) / (-dxb * dya + dxa * dyb)
+    };
+    return s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0;
+}
+
+#[pyfunction]
+fn edgesIntersect(pts1: Vec<(f32, f32)>, pts2: Vec<(f32, f32)>) -> bool {
+    let mut k;
+    for i in 0..pts1.len() {
+        let (x1, y1) = pts1[i];
+        k = (i + 1) % pts1.len();
+        let (x2, y2) = pts1[k];
+        for j in 0..pts2.len() {
+            let (x3, y3) = pts2[j];
+            k = (j + 1) % pts2.len();
+            let (x4, y4) = pts2[k];
+            if segmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 /* PYGEO */
 
 /* WYVERN */
@@ -68,9 +114,9 @@ use pyo3::exceptions::PyRuntimeError;
 use pyo3::types::PyByteArray;
 
 use skia_safe::{
-    font_style, gradient, surfaces, Color, Color4f, ColorSpace, ColorType, Font, FontMgr,
-    FontStyle, Image, ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point,
-    RRect, Rect, TileMode, Vector,
+    Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, Image, ImageInfo, Matrix,
+    Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, TileMode, Vector,
+    font_style, gradient, surfaces,
 };
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
@@ -992,8 +1038,10 @@ impl ImageSurface {
 fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let pygeo = PyModule::new(m.py(), "pygeo")?;
     pygeo.add_function(wrap_pyfunction!(union, &pygeo)?)?;
+    pygeo.add_function(wrap_pyfunction!(edgesIntersect, &pygeo)?)?;
     m.add_submodule(&pygeo)?;
-    m.py().import("sys")?
+    m.py()
+        .import("sys")?
         .getattr("modules")?
         .set_item("cmu_graphics_helpers.pygeo", pygeo)?;
 
@@ -1039,7 +1087,8 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_function(wrap_pyfunction!(set_source_gradient, m)?)?;
     wyvern.add_function(wrap_pyfunction!(set_source_image, m)?)?;
     m.add_submodule(&wyvern)?;
-    m.py().import("sys")?
+    m.py()
+        .import("sys")?
         .getattr("modules")?
         .set_item("cmu_graphics_helpers.wyvern", wyvern)?;
     Ok(())
