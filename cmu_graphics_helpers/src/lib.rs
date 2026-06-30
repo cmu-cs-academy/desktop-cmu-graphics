@@ -61,26 +61,26 @@ fn union(py_polys: Vec<PyMultiPolygon>) -> PyResult<PyMultiPolygon> {
 }
 
 fn segmentsIntersect(
-    x1: f32,
-    y1: f32,
-    x2: f32,
-    y2: f32,
-    x3: f32,
-    y3: f32,
-    x4: f32,
-    y4: f32,
+    x1: f64,
+    y1: f64,
+    x2: f64,
+    y2: f64,
+    x3: f64,
+    y3: f64,
+    x4: f64,
+    y4: f64,
 ) -> bool {
     let dxa = x2 - x1;
     let dya = y2 - y1;
     let dxb = x4 - x3;
     let dyb = y4 - y3;
     let s = if (-dxb * dya + dxa * dyb) == 0.0 {
-        f32::INFINITY
+        f64::INFINITY
     } else {
         (-dya * (x1 - x3) + dxa * (y1 - y3)) / (-dxb * dya + dxa * dyb)
     };
     let t = if (-dxb * dya + dxa * dyb) == 0.0 {
-        f32::INFINITY
+        f64::INFINITY
     } else {
         (dxb * (y1 - y3) - dyb * (x1 - x3)) / (-dxb * dya + dxa * dyb)
     };
@@ -88,16 +88,16 @@ fn segmentsIntersect(
 }
 
 #[pyfunction]
-fn edgesIntersect(pts1: Vec<(f32, f32)>, pts2: Vec<(f32, f32)>) -> bool {
+fn edgesIntersect(pts1: Vec<[f64; 2]>, pts2: Vec<[f64; 2]>) -> bool {
     let mut k;
     for i in 0..pts1.len() {
-        let (x1, y1) = pts1[i];
+        let (x1, y1) = (pts1[i][0], pts1[i][1]);
         k = (i + 1) % pts1.len();
-        let (x2, y2) = pts1[k];
+        let (x2, y2) = (pts1[k][0], pts1[k][1]);
         for j in 0..pts2.len() {
-            let (x3, y3) = pts2[j];
+            let (x3, y3) = (pts2[j][0], pts2[j][1]);
             k = (j + 1) % pts2.len();
-            let (x4, y4) = pts2[k];
+            let (x4, y4) = (pts2[k][0], pts2[k][1]);
             if segmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
                 return true;
             }

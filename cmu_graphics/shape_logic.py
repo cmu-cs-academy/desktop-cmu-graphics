@@ -1424,21 +1424,6 @@ class Shape(object):
         checkNumber(t('hits(x, y)'), t('y'), y, True)
         return self._hits(x, y)
 
-    def getEdgesFromPoints(self, points):
-        edges = []
-        for i in range(len(points)):
-            x1, y1 = points[i]
-            k = (i + 1) % (len(points))
-            x2, y2 = points[k]
-            if x1 < x2:
-                edges.append((x1, y1, x2, y2))
-            else:
-                edges.append((x2, y2, x1, y1))
-        return edges
-
-    def getEdges(self):
-        return self.getEdgesFromPoints(self.getApproxPoints())
-
     def containsShape(self, *arguments):
         checkArgCount(
             self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments
@@ -1875,19 +1860,13 @@ class Group(Shape):
         for shape in shapes:
             shape.append(shape[0])
 
-    def pointsToTuples(self, points):
-        finalPoints = []
-        for point in points:
-            finalPoints.append((point[0], point[1]))
-        return finalPoints
-
     def getApproxGroupPoints(self, group):
         shapes = group._shapes
         if len(shapes) > 0:
             groupPoints = [
                 self.getApproxGroupPoints(shape)
                 if isinstance(shape, Group)
-                else [[self.pointsToTuples(shape.getApproxPoints())]]
+                else [[utils.pointsToTuples(shape.getApproxPoints())]]
                 for shape in shapes
             ]
             for groups in groupPoints:
