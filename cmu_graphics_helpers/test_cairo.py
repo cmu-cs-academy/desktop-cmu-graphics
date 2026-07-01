@@ -1,0 +1,201 @@
+import math
+
+import cairo
+import pygame
+from io import BytesIO
+import os
+import ssl
+import urllib.request
+import array
+
+
+# need cacert.pem file in path for this to work
+def webrequestget(path):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'Accept-Encoding': 'none',
+        'Accept-Language': 'en-US,en;q=0.8',
+        'Connection': 'keep-alive',
+    }
+    request = urllib.request.Request(path, headers=headers)
+    # This is the October 2025 certifi cacert.pem
+    cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
+    context = ssl.create_default_context(cafile=cafile_path)
+    response = urllib.request.urlopen(request, context=context)
+    return response
+
+
+class SandboxModal(object):
+    def __init__(self):
+        self.centerX = 300
+        self.width = 600
+        self.top = 0
+        self.left = self.centerX - (self.width / 2)
+        self.right = self.left + self.width
+
+        self.height = 600
+
+        self.textXMargin = 15
+        self.textYMargin = 18
+        self.betweenLineMargin = 8
+        self.textSize = 20
+        self.shadowShift = 2
+
+        self.active = True
+
+        pygame.display.set_caption('test')
+        pygame.init()
+
+        self.run()
+
+    def loadImageFromStringReference(self, reference):
+        if reference.startswith('http'):
+            # reference is a url
+            try:
+                response = webrequestget(reference)
+                image = pygame.image.load(BytesIO(response.read()))
+            except Exception:
+                Exception('Failed to load image data')
+        else:
+            # reference is a path
+            image = pygame.image.load(reference)
+        return image
+
+    def cairoSurfaceFromPygameSurface(self, pygameSurface):
+        a = array.array('B', pygame.image.tostring(pygameSurface, 'RGBA'))
+        surface = cairo.ImageSurface.create_for_data(
+            a, cairo.FORMAT_ARGB32, *pygameSurface.get_size()
+        )
+        return surface
+
+    def redrawAll(self, screen, cairo_surface, ctx):
+        self.draw(ctx)
+        data_string = cairo_surface.get_data()
+        pygame_surface = pygame.image.frombuffer(
+            data_string, (int(self.width), int(self.height)), 'RGBA'
+        )
+        screen.fill((255, 255, 255))
+        screen.blit(pygame_surface, (0, 0))
+
+    def draw(self, ctx):
+        ctx.save()
+
+        ctx.new_path()
+        ctx.move_to(50, 50)
+        ctx.set_source_rgb(0.0, 0.0, 0.0)
+        ctx.select_font_face(
+            'Tahoma', cairo.FONT_WEIGHT_NORMAL, cairo.FONT_SLANT_NORMAL
+        )
+        ctx.set_font_size(20)
+        ctx.text_path('test')
+        ctx.set_line_width(2)
+        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        ctx.arc(75, 100, 20, 0, 2 * math.pi)
+        ctx.fill()
+        ctx.set_line_join(cairo.LINE_JOIN_BEVEL)
+        ctx.arc(125, 100, 20, 0, 2 * math.pi)
+        # ctx.stroke()
+        ctx.arc(175, 100, 20, 0, 3 * math.pi / 4)
+        ctx.set_source_rgb(1.0, 0.0, 0.5)
+        # ctx.stroke()
+        ctx.arc(175, 100, 20, math.pi, 3 * math.pi / 4)
+        # ctx.move_to(200, 50)
+        ctx.rectangle(200, 50, 20, 20)
+        ctx.stroke()
+
+        ctx.move_to(50, 150)
+        ctx.select_font_face('Arial', cairo.FONT_WEIGHT_BOLD, cairo.FONT_SLANT_ITALIC)
+        ctx.text_path('test')
+        ctx.fill()
+
+        # ctx = wyvern.move_to(ctx, 75, 200)
+        ctx.set_source_rgb(0.5, 0.0, 1.0)
+        ctx.curve_to(75, 200, 175, 250, 275, 200)
+        # ctx.set_dash([7, 7])
+        ctx.stroke()
+
+        ctx.rectangle(50, 300, 100, 50)
+        # ctx.clip()
+        ctx.fill_preserve()
+        ctx.arc(200, 300, 20, math.pi, 3 * math.pi / 4)
+        ctx.stroke()
+
+        # ctx.rotate(math.pi / 4)
+        # ctx.translate(400, -400)
+        ctx.transform(cairo.Matrix(0, 1, 1, 0, 0, 0))
+        ctx.rectangle(50, 400, 100, 50)
+        ctx.stroke()
+
+        gradient = cairo.LinearGradient(300, 300, 400, 400)
+
+        # Add color stops (offset, r, g, b, alpha)
+        gradient.add_color_stop_rgba(0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
+        gradient.add_color_stop_rgba(0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
+        gradient.add_color_stop_rgba(1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
+
+        ctx.set_source(gradient)
+        ctx.rectangle(300, 300, 100, 100)
+        ctx.fill()
+
+        gradient = cairo.RadialGradient(475, 100, 0, 475, 100, 100)
+
+        gradient.add_color_stop_rgba(0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
+        gradient.add_color_stop_rgba(0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
+        gradient.add_color_stop_rgba(1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
+
+        ctx.set_source(gradient)
+        ctx.arc(475, 100, 100, 0, 2 * math.pi)
+        ctx.fill()
+
+        image = self.loadImageFromStringReference(
+            'https://academy.cs.cmu.edu/static/media/project_10.472f439f.jpg'
+        )
+        surface = self.cairoSurfaceFromPygameSurface(image)
+
+        ctx.set_source_surface(surface, 400, 400)
+        ctx.paint_with_alpha(10 / 100)
+
+        ctx.restore()
+
+    def run(self):
+        self._msPassed = 0
+        self._refreshDelay = 60
+        self._stepsPerSecond = 30
+
+        clock = pygame.time.Clock()
+
+        # Make antialiasing possible
+        screen = pygame.display.set_mode((int(self.width), int(self.height)))
+        cairo_surface = cairo.ImageSurface(
+            cairo.FORMAT_ARGB32, int(self.width), int(self.height)
+        )
+        ctx = cairo.Context(cairo_surface)
+
+        self.running = True
+        while self.running:
+            self._msPassed += clock.tick(self._refreshDelay)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+
+            if (
+                self._msPassed > math.floor((1000 / self._stepsPerSecond))
+                or abs(self._msPassed - math.floor((1000 / self._stepsPerSecond))) < 10
+            ):
+                self._msPassed = 0
+
+            self.redrawAll(screen, cairo_surface, ctx)
+            pygame.display.flip()
+
+        pygame.display.quit()
+        pygame.quit()
+
+
+def main():
+    SandboxModal()
+
+
+if __name__ == '__main__':
+    main()

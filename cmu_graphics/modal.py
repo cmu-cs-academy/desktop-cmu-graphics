@@ -1,44 +1,16 @@
 import math
 
 ### ZIPFILE VERSION ###
-import libs.cairo_loader as cairo
 import libs.pygame_loader as pygame
+import libs.cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
-import cairo
 import pygame
 
 ### END PYPI VERSION ###
+from cmu_graphics_helpers import wyvern
 import json
-
-
-def roundedrec(ctx, x, y, w, h, radius_x=5, radius_y=5):
-    # from mono moonlight aka mono silverlight
-    # test limits (without using multiplications)
-    # http://graphics.stanford.edu/courses/cs248-98-fall/Final/q1.html
-    ARC_TO_BEZIER = 0.55228475
-    if radius_x > w - radius_x:
-        radius_x = w / 2
-    if radius_y > h - radius_y:
-        radius_y = h / 2
-
-    # approximate (quite close) the arc using a bezier curve
-    c1 = ARC_TO_BEZIER * radius_x
-    c2 = ARC_TO_BEZIER * radius_y
-
-    ctx.new_path()
-    ctx.move_to(x + radius_x, y)
-    ctx.rel_line_to(w - 2 * radius_x, 0.0)
-    ctx.rel_curve_to(c1, 0.0, radius_x, c2, radius_x, radius_y)
-    ctx.rel_line_to(0, h - 2 * radius_y)
-    ctx.rel_curve_to(0.0, c2, c1 - radius_x, radius_y, -radius_x, radius_y)
-    ctx.rel_line_to(-w + 2 * radius_x, 0)
-    ctx.rel_curve_to(-c1, 0, -radius_x, -c2, -radius_x, -radius_y)
-    ctx.rel_line_to(0, -h + 2 * radius_y)
-    ctx.rel_curve_to(0.0, -c2, radius_x - c1, -radius_y, radius_x, -radius_y)
-    ctx.close_path()
-
 
 keyNameMap = {
     pygame.K_TAB: 'tab',
@@ -92,7 +64,7 @@ class TextBox(object):
         self.cursorActive = True
         self.cursorTimer = pygame.time.get_ticks()
         self.blinkDelay = 400
-        self.font = ('Arial', cairo.FONT_WEIGHT_NORMAL, cairo.FONT_SLANT_NORMAL)
+        self.font = ('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         self.textSize = 15
         self.padding = 4
         self.textAnchor = [
@@ -128,25 +100,28 @@ class TextBox(object):
 
     def draw(self, ctx):
         if not self.active:
-            ctx.rectangle(self.left, self.top, self.width, self.height)
-            ctx.set_source_rgba(0.7, 0.7, 0.7, 1.0)
-            ctx.set_line_width(1)
-            ctx.stroke()
+            ctx = wyvern.rectangle(ctx, self.left, self.top, self.width, self.height)
+            ctx = wyvern.set_source_rgba(ctx, 0.7, 0.7, 0.7, 1.0)
+            ctx = wyvern.set_line_width(ctx, 1)
+            ctx = wyvern.stroke(ctx)
         else:
-            roundedrec(ctx, self.left, self.top, self.width, self.height, 3, 3)
-            ctx.set_source_rgba(0.9, 0.6, 0.4, 1.0)
-            ctx.set_line_width(3)
-            ctx.stroke()
+            ctx = wyvern.round_rectangle(
+                ctx, self.left, self.top, self.width, self.height, 3, 3
+            )
+            ctx = wyvern.set_source_rgba(ctx, 0.9, 0.6, 0.4, 1.0)
+            ctx = wyvern.set_line_width(ctx, 3)
+            ctx = wyvern.stroke(ctx)
 
         clipYMargin = 10
-        ctx.save()
-        ctx.rectangle(
+        ctx = wyvern.save(ctx)
+        ctx = wyvern.rectangle(
+            ctx,
             self.left + self.padding,
             self.top - clipYMargin,
             self.width - 2 * self.padding,
             self.top + self.height + 2 * clipYMargin,
         )
-        ctx.clip()
+        ctx = wyvern.clip(ctx)
 
         cursorX = (
             self.textAnchor[0]
@@ -167,24 +142,30 @@ class TextBox(object):
             )
             left = min(cursorX, anchorX)
             right = max(cursorX, anchorX)
-            ctx.set_source_rgba(1.0, 0.85, 0.7)
-            ctx.rectangle(left, cursorTop, right - left, cursorBottom - cursorTop)
-            ctx.fill()
+            ctx = wyvern.set_source_rgba(ctx, 1.0, 0.85, 0.7)
+            ctx = wyvern.rectangle(
+                ctx, left, cursorTop, right - left, cursorBottom - cursorTop
+            )
+            ctx = wyvern.fill(ctx)
 
         elif self.active and self.cursorActive:
-            ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
-            ctx.set_line_width(1)
-            ctx.move_to(cursorX, cursorBottom)
-            ctx.line_to(cursorX, cursorTop)
-            ctx.stroke()
+            ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
+            ctx = wyvern.set_line_width(ctx, 1)
+            ctx = wyvern.move_to(ctx, cursorX, cursorBottom)
+            ctx = wyvern.line_to(ctx, cursorX, cursorTop)
+            ctx = wyvern.stroke(ctx)
 
-        ctx.move_to(self.textAnchor[0] + self.textOffset, self.textAnchor[1])
-        ctx.select_font_face(*self.font)
-        ctx.set_font_size(self.textSize)
-        ctx.text_path(''.join(self.buf))
-        ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
-        ctx.fill()
-        ctx.restore()
+        ctx = wyvern.move_to(
+            ctx, self.textAnchor[0] + self.textOffset, self.textAnchor[1]
+        )
+        ctx = wyvern.select_font_face(ctx, *self.font)
+        ctx = wyvern.set_font_size(ctx, self.textSize)
+        ctx = wyvern.text_path(ctx, ''.join(self.buf))
+        ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
+        ctx = wyvern.fill(ctx)
+        ctx = wyvern.restore(ctx)
+        # NEW
+        return ctx
 
     def cursorPosFromCoord(self, x):
         if x <= self.textAnchor[0] + self.getTextWidth('') + self.textOffset:
@@ -207,12 +188,14 @@ class TextBox(object):
         return len(self.buf)
 
     def getTextWidth(self, text):
+        if len(text) <= 0:
+            return 0
         ctx = self.modal.measureCtx
-        ctx.save()
-        ctx.select_font_face(*self.font)
-        ctx.set_font_size(self.textSize)
-        _, _, _, _, xAdvance, _ = ctx.text_extents(text)
-        ctx.restore()
+        ctx = wyvern.save(ctx)
+        ctx = wyvern.select_font_face(ctx, *self.font)
+        ctx = wyvern.set_font_size(ctx, self.textSize)
+        _, _, _, _, xAdvance, _ = wyvern.text_extents(ctx, text)
+        ctx = wyvern.restore(ctx)
         return xAdvance
 
     def contains(self, x, y, checkYOnly=False):
@@ -353,30 +336,32 @@ class Button(object):
         self.baseColor = (0.7, 0.6, 0.35, 1.0)
         self.hoverColor = (0.75, 0.7, 0.5, 1.0)
         self.color = self.baseColor
-        self.font = ('Arial', cairo.FONT_WEIGHT_NORMAL, cairo.FONT_SLANT_NORMAL)
+        self.font = ('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         self.textSize = 15
         self.text = 'OK'
 
     def draw(self, ctx):
-        ctx.save()
+        ctx = wyvern.save(ctx)
 
         # Draw the rectangle
-        ctx.set_source_rgba(*self.color)
-        ctx.rectangle(self.left, self.top, self.width, self.height)
-        ctx.fill()
+        ctx = wyvern.set_source_rgba(ctx, *self.color)
+        ctx = wyvern.rectangle(ctx, self.left, self.top, self.width, self.height)
+        ctx = wyvern.fill(ctx)
 
         # Draw the label
-        ctx.select_font_face(*self.font)
-        ctx.set_font_size(self.textSize)
-        ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-        _, _, textWidth, textHeight, _, _ = ctx.text_extents(self.text)
+        ctx = wyvern.select_font_face(ctx, *self.font)
+        ctx = wyvern.set_font_size(ctx, self.textSize)
+        ctx = wyvern.set_source_rgba(ctx, 1.0, 1.0, 1.0, 1.0)
+        _, _, textWidth, textHeight, _, _ = wyvern.text_extents(ctx, self.text)
         yPadding = (self.height - textHeight) / 2
         xPadding = (self.width - textWidth) / 2
-        ctx.move_to(self.left + xPadding, self.bottom - yPadding)
-        ctx.text_path(self.text)
-        ctx.fill()
+        ctx = wyvern.move_to(ctx, self.left + xPadding, self.bottom - yPadding)
+        ctx = wyvern.text_path(ctx, self.text)
+        ctx = wyvern.fill(ctx)
 
-        ctx.restore()
+        ctx = wyvern.restore(ctx)
+
+        return ctx
 
     def contains(self, x, y):
         xInBounds = self.left <= x <= self.right
@@ -414,10 +399,11 @@ class TextBoxModal(object):
         self.shadowShift = 2
 
         self.active = True
-        self.measureCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
-        self.dividerY = (
-            self.drawPrompt(self.measureCtx, simulate=True) + self.textYMargin
-        )
+        # can't make a surface whose dimensions are zero
+        self.measureCtx = wyvern.ImageSurface(100, 100).canvas
+        dividerY, ctx = self.drawPrompt(self.measureCtx, simulate=True)
+        self.dividerY = dividerY + self.textYMargin
+        self.measureCtx = ctx
         self.textBox = TextBox(self) if getInput else None
         self.button = Button(self)
 
@@ -433,69 +419,81 @@ class TextBoxModal(object):
 
     height = property(get_height)
 
-    def redrawAll(self, screen, cairo_surface, ctx):
-        self.draw(ctx)
-        data_string = cairo_surface.get_data()
+    def redrawAll(self, screen, wyvern_surface, ctx):
+        ctx = self.draw(ctx)
+        data_string = wyvern_surface.data
         pygame_surface = pygame.image.frombuffer(
             data_string, (int(self.width), int(self.height)), 'RGBA'
         )
         screen.blit(pygame_surface, (0, 0))
 
     def draw(self, ctx):
-        ctx.save()
+        ctx = wyvern.save(ctx)
 
-        self.drawBox(ctx)
-        self.drawPrompt(ctx)
+        ctx = self.drawBox(ctx)
+        _, ctx = self.drawPrompt(ctx)
         if self.textBox:
-            self.textBox.draw(ctx)
-        self.button.draw(ctx)
+            ctx = self.textBox.draw(ctx)
+        ctx = self.button.draw(ctx)
 
-        ctx.restore()
+        ctx = wyvern.restore(ctx)
+        # NEW
+        return ctx
 
     def drawDivider(self, ctx):
-        ctx.set_source_rgba(0.8, 0.8, 0.8, 1.0)
-        ctx.move_to(self.left, self.dividerY)
-        ctx.line_to(self.right, self.dividerY)
-        ctx.set_line_width(1)
-        ctx.stroke()
+        ctx = wyvern.set_source_rgba(ctx, 0.8, 0.8, 0.8, 1.0)
+        ctx = wyvern.move_to(ctx, self.left, self.dividerY)
+        ctx = wyvern.line_to(ctx, self.right, self.dividerY)
+        ctx = wyvern.set_line_width(ctx, 1)
+        ctx = wyvern.stroke(ctx)
+        # NEW
+        return ctx
 
     def drawBox(self, ctx):
-        ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-        roundedrec(ctx, self.left, self.top, self.width, self.height, 0, 0)
-        ctx.fill()
+        ctx = wyvern.set_source_rgba(ctx, 1.0, 1.0, 1.0, 1.0)
+        ctx = wyvern.round_rectangle(
+            ctx, self.left, self.top, self.width, self.height, 0, 0
+        )
+        ctx = wyvern.fill(ctx)
 
-        self.drawDivider(ctx)
+        ctx = self.drawDivider(ctx)
+        # NEW
+        return ctx
 
     def drawPrompt(self, ctx, simulate=False):
-        ctx.select_font_face('Arial', cairo.FONT_WEIGHT_NORMAL, cairo.FONT_SLANT_NORMAL)
-        ctx.set_font_size(self.textSize)
+        ctx = wyvern.select_font_face(
+            ctx, 'Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL
+        )
+        ctx = wyvern.set_font_size(ctx, self.textSize)
 
         promptWords = self.prompt.split()
 
         currTop = self.top + self.textYMargin
         currLeft = self.left + self.textXMargin
 
-        _, _, _, lineHeight, _, _ = ctx.text_extents('|')
+        _, _, _, lineHeight, _, _ = wyvern.text_extents(ctx, '|')
 
         for word in promptWords:
             word = word + ' '
-            _, _, textWidth, textHeight, xAdvance, yAdvance = ctx.text_extents(word)
+            _, _, textWidth, textHeight, xAdvance, yAdvance = wyvern.text_extents(
+                ctx, word
+            )
 
             if currLeft + xAdvance > self.width:
                 currLeft = self.left + self.textXMargin
                 currTop += lineHeight + self.betweenLineMargin
 
-            ctx.new_path()
-            ctx.move_to(currLeft, currTop + lineHeight)
+            ctx = wyvern.new_path(ctx)
+            ctx = wyvern.move_to(ctx, currLeft, currTop + lineHeight)
 
             if not simulate:
-                ctx.text_path(word)
-                ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
-                ctx.fill()
+                ctx = wyvern.text_path(ctx, word)
+                ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
+                ctx = wyvern.fill(ctx)
 
             currLeft += xAdvance
 
-        return currTop + lineHeight
+        return currTop + lineHeight, ctx
 
     def onStep(self):
         if self.textBox:
@@ -515,10 +513,8 @@ class TextBoxModal(object):
 
         # Make antialiasing possible
         screen = pygame.display.set_mode((int(self.width), int(self.height)))
-        cairo_surface = cairo.ImageSurface(
-            cairo.FORMAT_ARGB32, int(self.width), int(self.height)
-        )
-        ctx = cairo.Context(cairo_surface)
+        wyvern_surface = wyvern.ImageSurface(int(self.width), int(self.height))
+        ctx = wyvern_surface.canvas
 
         self.running = True
         lastMousePosition = None
@@ -575,7 +571,7 @@ class TextBoxModal(object):
                 if self.textBox and self.mouseIsDown and not tickHadMouseDownEvent:
                     self.textBox.onMouseDrag(lastMousePosition)
 
-            self.redrawAll(screen, cairo_surface, ctx)
+            self.redrawAll(screen, wyvern_surface, ctx)
             pygame.display.flip()
 
         pygame.display.quit()
