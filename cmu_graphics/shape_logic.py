@@ -12,9 +12,10 @@ from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helper
 ### PYPI VERSION ###
 import cairo
 import pygame
-import cmu_graphics_helpers
+
 ### END PYPI VERSION ###
 
+from cmu_graphics_helpers import pygeo
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
@@ -1423,21 +1424,6 @@ class Shape(object):
         checkNumber(t('hits(x, y)'), t('y'), y, True)
         return self._hits(x, y)
 
-    def getEdgesFromPoints(self, points):
-        edges = []
-        for i in range(len(points)):
-            x1, y1 = points[i]
-            k = (i + 1) % (len(points))
-            x2, y2 = points[k]
-            if x1 < x2:
-                edges.append((x1, y1, x2, y2))
-            else:
-                edges.append((x2, y2, x1, y1))
-        return edges
-
-    def getEdges(self):
-        return self.getEdgesFromPoints(self.getApproxPoints())
-
     def containsShape(self, *arguments):
         checkArgCount(
             self.__class__.__name__, t('containsShape'), [t('targetShape')], arguments
@@ -1453,8 +1439,8 @@ class Shape(object):
         # the targetShape are inside this shape
         x = targetShape.centerX
         y = targetShape.centerY
-        return not utils.edgesIntersect(
-            self.getEdges(), targetShape.getEdges()
+        return not pygeo.edgesIntersect(
+            self.getApproxPoints(), targetShape.getApproxPoints()
         ) and self.contains(x, y)
 
     def getBounds(self):
@@ -1495,12 +1481,12 @@ class Shape(object):
             if any(targetShape.boundsIntersect(myShape) for myShape in myShapes):
                 targetShapes.append(targetShape)
 
-        myShapesEdges = [shape.getEdges() for shape in myShapes]
-        targetShapesEdges = [shape.getEdges() for shape in targetShapes]
+        myShapesPoints = [shape.getApproxPoints() for shape in myShapes]
+        targetShapesPoints = [shape.getApproxPoints() for shape in targetShapes]
 
         for i in range(len(myShapes)):
             for j in range(len(targetShapes)):
-                if utils.edgesIntersect(myShapesEdges[i], targetShapesEdges[j]):
+                if pygeo.edgesIntersect(myShapesPoints[i], targetShapesPoints[j]):
                     return True
 
         targetApproxPoints = [shape.getApproxPoints() for shape in targetShapes]
@@ -1874,25 +1860,19 @@ class Group(Shape):
         for shape in shapes:
             shape.append(shape[0])
 
-    def pointsToTuples(self, points):
-        finalPoints = []
-        for point in points:
-            finalPoints.append((point[0], point[1]))
-        return finalPoints
-
     def getApproxGroupPoints(self, group):
         shapes = group._shapes
         if len(shapes) > 0:
             groupPoints = [
                 self.getApproxGroupPoints(shape)
                 if isinstance(shape, Group)
-                else [[self.pointsToTuples(shape.getApproxPoints())]]
+                else [[shape.getApproxPoints()]]
                 for shape in shapes
             ]
             for groups in groupPoints:
                 for group in groups:
                     self.closeShapes(group)
-            return cmu_graphics_helpers.union(groupPoints)
+            return pygeo.union(groupPoints)
         else:
             return []
 
@@ -1913,9 +1893,9 @@ class Group(Shape):
             # for a polygon, the first argument is the outline and the remaining are holes in the shape, if they exist
             shapeNum = len(groupShape)
             for i in range(shapeNum):
-                if utils.edgesIntersect(
-                    self.getEdgesFromPoints(groupShape[i]),
-                    self.getEdgesFromPoints(targetPoints),
+                if pygeo.edgesIntersect(
+                    groupShape[i],
+                    targetPoints,
                 ):
                     return False
 
@@ -1961,7 +1941,7 @@ class Group(Shape):
                 self.setFillOrStrokeStyle(ctx, 'magenta')
                 ctx.set_dash([7, 7])
                 ctx.stroke()
-                ctx.restore()
+        ctx.restore()
 
     def addx(self, dx):
         for shape in self._shapes:
