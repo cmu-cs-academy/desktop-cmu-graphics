@@ -7,15 +7,15 @@ from cmu_graphics import utils
 from cmu_graphics.libs import cairo_loader as cairo
 from cmu_graphics.libs import pygame_loader as pygame
 from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
-from cmu_graphics_helpers import pygeo
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
 import cairo
 import pygame
-from cmu_graphics_helpers import pygeo
+
 ### END PYPI VERSION ###
 
+from cmu_graphics_helpers import pygeo
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import array
