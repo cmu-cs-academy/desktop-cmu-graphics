@@ -9,7 +9,7 @@ use geo::BooleanOps;
 use geo::{LineString, MultiPolygon, Polygon};
 
 // type aliases
-type PyLineString = Vec<(f64, f64)>;
+type PyLineString = Vec<[f64; 2]>;
 type PyPolygon = Vec<PyLineString>;
 type PyMultiPolygon = Vec<PyPolygon>;
 
@@ -30,7 +30,7 @@ fn py_multi_polygon_to_multi_polygon(multi_poly: PyMultiPolygon) -> MultiPolygon
 
 // conversions from Rust to Python
 fn line_string_to_vec(line_string: &LineString<f64>) -> PyLineString {
-    line_string.points().map(|p| (p.x(), p.y())).collect()
+    line_string.points().map(|p| [p.x(), p.y()]).collect()
 }
 
 fn polygon_to_py_polygon(poly: Polygon<f64>) -> PyPolygon {

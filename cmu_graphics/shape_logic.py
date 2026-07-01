@@ -1866,7 +1866,7 @@ class Group(Shape):
             groupPoints = [
                 self.getApproxGroupPoints(shape)
                 if isinstance(shape, Group)
-                else [[utils.pointsToTuples(shape.getApproxPoints())]]
+                else [[shape.getApproxPoints()]]
                 for shape in shapes
             ]
             for groups in groupPoints:

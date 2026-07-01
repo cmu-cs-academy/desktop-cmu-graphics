@@ -160,13 +160,6 @@ def distanceToLineSegment2(x, y, x1, y1, x2, y2):
     return distance2(x, y, x1 + t * (x2 - x1), y1 + t * (y2 - y1))
 
 
-def pointsToTuples(points):
-    finalPoints = []
-    for point in points:
-        finalPoints.append((point[0], point[1]))
-    return finalPoints
-
-
 def isGroup(shape):
     if hasattr(shape, '_shape'):
         shape = shape._shape
