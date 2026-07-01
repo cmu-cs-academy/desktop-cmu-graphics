@@ -2,7 +2,7 @@ import math
 
 ### ZIPFILE VERSION ###
 import libs.pygame_loader as pygame
-from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
+import libs.cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
