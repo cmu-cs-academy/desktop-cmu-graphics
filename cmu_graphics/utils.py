@@ -1,6 +1,11 @@
 import decimal
 import math
-import wyvern
+
+### ZIPFILE VERSION ###
+from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
+
+### END ZIPFILE VERSION ###
+from cmu_graphics_helpers import wyvern
 from . import shape_logic
 from collections import defaultdict
 

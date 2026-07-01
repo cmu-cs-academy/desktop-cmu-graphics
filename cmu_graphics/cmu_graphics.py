@@ -1709,10 +1709,11 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 import math
 
-### PYPI VERSION ###
-import wyvern
+### ZIPFILE VERSION ###
+from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
 
-### END PYPI VERSION ###
+### END ZIPFILE VERSION ###
+from cmu_graphics_helpers import wyvern
 from random import *
 from cmu_graphics.utils import *
 import atexit
