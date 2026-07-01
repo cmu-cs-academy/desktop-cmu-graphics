@@ -6,6 +6,7 @@ from cmu_graphics import utils
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import pygame_loader as pygame
 from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
+from cmu_graphics_helpers import pygeo
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
