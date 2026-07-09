@@ -68,7 +68,7 @@ class SandboxModal(object):
         return (bytearray(a), width, height, 4 * width)
 
     def redrawAll(self, screen, wyvern_surface, ctx):
-        ctx = self.draw(ctx)
+        self.draw(ctx)
         data_string = wyvern_surface.data
         pygame_surface = pygame.image.frombuffer(
             data_string, (int(self.width), int(self.height)), 'RGBA'
@@ -76,86 +76,82 @@ class SandboxModal(object):
         screen.blit(pygame_surface, (0, 0))
 
     def draw(self, ctx):
-        ctx = wyvern.save(ctx)
+        ctx.save()
 
-        ctx = wyvern.new_path(ctx)
-        ctx = wyvern.move_to(ctx, 50, 50)
-        ctx = wyvern.set_source_rgb(ctx, 0.0, 0.0, 0.0)
-        ctx = wyvern.select_font_face(
-            ctx, 'Tahoma', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL
+        ctx.new_path()
+        ctx.move_to(50, 50)
+        ctx.set_source_rgb(0.0, 0.0, 0.0)
+        ctx.select_font_face(
+            'Tahoma', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL
         )
-        ctx = wyvern.set_font_size(ctx, 20)
-        ctx = wyvern.text_path(ctx, 'test')
-        ctx = wyvern.set_line_width(ctx, 2)
-        ctx = wyvern.set_line_join(ctx, wyvern.LineJoin.ROUND)
-        ctx = wyvern.arc(ctx, 75, 100, 20, 0, 2 * math.pi)
-        ctx = wyvern.fill(ctx)
-        ctx = wyvern.arc(ctx, 125, 100, 20, 0, 2 * math.pi)
-        ctx = wyvern.arc(ctx, 175, 100, 20, 0, 3 * math.pi / 4)
-        ctx = wyvern.set_source_rgb(ctx, 1.0, 0.0, 0.5)
-        ctx = wyvern.arc(ctx, 175, 100, 20, math.pi, 3 * math.pi / 4)
-        # ctx = wyvern.move_to(ctx, 200, 50)
-        ctx = wyvern.rectangle(ctx, 200, 50, 20, 20)
-        ctx = wyvern.stroke(ctx)
+        ctx.set_font_size(20)
+        ctx.text_path('test')
+        ctx.set_line_width(2)
+        ctx.set_line_join(wyvern.LineJoin.ROUND)
+        ctx.arc(75, 100, 20, 0, 2 * math.pi)
+        ctx.fill()
+        ctx.arc(125, 100, 20, 0, 2 * math.pi)
+        ctx.arc(175, 100, 20, 0, 3 * math.pi / 4)
+        ctx.set_source_rgb(1.0, 0.0, 0.5)
+        ctx.arc(175, 100, 20, math.pi, 3 * math.pi / 4)
+        # ctx.move_to(200, 50)
+        ctx.rectangle(200, 50, 20, 20)
+        ctx.stroke()
 
-        ctx = wyvern.move_to(ctx, 50, 150)
-        ctx = wyvern.select_font_face(
-            ctx, 'Arial', wyvern.FontWeight.BOLD, wyvern.FontSlant.ITALIC
-        )
-        ctx = wyvern.text_path(ctx, 'test')
-        ctx = wyvern.fill(ctx)
+        ctx.move_to(50, 150)
+        ctx.select_font_face('Arial', wyvern.FontWeight.BOLD, wyvern.FontSlant.ITALIC)
+        ctx.text_path('test')
+        ctx.fill()
 
-        # ctx = wyvern.move_to(ctx, 75, 200)
-        ctx = wyvern.set_source_rgb(ctx, 0.5, 0.0, 1.0)
-        ctx = wyvern.curve_to(ctx, 75, 200, 175, 250, 275, 200)
-        # ctx = wyvern.set_dash(ctx, [7, 7])
-        ctx = wyvern.stroke(ctx)
+        # ctx.move_to(75, 200)
+        ctx.set_source_rgb(0.5, 0.0, 1.0)
+        ctx.curve_to(75, 200, 175, 250, 275, 200)
+        # ctx.set_dash([7, 7])
+        ctx.stroke()
 
-        ctx = wyvern.rectangle(ctx, 50, 300, 100, 50)
-        ctx = wyvern.fill_preserve(ctx)
-        # ctx = wyvern.clip(ctx)
-        ctx = wyvern.arc(ctx, 200, 300, 20, math.pi, 3 * math.pi / 4)
-        ctx = wyvern.stroke(ctx)
+        ctx.rectangle(50, 300, 100, 50)
+        ctx.fill_preserve()
+        # ctx.clip()
+        ctx.arc(200, 300, 20, math.pi, 3 * math.pi / 4)
+        ctx.stroke()
 
-        # ctx = wyvern.rotate(ctx, math.pi / 4)
-        # ctx = wyvern.translate(ctx, 400, -400)
-        ctx = wyvern.rectangle(ctx, 50, 400, 100, 50)
-        ctx = wyvern.transform(ctx, 0, 1, 1, 0, 0, 0)
-        ctx = wyvern.stroke(ctx)
+        # ctx.rotate(math.pi / 4)
+        # ctx.translate(400, -400)
+        ctx.rectangle(50, 400, 100, 50)
+        ctx.transform(0, 1, 1, 0, 0, 0)
+        ctx.stroke()
 
         gradient = wyvern.Gradient.LinearGradient(300, 300, 400, 400)
 
         # Add color stops (offset, r, g, b, alpha)
-        ctx = wyvern.add_color_stop_rgba(ctx, 0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
-        ctx = wyvern.add_color_stop_rgba(ctx, 0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
-        ctx = wyvern.add_color_stop_rgba(ctx, 1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
+        ctx.add_color_stop_rgba(0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
+        ctx.add_color_stop_rgba(0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
+        ctx.add_color_stop_rgba(1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
 
-        ctx = wyvern.set_source_gradient(ctx, gradient)
-        ctx = wyvern.rectangle(ctx, 300, 300, 100, 100)
-        ctx = wyvern.fill(ctx)
+        ctx.set_source_gradient(gradient)
+        ctx.rectangle(300, 300, 100, 100)
+        ctx.fill()
 
         gradient = wyvern.Gradient.RadialGradient(475, 100, 100)
 
         # Add color stops (offset, r, g, b, alpha)
-        ctx = wyvern.add_color_stop_rgba(ctx, 0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
-        ctx = wyvern.add_color_stop_rgba(ctx, 0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
-        ctx = wyvern.add_color_stop_rgba(ctx, 1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
+        ctx.add_color_stop_rgba(0.0, 1.0, 0.0, 0.0, 1.0)  # Start: Red
+        ctx.add_color_stop_rgba(0.5, 0.0, 1.0, 0.0, 1.0)  # Middle: Green
+        ctx.add_color_stop_rgba(1.0, 0.0, 0.0, 1.0, 1.0)  # End: Blue
 
-        ctx = wyvern.set_source_gradient(ctx, gradient)
-        ctx = wyvern.arc(ctx, 475, 100, 100, 0, 2 * math.pi)
-        ctx = wyvern.fill(ctx)
+        ctx.set_source_gradient(gradient)
+        ctx.arc(475, 100, 100, 0, 2 * math.pi)
+        ctx.fill()
 
         image = self.loadImageFromStringReference(
             'https://academy.cs.cmu.edu/static/media/project_10.472f439f.jpg'
         )
         params = self.wyvernImageFromPygameSurface(image)
 
-        ctx = wyvern.set_source_image(ctx, *params, 400, 400)
-        ctx = wyvern.paint_with_alpha(ctx, 10 / 100)
+        ctx.set_source_image(*params, 400, 400)
+        ctx.paint_with_alpha(10 / 100)
 
-        ctx = wyvern.restore(ctx)
-        # NEW
-        return ctx
+        ctx.restore()
 
     def run(self):
         self._msPassed = 0
