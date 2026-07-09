@@ -31,7 +31,7 @@ for:
       # toolchain already present on the build worker image.
       - ps: |
           $ErrorActionPreference = 'Continue'
-          & "$env:USERPROFILE\.cargo\bin\rustup.exe" update stable
+          rustup update stable
       # LLVM/libclang, needed by bindgen (a build dependency of skia-bindings).
       - choco install llvm -y --no-progress
       - set PATH=%USERPROFILE%\.cargo\bin;C:\Program Files\LLVM\bin;%PATH%
