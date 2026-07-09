@@ -27,9 +27,11 @@ for:
 
     install:
       - C:\Python311-x64\python.exe -m pip install tox twine build maturin
-      # Rust + cargo, needed to build cmu_graphics_helpers (skipped if the
-      # build worker image already has them).
-      - ps: if (-not (Get-Command rustc -ErrorAction SilentlyContinue)) { Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe; .\rustup-init.exe -y --default-toolchain stable-x86_64-pc-windows-msvc --profile minimal }
+      # Rust + cargo, needed to build cmu_graphics_helpers. Upgrade the
+      # toolchain already present on the build worker image.
+      - ps: |
+          $ErrorActionPreference = 'Continue'
+          & "$env:USERPROFILE\.cargo\bin\rustup.exe" update stable
       # LLVM/libclang, needed by bindgen (a build dependency of skia-bindings).
       - choco install llvm -y --no-progress
       - set PATH=%USERPROFILE%\.cargo\bin;C:\Program Files\LLVM\bin;%PATH%
@@ -72,9 +74,9 @@ for:
       # the default PATH value, `which pkg-config` returned
       # /Library/Frameworks/Mono.framework/Home/bin/pkg-config
       - export PATH=/usr/local/bin:$PATH
-      # Rust + cargo, needed to build cmu_graphics_helpers (skipped if the
-      # build worker image already has them).
-      - command -v cargo >/dev/null 2>&1 || curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal
+      # Rust + cargo, needed to build cmu_graphics_helpers. Upgrade the
+      # toolchain already present on the build worker image.
+      - "$HOME/.cargo/bin/rustup" update stable
       - export PATH="$HOME/.cargo/bin:$PATH"
 
     before_test:
