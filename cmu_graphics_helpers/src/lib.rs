@@ -85,27 +85,6 @@ fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> 
     Ok(surface)
 }
 
-/// # Safety
-/// The caller must ensure `data` is not resized, reallocated, or dropped for as
-/// long as the returned `Surface` (and anything built from it, e.g. a `Canvas`)
-/// is alive, since the surface writes directly into this buffer without copying.
-unsafe fn create_surface_for_data(
-    data: &mut [u8],
-    width: i32,
-    height: i32,
-) -> PyResult<skia_safe::Surface> {
-    let image_info = ImageInfo::new(
-        (width, height),
-        ColorType::BGRA8888,
-        skia_safe::AlphaType::Premul,
-        ColorSpace::new_srgb(),
-    );
-    let mut surface = surfaces::wrap_pixels(&image_info, data, None, None)
-        .ok_or_else(|| PyRuntimeError::new_err("Failed to create Skia raster surface"))?;
-    surface.canvas().clear(Color::WHITE);
-    Ok(unsafe { surface.release() })
-}
-
 fn new_path_and_move(p: Point) -> PathBuilder {
     let mut new_path = PathBuilder::new();
     new_path.move_to(p);
@@ -636,35 +615,6 @@ impl ImageSurface {
             .bytes()
             .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
         Ok(PyByteArray::new(py, bytes).unbind())
-    }
-
-    #[staticmethod]
-    unsafe fn create_for_data(
-        data: Bound<'_, PyByteArray>,
-        width: i32,
-        height: i32,
-    ) -> PyResult<Self> {
-        Python::attach(|py| {
-            let skia_surface =
-                unsafe { create_surface_for_data(data.as_bytes_mut(), width, height) }?;
-            let canvas = Py::new(
-                py,
-                Canvas {
-                    skia_surface,
-                    path: None,
-                    font: None,
-                    gradient_colors: Vec::new(),
-                    gradient_offsets: Vec::new(),
-                    paint: Paint::default(),
-                    state_stack: Vec::new(),
-                },
-            )?;
-            Ok(ImageSurface {
-                width,
-                height,
-                canvas,
-            })
-        })
     }
 }
 /* WYVERN */
