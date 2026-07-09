@@ -30,10 +30,8 @@ for:
       # Rust + cargo, needed to build cmu_graphics_helpers. Not preinstalled
       # on this image (unlike the macOS image), so install it from scratch.
       - ps: |
-          $ErrorActionPreference = 'Continue'
-          $PSNativeCommandUseErrorActionPreference = $false
           Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
-          .\rustup-init.exe -y --default-toolchain stable-x86_64-pc-windows-msvc --profile minimal
+          .\rustup-init.exe -y --default-toolchain stable-x86_64-pc-windows-msvc --profile minimal 2>$null
       # LLVM/libclang, needed by bindgen (a build dependency of skia-bindings).
       - choco install llvm -y --no-progress
       - set PATH=%USERPROFILE%\.cargo\bin;C:\Program Files\LLVM\bin;%PATH%
