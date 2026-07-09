@@ -76,7 +76,7 @@ for:
       - export PATH=/usr/local/bin:$PATH
       # Rust + cargo, needed to build cmu_graphics_helpers. Upgrade the
       # toolchain already present on the build worker image.
-      - "$HOME/.cargo/bin/rustup" update stable
+      - $HOME/.cargo/bin/rustup update stable
       - export PATH="$HOME/.cargo/bin:$PATH"
 
     before_test:
