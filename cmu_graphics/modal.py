@@ -100,28 +100,25 @@ class TextBox(object):
 
     def draw(self, ctx):
         if not self.active:
-            ctx = wyvern.rectangle(ctx, self.left, self.top, self.width, self.height)
-            ctx = wyvern.set_source_rgba(ctx, 0.7, 0.7, 0.7, 1.0)
-            ctx = wyvern.set_line_width(ctx, 1)
-            ctx = wyvern.stroke(ctx)
+            ctx.rectangle(self.left, self.top, self.width, self.height)
+            ctx.set_source_rgba(0.7, 0.7, 0.7, 1.0)
+            ctx.set_line_width(1)
+            ctx.stroke()
         else:
-            ctx = wyvern.round_rectangle(
-                ctx, self.left, self.top, self.width, self.height, 3, 3
-            )
-            ctx = wyvern.set_source_rgba(ctx, 0.9, 0.6, 0.4, 1.0)
-            ctx = wyvern.set_line_width(ctx, 3)
-            ctx = wyvern.stroke(ctx)
+            ctx.round_rectangle(self.left, self.top, self.width, self.height, 3, 3)
+            ctx.set_source_rgba(0.9, 0.6, 0.4, 1.0)
+            ctx.set_line_width(3)
+            ctx.stroke()
 
         clipYMargin = 10
-        ctx = wyvern.save(ctx)
-        ctx = wyvern.rectangle(
-            ctx,
+        ctx.save()
+        ctx.rectangle(
             self.left + self.padding,
             self.top - clipYMargin,
             self.width - 2 * self.padding,
             self.top + self.height + 2 * clipYMargin,
         )
-        ctx = wyvern.clip(ctx)
+        ctx.clip()
 
         cursorX = (
             self.textAnchor[0]
@@ -142,30 +139,24 @@ class TextBox(object):
             )
             left = min(cursorX, anchorX)
             right = max(cursorX, anchorX)
-            ctx = wyvern.set_source_rgba(ctx, 1.0, 0.85, 0.7)
-            ctx = wyvern.rectangle(
-                ctx, left, cursorTop, right - left, cursorBottom - cursorTop
-            )
-            ctx = wyvern.fill(ctx)
+            ctx.set_source_rgba(1.0, 0.85, 0.7)
+            ctx.rectangle(left, cursorTop, right - left, cursorBottom - cursorTop)
+            ctx.fill()
 
         elif self.active and self.cursorActive:
-            ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
-            ctx = wyvern.set_line_width(ctx, 1)
-            ctx = wyvern.move_to(ctx, cursorX, cursorBottom)
-            ctx = wyvern.line_to(ctx, cursorX, cursorTop)
-            ctx = wyvern.stroke(ctx)
+            ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
+            ctx.set_line_width(1)
+            ctx.move_to(cursorX, cursorBottom)
+            ctx.line_to(cursorX, cursorTop)
+            ctx.stroke()
 
-        ctx = wyvern.move_to(
-            ctx, self.textAnchor[0] + self.textOffset, self.textAnchor[1]
-        )
-        ctx = wyvern.select_font_face(ctx, *self.font)
-        ctx = wyvern.set_font_size(ctx, self.textSize)
-        ctx = wyvern.text_path(ctx, ''.join(self.buf))
-        ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
-        ctx = wyvern.fill(ctx)
-        ctx = wyvern.restore(ctx)
-        # NEW
-        return ctx
+        ctx.move_to(self.textAnchor[0] + self.textOffset, self.textAnchor[1])
+        ctx.select_font_face(*self.font)
+        ctx.set_font_size(self.textSize)
+        ctx.text_path(''.join(self.buf))
+        ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
+        ctx.fill()
+        ctx.restore()
 
     def cursorPosFromCoord(self, x):
         if x <= self.textAnchor[0] + self.getTextWidth('') + self.textOffset:
@@ -191,11 +182,11 @@ class TextBox(object):
         if len(text) <= 0:
             return 0
         ctx = self.modal.measureCtx
-        ctx = wyvern.save(ctx)
-        ctx = wyvern.select_font_face(ctx, *self.font)
-        ctx = wyvern.set_font_size(ctx, self.textSize)
-        _, _, _, _, xAdvance, _ = wyvern.text_extents(ctx, text)
-        ctx = wyvern.restore(ctx)
+        ctx.save()
+        ctx.select_font_face(*self.font)
+        ctx.set_font_size(self.textSize)
+        _, _, _, _, xAdvance, _ = ctx.text_extents(text)
+        ctx.restore()
         return xAdvance
 
     def contains(self, x, y, checkYOnly=False):
@@ -341,27 +332,25 @@ class Button(object):
         self.text = 'OK'
 
     def draw(self, ctx):
-        ctx = wyvern.save(ctx)
+        ctx.save()
 
         # Draw the rectangle
-        ctx = wyvern.set_source_rgba(ctx, *self.color)
-        ctx = wyvern.rectangle(ctx, self.left, self.top, self.width, self.height)
-        ctx = wyvern.fill(ctx)
+        ctx.set_source_rgba(*self.color)
+        ctx.rectangle(self.left, self.top, self.width, self.height)
+        ctx.fill()
 
         # Draw the label
-        ctx = wyvern.select_font_face(ctx, *self.font)
-        ctx = wyvern.set_font_size(ctx, self.textSize)
-        ctx = wyvern.set_source_rgba(ctx, 1.0, 1.0, 1.0, 1.0)
-        _, _, textWidth, textHeight, _, _ = wyvern.text_extents(ctx, self.text)
+        ctx.select_font_face(*self.font)
+        ctx.set_font_size(self.textSize)
+        ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)
+        _, _, textWidth, textHeight, _, _ = ctx.text_extents(self.text)
         yPadding = (self.height - textHeight) / 2
         xPadding = (self.width - textWidth) / 2
-        ctx = wyvern.move_to(ctx, self.left + xPadding, self.bottom - yPadding)
-        ctx = wyvern.text_path(ctx, self.text)
-        ctx = wyvern.fill(ctx)
+        ctx.move_to(self.left + xPadding, self.bottom - yPadding)
+        ctx.text_path(self.text)
+        ctx.fill()
 
-        ctx = wyvern.restore(ctx)
-
-        return ctx
+        ctx.restore()
 
     def contains(self, x, y):
         xInBounds = self.left <= x <= self.right
@@ -400,7 +389,7 @@ class TextBoxModal(object):
 
         self.active = True
         # can't make a surface whose dimensions are zero
-        self.measureCtx = wyvern.ImageSurface(100, 100).canvas
+        self.measurectx.ImageSurface(100, 100).canvas
         dividerY, ctx = self.drawPrompt(self.measureCtx, simulate=True)
         self.dividerY = dividerY + self.textYMargin
         self.measureCtx = ctx
@@ -420,7 +409,7 @@ class TextBoxModal(object):
     height = property(get_height)
 
     def redrawAll(self, screen, wyvern_surface, ctx):
-        ctx = self.draw(ctx)
+        self.draw(ctx)
         data_string = wyvern_surface.data
         pygame_surface = pygame.image.frombuffer(
             data_string, (int(self.width), int(self.height)), 'RGBA'
@@ -428,72 +417,60 @@ class TextBoxModal(object):
         screen.blit(pygame_surface, (0, 0))
 
     def draw(self, ctx):
-        ctx = wyvern.save(ctx)
+        ctx.save()
 
-        ctx = self.drawBox(ctx)
-        _, ctx = self.drawPrompt(ctx)
+        self.drawBox(ctx)
+        self.drawPrompt(ctx)
         if self.textBox:
-            ctx = self.textBox.draw(ctx)
-        ctx = self.button.draw(ctx)
+            self.textBox.draw(ctx)
+        self.button.draw(ctx)
 
-        ctx = wyvern.restore(ctx)
-        # NEW
-        return ctx
+        ctx.restore()
 
     def drawDivider(self, ctx):
-        ctx = wyvern.set_source_rgba(ctx, 0.8, 0.8, 0.8, 1.0)
-        ctx = wyvern.move_to(ctx, self.left, self.dividerY)
-        ctx = wyvern.line_to(ctx, self.right, self.dividerY)
-        ctx = wyvern.set_line_width(ctx, 1)
-        ctx = wyvern.stroke(ctx)
-        # NEW
-        return ctx
+        ctx.set_source_rgba(0.8, 0.8, 0.8, 1.0)
+        ctx.move_to(self.left, self.dividerY)
+        ctx.line_to(self.right, self.dividerY)
+        ctx.set_line_width(1)
+        ctx.stroke()
 
     def drawBox(self, ctx):
-        ctx = wyvern.set_source_rgba(ctx, 1.0, 1.0, 1.0, 1.0)
-        ctx = wyvern.round_rectangle(
-            ctx, self.left, self.top, self.width, self.height, 0, 0
-        )
-        ctx = wyvern.fill(ctx)
+        ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)
+        ctx.round_rectangle(self.left, self.top, self.width, self.height, 0, 0)
+        ctx.fill()
 
-        ctx = self.drawDivider(ctx)
-        # NEW
-        return ctx
+        self.drawDivider(ctx)
 
     def drawPrompt(self, ctx, simulate=False):
-        ctx = wyvern.select_font_face(
-            ctx, 'Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL
-        )
-        ctx = wyvern.set_font_size(ctx, self.textSize)
+        ctx.select_font_face('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
+        ctx.set_font_size(self.textSize)
 
         promptWords = self.prompt.split()
 
         currTop = self.top + self.textYMargin
         currLeft = self.left + self.textXMargin
 
-        _, _, _, lineHeight, _, _ = wyvern.text_extents(ctx, '|')
+        _, _, _, lineHeight, _, _ = ctx.text_extents('|')
 
         for word in promptWords:
             word = word + ' '
-            _, _, textWidth, textHeight, xAdvance, yAdvance = wyvern.text_extents(
-                ctx, word
-            )
+            _, _, textWidth, textHeight, xAdvance, yAdvance = ctx.text_extents(word)
 
             if currLeft + xAdvance > self.width:
                 currLeft = self.left + self.textXMargin
                 currTop += lineHeight + self.betweenLineMargin
 
-            ctx = wyvern.new_path(ctx)
-            ctx = wyvern.move_to(ctx, currLeft, currTop + lineHeight)
+            ctx.new_path()
+            ctx.move_to(currLeft, currTop + lineHeight)
 
             if not simulate:
-                ctx = wyvern.text_path(ctx, word)
-                ctx = wyvern.set_source_rgba(ctx, 0.0, 0.0, 0.0, 1.0)
-                ctx = wyvern.fill(ctx)
+                ctx.text_path(word)
+                ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
+                ctx.fill()
 
             currLeft += xAdvance
 
-        return currTop + lineHeight, ctx
+        return currTop + lineHeight
 
     def onStep(self):
         if self.textBox:

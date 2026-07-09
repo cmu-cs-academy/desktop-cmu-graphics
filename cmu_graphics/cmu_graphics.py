@@ -875,20 +875,20 @@ class App(object):
                 'fill': self.background or 'white',
             }
         )
-        ctx = shape.draw(ctx)
+        shape.draw(ctx)
 
-        ctx = wyvern.save(ctx)
+        ctx.save()
         try:
-            ctx = self._tlg._shape.draw(ctx)
+            self._tlg._shape.draw(ctx)
         finally:
-            ctx = wyvern.restore(ctx)
+            ctx.restore()
 
-        ctx = wyvern.save(ctx)
+        ctx.save()
         try:
             if self.shouldDrawInspector():
-                ctx = self.inspector.draw(ctx)
+                self.inspector.draw(ctx)
         finally:
-            ctx = wyvern.restore(ctx)
+            ctx.restore()
 
         # Get the wyvern buffer and convert it from BGRA to RGBA
         data_string = wyvern_surface.data

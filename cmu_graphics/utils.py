@@ -1,11 +1,6 @@
 import decimal
 import math
 
-### ZIPFILE VERSION ###
-from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
-
-### END ZIPFILE VERSION ###
-from cmu_graphics_helpers import wyvern
 from . import shape_logic
 from collections import defaultdict
 
@@ -379,14 +374,13 @@ def round2(value):
 
 
 def makePolygonPath(pts, ctx):
-    ctx = wyvern.new_path(ctx)
+    ctx.new_path()
     if pts is None or len(pts) == 0:
-        return ctx
+        return
     lastPt = pts[-1]
-    ctx = wyvern.move_to(ctx, lastPt[0], lastPt[1])
+    ctx.move_to(lastPt[0], lastPt[1])
     for pt in pts:
-        ctx = wyvern.line_to(ctx, pt[0], pt[1])
-    return ctx
+        ctx.line_to(pt[0], pt[1])
 
 
 def getLinePoints(x1, y1, x2, y2, lineWidth):
