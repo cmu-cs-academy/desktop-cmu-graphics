@@ -1,6 +1,8 @@
 name: Build rust wheels
 
-on: push
+on:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build_wheels:
@@ -71,19 +73,20 @@ jobs:
       with:
         path: cmu_graphics_helpers/target/wheels/*.tar.gz
 
-  # upload_all:
-  #   name: Upload to PyPi
-  #   needs: [build_wheels, make_sdist]
-  #   environment: pypi
-  #   permissions:
-  #     id-token: write
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/download-artifact@v5
-  #     with:
-  #       path: dist
-  #       merge-multiple: true
+  upload_all:
+    name: Upload to PyPi
+    needs: [build_wheels, make_sdist]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    environment: pypi
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v5
+      with:
+        path: dist
+        merge-multiple: true
 
-  #   - uses: pypa/gh-action-pypi-publish@release/v1
-  #     with:
-  #       repository-url: https://upload.pypi.org/legacy/
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://upload.pypi.org/legacy/
