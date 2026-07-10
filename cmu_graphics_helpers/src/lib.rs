@@ -67,9 +67,9 @@ use pyo3::exceptions::PyRuntimeError;
 use pyo3::types::PyByteArray;
 
 use skia_safe::{
-    font_style, gradient, surfaces, Color, Color4f, ColorSpace, ColorType, Font, FontMgr,
-    FontStyle, Image, ImageInfo, Matrix, Paint, PaintJoin, Path, PathBuilder, PathEffect, Point,
-    RRect, Rect, TileMode, Vector,
+    Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, Image, ImageInfo, Matrix,
+    Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, TileMode, Vector,
+    font_style, gradient, surfaces,
 };
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
@@ -135,6 +135,20 @@ fn py_to_skia_slant(slant: FontSlant) -> font_style::Slant {
     }
 }
 
+fn default_font(font_mgr: FontMgr) -> PyResult<Font> {
+    let arial = font_mgr
+        .match_family_style(
+            "Arial",
+            FontStyle::new(
+                font_style::Weight::NORMAL,
+                font_style::Width::NORMAL,
+                font_style::Slant::Upright,
+            ),
+        )
+        .ok_or_else(|| PyRuntimeError::new_err("Issue with getting Arial font"))?;
+    Ok(Font::from_typeface(arial, 12.0))
+}
+
 #[pyclass(from_py_object)]
 #[derive(Clone)]
 enum Gradient {
@@ -142,13 +156,14 @@ enum Gradient {
     RadialGradient(f32, f32, f32),
 }
 
-type CanvasSettings = (Option<Font>, Vec<Color4f>, Vec<f32>, Paint);
+type CanvasSettings = (Font, Vec<Color4f>, Vec<f32>, Paint);
 
 #[pyclass(unsendable, module = "wyvern")]
 struct Canvas {
     skia_surface: skia_safe::Surface,
     path: Option<skia_safe::PathBuilder>,
-    font: Option<skia_safe::Font>,
+    font_mgr: FontMgr,
+    font: Font,
     gradient_colors: Vec<Color4f>,
     gradient_offsets: Vec<f32>,
     paint: Paint,
@@ -167,16 +182,17 @@ impl Canvas {
         ));
     }
 
-    fn restore(&mut self) {
+    fn restore(&mut self) -> PyResult<()> {
         self.skia_surface.canvas().restore();
-        let (prev_font, prev_gcolor, prev_goff, prev_paint) =
-            self.state_stack
-                .pop()
-                .unwrap_or((None, Vec::new(), Vec::new(), Paint::default()));
+        let (prev_font, prev_gcolor, prev_goff, prev_paint) = self
+            .state_stack
+            .pop()
+            .ok_or(PyRuntimeError::new_err("Restore must be preceded by save"))?;
         self.font = prev_font;
         self.gradient_colors = prev_gcolor;
         self.gradient_offsets = prev_goff;
         self.paint = prev_paint;
+        Ok(())
     }
 
     fn translate(&mut self, x: f32, y: f32) {
@@ -317,42 +333,24 @@ impl Canvas {
         self.paint.set_path_effect(path_effect);
     }
 
-    fn select_font_face(
-        &mut self,
-        family_name: String,
-        weight: FontWeight,
-        slant: FontSlant,
-    ) -> PyResult<()> {
+    fn select_font_face(&mut self, family_name: String, weight: FontWeight, slant: FontSlant) {
         let style = FontStyle::new(
             py_to_skia_weight(weight),
             font_style::Width::NORMAL,
             py_to_skia_slant(slant),
         );
-        let arial = FontMgr::new()
-            .match_family_style("Arial", style)
-            .ok_or(PyRuntimeError::new_err("Issue with getting Arial font"));
-        let typeface = FontMgr::new()
-            .match_family_style(&family_name, style)
-            .map_or(arial, Ok)?;
-        let size = self.font.as_ref().map(|f| f.size()).unwrap_or(12.0);
-        self.font = Some(Font::from_typeface(typeface, size));
-        Ok(())
+        if let Some(typeface) = self.font_mgr.match_family_style(&family_name, style) {
+            self.font.set_typeface(typeface);
+        }
     }
 
     fn set_font_size(&mut self, size: f32) -> PyResult<()> {
-        let font = self
-            .font
-            .take()
-            .ok_or_else(|| PyRuntimeError::new_err("Font face required for set_font_size"))?;
-        self.font = Some(Font::from_typeface(font.typeface(), size));
+        self.font.set_size(size);
         Ok(())
     }
 
     fn text_extents(&mut self, text: String) -> PyResult<(f32, f32, f32, f32, f32, f32)> {
-        let font = self
-            .font
-            .as_ref()
-            .ok_or_else(|| PyRuntimeError::new_err("Font face required for text_extents"))?;
+        let font = self.font.as_ref();
         let (width, rect) = Font::measure_str(font, text, Some(&self.paint));
         Ok((
             rect.left(),
@@ -365,10 +363,7 @@ impl Canvas {
     }
 
     fn text_path(&mut self, text: String) -> PyResult<()> {
-        let font = self
-            .font
-            .as_ref()
-            .ok_or_else(|| PyRuntimeError::new_err("Font face required for text_path"))?;
+        let font = self.font.as_ref();
         let point = self
             .path
             .as_ref()
@@ -382,10 +377,7 @@ impl Canvas {
     }
 
     fn show_text(&mut self, text: String) -> PyResult<()> {
-        let font = self
-            .font
-            .as_ref()
-            .ok_or_else(|| PyRuntimeError::new_err("Font face required for text_path"))?;
+        let font = self.font.as_ref();
         let point = self
             .path
             .as_ref()
@@ -569,12 +561,14 @@ impl ImageSurface {
     fn create(width: i32, height: i32) -> PyResult<Self> {
         Python::attach(|py| {
             let skia_surface = create_skia_surface(width, height)?;
+            let font_mgr = FontMgr::new();
             let canvas = Py::new(
                 py,
                 Canvas {
                     skia_surface,
                     path: None,
-                    font: None,
+                    font_mgr: FontMgr::new(),
+                    font: default_font(font_mgr)?,
                     gradient_colors: Vec::new(),
                     gradient_offsets: Vec::new(),
                     paint: Paint::default(),
@@ -624,7 +618,8 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let pygeo = PyModule::new(m.py(), "pygeo")?;
     pygeo.add_function(wrap_pyfunction!(union, &pygeo)?)?;
     m.add_submodule(&pygeo)?;
-    m.py().import("sys")?
+    m.py()
+        .import("sys")?
         .getattr("modules")?
         .set_item("cmu_graphics_helpers.pygeo", pygeo)?;
 
@@ -636,7 +631,8 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<FontSlant>()?;
     wyvern.add_class::<Gradient>()?;
     m.add_submodule(&wyvern)?;
-    m.py().import("sys")?
+    m.py()
+        .import("sys")?
         .getattr("modules")?
         .set_item("cmu_graphics_helpers.wyvern", wyvern)?;
     Ok(())
