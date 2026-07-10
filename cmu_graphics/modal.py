@@ -389,10 +389,9 @@ class TextBoxModal(object):
 
         self.active = True
         # can't make a surface whose dimensions are zero
-        self.measurectx.ImageSurface(100, 100).canvas
-        dividerY, ctx = self.drawPrompt(self.measureCtx, simulate=True)
+        self.measureCtx = wyvern.ImageSurface(100, 100).canvas
+        dividerY = self.drawPrompt(self.measureCtx, simulate=True)
         self.dividerY = dividerY + self.textYMargin
-        self.measureCtx = ctx
         self.textBox = TextBox(self) if getInput else None
         self.button = Button(self)
 
