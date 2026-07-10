@@ -52,8 +52,8 @@ for:
     #   https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
     # The password for the RDP user is listed here:
     #   https://ci.appveyor.com/project/austin-schick/cpython-cmu-graphics-0l7rb/settings/environment
-    # on_finish:
-    #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    on_finish:
+      - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
   -
     matrix:
