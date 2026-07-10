@@ -75,9 +75,9 @@ for:
       # the default PATH value, `which pkg-config` returned
       # /Library/Frameworks/Mono.framework/Home/bin/pkg-config
       - export PATH=/usr/local/bin:$PATH
-      # Rust + cargo, needed to build cmu_graphics_helpers. Upgrade the
-      # toolchain already present on the build worker image.
-      - $HOME/.cargo/bin/rustup update stable
+      # Rust + cargo, needed to build cmu_graphics_helpers. Not preinstalled
+      # on this image, so install it from scratch.
+      - curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal
       - export PATH="$HOME/.cargo/bin:$PATH"
 
     before_test:
