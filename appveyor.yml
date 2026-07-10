@@ -88,6 +88,6 @@ for:
       - export PATH=$PATH:~/venv3.11/bin/:$HOME/.cargo/bin
       - $PYBIN -m tox --parallel 2
 
-    # on_finish:
-    #   - export APPVEYOR_SSH_BLOCK=true
-    #   - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+    on_finish:
+      - export APPVEYOR_SSH_BLOCK=true
+      - curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
