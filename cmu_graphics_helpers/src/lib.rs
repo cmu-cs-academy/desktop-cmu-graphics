@@ -567,7 +567,7 @@ impl ImageSurface {
                 Canvas {
                     skia_surface,
                     path: None,
-                    font_mgr: FontMgr::new(),
+                    font_mgr: font_mgr.clone(),
                     font: default_font(font_mgr)?,
                     gradient_colors: Vec::new(),
                     gradient_offsets: Vec::new(),
