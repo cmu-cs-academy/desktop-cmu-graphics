@@ -27,20 +27,13 @@ for:
 
     install:
       - C:\Python311-x64\python.exe -m pip install tox twine build maturin
-      # Rust + cargo, needed to build cmu_graphics_helpers. Not preinstalled
-      # on this image (unlike the macOS image), so install it from scratch.
-      # Plain cmd.exe (not PowerShell) so a stderr line from rustup-init.exe
-      # can't get turned into a build-failing PowerShell error record.
+      # Rust + cargo, needed to build cmu_graphics_helpers.
       - curl -sSf -o rustup-init.exe https://win.rustup.rs/x86_64
       - rustup-init.exe -y --default-toolchain stable-x86_64-pc-windows-msvc --profile minimal
       # LLVM/libclang, needed by bindgen (a build dependency of skia-bindings).
       - choco install llvm -y --no-progress
-      - set PATH=%USERPROFILE%\.cargo\bin;C:\Program Files\LLVM\bin;%PATH%
-      - set LIBCLANG_PATH=C:\Program Files\LLVM\bin
 
     before_test:
-      - set PATH=%USERPROFILE%\.cargo\bin;C:\Program Files\LLVM\bin;%PATH%
-      - set LIBCLANG_PATH=C:\Program Files\LLVM\bin
       - C:\Python311-x64\python.exe build/build.py
 
     test_script:
@@ -52,8 +45,8 @@ for:
     #   https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
     # The password for the RDP user is listed here:
     #   https://ci.appveyor.com/project/austin-schick/cpython-cmu-graphics-0l7rb/settings/environment
-    on_finish:
-      - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    # on_finish:
+    #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
   -
     matrix:
@@ -75,8 +68,7 @@ for:
       # the default PATH value, `which pkg-config` returned
       # /Library/Frameworks/Mono.framework/Home/bin/pkg-config
       - export PATH=/usr/local/bin:$PATH
-      # Rust + cargo, needed to build cmu_graphics_helpers. Not preinstalled
-      # on this image, so install it from scratch.
+      # Rust + cargo, needed to build cmu_graphics_helpers.
       - curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal
       - export PATH="$HOME/.cargo/bin:$PATH"
 
