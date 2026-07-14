@@ -1560,6 +1560,7 @@ class Shape(object):
             return g
         if isinstance(fillOrBorder, str):
             fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
+        # Flips RGBA to BGRA because Wyvern is going to flip it back
         rgba = (
             fillOrBorder.blue / 255,
             fillOrBorder.green / 255,
@@ -2346,6 +2347,9 @@ def maybe_show_font_warning(fontName):
         print('To stop showing this warning, set app.showFontWarnings = False.\n')
 
 
+fontCtx = wyvern.ImageSurface(1, 1).canvas
+
+
 class Label(Shape):
     def __init__(self, attrs):
         super().__init__(attrs)
@@ -2362,7 +2366,6 @@ class Label(Shape):
         self.setDims()
 
     def setDims(self):
-        fontCtx = wyvern.ImageSurface(1, 1).canvas
         fontCtx.select_font_face(*getFont(self.font, self.bold, self.italic))
         fontCtx.set_font_size(self.size)
 
