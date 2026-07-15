@@ -68,7 +68,7 @@ use pyo3::types::PyByteArray;
 
 use skia_safe::{
     Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, Image, ImageInfo, Matrix,
-    Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, TileMode, Vector,
+    Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, TileMode, Typeface, Vector,
     font_style, gradient, surfaces,
 };
 
@@ -135,7 +135,7 @@ fn py_to_skia_slant(slant: FontSlant) -> font_style::Slant {
     }
 }
 
-fn default_font(font_mgr: FontMgr) -> PyResult<Font> {
+fn default_font(font_mgr: &FontMgr) -> PyResult<Typeface> {
     let arial = font_mgr
         .match_family_style(
             "Arial",
@@ -146,7 +146,7 @@ fn default_font(font_mgr: FontMgr) -> PyResult<Font> {
             ),
         )
         .ok_or_else(|| PyRuntimeError::new_err("Issue with getting Arial font"))?;
-    Ok(Font::from_typeface(arial, 12.0))
+    Ok(arial)
 }
 
 #[pyclass(from_py_object)]
@@ -333,7 +333,7 @@ impl Canvas {
         self.paint.set_path_effect(path_effect);
     }
 
-    fn select_font_face(&mut self, family_name: String, weight: FontWeight, slant: FontSlant) {
+    fn select_font_face(&mut self, family_name: String, weight: FontWeight, slant: FontSlant) -> PyResult<()> {
         let style = FontStyle::new(
             py_to_skia_weight(weight),
             font_style::Width::NORMAL,
@@ -341,7 +341,10 @@ impl Canvas {
         );
         if let Some(typeface) = self.font_mgr.match_family_style(&family_name, style) {
             self.font.set_typeface(typeface);
+        } else {
+            self.font.set_typeface(default_font(&self.font_mgr)?);
         }
+        Ok(())
     }
 
     fn set_font_size(&mut self, size: f32) -> PyResult<()> {
@@ -562,13 +565,14 @@ impl ImageSurface {
         Python::attach(|py| {
             let skia_surface = create_skia_surface(width, height)?;
             let font_mgr = FontMgr::new();
+            let arial = default_font(&font_mgr)?;
             let canvas = Py::new(
                 py,
                 Canvas {
                     skia_surface,
                     path: None,
-                    font_mgr: font_mgr.clone(),
-                    font: default_font(font_mgr)?,
+                    font_mgr,
+                    font: Font::from_typeface(arial, 12.0),
                     gradient_colors: Vec::new(),
                     gradient_offsets: Vec::new(),
                     paint: Paint::default(),
