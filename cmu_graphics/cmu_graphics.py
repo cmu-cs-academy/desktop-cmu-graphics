@@ -1170,22 +1170,6 @@ class App(object):
         throttle.flush = flush
         return throttle
 
-    def getScreenshotAndExit(self, path):
-        app._app.callUserFn(
-            'onMousePress',
-            (200, 200, 0),
-        )
-
-        # necessary for tests that involve screens
-        for event in pygame.event.get():
-            if event.type == SET_ACTIVE_SCREEN:
-                self.handleSetActiveScreen(event.newScreen, redraw=True)
-
-        self.redrawAll(self._screen, self._cairo_surface, self._ctx)
-
-        self.getScreenshot(path)
-        self.quit()
-
     @_safeMethod
     def run(self, takeScreenshotPath=None):
         pygame.init()
@@ -1203,11 +1187,20 @@ class App(object):
         )
         self._running = True
 
-        if takeScreenshotPath is not None:
-            self.getScreenshotAndExit(takeScreenshotPath)
+        screenshotTriggered = False
 
         while self._running:
             sys.stdout.flush()
+            if takeScreenshotPath is not None:
+                if not screenshotTriggered:
+                    app._app.callUserFn(
+                        'onMousePress',
+                        (200, 200, 0),
+                    )
+                    screenshotTriggered = True
+                else:
+                    self.getScreenshot(takeScreenshotPath)
+                    self._running = False
             with DRAWING_LOCK:
                 had_event = False
                 for event in pygame.event.get():
@@ -1448,7 +1441,7 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
     # just sets up variables and draws a static image.
     app._app.redrawAllWrapper()
 
-    run(takeScreenshotPath)
+    run(takeScreenshotPath=takeScreenshotPath)
 
 
 def setActiveScreen(screen, fromRunApp=False):
