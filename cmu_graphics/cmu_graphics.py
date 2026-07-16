@@ -1170,8 +1170,24 @@ class App(object):
         throttle.flush = flush
         return throttle
 
+    def getScreenshotAndExit(self, path):
+        app._app.callUserFn(
+            'onMousePress',
+            (200, 200, 0),
+        )
+
+        # necessary for tests that involve screens
+        for event in pygame.event.get():
+            if event.type == SET_ACTIVE_SCREEN:
+                self.handleSetActiveScreen(event.newScreen, redraw=True)
+
+        self.redrawAll(self._screen, self._cairo_surface, self._ctx)
+
+        self.getScreenshot(path)
+        self.quit()
+
     @_safeMethod
-    def run(self):
+    def run(self, getScreenshot=None):
         pygame.init()
         pygame.display.set_caption(self.title)
 
@@ -1186,6 +1202,9 @@ class App(object):
             lambda arg: self.callUserFn('onMouseDrag', arg), 30
         )
         self._running = True
+
+        if getScreenshot is not None:
+            self.getScreenshotAndExit(getScreenshot)
 
         while self._running:
             sys.stdout.flush()
@@ -1335,6 +1354,8 @@ def processRunAppArgs(args, kwargs):
     set_width = False
     set_height = False
 
+    getScreenshot = None
+
     remaining_kwargs = {}
 
     # Handle positional arguments for width and height
@@ -1364,15 +1385,17 @@ def processRunAppArgs(args, kwargs):
                 )
             height = value
             set_height = True
+        elif param == 'getScreenshot':
+            getScreenshot = value
         else:
             # Pass through any other keyword arguments to onAppStart
             remaining_kwargs[param] = value
 
-    return width, height, remaining_kwargs
+    return width, height, getScreenshot, remaining_kwargs
 
 
 def runApp(*args, **kwargs):
-    width, height, remaining_kwargs = processRunAppArgs(args, kwargs)
+    width, height, getScreenshot, remaining_kwargs = processRunAppArgs(args, kwargs)
 
     # If we didn't call runAppWithScreens
     if app._app._initialScreen is None:
@@ -1423,7 +1446,7 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
     # just sets up variables and draws a static image.
     app._app.redrawAllWrapper()
 
-    run()
+    run(getScreenshot)
 
 
 def setActiveScreen(screen, fromRunApp=False):
@@ -1546,7 +1569,7 @@ def loop():
     run()
 
 
-def run():
+def run(getScreenshot=None):
     if not app._app._isMvc:
         for cs3ModeHandler in ['redrawAll']:
             if cs3ModeHandler in __main__.__dict__:
@@ -1561,7 +1584,7 @@ def run():
         threading.Thread(target=CSAcademyConsole().interact).start()
 
     try:
-        app._app.run()
+        app._app.run(getScreenshot)
     except KeyboardInterrupt:
         cleanAndClose()
 
