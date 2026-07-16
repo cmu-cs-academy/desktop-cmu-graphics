@@ -137,7 +137,7 @@ def run_test(test_name, all_source_code):
 
         test = ''
         screenshot_path = repr(os.path.abspath(output_path))
-        run_fn = 'cmu_graphics.run(getScreenshot=%s)' % screenshot_path
+        run_fn = 'cmu_graphics.run(takeScreenshotPath=%s)' % screenshot_path
         if not test_name.startswith('cs3'):
             test += '\n######\n'.join(source_code_pieces[:piece_i])
             test += '\ndef onMousePress(x, y):\n'
@@ -145,10 +145,10 @@ def run_test(test_name, all_source_code):
             test += '\n    app.background = "honeydew"'
         else:
             test += source_code_pieces[piece_i]
-            run_fn = 'runApp(getScreenshot=%s)' % screenshot_path
+            run_fn = 'runApp(takeScreenshotPath=%s)' % screenshot_path
 
         if '_screens' in test_name:
-            run_fn = "runAppWithScreens('a', getScreenshot=%s)" % screenshot_path
+            run_fn = "runAppWithScreens('a', takeScreenshotPath=%s)" % screenshot_path
 
         source_code = generate_test_source(test, run_fn, 'es' if test_name.endswith('_es') else 'en')
 
