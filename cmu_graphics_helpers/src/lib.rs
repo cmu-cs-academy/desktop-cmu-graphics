@@ -68,9 +68,12 @@ use pyo3::types::PyByteArray;
 
 use skia_safe::{
     Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, Image, ImageInfo, Matrix,
-    Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, TileMode, Typeface, Vector,
-    font_style, gradient, surfaces,
+    Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, TileMode, Typeface,
+    Vector, font_style, gradient, surfaces,
 };
+
+const RAD_TO_DEG: f32 = 180.0 / PI;
+const ORIGIN: Point = Point::new(0.0, 0.0);
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
     let image_info = ImageInfo::new(
@@ -135,16 +138,9 @@ fn py_to_skia_slant(slant: FontSlant) -> font_style::Slant {
     }
 }
 
-fn default_font(font_mgr: &FontMgr) -> PyResult<Typeface> {
+fn get_arial(font_mgr: &FontMgr, style: FontStyle) -> PyResult<Typeface> {
     let arial = font_mgr
-        .match_family_style(
-            "Arial",
-            FontStyle::new(
-                font_style::Weight::NORMAL,
-                font_style::Width::NORMAL,
-                font_style::Slant::Upright,
-            ),
-        )
+        .match_family_style("Arial", style)
         .ok_or_else(|| PyRuntimeError::new_err("Issue with getting Arial font"))?;
     Ok(arial)
 }
@@ -200,9 +196,7 @@ impl Canvas {
     }
 
     fn rotate(&mut self, angle: f32) {
-        self.skia_surface
-            .canvas()
-            .rotate(angle * (180.0 / PI), None);
+        self.skia_surface.canvas().rotate(angle * RAD_TO_DEG, None);
     }
 
     #[pyo3(signature = (xx = 1.0, yx = 0.0, xy = 0.0, yy = 1.0, x0 = 0.0, y0 = 0.0))]
@@ -294,7 +288,7 @@ impl Canvas {
         }
         self.path
             .get_or_insert_with(|| new_path_and_line(start_point))
-            .add_arc(r, angle1 * (180.0 / PI), (angle2 - angle1) * (180.0 / PI));
+            .add_arc(r, angle1 * RAD_TO_DEG, (angle2 - angle1) * RAD_TO_DEG);
     }
 
     fn close_path(&mut self) {
@@ -305,10 +299,9 @@ impl Canvas {
 
     #[pyo3(signature = (r, g, b, a = None))]
     fn set_source_rgba(&mut self, r: f32, g: f32, b: f32, a: Option<f32>) {
-        let color_space = self.skia_surface.image_info().color_space();
         self.paint.set_shader(None);
         self.paint
-            .set_color4f(Color4f::new(r, g, b, a.unwrap_or(1.0)), &color_space);
+            .set_color4f(Color4f::new(r, g, b, a.unwrap_or(1.0)), None);
     }
 
     fn set_source_rgb(&mut self, r: f32, g: f32, b: f32) {
@@ -333,7 +326,12 @@ impl Canvas {
         self.paint.set_path_effect(path_effect);
     }
 
-    fn select_font_face(&mut self, family_name: String, weight: FontWeight, slant: FontSlant) -> PyResult<()> {
+    fn select_font_face(
+        &mut self,
+        family_name: String,
+        weight: FontWeight,
+        slant: FontSlant,
+    ) -> PyResult<()> {
         let style = FontStyle::new(
             py_to_skia_weight(weight),
             font_style::Width::NORMAL,
@@ -342,7 +340,7 @@ impl Canvas {
         if let Some(typeface) = self.font_mgr.match_family_style(&family_name, style) {
             self.font.set_typeface(typeface);
         } else {
-            self.font.set_typeface(default_font(&self.font_mgr)?);
+            self.font.set_typeface(get_arial(&self.font_mgr, style)?);
         }
         Ok(())
     }
@@ -370,8 +368,8 @@ impl Canvas {
         let point = self
             .path
             .as_ref()
-            .and_then(|pb| pb.snapshot().last_pt())
-            .unwrap_or_else(|| Point::new(0.0, 0.0));
+            .and_then(|pb| pb.get_last_pt())
+            .unwrap_or_else(|| ORIGIN);
         let text_path = Path::from_str(&text, point, font);
         self.path
             .get_or_insert(PathBuilder::new_path(&text_path))
@@ -384,75 +382,93 @@ impl Canvas {
         let point = self
             .path
             .as_ref()
-            .and_then(|pb| pb.snapshot().last_pt())
-            .unwrap_or_else(|| Point::new(0.0, 0.0));
-        let mut paint = self.paint.clone();
-        paint.set_stroke(false);
-        paint.set_anti_alias(true);
+            .and_then(|pb| pb.get_last_pt())
+            .unwrap_or_else(|| ORIGIN);
+        self.paint.set_stroke(false);
+        self.paint.set_anti_alias(true);
         self.skia_surface
             .canvas()
-            .draw_str(&text, point, font, &paint);
+            .draw_str(&text, point, font, &self.paint);
         Ok(())
     }
 
     fn paint_with_alpha(&mut self, a: f32) {
-        let mut paint = self.paint.clone();
-        paint.set_alpha_f(a);
-        paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_paint(&paint);
+        self.paint.set_alpha_f(a);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_paint(&self.paint);
     }
 
     fn clip_preserve(&mut self) -> PyResult<()> {
+        let path = if let Some(pb) = &self.path {
+            Ok(pb.snapshot())
+        } else {
+            Err(PyRuntimeError::new_err(
+                "Path does not exist for clip_preserve",
+            ))
+        }?;
+        self.skia_surface.canvas().clip_path(&path, None, true);
+        Ok(())
+    }
+
+    fn clip(&mut self) -> PyResult<()> {
         let path = self
             .path
-            .clone()
+            .take()
             .ok_or(PyRuntimeError::new_err("Path does not exist for clip"))?
             .detach();
         self.skia_surface.canvas().clip_path(&path, None, true);
         Ok(())
     }
 
-    fn clip(&mut self) -> PyResult<()> {
-        self.clip_preserve()?;
-        self.path = None;
-        Ok(())
-    }
-
     fn stroke_preserve(&mut self) -> PyResult<()> {
-        let path = self
-            .path
-            .clone()
-            .ok_or(PyRuntimeError::new_err("Path does not exist for stroke"))?
-            .detach();
-        let mut paint = self.paint.clone();
-        paint.set_stroke(true);
-        paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_path(&path, &paint);
+        let path = if let Some(pb) = &self.path {
+            Ok(pb.snapshot())
+        } else {
+            Err(PyRuntimeError::new_err(
+                "Path does not exist for stroke_preserve",
+            ))
+        }?;
+        self.paint.set_stroke(true);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &self.paint);
         Ok(())
     }
 
     fn stroke(&mut self) -> PyResult<()> {
-        self.stroke_preserve()?;
-        self.path = None;
+        let path = self
+            .path
+            .take()
+            .ok_or(PyRuntimeError::new_err("Path does not exist for stroke"))?
+            .detach();
+        self.paint.set_stroke(true);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &self.paint);
         Ok(())
     }
 
     fn fill_preserve(&mut self) -> PyResult<()> {
-        let path = self
-            .path
-            .clone()
-            .ok_or(PyRuntimeError::new_err("Path does not exist for fill"))?
-            .detach();
-        let mut paint = self.paint.clone();
-        paint.set_stroke(false);
-        paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_path(&path, &paint);
+        let path = if let Some(pb) = &self.path {
+            Ok(pb.snapshot())
+        } else {
+            Err(PyRuntimeError::new_err(
+                "Path does not exist for fill_preserve",
+            ))
+        }?;
+        self.paint.set_stroke(false);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &self.paint);
         Ok(())
     }
 
     fn fill(&mut self) -> PyResult<()> {
-        self.fill_preserve()?;
-        self.path = None;
+        let path = self
+            .path
+            .take()
+            .ok_or(PyRuntimeError::new_err("Path does not exist for fill"))?
+            .detach();
+        self.paint.set_stroke(false);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &self.paint);
         Ok(())
     }
 
@@ -462,10 +478,13 @@ impl Canvas {
     }
 
     fn set_source_linear_gradient(&mut self, x0: f32, y0: f32, x1: f32, y1: f32) -> PyResult<()> {
-        let colors = &self.gradient_colors.clone();
-        let offsets = &self.gradient_offsets.clone();
         let gradient = gradient::Gradient::new(
-            gradient::Colors::new(colors, Some(offsets), TileMode::Clamp, None),
+            gradient::Colors::new(
+                &self.gradient_colors,
+                Some(&self.gradient_offsets),
+                TileMode::Clamp,
+                None,
+            ),
             gradient::Interpolation::default(),
         );
         let shader = gradient::shaders::linear_gradient(
@@ -481,10 +500,13 @@ impl Canvas {
     }
 
     fn set_source_radial_gradient(&mut self, xc: f32, yc: f32, radius: f32) -> PyResult<()> {
-        let colors = &self.gradient_colors.clone();
-        let offsets = &self.gradient_offsets.clone();
         let gradient = gradient::Gradient::new(
-            gradient::Colors::new(colors, Some(offsets), TileMode::Clamp, None),
+            gradient::Colors::new(
+                &self.gradient_colors,
+                Some(&self.gradient_offsets),
+                TileMode::Clamp,
+                None,
+            ),
             gradient::Interpolation::default(),
         );
         let shader =
@@ -505,8 +527,8 @@ impl Canvas {
                 self.set_source_radial_gradient(xc, yc, radius)?
             }
         }
-        self.gradient_offsets = Vec::new();
-        self.gradient_colors = Vec::new();
+        self.gradient_offsets.clear();
+        self.gradient_colors.clear();
         Ok(())
     }
 
@@ -565,7 +587,12 @@ impl ImageSurface {
         Python::attach(|py| {
             let skia_surface = create_skia_surface(width, height)?;
             let font_mgr = FontMgr::new();
-            let arial = default_font(&font_mgr)?;
+            let style = FontStyle::new(
+                font_style::Weight::NORMAL,
+                font_style::Width::NORMAL,
+                font_style::Slant::Upright,
+            );
+            let arial = get_arial(&font_mgr, style)?;
             let canvas = Py::new(
                 py,
                 Canvas {
