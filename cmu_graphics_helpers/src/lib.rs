@@ -68,9 +68,12 @@ use pyo3::types::PyByteArray;
 
 use skia_safe::{
     Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, Image, ImageInfo, Matrix,
-    Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, TileMode, Typeface, Vector,
-    font_style, gradient, surfaces,
+    Paint, PaintJoin, Path, PathBuilder, PathEffect, Point, RRect, Rect, TileMode, Typeface,
+    Vector, font_style, gradient, surfaces,
 };
+
+const RAD_TO_DEG: f32 = 180.0 / PI;
+const ORIGIN: Point = Point::new(0.0, 0.0);
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
     let image_info = ImageInfo::new(
@@ -193,9 +196,7 @@ impl Canvas {
     }
 
     fn rotate(&mut self, angle: f32) {
-        self.skia_surface
-            .canvas()
-            .rotate(angle * (180.0 / PI), None);
+        self.skia_surface.canvas().rotate(angle * RAD_TO_DEG, None);
     }
 
     #[pyo3(signature = (xx = 1.0, yx = 0.0, xy = 0.0, yy = 1.0, x0 = 0.0, y0 = 0.0))]
@@ -287,7 +288,7 @@ impl Canvas {
         }
         self.path
             .get_or_insert_with(|| new_path_and_line(start_point))
-            .add_arc(r, angle1 * (180.0 / PI), (angle2 - angle1) * (180.0 / PI));
+            .add_arc(r, angle1 * RAD_TO_DEG, (angle2 - angle1) * RAD_TO_DEG);
     }
 
     fn close_path(&mut self) {
@@ -298,10 +299,9 @@ impl Canvas {
 
     #[pyo3(signature = (r, g, b, a = None))]
     fn set_source_rgba(&mut self, r: f32, g: f32, b: f32, a: Option<f32>) {
-        let color_space = self.skia_surface.image_info().color_space();
         self.paint.set_shader(None);
         self.paint
-            .set_color4f(Color4f::new(r, g, b, a.unwrap_or(1.0)), &color_space);
+            .set_color4f(Color4f::new(r, g, b, a.unwrap_or(1.0)), None);
     }
 
     fn set_source_rgb(&mut self, r: f32, g: f32, b: f32) {
@@ -368,8 +368,8 @@ impl Canvas {
         let point = self
             .path
             .as_ref()
-            .and_then(|pb| pb.snapshot().last_pt())
-            .unwrap_or_else(|| Point::new(0.0, 0.0));
+            .and_then(|pb| pb.get_last_pt())
+            .unwrap_or_else(|| ORIGIN);
         let text_path = Path::from_str(&text, point, font);
         self.path
             .get_or_insert(PathBuilder::new_path(&text_path))
@@ -382,75 +382,93 @@ impl Canvas {
         let point = self
             .path
             .as_ref()
-            .and_then(|pb| pb.snapshot().last_pt())
-            .unwrap_or_else(|| Point::new(0.0, 0.0));
-        let mut paint = self.paint.clone();
-        paint.set_stroke(false);
-        paint.set_anti_alias(true);
+            .and_then(|pb| pb.get_last_pt())
+            .unwrap_or_else(|| ORIGIN);
+        self.paint.set_stroke(false);
+        self.paint.set_anti_alias(true);
         self.skia_surface
             .canvas()
-            .draw_str(&text, point, font, &paint);
+            .draw_str(&text, point, font, &self.paint);
         Ok(())
     }
 
     fn paint_with_alpha(&mut self, a: f32) {
-        let mut paint = self.paint.clone();
-        paint.set_alpha_f(a);
-        paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_paint(&paint);
+        self.paint.set_alpha_f(a);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_paint(&self.paint);
     }
 
     fn clip_preserve(&mut self) -> PyResult<()> {
+        let path = if let Some(pb) = &self.path {
+            Ok(pb.snapshot())
+        } else {
+            Err(PyRuntimeError::new_err(
+                "Path does not exist for clip_preserve",
+            ))
+        }?;
+        self.skia_surface.canvas().clip_path(&path, None, true);
+        Ok(())
+    }
+
+    fn clip(&mut self) -> PyResult<()> {
         let path = self
             .path
-            .clone()
+            .take()
             .ok_or(PyRuntimeError::new_err("Path does not exist for clip"))?
             .detach();
         self.skia_surface.canvas().clip_path(&path, None, true);
         Ok(())
     }
 
-    fn clip(&mut self) -> PyResult<()> {
-        self.clip_preserve()?;
-        self.path = None;
-        Ok(())
-    }
-
     fn stroke_preserve(&mut self) -> PyResult<()> {
-        let path = self
-            .path
-            .clone()
-            .ok_or(PyRuntimeError::new_err("Path does not exist for stroke"))?
-            .detach();
-        let mut paint = self.paint.clone();
-        paint.set_stroke(true);
-        paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_path(&path, &paint);
+        let path = if let Some(pb) = &self.path {
+            Ok(pb.snapshot())
+        } else {
+            Err(PyRuntimeError::new_err(
+                "Path does not exist for stroke_preserve",
+            ))
+        }?;
+        self.paint.set_stroke(true);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &self.paint);
         Ok(())
     }
 
     fn stroke(&mut self) -> PyResult<()> {
-        self.stroke_preserve()?;
-        self.path = None;
+        let path = self
+            .path
+            .take()
+            .ok_or(PyRuntimeError::new_err("Path does not exist for stroke"))?
+            .detach();
+        self.paint.set_stroke(true);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &self.paint);
         Ok(())
     }
 
     fn fill_preserve(&mut self) -> PyResult<()> {
-        let path = self
-            .path
-            .clone()
-            .ok_or(PyRuntimeError::new_err("Path does not exist for fill"))?
-            .detach();
-        let mut paint = self.paint.clone();
-        paint.set_stroke(false);
-        paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_path(&path, &paint);
+        let path = if let Some(pb) = &self.path {
+            Ok(pb.snapshot())
+        } else {
+            Err(PyRuntimeError::new_err(
+                "Path does not exist for fill_preserve",
+            ))
+        }?;
+        self.paint.set_stroke(false);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &self.paint);
         Ok(())
     }
 
     fn fill(&mut self) -> PyResult<()> {
-        self.fill_preserve()?;
-        self.path = None;
+        let path = self
+            .path
+            .take()
+            .ok_or(PyRuntimeError::new_err("Path does not exist for fill"))?
+            .detach();
+        self.paint.set_stroke(false);
+        self.paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &self.paint);
         Ok(())
     }
 
@@ -509,8 +527,8 @@ impl Canvas {
                 self.set_source_radial_gradient(xc, yc, radius)?
             }
         }
-        self.gradient_offsets = Vec::new();
-        self.gradient_colors = Vec::new();
+        self.gradient_offsets.clear();
+        self.gradient_colors.clear();
         Ok(())
     }
 
