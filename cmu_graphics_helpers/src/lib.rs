@@ -135,16 +135,9 @@ fn py_to_skia_slant(slant: FontSlant) -> font_style::Slant {
     }
 }
 
-fn default_font(font_mgr: &FontMgr) -> PyResult<Typeface> {
+fn get_arial(font_mgr: &FontMgr, style: FontStyle) -> PyResult<Typeface> {
     let arial = font_mgr
-        .match_family_style(
-            "Arial",
-            FontStyle::new(
-                font_style::Weight::NORMAL,
-                font_style::Width::NORMAL,
-                font_style::Slant::Upright,
-            ),
-        )
+        .match_family_style("Arial", style)
         .ok_or_else(|| PyRuntimeError::new_err("Issue with getting Arial font"))?;
     Ok(arial)
 }
@@ -333,7 +326,12 @@ impl Canvas {
         self.paint.set_path_effect(path_effect);
     }
 
-    fn select_font_face(&mut self, family_name: String, weight: FontWeight, slant: FontSlant) -> PyResult<()> {
+    fn select_font_face(
+        &mut self,
+        family_name: String,
+        weight: FontWeight,
+        slant: FontSlant,
+    ) -> PyResult<()> {
         let style = FontStyle::new(
             py_to_skia_weight(weight),
             font_style::Width::NORMAL,
@@ -342,7 +340,7 @@ impl Canvas {
         if let Some(typeface) = self.font_mgr.match_family_style(&family_name, style) {
             self.font.set_typeface(typeface);
         } else {
-            self.font.set_typeface(default_font(&self.font_mgr)?);
+            self.font.set_typeface(get_arial(&self.font_mgr, style)?);
         }
         Ok(())
     }
@@ -462,10 +460,13 @@ impl Canvas {
     }
 
     fn set_source_linear_gradient(&mut self, x0: f32, y0: f32, x1: f32, y1: f32) -> PyResult<()> {
-        let colors = &self.gradient_colors.clone();
-        let offsets = &self.gradient_offsets.clone();
         let gradient = gradient::Gradient::new(
-            gradient::Colors::new(colors, Some(offsets), TileMode::Clamp, None),
+            gradient::Colors::new(
+                &self.gradient_colors,
+                Some(&self.gradient_offsets),
+                TileMode::Clamp,
+                None,
+            ),
             gradient::Interpolation::default(),
         );
         let shader = gradient::shaders::linear_gradient(
@@ -481,10 +482,13 @@ impl Canvas {
     }
 
     fn set_source_radial_gradient(&mut self, xc: f32, yc: f32, radius: f32) -> PyResult<()> {
-        let colors = &self.gradient_colors.clone();
-        let offsets = &self.gradient_offsets.clone();
         let gradient = gradient::Gradient::new(
-            gradient::Colors::new(colors, Some(offsets), TileMode::Clamp, None),
+            gradient::Colors::new(
+                &self.gradient_colors,
+                Some(&self.gradient_offsets),
+                TileMode::Clamp,
+                None,
+            ),
             gradient::Interpolation::default(),
         );
         let shader =
@@ -565,7 +569,12 @@ impl ImageSurface {
         Python::attach(|py| {
             let skia_surface = create_skia_surface(width, height)?;
             let font_mgr = FontMgr::new();
-            let arial = default_font(&font_mgr)?;
+            let style = FontStyle::new(
+                font_style::Weight::NORMAL,
+                font_style::Width::NORMAL,
+                font_style::Slant::Upright,
+            );
+            let arial = get_arial(&font_mgr, style)?;
             let canvas = Py::new(
                 py,
                 Canvas {
