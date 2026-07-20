@@ -89,7 +89,7 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
 
     return mean_squared_error < threshold
 
-def generate_test_source(test, run_fn, extras='', language='en'):
+def generate_test_source(test, run_fn, language='en'):
     source_code = ''
     source_code += 'import sys'
     source_code += '\nimport os'
@@ -112,7 +112,6 @@ def generate_test_source(test, run_fn, extras='', language='en'):
 '''
 
     source_code += '\n' + test
-    source_code += '\n' + extras
     source_code += '\n' + run_fn
 
     return source_code
@@ -137,7 +136,8 @@ def run_test(test_name, all_source_code):
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
         test = ''
-        run_fn = 'cmu_graphics.run()'
+        screenshot_path = repr(os.path.abspath(output_path))
+        run_fn = 'cmu_graphics.run(takeScreenshotPath=%s)' % screenshot_path
         if not test_name.startswith('cs3'):
             test += '\n######\n'.join(source_code_pieces[:piece_i])
             test += '\ndef onMousePress(x, y):\n'
@@ -145,36 +145,12 @@ def run_test(test_name, all_source_code):
             test += '\n    app.background = "honeydew"'
         else:
             test += source_code_pieces[piece_i]
-            run_fn = 'runApp()'
+            run_fn = 'runApp(takeScreenshotPath=%s)' % screenshot_path
 
         if '_screens' in test_name:
-            run_fn = "runAppWithScreens('a')"
+            run_fn = "runAppWithScreens('a', takeScreenshotPath=%s)" % screenshot_path
 
-        screenshot_thread = '''
-from threading import Thread
-import time
-import traceback
-
-def screenshotAndExit():
-    try:
-        raw_app = app._app
-        while not raw_app._running:
-            time.sleep(0.01)
-        with cmu_graphics.DRAWING_LOCK:
-            raw_app.frameworkRedrew = False
-            raw_app.callUserFn("onMousePress", (200,200,0))
-        while not raw_app.frameworkRedrew:
-            time.sleep(0.01)
-        raw_app.getScreenshot(%s)
-        raw_app.quit()
-    except:
-        traceback.print_exc()
-        os._exit(1)
-
-Thread(target=screenshotAndExit, daemon=True).start()
-''' % repr(os.path.abspath(output_path))
-
-        source_code = generate_test_source(test, run_fn, screenshot_thread, 'es' if test_name.endswith('_es') else 'en')
+        source_code = generate_test_source(test, run_fn, 'es' if test_name.endswith('_es') else 'en')
 
         with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
             f.write(source_code)
