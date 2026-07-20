@@ -384,18 +384,20 @@ impl Canvas {
             .as_ref()
             .and_then(|pb| pb.get_last_pt())
             .unwrap_or_else(|| ORIGIN);
-        self.paint.set_stroke(false);
-        self.paint.set_anti_alias(true);
+        let mut paint = self.paint.clone();
+        paint.set_stroke(false);
+        paint.set_anti_alias(true);
         self.skia_surface
             .canvas()
-            .draw_str(&text, point, font, &self.paint);
+            .draw_str(&text, point, font, &paint);
         Ok(())
     }
 
     fn paint_with_alpha(&mut self, a: f32) {
-        self.paint.set_alpha_f(a);
-        self.paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_paint(&self.paint);
+        let mut paint = self.paint.clone();
+        paint.set_alpha_f(a);
+        paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_paint(&paint);
     }
 
     fn clip_preserve(&mut self) -> PyResult<()> {
@@ -428,9 +430,10 @@ impl Canvas {
                 "Path does not exist for stroke_preserve",
             ))
         }?;
-        self.paint.set_stroke(true);
-        self.paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_path(&path, &self.paint);
+        let mut paint = self.paint.clone();
+        paint.set_stroke(true);
+        paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &paint);
         Ok(())
     }
 
@@ -440,9 +443,10 @@ impl Canvas {
             .take()
             .ok_or(PyRuntimeError::new_err("Path does not exist for stroke"))?
             .detach();
-        self.paint.set_stroke(true);
-        self.paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_path(&path, &self.paint);
+        let mut paint = self.paint.clone();
+        paint.set_stroke(true);
+        paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &paint);
         Ok(())
     }
 
@@ -454,9 +458,10 @@ impl Canvas {
                 "Path does not exist for fill_preserve",
             ))
         }?;
-        self.paint.set_stroke(false);
-        self.paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_path(&path, &self.paint);
+        let mut paint = self.paint.clone();
+        paint.set_stroke(false);
+        paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &paint);
         Ok(())
     }
 
@@ -466,9 +471,10 @@ impl Canvas {
             .take()
             .ok_or(PyRuntimeError::new_err("Path does not exist for fill"))?
             .detach();
-        self.paint.set_stroke(false);
-        self.paint.set_anti_alias(true);
-        self.skia_surface.canvas().draw_path(&path, &self.paint);
+        let mut paint = self.paint.clone();
+        paint.set_stroke(false);
+        paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_path(&path, &paint);
         Ok(())
     }
 
