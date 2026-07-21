@@ -3864,10 +3864,11 @@ class Inspector(object):
         if self.bestX is None or self.bestY is None:
             return
 
+        # BGR, in the 0-1 range set_source_rgb/set_source_rgba expect
         black = (0, 0, 0)
-        red = (0, 0, 255)
-        gold = (0, 215, 255)
-        white = (255, 255, 255)
+        red = (0, 0, 1)
+        gold = (0, 215 / 255, 1)
+        white = (1, 1, 1)
 
         for pt in self.keyPoints:
             ctx.new_path()

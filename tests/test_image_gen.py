@@ -285,9 +285,6 @@ def main():
             num_failures += 1
 
         for test_py_name in (args.only and [args.only] or os.listdir('image_gen')):
-            if test_py_name in ('inspector.py', 'cs3_basic.py') and is_mac_pip_ci():
-                continue
-
             if not test_py_name.endswith('.py'):
                 continue
 
