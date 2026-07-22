@@ -180,8 +180,6 @@ def run_test(test_name, all_source_code):
             if 'Label' in source_code or 'Rótulo' in source_code:
                 if sys.platform == 'win32':
                     threshold = 2500
-                # The newer version of cairo we're compiling with in Python 3.13+
-                # has slightly different kerning in inspector labels
                 elif int(python_minor) >= 13:
                     threshold = 150
                 else:
