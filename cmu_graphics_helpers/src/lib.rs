@@ -337,14 +337,7 @@ impl Canvas {
             font_style::Width::NORMAL,
             py_to_skia_slant(slant),
         );
-        // legacy_make_typeface falls back to the platform's default face for an
-        // unknown family, which is what cairo's select_font_face did (Helvetica on
-        // macOS). Falling back to Arial ourselves would render unavailable fonts
-        // differently than cairo did.
-        if let Some(typeface) = self
-            .font_mgr
-            .legacy_make_typeface(Some(family_name.as_str()), style)
-        {
+        if let Some(typeface) = self.font_mgr.match_family_style(&family_name, style) {
             self.font.set_typeface(typeface);
         } else {
             self.font.set_typeface(get_arial(&self.font_mgr, style)?);
@@ -359,12 +352,7 @@ impl Canvas {
 
     fn text_extents(&mut self, text: String) -> PyResult<(f32, f32, f32, f32, f32, f32)> {
         let font = self.font.as_ref();
-        let (width, _) = Font::measure_str(font, &text, Some(&self.paint));
-        // Font::measure_str's bounds are the rasterizer's glyph-mask bounds, which
-        // are rounded out to whole pixels and padded for anti-aliasing. Cairo's
-        // text_extents reports the exact outline ink extents, so measure the text
-        // path instead to keep label dimensions the same as they were under cairo.
-        let rect = Path::from_str(&text, ORIGIN, font).compute_tight_bounds();
+        let (width, rect) = Font::measure_str(font, text, Some(&self.paint));
         Ok((
             rect.left(),
             rect.top(),
