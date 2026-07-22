@@ -1171,7 +1171,7 @@ class App(object):
         return throttle
 
     @_safeMethod
-    def run(self):
+    def run(self, takeScreenshotPath=None):
         pygame.init()
         pygame.display.set_caption(self.title)
 
@@ -1187,8 +1187,20 @@ class App(object):
         )
         self._running = True
 
+        screenshotTriggered = False
+
         while self._running:
             sys.stdout.flush()
+            if takeScreenshotPath is not None:
+                if not screenshotTriggered:
+                    app._app.callUserFn(
+                        'onMousePress',
+                        (200, 200, 0),
+                    )
+                    screenshotTriggered = True
+                else:
+                    self.getScreenshot(takeScreenshotPath)
+                    self._running = False
             with DRAWING_LOCK:
                 had_event = False
                 for event in pygame.event.get():
@@ -1335,6 +1347,8 @@ def processRunAppArgs(args, kwargs):
     set_width = False
     set_height = False
 
+    takeScreenshotPath = None
+
     remaining_kwargs = {}
 
     # Handle positional arguments for width and height
@@ -1364,15 +1378,19 @@ def processRunAppArgs(args, kwargs):
                 )
             height = value
             set_height = True
+        elif param == 'takeScreenshotPath':
+            takeScreenshotPath = value
         else:
             # Pass through any other keyword arguments to onAppStart
             remaining_kwargs[param] = value
 
-    return width, height, remaining_kwargs
+    return width, height, takeScreenshotPath, remaining_kwargs
 
 
 def runApp(*args, **kwargs):
-    width, height, remaining_kwargs = processRunAppArgs(args, kwargs)
+    width, height, takeScreenshotPath, remaining_kwargs = processRunAppArgs(
+        args, kwargs
+    )
 
     # If we didn't call runAppWithScreens
     if app._app._initialScreen is None:
@@ -1423,7 +1441,7 @@ Otherwise, please call cmu_graphics.run() in place of runApp.
     # just sets up variables and draws a static image.
     app._app.redrawAllWrapper()
 
-    run()
+    run(takeScreenshotPath=takeScreenshotPath)
 
 
 def setActiveScreen(screen, fromRunApp=False):
@@ -1546,7 +1564,7 @@ def loop():
     run()
 
 
-def run():
+def run(*, takeScreenshotPath=None):
     if not app._app._isMvc:
         for cs3ModeHandler in ['redrawAll']:
             if cs3ModeHandler in __main__.__dict__:
@@ -1561,7 +1579,7 @@ def run():
         threading.Thread(target=CSAcademyConsole().interact).start()
 
     try:
-        app._app.run()
+        app._app.run(takeScreenshotPath)
     except KeyboardInterrupt:
         cleanAndClose()
 

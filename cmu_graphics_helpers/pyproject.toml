@@ -11,3 +11,13 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
+
+[tool.uv]
+# uv's default cache invalidation for this path dependency doesn't notice
+# edits to the Rust source, so `uv run` would keep using a stale build.
+cache-keys = [
+    { file = "Cargo.toml" },
+    { file = "Cargo.lock" },
+    { file = "pyproject.toml" },
+    { file = "src/**/*.rs" },
+]
