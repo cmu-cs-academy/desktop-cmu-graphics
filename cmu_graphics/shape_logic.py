@@ -600,18 +600,18 @@ def loadImageFromStringReference(reference):
 
 def loadImage(reference):
     referenceHash = hashReference(reference)
-
     if referenceHash not in activeDrawing.images:
         if isinstance(reference, PILWrapper):
             imageParams = reference.params
         else:
             pygameSurface = loadImageFromStringReference(reference)
             imageParams = wyvernImageFromPygameSurface(pygameSurface)
-        activeDrawing.images[hashReference(reference)] = imageParams
-    else:
-        imageParams = activeDrawing.images[referenceHash]
-
-    return {'width': imageParams[1], 'height': imageParams[2]}
+        wyvernImage = wyvern.WyvernImage(*imageParams)
+        activeDrawing.images[referenceHash] = wyvernImage
+    return {
+        'width': activeDrawing.images[referenceHash].width,
+        'height': activeDrawing.images[referenceHash].height,
+    }
 
 
 shapeAttrs = dict()
@@ -3222,8 +3222,9 @@ class CMUImage(PolygonWithTransform):
         mat = self.transformMatrix
         ctx.translate(self.pointList[0][0], self.pointList[0][1])
         ctx.transform(mat[0][0], mat[1][0], mat[0][1], mat[1][1], 0, 0)
-        ctx.set_source_image(*activeDrawing.images[hashReference(self.url)], 0, 0)
-        ctx.paint_with_alpha(self.opacity / 100)
+        ctx.draw_image(
+            activeDrawing.images[hashReference(self.url)], 0, 0, self.opacity / 100
+        )
 
     def toString(self):
         args = [self.left, self.top, self.width, self.height]

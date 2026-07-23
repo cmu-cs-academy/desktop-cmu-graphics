@@ -146,10 +146,9 @@ class SandboxModal(object):
         image = self.loadImageFromStringReference(
             'https://academy.cs.cmu.edu/static/media/project_10.472f439f.jpg'
         )
-        params = self.wyvernImageFromPygameSurface(image)
+        wyvernImage = wyvern.WyvernImage(*self.wyvernImageFromPygameSurface(image))
 
-        ctx.set_source_image(*params, 400, 400)
-        ctx.paint_with_alpha(10 / 100)
+        ctx.draw_image(wyvernImage, 400, 400, 10 / 100)
 
         ctx.restore()
 
