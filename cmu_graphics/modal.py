@@ -1,15 +1,16 @@
 import math
 
-### ZIPFILE VERSION ###
-import libs.cairo_loader as cairo
-import libs.pygame_loader as pygame
+# modal.py runs as a standalone subprocess whose sys.path is the package
+# directory itself, so it imports libs.* flatly and reads the distribution
+# switch flatly too (see _dist.py / _deps.py -- it can't use that shim here).
+from _dist import VENDORED
 
-### END ZIPFILE VERSION ###
-### PYPI VERSION ###
-import cairo
-import pygame
-
-### END PYPI VERSION ###
+if VENDORED:
+    import libs.cairo_loader as cairo
+    import libs.pygame_loader as pygame
+else:
+    import cairo
+    import pygame
 import json
 
 

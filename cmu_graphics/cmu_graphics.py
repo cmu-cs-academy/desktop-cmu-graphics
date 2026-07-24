@@ -5,6 +5,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
+from cmu_graphics._dist import VENDORED
 
 
 class Signal:
@@ -1693,12 +1694,10 @@ def check_for_update():
             print(
                 f'\n\nYou are running cmu-graphics version {version}, but a newer version {most_recent_version} is available.'
             )
-            ### ZIPFILE VERSION ###
-            print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
-            ### END ZIPFILE VERSION ###
-            ### PYPI VERSION ###
-            print('Run "pip install --upgrade cmu-graphics" to upgrade.')
-            ### END PYPI VERSION ###
+            if VENDORED:
+                print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
+            else:
+                print('Run "pip install --upgrade cmu-graphics" to upgrade.')
             print('\n\n')
     except Exception:
         pass
@@ -1729,14 +1728,8 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 import math
 
-### ZIPFILE VERSION ###
-from cmu_graphics.libs import cairo_loader as cairo
+from cmu_graphics._deps import cairo, pygame
 
-### END ZIPFILE VERSION ###
-### PYPI VERSION ###
-import cairo
-
-### END PYPI VERSION ###
 from random import *
 from cmu_graphics.utils import *
 import atexit
@@ -1744,14 +1737,6 @@ import threading
 import traceback
 
 DRAWING_LOCK = threading.RLock()
-
-### ZIPFILE VERSION ###
-from cmu_graphics.libs import pygame_loader as pygame
-
-### END ZIPFILE VERSION ###
-### PYPI VERSION ###
-import pygame
-### END PYPI VERSION ###
 
 sli = shape_logic.ShapeLogicInterface()
 slInitShape = sli.slInitShape

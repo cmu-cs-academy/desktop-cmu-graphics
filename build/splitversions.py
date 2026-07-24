@@ -4,30 +4,25 @@ import platform
 import re
 import shutil
 
-# Regex used to remove the zip version code from the pip version and vice versa
-ZIP_REGEX=r"### ZIPFILE VERSION ###.*?### END ZIPFILE VERSION ###"
-PYPI_REGEX=r"### PYPI VERSION ###.*?### END PYPI VERSION ###"
-
-def replace_file_text(path, regex, repl, flags=0):
-    old_text = ""
-    with open(path, "r", encoding="utf-8") as f:
-        old_text = f.read()
-
-    new_text = re.sub(regex, repl, old_text, flags=flags)
-
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(new_text)
-
 def make_all_dirs(*dirs):
     for dir in dirs:
         os.makedirs(dir)
 
-def apply_regex_to_dirs(dirs, regex):
-    for dir in dirs:
-        for path in os.listdir(dir):
-            full_path = f"{dir}/{path}"
-            if full_path.endswith('.py') and os.path.isfile(full_path):
-                replace_file_text(full_path, regex, "", re.DOTALL)
+def set_vendored(dist_py_path, vendored):
+    # Bake the distribution switch (see cmu_graphics/_dist.py) into a build
+    # copy. The source is checked in as VENDORED = True (used by the zip
+    # installer and local development); this flips it for the pip build.
+    with open(dist_py_path, "r", encoding="utf-8") as f:
+        old_text = f.read()
+
+    new_text, n = re.subn(
+        r"^VENDORED = .*$", f"VENDORED = {vendored}", old_text, flags=re.MULTILINE)
+    if n != 1:
+        raise Exception(
+            f"Expected exactly one 'VENDORED =' line in {dist_py_path}, found {n}")
+
+    with open(dist_py_path, "w", encoding="utf-8") as f:
+        f.write(new_text)
 
 
 def split_versions(zip_dest, pypi_dest, dots):
@@ -55,16 +50,9 @@ def split_versions(zip_dest, pypi_dest, dots):
     for path in ["LICENSE", "README.md", "pyproject.toml"]:
         shutil.copy2(dots + path, dots + f"{pypi_dest}/{os.path.basename(path)}")
 
-    apply_regex_to_dirs([
-        dots + f"{pypi_dest}/cmu_graphics",
-        dots + f"{pypi_dest}/cmu_graphics/libs"
-        ],
-        ZIP_REGEX)
-
-    apply_regex_to_dirs([
-        dots + f"{zip_dest}/cmu_graphics",
-        dots + f"{zip_dest}/cmu_graphics/libs"
-        ], PYPI_REGEX)
+    # The zip copy keeps the checked-in VENDORED = True; only the pip copy
+    # needs flipping to load dependencies from the system instead of libs.
+    set_vendored(dots + f"{pypi_dest}/cmu_graphics/_dist.py", False)
 
 
 def rm_temp_dirs(zip_dest, pypi_dest, dots=''):
