@@ -3220,11 +3220,29 @@ class CMUImage(PolygonWithTransform):
 
     def drawImage(self, ctx):
         mat = self.transformMatrix
-        ctx.translate(self.pointList[0][0], self.pointList[0][1])
+        src = activeDrawing.images[hashReference(self.url)]
+        x, y = self.pointList[0][0], self.pointList[0][1]
+
+        # Fast path: pure (non-negative) scale with no rotation/shear. Resample
+        # the image to its on-screen size once, cache it, and blit that 1:1 on
+        # subsequent frames instead of resampling every frame.
+        if mat[0][1] == 0 and mat[1][0] == 0 and mat[0][0] > 0 and mat[1][1] > 0:
+            tw = max(1, round(src.width * mat[0][0]))
+            th = max(1, round(src.height * mat[1][1]))
+            if tw == src.width and th == src.height:
+                image = src
+            else:
+                cache = getattr(self, '_scaledImage', None)
+                if cache is None or cache[0] != (tw, th):
+                    cache = ((tw, th), src.scaled(tw, th))
+                    self._scaledImage = cache
+                image = cache[1]
+            ctx.translate(x, y)
+            ctx.draw_image(image, 0, 0, self.opacity / 100)
+            return
+        ctx.translate(x, y)
         ctx.transform(mat[0][0], mat[1][0], mat[0][1], mat[1][1], 0, 0)
-        ctx.draw_image(
-            activeDrawing.images[hashReference(self.url)], 0, 0, self.opacity / 100
-        )
+        ctx.draw_image(src, 0, 0, self.opacity / 100)
 
     def toString(self):
         args = [self.left, self.top, self.width, self.height]
