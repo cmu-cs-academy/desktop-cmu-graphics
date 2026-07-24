@@ -1,4 +1,4 @@
-# Resolves the native dependencies for the package modules, 
+# Resolves the native dependencies for the package modules,
 # based on which distribution we are (see _dist.py).
 #
 # Import these from here rather than importing cairo/pygame directly, so the

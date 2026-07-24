@@ -69,7 +69,7 @@ def build_pypi_package(pypi_dest):
     # The zip copy keeps the checked-in VENDORED = True; only the pip copy
     # needs flipping to load dependencies from the system instead of libs.
     set_vendored(f"{pypi_dest}/cmu_graphics/_dist.py", False)
-    
+
     print('Running python -m build...')
     subprocess.run([sys.executable, '-m', 'build'], cwd=pypi_dest, check=True)
 
