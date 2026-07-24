@@ -157,7 +157,22 @@ struct WyvernImage {
     image: Image,
     width: i32,
     height: i32,
+    opaque: bool,
 }
+
+fn image_info_for(width: i32, height: i32, opaque: bool) -> ImageInfo {
+    let alpha = if opaque {
+        skia_safe::AlphaType::Opaque
+    } else {
+        skia_safe::AlphaType::Premul
+    };
+    ImageInfo::new(
+        (width, height),
+        ColorType::BGRA8888,
+        alpha,
+        ColorSpace::new_srgb(),
+    )
+ }
 
 #[pymethods]
 impl WyvernImage {
@@ -169,20 +184,44 @@ impl WyvernImage {
         row_bytes: usize,
     ) -> PyResult<Self> {
         let bytes = unsafe { data.as_bytes() };
-        let image_info = ImageInfo::new(
-            (width, height),
-            ColorType::BGRA8888,
-            skia_safe::AlphaType::Premul,
-            ColorSpace::new_srgb(),
-        );
+        let opaque = bytes.iter().skip(3).step_by(4).all(|&a| a == 255);
+        let image_info = image_info_for(width, height, opaque);
         let image = skia_safe::images::raster_from_data(
             &image_info,
             skia_safe::Data::new_copy(bytes),
             row_bytes,
         )
         .ok_or(PyRuntimeError::new_err("Issue with creating image from data"))?;
-        Ok(WyvernImage { image, width, height })
+        Ok(WyvernImage { image, width, height, opaque })
     }
+
+    fn scaled(&self, width: i32, height: i32) -> PyResult<WyvernImage> {
+        let width = width.max(1);
+        let height = height.max(1);
+        let image_info = image_info_for(width, height, self.opaque);
+        let mut surface = surfaces::raster(&image_info, None, None)
+            .ok_or_else(|| PyRuntimeError::new_err("Failed to create scaling surface"))?;
+        let dst = Rect::from_wh(width as f32, height as f32);
+        surface
+            .canvas()
+            .draw_image_rect_with_sampling_options(
+                &self.image,
+                None,
+                dst,
+                skia_safe::SamplingOptions::new(
+                    skia_safe::FilterMode::Linear,
+                    skia_safe::MipmapMode::None,
+                ),
+                &Paint::default(),
+            );
+        let image = surface.image_snapshot();
+        Ok(WyvernImage {
+            image,
+            width,
+            height,
+            opaque: self.opaque,
+        })
+     }
 
     #[getter]
     fn width(&self) -> i32 {
@@ -608,7 +647,7 @@ impl Canvas {
             Point::new(x, y),
             skia_safe::SamplingOptions::new(
                 skia_safe::FilterMode::Linear,
-                skia_safe::MipmapMode::Linear,
+                skia_safe::MipmapMode::None,
             ),
             Some(&paint),
         );
