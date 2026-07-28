@@ -76,6 +76,8 @@ const RAD_TO_DEG: f32 = 180.0 / PI;
 const ORIGIN: Point = Point::new(0.0, 0.0);
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
+    let width = width.max(1);
+    let height = height.max(1);
     let image_info = ImageInfo::new(
         (width, height),
         ColorType::BGRA8888,
