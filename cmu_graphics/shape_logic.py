@@ -3227,8 +3227,8 @@ class CMUImage(PolygonWithTransform):
         # the image to its on-screen size once, cache it, and blit that 1:1 on
         # subsequent frames instead of resampling every frame.
         if mat[0][1] == 0 and mat[1][0] == 0 and mat[0][0] > 0 and mat[1][1] > 0:
-            tw = max(1, round(src.width * mat[0][0]))
-            th = max(1, round(src.height * mat[1][1]))
+            tw = round(src.width * mat[0][0])
+            th = round(src.height * mat[1][1])
             if tw == src.width and th == src.height:
                 image = src
             else:
