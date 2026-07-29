@@ -472,7 +472,7 @@ impl Canvas {
             .path
             .as_ref()
             .and_then(|pb| pb.get_last_pt())
-            .unwrap_or_else(|| ORIGIN);
+            .unwrap_or(ORIGIN);
         let text_path = Path::from_str(&text, point, font);
         self.path
             .get_or_insert(PathBuilder::new_path(&text_path))
@@ -486,7 +486,7 @@ impl Canvas {
             .path
             .as_ref()
             .and_then(|pb| pb.get_last_pt())
-            .unwrap_or_else(|| ORIGIN);
+            .unwrap_or(ORIGIN);
         let mut paint = self.paint.clone();
         paint.set_stroke(false);
         paint.set_anti_alias(true);
@@ -641,7 +641,7 @@ impl Canvas {
         Ok(())
     }
 
-    fn draw_image(&mut self, image: &WyvernImage, x: f32, y: f32, a: f32) -> () {
+    fn draw_image(&mut self, image: &WyvernImage, x: f32, y: f32, a: f32) {
         let mut paint = Paint::default();
         paint.set_alpha_f(a);
         paint.set_anti_alias(true);
