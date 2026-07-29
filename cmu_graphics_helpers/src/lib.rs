@@ -906,7 +906,10 @@ impl ApplicationHandler for WinitApp {
                     return;
                 };
 
-                softbuffer_surface.resize(new_width, new_height);
+                if softbuffer_surface.resize(new_width, new_height).is_err() {
+                    self.error = Some(PyRuntimeError::new_err("Issue with resizing softbuffer surface"));
+                    event_loop.exit()
+                };
 
                 Python::attach(|py| {
                     let mut surface_ref = py_surface.borrow_mut(py);
@@ -979,7 +982,7 @@ impl ApplicationHandler for WinitApp {
                             let r = bytes[i * 4 + 2] as u32;
                             *pixel = (r << 16) | (g << 8) | b;
                         }
-                        if let Err(_) = buffer.present() {
+                        if buffer.present().is_err() {
                             self.error =
                                 Some(PyRuntimeError::new_err("Issue presenting to buffer"));
                             event_loop.exit()
@@ -1024,7 +1027,7 @@ fn run(user_class: Py<PyAny>) -> PyResult<()> {
         error: None,
     };
 
-    let event_loop = EventLoop::new().expect("Unable to start event loop");
+    let event_loop = EventLoop::new().map_err(|_| PyRuntimeError::new_err("Issue with starting event loop"))?;
     event_loop.set_control_flow(ControlFlow::Poll);
     let _ = event_loop.run_app(&mut app);
 
