@@ -174,7 +174,7 @@ fn image_info_for(width: i32, height: i32, opaque: bool) -> ImageInfo {
         alpha,
         ColorSpace::new_srgb(),
     )
- }
+}
 
 #[pymethods]
 impl WyvernImage {
@@ -193,8 +193,15 @@ impl WyvernImage {
             skia_safe::Data::new_copy(bytes),
             row_bytes,
         )
-        .ok_or(PyRuntimeError::new_err("Issue with creating image from data"))?;
-        Ok(WyvernImage { image, width, height, opaque })
+        .ok_or(PyRuntimeError::new_err(
+            "Issue with creating image from data",
+        ))?;
+        Ok(WyvernImage {
+            image,
+            width,
+            height,
+            opaque,
+        })
     }
 
     fn scaled(&self, width: i32, height: i32) -> PyResult<WyvernImage> {
@@ -204,18 +211,16 @@ impl WyvernImage {
         let mut surface = surfaces::raster(&image_info, None, None)
             .ok_or_else(|| PyRuntimeError::new_err("Failed to create scaling surface"))?;
         let dst = Rect::from_wh(width as f32, height as f32);
-        surface
-            .canvas()
-            .draw_image_rect_with_sampling_options(
-                &self.image,
-                None,
-                dst,
-                skia_safe::SamplingOptions::new(
-                    skia_safe::FilterMode::Linear,
-                    skia_safe::MipmapMode::None,
-                ),
-                &Paint::default(),
-            );
+        surface.canvas().draw_image_rect_with_sampling_options(
+            &self.image,
+            None,
+            dst,
+            skia_safe::SamplingOptions::new(
+                skia_safe::FilterMode::Linear,
+                skia_safe::MipmapMode::None,
+            ),
+            &Paint::default(),
+        );
         let image = surface.image_snapshot();
         Ok(WyvernImage {
             image,
@@ -223,7 +228,7 @@ impl WyvernImage {
             height,
             opaque: self.opaque,
         })
-     }
+    }
 
     #[getter]
     fn width(&self) -> i32 {
@@ -465,7 +470,7 @@ impl Canvas {
             .path
             .as_ref()
             .and_then(|pb| pb.get_last_pt())
-            .unwrap_or_else(|| ORIGIN);
+            .unwrap_or(ORIGIN);
         let text_path = Path::from_str(&text, point, font);
         self.path
             .get_or_insert(PathBuilder::new_path(&text_path))
@@ -479,7 +484,7 @@ impl Canvas {
             .path
             .as_ref()
             .and_then(|pb| pb.get_last_pt())
-            .unwrap_or_else(|| ORIGIN);
+            .unwrap_or(ORIGIN);
         let mut paint = self.paint.clone();
         paint.set_stroke(false);
         paint.set_anti_alias(true);
@@ -634,13 +639,7 @@ impl Canvas {
         Ok(())
     }
 
-    fn draw_image(
-        &mut self,
-        image: &WyvernImage,
-        x: f32,
-        y: f32,
-        a: f32,
-    ) -> () {
+    fn draw_image(&mut self, image: &WyvernImage, x: f32, y: f32, a: f32) {
         let mut paint = Paint::default();
         paint.set_alpha_f(a);
         paint.set_anti_alias(true);
