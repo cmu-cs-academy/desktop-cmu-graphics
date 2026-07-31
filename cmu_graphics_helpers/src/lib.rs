@@ -902,6 +902,15 @@ impl CMUEvent {
         }
     }
 
+    pub fn init() -> Self {
+        CMUEvent {
+            event_type: "init".to_string(),
+            mouse: None,
+            key: None,
+            resize: None,
+        }
+    }
+
     pub fn quit() -> Self {
         CMUEvent {
             event_type: "quit".to_string(),
@@ -932,21 +941,22 @@ impl CMUEvent {
 
 impl WinitApp {
     fn call_event_handler(&mut self, event_loop: &ActiveEventLoop, event: CMUEvent) {
+        let Some(py_surface) = self.py_surface.as_ref() else {
+            return;
+        };
         let handler_result = Python::attach(|py| -> PyResult<()> {
-            self.on_event.call1(py, (event,))?;
+            self.on_event.call1(py, (event, py_surface.clone_ref(py)))?;
             Ok(())
         });
 
         if let Err(err) = handler_result {
             self.error = Some(err);
             event_loop.exit();
+        } else if let Some(internals) = self.internals.as_ref() {
+            internals.window.request_redraw();
         } else {
-            if let Some(internals) = self.internals.as_ref() {
-                internals.window.request_redraw();
-            } else {
-                self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
-                event_loop.exit();
-            }
+            self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
+            event_loop.exit();
         }
     }
 }
@@ -991,12 +1001,12 @@ impl ApplicationHandler for WinitApp {
             event_loop.exit();
         };
 
-        // self.call_event_handler(event_loop, "init", ());
-
         self.internals = Some(AppInternals {
             window,
             softbuffer_surface,
         });
+
+        self.call_event_handler(event_loop, CMUEvent::init());
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
