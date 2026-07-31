@@ -401,7 +401,6 @@ class TextBoxModal(object):
         self.lastMousePosition = None
         self.running = True
 
-        print(vars(wyvern))
         wyvern.run(self.on_event)
 
     def get_height(self):
@@ -481,13 +480,18 @@ class TextBoxModal(object):
         # import os
         # os._exit(0)
 
-    def on_event(self, event, surface):
-        ctx = surface.canvas
+    def on_event(self, event, surface=None):
+        ctx = None
+        if surface is not None:
+            ctx = surface.canvas
+
+        if event.event_type == "init":
+            return wyvern.InitEvent(int(self.width), int(self.height), False, self.title)
 
         if event.event_type == 'step':
             self.onStep()
 
-        elif event.event_type == 'init' or event.event_type == 'redraw':
+        elif event.event_type == 'redraw':
             self.draw(ctx)
 
         elif event.event_type == 'mouse_press':
