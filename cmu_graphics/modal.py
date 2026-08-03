@@ -218,16 +218,11 @@ class TextBox(object):
         else:
             self.cursorPos = min(self.cursorPos + 1, len(self.buf))
 
-    def onKeyPress(self, key, modifiers):
+    def onKeyPress(self, key, is_named, modifiers):
         if not self.active:
             return
 
-        k = NAMED_KEY_MAP.get(key)
-
-        if k is None and len(key) == 1:
-            # printable character — winit already applies shift for us,
-            # but we replicate the old shiftMap only for symbols that
-            # to_text() might not shift consistently across platforms
+        if not is_named and len(key) == 1:
             if 'control' in modifiers or 'meta' in modifiers:
                 return
             if self.anchorPos is not None:
@@ -235,23 +230,26 @@ class TextBox(object):
             self.buf.insert(self.cursorPos, key)
             self.cursorPos += 1
         else:
-            if k == 'left':
+            if key == 'left':
                 self.onKeyLeft()
-            elif k == 'right':
+            elif key == 'right':
                 self.onKeyRight()
-            elif k == 'backspace':
+            elif key == 'backspace':
                 self.onBackSpace()
-            elif k == 'up':
+            elif key == 'up':
                 self.anchorPos = None
                 self.cursorPos = 0
-            elif k == 'down':
+            elif key == 'down':
                 self.anchorPos = None
                 self.cursorPos = len(self.buf)
-            elif k == 'enter':
+            elif key == 'space':
+                self.buf.insert(self.cursorPos, ' ')
+                self.cursorPos += 1
+            elif key == 'enter':
                 self.modal.execute()
-            if k not in self.keysHeldData:
-                self.keysHeldData[k] = KeyHoldData()
-            self.keysHeldData[k].isDown = True
+            if key not in self.keysHeldData:
+                self.keysHeldData[key] = KeyHoldData()
+            self.keysHeldData[key].isDown = True
         self.resetTextOffset()
 
     def resetTextOffset(self):
@@ -267,10 +265,9 @@ class TextBox(object):
         elif cursorX < minCursorX:
             self.textOffset += minCursorX - cursorX
 
-    def onKeyRelease(self, key, modifiers):
-        namedKey = NAMED_KEY_MAP.get(key)
-        if namedKey is not None and namedKey in self.keysHeldData:
-            data = self.keysHeldData[namedKey]
+    def onKeyRelease(self, key, is_named, modifiers):
+        if is_named and key in self.keysHeldData:
+            data = self.keysHeldData[key]
             data.isDown = False
             data.delay = 400
             data.timer = None
@@ -488,11 +485,11 @@ class TextBoxModal(object):
 
         elif event.event_type == 'key_press':
             if self.textBox:
-                self.textBox.onKeyPress(event.key.key, event.key.modifiers)
+                self.textBox.onKeyPress(event.key.key, event.key.is_named, event.key.modifiers)
 
         elif event.event_type == 'key_release':
             if self.textBox:
-                self.textBox.onKeyRelease(event.key.key, event.key.modifiers)
+                self.textBox.onKeyRelease(event.key.key, event.key.is_named, event.key.modifiers)
 
 
 def main():
