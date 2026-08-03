@@ -12,14 +12,6 @@ import math
 from cmu_graphics_helpers import wyvern
 import json
 
-NAMED_KEY_MAP = {
-    '\t': 'tab',
-    '\r': 'enter',
-    '\x08': 'backspace',
-    '\x7f': 'delete',
-    '\x1b': 'escape',
-}
-
 def nowMs():
     import time
     return time.monotonic() * 1000
