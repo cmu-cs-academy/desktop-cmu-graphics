@@ -769,7 +769,6 @@ struct AppInternals {
 }
 
 struct WinitApp {
-    is_initialized: bool,
     window_attributes: WindowAttributes,
     internals: Option<AppInternals>,
     last_tick: Instant,
@@ -1022,7 +1021,7 @@ impl WinitApp {
 
 impl ApplicationHandler<UserEvent> for WinitApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        if !self.is_initialized {
+        if self.internals.is_none() {
             let Some(attribs) = self.call_event_handler(event_loop, CMUEvent::init()) else {
                 self.error = Some(PyRuntimeError::new_err("Issue with init event"));
                 return;
@@ -1030,8 +1029,8 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             self.window_attributes = std::mem::take(&mut self.window_attributes)
                 .with_inner_size(PhysicalSize::new(attribs.width, attribs.height))
                 .with_resizable(attribs.resizable)
-                .with_title(attribs.title);
-            self.is_initialized = true;
+                .with_title(attribs.title)
+                .with_visible(false);
         }
 
         let window = if let Ok(window) = event_loop.create_window(self.window_attributes.clone()) {
@@ -1083,6 +1082,8 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             self.error = Some(err);
             event_loop.exit();
         };
+
+        window.set_visible(true);
 
         self.internals = Some(AppInternals {
             window,
@@ -1281,7 +1282,6 @@ impl ApplicationHandler<UserEvent> for WinitApp {
 #[pyfunction]
 fn run(on_event: Py<PyAny>) -> PyResult<()> {
     let mut app = WinitApp {
-        is_initialized: false,
         window_attributes: Window::default_attributes(),
         internals: None,
         last_tick: Instant::now(),
