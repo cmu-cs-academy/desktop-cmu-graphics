@@ -12,41 +12,12 @@ import math
 from cmu_graphics_helpers import wyvern
 import json
 
-shiftMap = {
-    '1': '!',
-    '2': '@',
-    '3': '#',
-    '4': '$',
-    '5': '%',
-    '6': '^',
-    '7': '&',
-    '8': '*',
-    '9': '(',
-    '0': ')',
-    '[': '{',
-    ']': '}',
-    '/': '?',
-    '=': '+',
-    '\\': '|',
-    "'": '"',
-    ',': '<',
-    '.': '>',
-    '-': '_',
-    ';': ':',
-    '`': '~',
-}
-
-# winit's logical_key.to_text() already returns the human-readable
-# character (e.g. 'a', '1', '\t' for tab), so most translation from
-# pygame keycodes is no longer needed. Only named (non-printable) keys
-# need remapping.
 NAMED_KEY_MAP = {
     '\t': 'tab',
     '\r': 'enter',
     '\x08': 'backspace',
     '\x7f': 'delete',
     '\x1b': 'escape',
-    ' ': 'space',
 }
 
 def nowMs():
