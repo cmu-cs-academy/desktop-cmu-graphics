@@ -1035,6 +1035,18 @@ impl ApplicationHandler<UserEvent> for WinitApp {
         }
 
         let window = if let Ok(window) = event_loop.create_window(self.window_attributes.clone()) {
+            // make the window centered
+            if let Some(monitor) = window.current_monitor() {
+                let screen_size = monitor.size();
+                let window_size = window.outer_size();
+
+                let x = (screen_size.width.saturating_sub(window_size.width) / 2) as i32 
+                    + monitor.position().x;
+                let y = (screen_size.height.saturating_sub(window_size.height) / 2) as i32 
+                    + monitor.position().y;
+
+                window.set_outer_position(PhysicalPosition::new(x, y));
+            }
             Rc::new(window)
         } else {
             self.error = Some(PyRuntimeError::new_err("Issue with creating window"));
