@@ -473,12 +473,7 @@ class TextBoxModal(object):
     def execute(self):
         if self.textBox:
             print(''.join(self.textBox.buf), end='')
-        # self.running = False
-        # # There's no explicit "close window" call exposed from wyvern.run
-        # # yet, so print + os._exit is the simplest way to terminate cleanly
-        # # once the parent process has read stdout.
-        # import os
-        # os._exit(0)
+        wyvern.quit()
 
     def on_event(self, event, surface=None):
         ctx = None
@@ -496,7 +491,7 @@ class TextBoxModal(object):
 
         elif event.event_type == 'mouse_press':
             pos = (event.mouse.x, event.mouse.y)
-            if event.mouse.button == 0:  # left button
+            if event.mouse.button == 0:
                 self.button.onMousePress(pos)
                 if self.textBox:
                     if self.textBox.contains(*pos):

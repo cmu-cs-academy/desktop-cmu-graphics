@@ -746,14 +746,22 @@ impl ImageSurface {
 /* WYVERN */
 
 /* BYEGAME */
+use std::sync::OnceLock;
 use std::num::NonZero;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{Modifiers, WindowEvent};
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
 use winit::window::{Window, WindowAttributes, WindowId};
+
+enum UserEvent {
+    Quit,
+}
+
+// apparently this is idiomatic
+static PROXY: OnceLock<EventLoopProxy<UserEvent>> = OnceLock::new();
 
 struct AppInternals {
     window: Rc<Window>,
@@ -973,7 +981,6 @@ impl WinitApp {
         event: CMUEvent,
     ) -> Option<InitEvent> {
         let mut request_redraw = true;
-        println!("{}", event.event_type);
         let handler_result = Python::attach(|py| -> PyResult<Option<InitEvent>> {
             if event.event_type == "init" {
                 let attributes = self.on_event.call1(py, (event,))?.extract(py)?;
@@ -985,7 +992,7 @@ impl WinitApp {
                         "Surface does not exist for event handler",
                     ));
                     event_loop.exit();
-                    return Ok(None);
+                    return Ok(None)
                 };
                 self.on_event.call1(py, (event, py_surface.clone_ref(py)))?;
                 Ok(None)
@@ -1013,7 +1020,7 @@ impl WinitApp {
     }
 }
 
-impl ApplicationHandler for WinitApp {
+impl ApplicationHandler<UserEvent> for WinitApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if !self.is_initialized {
             let Some(attribs) = self.call_event_handler(event_loop, CMUEvent::init()) else {
@@ -1188,11 +1195,10 @@ impl ApplicationHandler for WinitApp {
                 Python::attach(|py| {
                     if let Ok(bytearray) = py_surface.borrow_mut(py).data(py) {
                         let bytes = unsafe { bytearray.bind(py).as_bytes() };
-                        // Convert BGRA (Skia) to RGBX (softbuffer) and copy
                         for (i, pixel) in buffer.iter_mut().enumerate() {
-                            let b = bytes[i * 4] as u32;
+                            let r = bytes[i * 4] as u32;
                             let g = bytes[i * 4 + 1] as u32;
-                            let r = bytes[i * 4 + 2] as u32;
+                            let b = bytes[i * 4 + 2] as u32;
                             *pixel = (r << 16) | (g << 8) | b;
                         }
                         if buffer.present().is_err() {
@@ -1211,8 +1217,11 @@ impl ApplicationHandler for WinitApp {
             WindowEvent::KeyboardInput {
                 device_id: _,
                 event,
-                is_synthetic: _,
+                is_synthetic,
             } => {
+                if is_synthetic {
+                    return;
+                }
                 if let Some(key) = event.logical_key.to_text() {
                     match event.state {
                         winit::event::ElementState::Pressed => {
@@ -1242,6 +1251,19 @@ impl ApplicationHandler for WinitApp {
             _ => (),
         }
     }
+
+    fn user_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        event: UserEvent,
+    ) {
+        match event {
+            UserEvent::Quit => {
+                self.call_event_handler(event_loop, CMUEvent::quit());
+                event_loop.exit()
+            },
+        }
+    }
 }
 
 #[pyfunction]
@@ -1259,15 +1281,26 @@ fn run(on_event: Py<PyAny>) -> PyResult<()> {
         error: None,
     };
 
-    let event_loop =
-        EventLoop::new().map_err(|_| PyRuntimeError::new_err("Issue with starting event loop"))?;
+    let event_loop = EventLoop::<UserEvent>::with_user_event().build().map_err(|_| PyRuntimeError::new_err("Issue with starting event loop"))?;
     event_loop.set_control_flow(ControlFlow::Poll);
+    PROXY.set(event_loop.create_proxy()).map_err(|_| PyRuntimeError::new_err("Issue with starting proxy event loop"))?;
     let _ = event_loop.run_app(&mut app);
 
     match app.error {
         None => Ok(()),
         Some(err) => Err(err),
     }
+}
+
+#[pyfunction]
+fn quit() -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::Quit)
+        .map_err(|_| PyRuntimeError::new_err("Failed to send quit event"))?;
+    Ok(())
 }
 /* BYEGAME */
 
@@ -1295,6 +1328,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<ResizeEvent>()?;
     wyvern.add_class::<InitEvent>()?;
     wyvern.add_function(wrap_pyfunction!(run, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(quit, &wyvern)?)?;
     m.add_submodule(&wyvern)?;
     m.py()
         .import("sys")?
