@@ -746,14 +746,15 @@ impl ImageSurface {
 /* WYVERN */
 
 /* BYEGAME */
-use std::sync::OnceLock;
 use std::num::NonZero;
 use std::rc::Rc;
+use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{Modifiers, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
+use winit::keyboard::{Key, NamedKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
 enum UserEvent {
@@ -806,7 +807,26 @@ pub struct KeyEvent {
     #[pyo3(get)]
     pub key: String,
     #[pyo3(get)]
+    pub is_named: bool,
+    #[pyo3(get)]
     pub modifiers: Vec<String>,
+}
+
+fn named_keys_to_name(name: &NamedKey) -> Option<&str> {
+    match name {
+        NamedKey::ArrowLeft => Some("left"),
+        NamedKey::ArrowRight => Some("right"),
+        NamedKey::ArrowDown => Some("down"),
+        NamedKey::ArrowUp => Some("up"),
+
+        NamedKey::Enter => Some("enter"),
+        NamedKey::Tab => Some("tab"),
+        NamedKey::Escape => Some("escape"),
+        NamedKey::Backspace => Some("backspace"),
+        NamedKey::Delete => Some("delete"),
+        NamedKey::Space => Some("space"),
+        _ => None
+    }
 }
 
 fn modifiers_to_vec(modifiers: &winit::event::Modifiers) -> Vec<String> {
@@ -909,20 +929,28 @@ impl CMUEvent {
         }
     }
 
-    pub fn key_press(key: String, modifiers: Vec<String>) -> Self {
+    pub fn key_press(key: String, is_named: bool, modifiers: Vec<String>) -> Self {
         CMUEvent {
             event_type: "key_press".to_string(),
             mouse: None,
-            key: Some(KeyEvent { key, modifiers }),
+            key: Some(KeyEvent {
+                key,
+                is_named,
+                modifiers,
+            }),
             resize: None,
         }
     }
 
-    pub fn key_release(key: String, modifiers: Vec<String>) -> Self {
+    pub fn key_release(key: String, is_named: bool, modifiers: Vec<String>) -> Self {
         CMUEvent {
             event_type: "key_release".to_string(),
             mouse: None,
-            key: Some(KeyEvent { key, modifiers }),
+            key: Some(KeyEvent {
+                key,
+                is_named,
+                modifiers,
+            }),
             resize: None,
         }
     }
@@ -991,7 +1019,7 @@ impl WinitApp {
                         "Surface does not exist for event handler",
                     ));
                     event_loop.exit();
-                    return Ok(None)
+                    return Ok(None);
                 };
                 self.on_event.call1(py, (event, py_surface.clone_ref(py)))?;
                 Ok(None)
@@ -1039,9 +1067,9 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 let screen_size = monitor.size();
                 let window_size = window.outer_size();
 
-                let x = (screen_size.width.saturating_sub(window_size.width) / 2) as i32 
+                let x = (screen_size.width.saturating_sub(window_size.width) / 2) as i32
                     + monitor.position().x;
-                let y = (screen_size.height.saturating_sub(window_size.height) / 2) as i32 
+                let y = (screen_size.height.saturating_sub(window_size.height) / 2) as i32
                     + monitor.position().y;
 
                 window.set_outer_position(PhysicalPosition::new(x, y));
@@ -1235,26 +1263,38 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 if is_synthetic {
                     return;
                 }
-                if let Some(key) = event.logical_key.to_text() {
-                    match event.state {
-                        winit::event::ElementState::Pressed => {
-                            self.call_event_handler(
-                                event_loop,
-                                CMUEvent::key_press(
-                                    key.to_string(),
-                                    modifiers_to_vec(&self.modifiers),
-                                ),
-                            );
-                        }
-                        winit::event::ElementState::Released => {
-                            self.call_event_handler(
-                                event_loop,
-                                CMUEvent::key_release(
-                                    key.to_string(),
-                                    modifiers_to_vec(&self.modifiers),
-                                ),
-                            );
-                        }
+                let mut is_named = false;
+                let key = match &event.logical_key {
+                    Key::Character(s) => s,
+                    Key::Named(name) => {
+                        is_named = true;
+                        let Some(name) = named_keys_to_name(name) else {
+                            return;
+                        };
+                        name
+                    }
+                    _ => return,
+                };
+                match event.state {
+                    winit::event::ElementState::Pressed => {
+                        self.call_event_handler(
+                            event_loop,
+                            CMUEvent::key_press(
+                                key.to_string(),
+                                is_named,
+                                modifiers_to_vec(&self.modifiers),
+                            ),
+                        );
+                    }
+                    winit::event::ElementState::Released => {
+                        self.call_event_handler(
+                            event_loop,
+                            CMUEvent::key_release(
+                                key.to_string(),
+                                is_named,
+                                modifiers_to_vec(&self.modifiers),
+                            ),
+                        );
                     }
                 }
             }
@@ -1265,16 +1305,12 @@ impl ApplicationHandler<UserEvent> for WinitApp {
         }
     }
 
-    fn user_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        event: UserEvent,
-    ) {
+    fn user_event(&mut self, event_loop: &ActiveEventLoop, event: UserEvent) {
         match event {
             UserEvent::Quit => {
                 self.call_event_handler(event_loop, CMUEvent::quit());
                 event_loop.exit()
-            },
+            }
         }
     }
 }
@@ -1293,9 +1329,13 @@ fn run(on_event: Py<PyAny>) -> PyResult<()> {
         error: None,
     };
 
-    let event_loop = EventLoop::<UserEvent>::with_user_event().build().map_err(|_| PyRuntimeError::new_err("Issue with starting event loop"))?;
+    let event_loop = EventLoop::<UserEvent>::with_user_event()
+        .build()
+        .map_err(|_| PyRuntimeError::new_err("Issue with starting event loop"))?;
     event_loop.set_control_flow(ControlFlow::Poll);
-    PROXY.set(event_loop.create_proxy()).map_err(|_| PyRuntimeError::new_err("Issue with starting proxy event loop"))?;
+    PROXY
+        .set(event_loop.create_proxy())
+        .map_err(|_| PyRuntimeError::new_err("Issue with starting proxy event loop"))?;
     let _ = event_loop.run_app(&mut app);
 
     match app.error {
