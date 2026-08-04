@@ -1052,12 +1052,24 @@ impl ApplicationHandler<UserEvent> for WinitApp {
         if self.internals.is_none() {
             let Some(attribs) = self.call_event_handler(event_loop, CMUEvent::init()) else {
                 self.error = Some(PyRuntimeError::new_err("Issue with init event"));
-                return;
+                return
+            };
+            let Ok(image) = image::open("scotty.png") else {
+                self.error = Some(PyRuntimeError::new_err("Issue with opening icon image"));
+                return
+            };
+            let image_rgba = image.into_rgba8();
+            let (width, height) = image_rgba.dimensions();
+            let rgba = image_rgba.into_raw();
+            let Ok(icon) = winit::window::Icon::from_rgba(rgba, width, height) else {
+                self.error = Some(PyRuntimeError::new_err("Issue with creating icon image"));
+                return
             };
             self.window_attributes = std::mem::take(&mut self.window_attributes)
                 .with_inner_size(PhysicalSize::new(attribs.width, attribs.height))
                 .with_resizable(attribs.resizable)
                 .with_title(attribs.title)
+                .with_window_icon(Some(icon))
                 .with_visible(false);
         }
 
