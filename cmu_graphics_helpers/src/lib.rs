@@ -881,7 +881,7 @@ impl InitEvent {
 
 #[pyclass(from_py_object)]
 #[derive(Clone)]
-pub struct CMUEvent {
+pub struct PythonEvent {
     #[pyo3(get)]
     pub event_type: String,
     #[pyo3(get)]
@@ -892,9 +892,9 @@ pub struct CMUEvent {
     pub resize: Option<ResizeEvent>,
 }
 
-impl CMUEvent {
+impl PythonEvent {
     pub fn mouse_press(x: f64, y: f64, button: u8) -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "mouse_press".to_string(),
             mouse: Some(MouseEvent { x, y, button }),
             key: None,
@@ -903,7 +903,7 @@ impl CMUEvent {
     }
 
     pub fn mouse_release(x: f64, y: f64, button: u8) -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "mouse_release".to_string(),
             mouse: Some(MouseEvent { x, y, button }),
             key: None,
@@ -912,7 +912,7 @@ impl CMUEvent {
     }
 
     pub fn mouse_move(x: f64, y: f64) -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "mouse_move".to_string(),
             mouse: Some(MouseEvent { x, y, button: 0 }),
             key: None,
@@ -921,7 +921,7 @@ impl CMUEvent {
     }
 
     pub fn mouse_drag(x: f64, y: f64, button: u8) -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "mouse_drag".to_string(),
             mouse: Some(MouseEvent { x, y, button }),
             key: None,
@@ -930,7 +930,7 @@ impl CMUEvent {
     }
 
     pub fn key_press(key: String, is_named: bool, modifiers: Vec<String>) -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "key_press".to_string(),
             mouse: None,
             key: Some(KeyEvent {
@@ -943,7 +943,7 @@ impl CMUEvent {
     }
 
     pub fn key_release(key: String, is_named: bool, modifiers: Vec<String>) -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "key_release".to_string(),
             mouse: None,
             key: Some(KeyEvent {
@@ -956,7 +956,7 @@ impl CMUEvent {
     }
 
     pub fn resize(width: u32, height: u32) -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "resize".to_string(),
             mouse: None,
             key: None,
@@ -965,7 +965,7 @@ impl CMUEvent {
     }
 
     pub fn init() -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "init".to_string(),
             mouse: None,
             key: None,
@@ -974,7 +974,7 @@ impl CMUEvent {
     }
 
     pub fn quit() -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "quit".to_string(),
             mouse: None,
             key: None,
@@ -983,7 +983,7 @@ impl CMUEvent {
     }
 
     pub fn step() -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "step".to_string(),
             mouse: None,
             key: None,
@@ -992,7 +992,7 @@ impl CMUEvent {
     }
 
     pub fn redraw() -> Self {
-        CMUEvent {
+        PythonEvent {
             event_type: "redraw".to_string(),
             mouse: None,
             key: None,
@@ -1005,7 +1005,7 @@ impl WinitApp {
     fn call_event_handler(
         &mut self,
         event_loop: &ActiveEventLoop,
-        event: CMUEvent,
+        event: PythonEvent,
     ) -> Option<InitEvent> {
         let mut request_redraw = true;
         let handler_result = Python::attach(|py| -> PyResult<Option<InitEvent>> {
@@ -1050,7 +1050,7 @@ impl WinitApp {
 impl ApplicationHandler<UserEvent> for WinitApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.internals.is_none() {
-            let Some(attribs) = self.call_event_handler(event_loop, CMUEvent::init()) else {
+            let Some(attribs) = self.call_event_handler(event_loop, PythonEvent::init()) else {
                 self.error = Some(PyRuntimeError::new_err("Issue with init event"));
                 return
             };
@@ -1130,14 +1130,14 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             softbuffer_surface,
         });
 
-        self.call_event_handler(event_loop, CMUEvent::redraw());
+        self.call_event_handler(event_loop, PythonEvent::redraw());
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         let fps = 30;
         let elapsed = self.last_tick.elapsed();
         if elapsed >= Duration::from_millis(1000 / fps) {
-            self.call_event_handler(event_loop, CMUEvent::step());
+            self.call_event_handler(event_loop, PythonEvent::step());
             self.last_tick = Instant::now();
         }
     }
@@ -1190,7 +1190,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
 
                 // self.call_event_handler(
                 //     event_loop,
-                //     CMUEvent::resize(new_size.width, new_size.height),
+                //     PythonEvent::resize(new_size.width, new_size.height),
                 // );
             }
             WindowEvent::CursorMoved {
@@ -1204,7 +1204,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 let scale = window.scale_factor();
                 self.call_event_handler(
                     event_loop,
-                    CMUEvent::mouse_move(position.x / scale, position.y / scale),
+                    PythonEvent::mouse_move(position.x / scale, position.y / scale),
                 );
                 self.last_mouse = Instant::now();
             }
@@ -1218,7 +1218,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     winit::event::ElementState::Pressed => {
                         self.call_event_handler(
                             event_loop,
-                            CMUEvent::mouse_press(
+                            PythonEvent::mouse_press(
                                 self.cursor_position.x / scale,
                                 self.cursor_position.y / scale,
                                 winit_button_to_int(button),
@@ -1228,7 +1228,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     winit::event::ElementState::Released => {
                         self.call_event_handler(
                             event_loop,
-                            CMUEvent::mouse_release(
+                            PythonEvent::mouse_release(
                                 self.cursor_position.x / scale,
                                 self.cursor_position.y / scale,
                                 winit_button_to_int(button),
@@ -1265,7 +1265,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     }
                 });
 
-                self.call_event_handler(event_loop, CMUEvent::redraw());
+                self.call_event_handler(event_loop, PythonEvent::redraw());
             }
             WindowEvent::KeyboardInput {
                 device_id: _,
@@ -1291,7 +1291,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     winit::event::ElementState::Pressed => {
                         self.call_event_handler(
                             event_loop,
-                            CMUEvent::key_press(
+                            PythonEvent::key_press(
                                 key.to_string(),
                                 is_named,
                                 modifiers_to_vec(&self.modifiers),
@@ -1301,7 +1301,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     winit::event::ElementState::Released => {
                         self.call_event_handler(
                             event_loop,
-                            CMUEvent::key_release(
+                            PythonEvent::key_release(
                                 key.to_string(),
                                 is_named,
                                 modifiers_to_vec(&self.modifiers),
@@ -1320,7 +1320,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
     fn user_event(&mut self, event_loop: &ActiveEventLoop, event: UserEvent) {
         match event {
             UserEvent::Quit => {
-                self.call_event_handler(event_loop, CMUEvent::quit());
+                self.call_event_handler(event_loop, PythonEvent::quit());
                 event_loop.exit()
             }
         }
@@ -1386,7 +1386,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<FontSlant>()?;
     wyvern.add_class::<Gradient>()?;
     wyvern.add_class::<WyvernImage>()?;
-    wyvern.add_class::<CMUEvent>()?;
+    wyvern.add_class::<PythonEvent>()?;
     wyvern.add_class::<MouseEvent>()?;
     wyvern.add_class::<KeyEvent>()?;
     wyvern.add_class::<ResizeEvent>()?;
