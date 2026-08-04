@@ -1,4 +1,4 @@
-import math
+import time
 
 ### ZIPFILE VERSION ###
 # import libs.pygame_loader as pygame
@@ -13,7 +13,6 @@ from cmu_graphics_helpers import wyvern
 import json
 
 def nowMs():
-    import time
     return time.monotonic() * 1000
 
 class KeyHoldData(object):
