@@ -1043,7 +1043,7 @@ impl WinitApp {
                 event_loop.exit();
             }
         }
-        return res;
+        res
     }
 }
 
@@ -1248,11 +1248,16 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 Python::attach(|py| {
                     if let Ok(bytearray) = py_surface.borrow_mut(py).data(py) {
                         let bytes = unsafe { bytearray.bind(py).as_bytes() };
-                        for (i, pixel) in buffer.iter_mut().enumerate() {
-                            let r = bytes[i * 4] as u32;
-                            let g = bytes[i * 4 + 1] as u32;
-                            let b = bytes[i * 4 + 2] as u32;
+                        let safe_len = buffer.len().min(bytes.len() / 4);
+                        for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
+                            let offset = i * 4;
+                            let r = bytes[offset] as u32;
+                            let g = bytes[offset + 1] as u32;
+                            let b = bytes[offset + 2] as u32;
                             *pixel = (r << 16) | (g << 8) | b;
+                        }
+                        if safe_len < buffer.len() {
+                            return;
                         }
                         if buffer.present().is_err() {
                             self.error =
