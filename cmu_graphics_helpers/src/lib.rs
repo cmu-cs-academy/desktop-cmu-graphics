@@ -1246,26 +1246,32 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     return;
                 };
                 Python::attach(|py| {
-                    if let Ok(bytearray) = py_surface.borrow_mut(py).data(py) {
-                        let bytes = unsafe { bytearray.bind(py).as_bytes() };
-                        let safe_len = buffer.len().min(bytes.len() / 4);
-                        for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
-                            let offset = i * 4;
-                            let r = bytes[offset] as u32;
-                            let g = bytes[offset + 1] as u32;
-                            let b = bytes[offset + 2] as u32;
-                            *pixel = (r << 16) | (g << 8) | b;
-                        }
-                        if safe_len < buffer.len() {
-                            return;
-                        }
-                        if buffer.present().is_err() {
-                            self.error =
-                                Some(PyRuntimeError::new_err("Issue presenting to buffer"));
-                            event_loop.exit()
-                        }
-                    } else {
+                    let surface_ref = py_surface.borrow(py);
+                    let mut canvas_ref = surface_ref.canvas.bind(py).borrow_mut();
+                    let Some(pixmap) = canvas_ref.skia_surface.peek_pixels() else {
                         self.error = Some(PyRuntimeError::new_err("Issue getting canvas data"));
+                        event_loop.exit();
+                        return
+                    };
+                    let Some(bytes) = pixmap.bytes() else {
+                        self.error = Some(PyRuntimeError::new_err("Issue getting bytes from pixel data"));
+                        event_loop.exit();
+                        return
+                    };
+                    let safe_len = buffer.len().min(bytes.len() / 4);
+                    for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
+                        let offset = i * 4;
+                        let r = bytes[offset] as u32;
+                        let g = bytes[offset + 1] as u32;
+                        let b = bytes[offset + 2] as u32;
+                        *pixel = (r << 16) | (g << 8) | b;
+                    }
+                    if safe_len < buffer.len() {
+                        return;
+                    }
+                    if buffer.present().is_err() {
+                        self.error =
+                            Some(PyRuntimeError::new_err("Issue presenting to buffer"));
                         event_loop.exit()
                     }
                 });
