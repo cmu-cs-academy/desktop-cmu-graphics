@@ -12,8 +12,10 @@ import time
 from cmu_graphics_helpers import wyvern
 import json
 
+
 def nowMs():
     return time.monotonic() * 1000
+
 
 class KeyHoldData(object):
     def __init__(self):
@@ -168,10 +170,7 @@ class TextBox(object):
             if data.timer is None and data.isDown:
                 data.timer = nowMs()
                 data.delay = 400
-            elif (
-                data.timer is not None
-                and nowMs() - data.timer > data.delay
-            ):
+            elif data.timer is not None and nowMs() - data.timer > data.delay:
                 data.timer = nowMs()
                 data.delay = 50
                 if key == 'backspace':
@@ -439,8 +438,10 @@ class TextBoxModal(object):
         if surface is not None:
             ctx = surface.canvas
 
-        if event.event_type == "init":
-            return wyvern.InitEvent(int(self.width), int(self.height), False, self.title)
+        if event.event_type == 'init':
+            return wyvern.InitEvent(
+                int(self.width), int(self.height), False, self.title
+            )
 
         if event.event_type == 'step':
             self.onStep()
@@ -476,11 +477,15 @@ class TextBoxModal(object):
 
         elif event.event_type == 'key_press':
             if self.textBox:
-                self.textBox.onKeyPress(event.key.key, event.key.is_named, event.key.modifiers)
+                self.textBox.onKeyPress(
+                    event.key.key, event.key.is_named, event.key.modifiers
+                )
 
         elif event.event_type == 'key_release':
             if self.textBox:
-                self.textBox.onKeyRelease(event.key.key, event.key.is_named, event.key.modifiers)
+                self.textBox.onKeyRelease(
+                    event.key.key, event.key.is_named, event.key.modifiers
+                )
 
 
 def main():
