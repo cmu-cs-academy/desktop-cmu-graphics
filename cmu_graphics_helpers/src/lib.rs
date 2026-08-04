@@ -720,6 +720,7 @@ impl ImageSurface {
         self.canvas.clone_ref(py)
     }
 
+    // this can probably be deleted once the pygame windowing has been replaced
     #[getter]
     fn data(&self, py: Python<'_>) -> PyResult<Py<PyByteArray>> {
         let mut canvas_ref = self.canvas.bind(py).borrow_mut();
@@ -825,7 +826,7 @@ fn named_keys_to_name(name: &NamedKey) -> Option<&str> {
         NamedKey::Backspace => Some("backspace"),
         NamedKey::Delete => Some("delete"),
         NamedKey::Space => Some("space"),
-        _ => None
+        _ => None,
     }
 }
 
@@ -1052,18 +1053,18 @@ impl ApplicationHandler<UserEvent> for WinitApp {
         if self.internals.is_none() {
             let Some(attribs) = self.call_event_handler(event_loop, PythonEvent::init()) else {
                 self.error = Some(PyRuntimeError::new_err("Issue with init event"));
-                return
+                return;
             };
             let Ok(image) = image::open("scotty.png") else {
                 self.error = Some(PyRuntimeError::new_err("Issue with opening icon image"));
-                return
+                return;
             };
             let image_rgba = image.into_rgba8();
             let (width, height) = image_rgba.dimensions();
             let rgba = image_rgba.into_raw();
             let Ok(icon) = winit::window::Icon::from_rgba(rgba, width, height) else {
                 self.error = Some(PyRuntimeError::new_err("Issue with creating icon image"));
-                return
+                return;
             };
             self.window_attributes = std::mem::take(&mut self.window_attributes)
                 .with_inner_size(PhysicalSize::new(attribs.width, attribs.height))
@@ -1251,12 +1252,14 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     let Some(pixmap) = canvas_ref.skia_surface.peek_pixels() else {
                         self.error = Some(PyRuntimeError::new_err("Issue getting canvas data"));
                         event_loop.exit();
-                        return
+                        return;
                     };
                     let Some(bytes) = pixmap.bytes() else {
-                        self.error = Some(PyRuntimeError::new_err("Issue getting bytes from pixel data"));
+                        self.error = Some(PyRuntimeError::new_err(
+                            "Issue getting bytes from pixel data",
+                        ));
                         event_loop.exit();
-                        return
+                        return;
                     };
                     let safe_len = buffer.len().min(bytes.len() / 4);
                     for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
@@ -1270,8 +1273,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                         return;
                     }
                     if buffer.present().is_err() {
-                        self.error =
-                            Some(PyRuntimeError::new_err("Issue presenting to buffer"));
+                        self.error = Some(PyRuntimeError::new_err("Issue presenting to buffer"));
                         event_loop.exit()
                     }
                 });
