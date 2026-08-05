@@ -38,8 +38,6 @@ If you're using Windows, you don't need to install any dependencies. Skip ahead 
 
 If you're using a Mac, install [Homebrew](https://brew.sh/).
 
-If you're using a Mac or Linux, install the software packages needed by pycairo. Read their [getting started page](https://pycairo.readthedocs.io/en/latest/getting_started.html) for instructions.
-
 ### Install CMU Graphics
 
 Run the following command:

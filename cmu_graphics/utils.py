@@ -1,5 +1,6 @@
 import decimal
 import math
+
 from . import shape_logic
 from collections import defaultdict
 
