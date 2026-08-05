@@ -3,7 +3,11 @@ import struct
 import platform
 import os
 
-from cmu_graphics._dist import VENDORED
+# Don't import cmu_graphics._dist here. This module is also reached from the
+# modal.py subprocess (via libs.cairo_loader), whose sys.path[0] is the package
+# directory itself -- there the name `cmu_graphics` resolves to the sibling
+# cmu_graphics.py module rather than the package. The distribution switch is
+# passed in to verify_support() instead.
 
 min_minor_version = 11
 max_minor_version = 14
@@ -32,10 +36,10 @@ through Python 3.%(max_minor_version)d on Windows and MacOS."""
         os._exit(1)
 
 
-def verify_support():
+def verify_support(vendored):
     python_major, python_minor, _ = platform.python_version_tuple()
     # The vendored distribution only ships binaries for Windows and MacOS.
-    if VENDORED:
+    if vendored:
         verify_os()
 
     if python_major != '3':
@@ -48,7 +52,7 @@ We recommend installing Python 3.%(max_minor_version)d from python.org"""
 
     # A newer Python is only unsupported because we haven't vendored binaries
     # for it yet; the pip distribution has no such ceiling.
-    if VENDORED and int(python_minor) > max_minor_version:
+    if vendored and int(python_minor) > max_minor_version:
         print("""\
 It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
 supported by CMU Graphics. We support Python 3.%(min_minor_version)d-3.%(max_minor_version)d. We recommend
