@@ -1,5 +1,5 @@
 import unittest
-import cmu_graphics_helpers
+from cmu_graphics_helpers import pygeo
 
 # simple: a square with no holes
 square = [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]]
@@ -134,12 +134,6 @@ result = [
             (218.3012702195511, 100.0),
             (223.29629132436372, 112.05904769897461),
             (224.99999997304536, 125.0),
-            (223.29629132436372, 137.9409523010254),
-            (218.3012702195511, 150.0),
-            (216.90187642263032, 151.82372546195984),
-            (233.16145083592988, 151.82372546195984),
-            (241.8770074574814, 125.0),
-            (224.99999997304536, 125.0),
             (224.99999997304536, 75.0),
             (324.99999997304536, 75.0),
             (324.99999997304536, 125.0),
@@ -186,16 +180,31 @@ result = [
             (125.99999997304536, 325.0),
             (119.92736074613191, 328.45036339759827),
             (113.03030297444917, 300.0),
-            (124.99999997304536, 300.0),
-            (124.99999997304536, 250.0),
-            (100.90909073041536, 250.0),
-            (113.03030297444917, 300.0),
             (84.13793084310151, 300.0),
             (68.32418725179292, 275.8632333278656),
-            (76.2352940766678, 250.0),
-            (51.37931010411836, 250.0),
-            (68.32418725179292, 275.8632333278656),
             (60.94117638753511, 300.0),
+        ],
+        [
+            (68.32418725179292, 275.8632333278656),
+            (51.37931010411836, 250.0),
+            (76.2352940766678, 250.0),
+            (68.32418725179292, 275.8632333278656),
+        ],
+        [
+            (113.03030297444917, 300.0),
+            (100.90909073041536, 250.0),
+            (124.99999997304536, 250.0),
+            (124.99999997304536, 300.0),
+            (113.03030297444917, 300.0),
+        ],
+        [
+            (233.16145083592988, 151.82372546195984),
+            (216.90187642263032, 151.82372546195984),
+            (218.3012702195511, 150.0),
+            (223.29629132436372, 137.9409523010254),
+            (224.99999997304536, 125.0),
+            (241.8770074574814, 125.0),
+            (233.16145083592988, 151.82372546195984),
         ],
         [
             (149.99999997304536, 168.30127024650574),
@@ -245,18 +254,18 @@ result = [
 
 class TestUnion(unittest.TestCase):
     def test_union(self):
-        self.assertEqual(cmu_graphics_helpers.union([square]), square)
+        self.assertEqual(pygeo.union([square]), square)
 
-        unionResult = cmu_graphics_helpers.union(bigMulti)
+        unionResult = pygeo.union(bigMulti)
         self.assertEqual(unionResult, result)
 
     def test_weird_args(self):
         with self.assertRaisesRegex(
             ValueError, 'must be given at least one MultiPolygon'
         ):
-            cmu_graphics_helpers.union([])
-        self.assertEqual(cmu_graphics_helpers.union([[]]), [])
-        self.assertEqual(cmu_graphics_helpers.union([[[]]]), [[[]]])
+            pygeo.union([])
+        self.assertEqual(pygeo.union([[]]), [])
+        self.assertEqual(pygeo.union([[[]]]), [[[]]])
 
         for value in (
             [[[[(1), (2), (3)]]]],
@@ -265,7 +274,7 @@ class TestUnion(unittest.TestCase):
         ):
             with self.assertRaises(TypeError):
                 print('testing', value)
-                cmu_graphics_helpers.union(value)
+                pygeo.union(value)
 
         for value in (
             [[[[(1,), (2,), (3,)]]]],
@@ -285,7 +294,7 @@ class TestUnion(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 print('testing', value)
-                cmu_graphics_helpers.union(value)
+                pygeo.union(value)
 
 
 if __name__ == '__main__':

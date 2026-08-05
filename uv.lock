@@ -200,7 +200,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cmu-graphics-helpers", specifier = "==0.1.3" },
+    { name = "cmu-graphics-helpers", directory = "cmu_graphics_helpers" },
     { name = "pycairo", specifier = ">=1.20" },
     { name = "pygame-ce", specifier = ">=2" },
 ]
@@ -220,15 +220,7 @@ dev = [
 
 [[package]]
 name = "cmu-graphics-helpers"
-version = "0.1.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/22/62/bc23d1b2a41534408a37b88d174d1c7885be7445f80cee46b42f25e274ce/cmu_graphics_helpers-0.1.3.tar.gz", hash = "sha256:7fe596751657239c3b7836f94412ba55a8c8cc6cce278a400eb1d449c02fa62d", size = 8525, upload-time = "2026-03-18T20:37:04.092Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/48/2fa8d5a332768e6f07cddc28dd45e0585c362139713d6640352779b9b46d/cmu_graphics_helpers-0.1.3-cp37-abi3-macosx_10_12_x86_64.whl", hash = "sha256:b3d41468dd71d75573988795bdfa258ea408ae859369a33f60f301c3c487b197", size = 421948, upload-time = "2026-03-18T20:36:58.191Z" },
-    { url = "https://files.pythonhosted.org/packages/c2/db/6fbd8596a9827c38ad65714ca931200c50d7430ebbe52649f1c2037e711e/cmu_graphics_helpers-0.1.3-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:75028ed47d21fb7faac6d51c4542dd4de9ced01e365e95b1cc721ce2d9786059", size = 405202, upload-time = "2026-03-18T20:36:59.756Z" },
-    { url = "https://files.pythonhosted.org/packages/af/6e/74ade6c2ec5c174fbab1c8db5c33c28c40a1e7680ca67d51044ca3069feb/cmu_graphics_helpers-0.1.3-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9ba753d87c35e7f5877e607fc4807fdd3887a601de4c0205f6d132d391b05e6c", size = 466270, upload-time = "2026-03-18T20:37:01.393Z" },
-    { url = "https://files.pythonhosted.org/packages/29/3b/cf198ce0d18134982917579d5a0505f99aeec5c87c77c0f409115dbb133b/cmu_graphics_helpers-0.1.3-cp37-abi3-win_amd64.whl", hash = "sha256:00114ae5e5edfeaaa8d408ff4ad6bee7fb3d745e4d6587bc3875de04935a38cc", size = 281799, upload-time = "2026-03-18T20:37:02.717Z" },
-]
+source = { directory = "cmu_graphics_helpers" }
 
 [[package]]
 name = "colorama"
