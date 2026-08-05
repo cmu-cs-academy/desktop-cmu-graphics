@@ -357,7 +357,6 @@ class TextBoxModal(object):
 
         self.mouseIsDown = False
         self.lastMousePosition = None
-        self.running = True
 
         wyvern.run(self.on_event)
 
