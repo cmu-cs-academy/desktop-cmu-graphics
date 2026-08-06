@@ -1,7 +1,6 @@
 import inspect
 import os
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
+import time
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
@@ -624,10 +623,11 @@ class App(object):
 
     def getScreenshot(self, path):
         with DRAWING_LOCK:
-            pygame.image.save(self._screen, path)
+            # TODO: make this function
+            self._ctx.save_png(path)
 
     def quit(self):
-        self._running = False
+        wyvern.quit()
 
     def getPosArgCount(self, fn):
         fn_code = fn.__code__
@@ -734,55 +734,6 @@ class App(object):
         self.callUserFn('redrawAll', ())
         self.inRedrawAll = False
 
-    @staticmethod
-    def getKey(keyCode, modifierMask):
-        keyNameMap = {
-            pygame.K_TAB: 'tab',
-            pygame.K_RETURN: 'enter',
-            pygame.K_BACKSPACE: 'backspace',
-            pygame.K_DELETE: 'delete',
-            pygame.K_ESCAPE: 'escape',
-            pygame.K_SPACE: 'space',
-            pygame.K_RIGHT: 'right',
-            pygame.K_LEFT: 'left',
-            pygame.K_UP: 'up',
-            pygame.K_DOWN: 'down',
-            pygame.K_RCTRL: 'ctrl',
-            pygame.K_LCTRL: 'ctrl',
-        }
-
-        shiftMap = {
-            '1': '!',
-            '2': '@',
-            '3': '#',
-            '4': '$',
-            '5': '%',
-            '6': '^',
-            '7': '&',
-            '8': '*',
-            '9': '(',
-            '0': ')',
-            '[': '{',
-            ']': '}',
-            '/': '?',
-            '=': '+',
-            '\\': '|',
-            "'": '"',
-            ',': '<',
-            '.': '>',
-            '-': '_',
-            ';': ':',
-            '`': '~',
-        }
-
-        # Punctuation, numbers, and letters
-        if 33 < keyCode < 127:
-            key = chr(keyCode)
-            if modifierMask & pygame.KMOD_SHIFT:
-                key = shiftMap.get(key, key).upper()
-            return key
-        return keyNameMap.get(keyCode, None)
-
     def drawErrorScreen(self):
         wyvern_surface = wyvern.ImageSurface(self.width, self.height)
         ctx = wyvern_surface.canvas
@@ -817,39 +768,25 @@ class App(object):
                 fill='red',
             )
 
-        self.redrawAll(self._screen, wyvern_surface, ctx)
+        self.redrawAll(ctx)
 
-    def getModifiers(self, modifierMask):
-        modifiers = list()
-        if modifierMask & pygame.KMOD_SHIFT:
-            modifiers.append('shift')
-        if modifierMask & pygame.KMOD_CTRL:
-            modifiers.append('control')
-        if modifierMask & pygame.KMOD_META:
-            modifiers.append('meta')
-        return modifiers
-
-    def handleKeyPress(self, keyCode, modifierMask):
-        self._modifiers = self.getModifiers(modifierMask)
-        key = App.getKey(keyCode, modifierMask)
+    def handleKeyPress(self, key, modifiers):
+        self._modifiers = list(modifiers)
 
         if key is None:
             return
         if key == 'ctrl':
             self.isCtrlKeyDown = True
             return
-        if key == 'space' and (modifierMask & pygame.KMOD_SHIFT):
+        if key == 'space' and 'shift' in modifiers:
             self.paused = not self.paused
             return
 
         self._allKeysDown.add(key)
-
-        modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyPress', (key, modifiers))
 
-    def handleKeyRelease(self, keyCode, modifierMask):
-        self._modifiers = self.getModifiers(modifierMask)
-        key = App.getKey(keyCode, modifierMask)
+    def handleKeyRelease(self, key, modifiers):
+        self._modifiers = list(modifiers)
 
         if key is None:
             return
@@ -861,10 +798,9 @@ class App(object):
         if key.lower() in self._allKeysDown:
             self._allKeysDown.remove(key.lower())
 
-        modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyRelease', (key, modifiers))
 
-    def redrawAll(self, screen, wyvern_surface, ctx):
+    def redrawAll(self, ctx):
         shape = shape_logic.Rect(
             {
                 'noGroup': True,
@@ -890,18 +826,6 @@ class App(object):
         finally:
             ctx.restore()
 
-        # Get the wyvern buffer and convert it from BGRA to RGBA
-        data_string = wyvern_surface.data
-
-        # Create PyGame surface
-        pygame_surface = pygame.image.frombuffer(
-            data_string, (self.width, self.height), 'RGBA'
-        )
-
-        # Show PyGame surface
-        screen.blit(pygame_surface, (0, 0))
-        pygame.display.flip()
-
         self.frameworkRedrew = True
 
     def shouldDrawInspector(self):
@@ -921,7 +845,7 @@ class App(object):
         self._width = 400
         self._height = 400
         self._allKeysDown = set()
-        self._modifiers = set()
+        self._modifiers = []
         self.background = None
 
         self._stepsPerSecond = 30
@@ -943,6 +867,14 @@ class App(object):
 
         self._isMvc = False
         self._initialScreen = None
+
+        self._lastTick = 0.0
+        self._lastMouseMoveTime = 0.0
+        self._lastMouseDragTime = 0.0
+        self._pendingMouseMove = None
+        self._pendingMouseDrag = None
+        self._takeScreenshotPath = None
+        self._screenshotTriggered = False
 
     def get_group(self):
         return self._tlg
@@ -985,14 +917,9 @@ class App(object):
 
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
-    def updateScreenSize(self):
-        if self._running:
-            self.updateScreen(True)
-
     def handleResize(self, newWidth, newHeight):
         self._width = newWidth
         self._height = newHeight
-        self.updateScreen(False)
 
         # Redraw even if onResize is not present in the user's globals
         self.callUserFn('onResize', (), redraw=False)
@@ -1127,146 +1054,89 @@ class App(object):
         )
         return p
 
-    def updateScreen(self, newScreen):
-        if newScreen:
-            self._screen = pygame.display.set_mode(
-                (self.width, self.height), pygame.RESIZABLE
-            )
-        self._wyvern_surface = wyvern.ImageSurface(self.width, self.height)
-        self._ctx = self._wyvern_surface.canvas
+    # --- unified event dispatcher, called by wyvern.run for every event ---
+    def on_event(self, event, surface=None):
+        self._ctx = None
+        self._width = None
+        self._height = None
+        if surface is not None:
+            self._ctx = surface.canvas
+            self._width = surface.width
+            self._height = surface.height
 
-    def throttleEvent(self, fn, delay):
-        lastCall = -delay
-        prevArgs = None
+        if self.stopped and event.event_type not in ('redraw', 'step'):
+            return
 
-        def throttle(*args):
-            nonlocal lastCall, prevArgs
+        if event.event_type == 'step':
+            self._handleStep()
 
-            now = pygame.time.get_ticks()
-            if now - lastCall >= delay:
-                lastCall = now
-                fn(*args)
-                prevArgs = None
-            else:
-                prevArgs = args
+        elif event.event_type == 'redraw':
+            if self._takeScreenshotPath is not None:
+                if not self._screenshotTriggered:
+                    self.callUserFn('onMousePress', (200, 200, 0))
+                    self._screenshotTriggered = True
+                    self.inspector.clearCache()
+                    self.redrawAll(surface, self._ctx)
+                else:
+                    self.getScreenshot(self._takeScreenshotPath)
+                    self._running = False
+                    self.quit()
+                return
+            self.inspector.clearCache()
+            self.redrawAll(surface, self._ctx)
 
-        def flush():
-            nonlocal lastCall, prevArgs
+        elif event.event_type == 'mouse_press':
+            self.callUserFn('onMousePress', (event.mouse.x, event.mouse.y, event.mouse.button))
 
-            if prevArgs is None:
-                return False
+        elif event.event_type == 'mouse_release':
+            self.callUserFn('onMouseRelease', (event.mouse.x, event.mouse.y, event.mouse.button))
 
-            now = pygame.time.get_ticks()
-            if now - lastCall >= delay:
-                lastCall = now
-                fn(*prevArgs)
-                prevArgs = None
-                return True
+        elif event.event_type == 'mouse_move':
+            self.inspector.setMousePosition(event.mouse.x, event.mouse.y)
+            self.callUserFn('onMouseMove', (event.mouse.x, event.mouse.y))
 
-            return False
+        elif event.event_type == 'mouse_drag':
+            self.callUserFn('onMouseDrag', (event.mouse.x, event.mouse.y, [event.mouse.button]))
 
-        throttle.flush = flush
-        return throttle
+        elif event.event_type == 'key_press':
+            if event.key.key == 'ctrl':
+                self.isCtrlKeyDown = True
+            self.handleKeyPress(event.key.key, event.key.modifiers)
+
+        elif event.event_type == 'key_release':
+            if event.key.key == 'ctrl':
+                self.isCtrlKeyDown = False
+            self.handleKeyRelease(event.key.key, event.key.modifiers)
+
+        elif event.event_type == 'resize':
+            self.handleResize(event.resize.width, event.resize.height)
+
+
+    def _handleStep(self):
+        now = time.monotonic()
+        interval = 1.0 / self.stepsPerSecond
+        if now - self._lastTick < interval:
+            return
+        self._lastTick = now
+
+        if not (self.paused or self.stopped):
+            self.callUserFn('onStep', ())
+            if len(self._allKeysDown) > 0:
+                self.callUserFn(
+                    'onKeyHold', (list(self._allKeysDown), list(self._modifiers))
+                )
+            onStepEvent.send_robust(self.callUserFn, self._wrapper)
+
+        onMainLoopEvent.send_robust(interval * 1000, self.callUserFn, self._wrapper)
 
     @_safeMethod
     def run(self, takeScreenshotPath=None):
-        pygame.init()
-        pygame.display.set_caption(self.title)
-
-        self._screen = None
-        self.updateScreen(True)
-
-        lastTick = 0
-        throttledMouseMove = self.throttleEvent(
-            lambda arg: self.callUserFn('onMouseMove', arg), 30
-        )
-        throttledMouseDrag = self.throttleEvent(
-            lambda arg: self.callUserFn('onMouseDrag', arg), 30
-        )
+        self._takeScreenshotPath = takeScreenshotPath
+        self._screenshotTriggered = False
         self._running = True
 
-        screenshotTriggered = False
+        wyvern.run(self.on_event)
 
-        while self._running:
-            sys.stdout.flush()
-            if takeScreenshotPath is not None:
-                if not screenshotTriggered:
-                    app._app.callUserFn(
-                        'onMousePress',
-                        (200, 200, 0),
-                    )
-                    screenshotTriggered = True
-                else:
-                    self.getScreenshot(takeScreenshotPath)
-                    self._running = False
-            with DRAWING_LOCK:
-                had_event = False
-                for event in pygame.event.get():
-                    had_event = True
-                    if not self.stopped:
-                        if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
-                            self.callUserFn(
-                                'onMousePress', (*event.pos, event.button - 1)
-                            )
-                        elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
-                            self.callUserFn(
-                                'onMouseRelease', (*event.pos, event.button - 1)
-                            )
-                        elif event.type == pygame.MOUSEMOTION:
-                            if event.buttons == (0, 0, 0):
-                                throttledMouseMove(event.pos)
-                            else:
-                                throttledMouseDrag(
-                                    (
-                                        *event.pos,
-                                        [i for i in range(3) if event.buttons[i] != 0],
-                                    )
-                                )
-                        elif event.type == pygame.KEYDOWN:
-                            self.handleKeyPress(event.key, event.mod)
-                        elif event.type == pygame.KEYUP:
-                            self.handleKeyRelease(event.key, event.mod)
-                        elif event.type == SET_ACTIVE_SCREEN:
-                            self.handleSetActiveScreen(event.newScreen)
-                        elif event.type == pygame.WINDOWSIZECHANGED:
-                            self.handleResize(event.x, event.y)
-                    if event.type == pygame.QUIT:
-                        self._running = False
-                    elif event.type == pygame.MOUSEMOTION:
-                        self.inspector.setMousePosition(*event.pos)
-                    elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
-                        key = App.getKey(event.key, event.mod)
-                        if key == 'ctrl':
-                            self.isCtrlKeyDown = event.type == pygame.KEYDOWN
-
-                    pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
-
-                did_move = throttledMouseMove.flush()
-                did_drag = throttledMouseDrag.flush()
-                should_redraw = had_event or did_move or did_drag
-
-                msPassed = pygame.time.get_ticks() - lastTick
-                if 1000 / self.stepsPerSecond - msPassed < 1:
-                    lastTick = pygame.time.get_ticks()
-                    if not (self.paused or self.stopped):
-                        self.callUserFn('onStep', ())
-                        if len(self._allKeysDown) > 0:
-                            self.callUserFn(
-                                'onKeyHold',
-                                (list(self._allKeysDown), list(self._modifiers)),
-                            )
-                        onStepEvent.send_robust(self.callUserFn, self._wrapper)
-                        should_redraw = True
-
-                if should_redraw:
-                    self.inspector.clearCache()
-                    self.redrawAll(self._screen, self._wyvern_surface, self._ctx)
-
-                onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
-
-                pygame.time.wait(1)
-
-        pygame.quit()
         cleanAndClose()
 
 
@@ -1473,10 +1343,7 @@ def setActiveScreen(screen, fromRunApp=False):
                 },
             )
         )
-    if fromRunApp:
-        app._app.handleSetActiveScreen(screen, redraw=False)
-    else:
-        pygame.event.post(pygame.event.Event(SET_ACTIVE_SCREEN, newScreen=screen))
+    app._app.handleSetActiveScreen(screen, redraw=not fromRunApp)
 
 
 def runAppWithScreens(initialScreen, *args, **kwargs):
@@ -1759,7 +1626,6 @@ t = sli.t
 
 SHAPES_CREATED = 0
 MAINLOOP_RUN = False
-SET_ACTIVE_SCREEN = pygame.event.custom_type()
 
 
 # Checks to see if a user created shapes but did not call

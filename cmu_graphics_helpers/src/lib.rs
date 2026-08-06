@@ -62,6 +62,8 @@ fn union(py_polys: Vec<PyMultiPolygon>) -> PyResult<PyMultiPolygon> {
 
 /* WYVERN */
 use std::f32::consts::PI;
+use std::fs::File;
+use std::io::Write;
 
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::types::PyByteArray;
@@ -660,6 +662,16 @@ impl Canvas {
         self.skia_surface
             .canvas()
             .scale((scale_factor as f32, scale_factor as f32));
+    }
+
+    fn save_png(&mut self, path: String) -> PyResult<()> {
+        let image = self.skia_surface.image_snapshot();
+        let data = image
+            .encode(None, skia_safe::EncodedImageFormat::PNG, 100)
+            .ok_or(PyRuntimeError::new_err("Failed to encode image data"))?;
+        let mut file = File::create(path)?;
+        file.write_all(data.as_bytes())?;
+        Ok(())
     }
 }
 
