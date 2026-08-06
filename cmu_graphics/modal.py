@@ -1,44 +1,16 @@
 import math
 
 ### ZIPFILE VERSION ###
-import libs.cairo_loader as cairo
 import libs.pygame_loader as pygame
+import libs.cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
-import cairo
 import pygame
 
 ### END PYPI VERSION ###
+from cmu_graphics_helpers import wyvern
 import json
-
-
-def roundedrec(ctx, x, y, w, h, radius_x=5, radius_y=5):
-    # from mono moonlight aka mono silverlight
-    # test limits (without using multiplications)
-    # http://graphics.stanford.edu/courses/cs248-98-fall/Final/q1.html
-    ARC_TO_BEZIER = 0.55228475
-    if radius_x > w - radius_x:
-        radius_x = w / 2
-    if radius_y > h - radius_y:
-        radius_y = h / 2
-
-    # approximate (quite close) the arc using a bezier curve
-    c1 = ARC_TO_BEZIER * radius_x
-    c2 = ARC_TO_BEZIER * radius_y
-
-    ctx.new_path()
-    ctx.move_to(x + radius_x, y)
-    ctx.rel_line_to(w - 2 * radius_x, 0.0)
-    ctx.rel_curve_to(c1, 0.0, radius_x, c2, radius_x, radius_y)
-    ctx.rel_line_to(0, h - 2 * radius_y)
-    ctx.rel_curve_to(0.0, c2, c1 - radius_x, radius_y, -radius_x, radius_y)
-    ctx.rel_line_to(-w + 2 * radius_x, 0)
-    ctx.rel_curve_to(-c1, 0, -radius_x, -c2, -radius_x, -radius_y)
-    ctx.rel_line_to(0, -h + 2 * radius_y)
-    ctx.rel_curve_to(0.0, -c2, radius_x - c1, -radius_y, radius_x, -radius_y)
-    ctx.close_path()
-
 
 keyNameMap = {
     pygame.K_TAB: 'tab',
@@ -92,7 +64,7 @@ class TextBox(object):
         self.cursorActive = True
         self.cursorTimer = pygame.time.get_ticks()
         self.blinkDelay = 400
-        self.font = ('Arial', cairo.FONT_WEIGHT_NORMAL, cairo.FONT_SLANT_NORMAL)
+        self.font = ('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         self.textSize = 15
         self.padding = 4
         self.textAnchor = [
@@ -133,7 +105,7 @@ class TextBox(object):
             ctx.set_line_width(1)
             ctx.stroke()
         else:
-            roundedrec(ctx, self.left, self.top, self.width, self.height, 3, 3)
+            ctx.round_rectangle(self.left, self.top, self.width, self.height, 3, 3)
             ctx.set_source_rgba(0.9, 0.6, 0.4, 1.0)
             ctx.set_line_width(3)
             ctx.stroke()
@@ -207,6 +179,8 @@ class TextBox(object):
         return len(self.buf)
 
     def getTextWidth(self, text):
+        if len(text) <= 0:
+            return 0
         ctx = self.modal.measureCtx
         ctx.save()
         ctx.select_font_face(*self.font)
@@ -353,7 +327,7 @@ class Button(object):
         self.baseColor = (0.7, 0.6, 0.35, 1.0)
         self.hoverColor = (0.75, 0.7, 0.5, 1.0)
         self.color = self.baseColor
-        self.font = ('Arial', cairo.FONT_WEIGHT_NORMAL, cairo.FONT_SLANT_NORMAL)
+        self.font = ('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         self.textSize = 15
         self.text = 'OK'
 
@@ -414,10 +388,10 @@ class TextBoxModal(object):
         self.shadowShift = 2
 
         self.active = True
-        self.measureCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
-        self.dividerY = (
-            self.drawPrompt(self.measureCtx, simulate=True) + self.textYMargin
-        )
+        # can't make a surface whose dimensions are zero
+        self.measureCtx = wyvern.ImageSurface(100, 100).canvas
+        dividerY = self.drawPrompt(self.measureCtx, simulate=True)
+        self.dividerY = dividerY + self.textYMargin
         self.textBox = TextBox(self) if getInput else None
         self.button = Button(self)
 
@@ -433,9 +407,9 @@ class TextBoxModal(object):
 
     height = property(get_height)
 
-    def redrawAll(self, screen, cairo_surface, ctx):
+    def redrawAll(self, screen, wyvern_surface, ctx):
         self.draw(ctx)
-        data_string = cairo_surface.get_data()
+        data_string = wyvern_surface.data
         pygame_surface = pygame.image.frombuffer(
             data_string, (int(self.width), int(self.height)), 'RGBA'
         )
@@ -461,13 +435,13 @@ class TextBoxModal(object):
 
     def drawBox(self, ctx):
         ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-        roundedrec(ctx, self.left, self.top, self.width, self.height, 0, 0)
+        ctx.round_rectangle(self.left, self.top, self.width, self.height, 0, 0)
         ctx.fill()
 
         self.drawDivider(ctx)
 
     def drawPrompt(self, ctx, simulate=False):
-        ctx.select_font_face('Arial', cairo.FONT_WEIGHT_NORMAL, cairo.FONT_SLANT_NORMAL)
+        ctx.select_font_face('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         ctx.set_font_size(self.textSize)
 
         promptWords = self.prompt.split()
@@ -515,10 +489,8 @@ class TextBoxModal(object):
 
         # Make antialiasing possible
         screen = pygame.display.set_mode((int(self.width), int(self.height)))
-        cairo_surface = cairo.ImageSurface(
-            cairo.FORMAT_ARGB32, int(self.width), int(self.height)
-        )
-        ctx = cairo.Context(cairo_surface)
+        wyvern_surface = wyvern.ImageSurface(int(self.width), int(self.height))
+        ctx = wyvern_surface.canvas
 
         self.running = True
         lastMousePosition = None
@@ -575,7 +547,7 @@ class TextBoxModal(object):
                 if self.textBox and self.mouseIsDown and not tickHadMouseDownEvent:
                     self.textBox.onMouseDrag(lastMousePosition)
 
-            self.redrawAll(screen, cairo_surface, ctx)
+            self.redrawAll(screen, wyvern_surface, ctx)
             pygame.display.flip()
 
         pygame.display.quit()

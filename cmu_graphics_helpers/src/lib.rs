@@ -122,6 +122,8 @@ const RAD_TO_DEG: f32 = 180.0 / PI;
 const ORIGIN: Point = Point::new(0.0, 0.0);
 
 fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
+    let width = width.max(1);
+    let height = height.max(1);
     let image_info = ImageInfo::new(
         (width, height),
         ColorType::BGRA8888,
@@ -196,6 +198,93 @@ fn get_arial(font_mgr: &FontMgr, style: FontStyle) -> PyResult<Typeface> {
 enum Gradient {
     LinearGradient(f32, f32, f32, f32),
     RadialGradient(f32, f32, f32),
+}
+
+#[pyclass(module = "wyvern")]
+struct WyvernImage {
+    image: Image,
+    width: i32,
+    height: i32,
+    opaque: bool,
+}
+
+fn image_info_for(width: i32, height: i32, opaque: bool) -> ImageInfo {
+    let alpha = if opaque {
+        skia_safe::AlphaType::Opaque
+    } else {
+        skia_safe::AlphaType::Premul
+    };
+    ImageInfo::new(
+        (width, height),
+        ColorType::BGRA8888,
+        alpha,
+        ColorSpace::new_srgb(),
+    )
+}
+
+#[pymethods]
+impl WyvernImage {
+    #[new]
+    fn create(
+        data: Bound<'_, PyByteArray>,
+        width: i32,
+        height: i32,
+        row_bytes: usize,
+    ) -> PyResult<Self> {
+        let bytes = unsafe { data.as_bytes() };
+        let opaque = bytes.iter().skip(3).step_by(4).all(|&a| a == 255);
+        let image_info = image_info_for(width, height, opaque);
+        let image = skia_safe::images::raster_from_data(
+            &image_info,
+            skia_safe::Data::new_copy(bytes),
+            row_bytes,
+        )
+        .ok_or(PyRuntimeError::new_err(
+            "Issue with creating image from data",
+        ))?;
+        Ok(WyvernImage {
+            image,
+            width,
+            height,
+            opaque,
+        })
+    }
+
+    fn scaled(&self, width: i32, height: i32) -> PyResult<WyvernImage> {
+        let width = width.max(1);
+        let height = height.max(1);
+        let image_info = image_info_for(width, height, self.opaque);
+        let mut surface = surfaces::raster(&image_info, None, None)
+            .ok_or_else(|| PyRuntimeError::new_err("Failed to create scaling surface"))?;
+        let dst = Rect::from_wh(width as f32, height as f32);
+        surface.canvas().draw_image_rect_with_sampling_options(
+            &self.image,
+            None,
+            dst,
+            skia_safe::SamplingOptions::new(
+                skia_safe::FilterMode::Linear,
+                skia_safe::MipmapMode::None,
+            ),
+            &Paint::default(),
+        );
+        let image = surface.image_snapshot();
+        Ok(WyvernImage {
+            image,
+            width,
+            height,
+            opaque: self.opaque,
+        })
+    }
+
+    #[getter]
+    fn width(&self) -> i32 {
+        self.width
+    }
+
+    #[getter]
+    fn height(&self) -> i32 {
+        self.height
+    }
 }
 
 type CanvasSettings = (Font, Vec<Color4f>, Vec<f32>, Paint);
@@ -427,7 +516,7 @@ impl Canvas {
             .path
             .as_ref()
             .and_then(|pb| pb.get_last_pt())
-            .unwrap_or_else(|| ORIGIN);
+            .unwrap_or(ORIGIN);
         let text_path = Path::from_str(&text, point, font);
         self.path
             .get_or_insert(PathBuilder::new_path(&text_path))
@@ -441,7 +530,7 @@ impl Canvas {
             .path
             .as_ref()
             .and_then(|pb| pb.get_last_pt())
-            .unwrap_or_else(|| ORIGIN);
+            .unwrap_or(ORIGIN);
         let mut paint = self.paint.clone();
         paint.set_stroke(false);
         paint.set_anti_alias(true);
@@ -596,44 +685,19 @@ impl Canvas {
         Ok(())
     }
 
-    fn set_source_image(
-        &mut self,
-        data: Bound<'_, PyByteArray>,
-        width: i32,
-        height: i32,
-        row_bytes: usize,
-        x: f32,
-        y: f32,
-    ) -> PyResult<()> {
-        let bytes = data.to_vec();
-        let image_info = ImageInfo::new(
-            (width, height),
-            ColorType::BGRA8888,
-            skia_safe::AlphaType::Premul,
-            ColorSpace::new_srgb(),
-        );
-        let image = skia_safe::images::raster_from_data(
-            &image_info,
-            skia_safe::Data::new_copy(&bytes),
-            row_bytes,
-        )
-        .ok_or(PyRuntimeError::new_err(
-            "Issue with creating image from data",
-        ))?;
-        let shader = Image::to_shader(
-            &image,
-            (TileMode::Decal, TileMode::Decal),
+    fn draw_image(&mut self, image: &WyvernImage, x: f32, y: f32, a: f32) {
+        let mut paint = Paint::default();
+        paint.set_alpha_f(a);
+        paint.set_anti_alias(true);
+        self.skia_surface.canvas().draw_image_with_sampling_options(
+            &image.image,
+            Point::new(x, y),
             skia_safe::SamplingOptions::new(
                 skia_safe::FilterMode::Linear,
-                skia_safe::MipmapMode::Linear,
+                skia_safe::MipmapMode::None,
             ),
-            Some(&Matrix::translate(Point::new(x, y))),
-        )
-        .ok_or(PyRuntimeError::new_err(
-            "Issue with creating shader from image",
-        ))?;
-        self.paint.set_shader(shader);
-        Ok(())
+            Some(&paint),
+        );
     }
 }
 
@@ -726,6 +790,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<FontWeight>()?;
     wyvern.add_class::<FontSlant>()?;
     wyvern.add_class::<Gradient>()?;
+    wyvern.add_class::<WyvernImage>()?;
     m.add_submodule(&wyvern)?;
     m.py()
         .import("sys")?

@@ -3,7 +3,7 @@
 
 import subprocess
 
-# Links come from the pypi "download files" page for cmu_graphics_helpers-ce
+# Links come from the pypi "download files" page for cmu_graphics_helpers
 
 links = {
     'cmu_graphics_helpers_mac': 'fill me in',

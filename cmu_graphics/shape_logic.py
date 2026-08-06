@@ -4,21 +4,18 @@ from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 
 ### ZIPFILE VERSION ###
-from cmu_graphics.libs import cairo_loader as cairo
 from cmu_graphics.libs import pygame_loader as pygame
 from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
-import cairo
 import pygame
 
 ### END PYPI VERSION ###
 
-from cmu_graphics_helpers import pygeo
+from cmu_graphics_helpers import pygeo, wyvern
 from cmu_graphics.libs import webrequest
 from io import BytesIO
-import array
 import sys
 import traceback
 import atexit
@@ -555,35 +552,30 @@ def getAlignAttrs(align):
     return [xattr, yattr]
 
 
-def cairoSurfaceFromPilImage(image):
+def wyvernImageFromPilImage(image):
     image = image.convert('RGBA')  # ensure we have the correct number of channels
-    a = array.array('B', image.tobytes('raw', 'RGBA'))
-    surface = cairo.ImageSurface.create_for_data(
-        a, cairo.FORMAT_ARGB32, image.size[0], image.size[1]
-    )
-    return surface
+    a = bytearray(image.tobytes('raw', 'RGBA'))
+    return (a, image.size[0], image.size[1], image.size[0] * 4)
 
 
-def cairoSurfaceFromPygameSurface(pygameSurface):
-    a = array.array('B', pygame.image.tostring(pygameSurface, 'RGBA'))
-    surface = cairo.ImageSurface.create_for_data(
-        a, cairo.FORMAT_ARGB32, *pygameSurface.get_size()
-    )
-    return surface
+def wyvernImageFromPygameSurface(pygameSurface):
+    a = pygame.image.tobytes(pygameSurface, 'RGBA')
+    width, height = pygameSurface.get_size()
+    return (bytearray(a), width, height, width * 4)
 
 
 class PILWrapper(object):
     def __init__(self, image):
         self.image = image
-        self._surface = None
+        self._imageParams = None
         self.uuid = str(uuid.uuid4())
 
-    def get_surface(self):
-        if self._surface is None:
-            self._surface = cairoSurfaceFromPilImage(self.image)
-        return self._surface
+    def get_params(self):
+        if self._imageParams is None:
+            self._imageParams = wyvernImageFromPilImage(self.image)
+        return self._imageParams
 
-    surface = property(get_surface, None)
+    params = property(get_params, None)
 
 
 def hashReference(reference):
@@ -608,18 +600,18 @@ def loadImageFromStringReference(reference):
 
 def loadImage(reference):
     referenceHash = hashReference(reference)
-
     if referenceHash not in activeDrawing.images:
         if isinstance(reference, PILWrapper):
-            cairoSurface = reference.surface
+            imageParams = reference.params
         else:
             pygameSurface = loadImageFromStringReference(reference)
-            cairoSurface = cairoSurfaceFromPygameSurface(pygameSurface)
-        activeDrawing.images[hashReference(reference)] = cairoSurface
-    else:
-        cairoSurface = activeDrawing.images[referenceHash]
-
-    return {'width': cairoSurface.get_width(), 'height': cairoSurface.get_height()}
+            imageParams = wyvernImageFromPygameSurface(pygameSurface)
+        wyvernImage = wyvern.WyvernImage(*imageParams)
+        activeDrawing.images[referenceHash] = wyvernImage
+    return {
+        'width': activeDrawing.images[referenceHash].width,
+        'height': activeDrawing.images[referenceHash].height,
+    }
 
 
 shapeAttrs = dict()
@@ -1532,13 +1524,13 @@ class Shape(object):
             self.group._toBack(self)
 
     def setFillOrStrokeStyle(self, ctx, fillOrBorder):
-        style = self.getFillOrStrokeStyle(fillOrBorder)
-        if isinstance(style, cairo.Gradient):
-            ctx.set_source(style)
+        style = self.getFillOrStrokeStyle(fillOrBorder, ctx)
+        if isinstance(style, wyvern.Gradient):
+            ctx.set_source_gradient(style)
         else:
             ctx.set_source_rgba(*style)
 
-    def getFillOrStrokeStyle(self, fillOrBorder):
+    def getFillOrStrokeStyle(self, fillOrBorder, ctx):
         if fillOrBorder is None:
             return (0, 0, 0, 1)
         if isinstance(fillOrBorder, Gradient):
@@ -1547,11 +1539,13 @@ class Shape(object):
             n = len(gradient.colors)
             for i in range(n):
                 color = gradient.colors[i]
-                g.add_color_stop_rgba(i / (n - 1), *self.getFillOrStrokeStyle(color))
+                ctx.add_color_stop_rgba(
+                    i / (n - 1), *self.getFillOrStrokeStyle(color, ctx)
+                )
             return g
         if isinstance(fillOrBorder, str):
             fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
-        # Flips RGBA to BGRA because Cairo is going to flip it back
+        # Flips RGBA to BGRA because Wyvern is going to flip it back
         rgba = (
             fillOrBorder.blue / 255,
             fillOrBorder.green / 255,
@@ -1566,17 +1560,9 @@ class Shape(object):
         else:
             ctx.set_dash(self.dashes)
 
-    def toFront(self):
-        if self._group:
-            self._group._toFront(self)
-
-    def toBack(self):
-        if self._group:
-            self._group._toBack(self)
-
     def drawDbPoint(self, ctx, x, y, color):
         ctx.save()
-        color_list = list(self.getFillOrStrokeStyle(color))
+        color_list = list(self.getFillOrStrokeStyle(color, ctx))
         color_list[3] = 1  # ignore our own opacity when drawing db points
         ctx.set_source_rgba(*color_list)
         r = 3
@@ -1602,7 +1588,7 @@ class Shape(object):
         ctx.rectangle(self.left, self.top, self.width, self.height)
         ctx.close_path()
         ctx.set_line_width(2)
-        color_list = list(self.getFillOrStrokeStyle('red'))
+        color_list = list(self.getFillOrStrokeStyle('red', ctx))
         color_list[3] = 1  # ignore our own opacity when drawing db points
         ctx.set_source_rgba(*color_list)
         ctx.set_dash([2, 2])
@@ -1622,7 +1608,7 @@ class Shape(object):
             ctx.close_path()
             ctx.fill()
         # now connect the dots
-        ctx.new_path
+        ctx.new_path()
         utils.makePolygonPath(pts, ctx)
         ctx.close_path()
         ctx.set_line_width(3)
@@ -1693,7 +1679,7 @@ class Shape(object):
                     # @TODO
                     self.setDashes(ctx)
                     if isinstance(self, Arc):
-                        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+                        ctx.set_line_join(wyvern.LineJoin.ROUND)
                     ctx.set_line_width(bw)
                     ctx.stroke()
             if isinstance(self, CMUImage):
@@ -1933,8 +1919,7 @@ class Group(Shape):
                     ctx.arc(x, y, r, 0, 2 * math.pi)
                     ctx.close_path()
                     ctx.fill()
-                # now connect the dots
-                ctx.new_path
+                ctx.new_path()
                 utils.makePolygonPath(shape, ctx)
                 ctx.close_path()
                 ctx.set_line_width(3)
@@ -2294,9 +2279,6 @@ class Group(Shape):
                 shape.scaleToTarget(varName, target)
 
 
-fontCtx = cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0))
-
-
 SHOW_FONT_WARNINGS = True
 
 # This is a list of fonts that are available on the CMU CS Academy website but may not be
@@ -2328,10 +2310,10 @@ def getFont(baseFontName, isBold=False, isItalic=False):
     else:
         fontName = baseFontName
 
-    bold = cairo.FONT_WEIGHT_BOLD if isBold else cairo.FONT_WEIGHT_NORMAL
-    italic = cairo.FONT_SLANT_ITALIC if isItalic else cairo.FONT_SLANT_NORMAL
+    bold = wyvern.FontWeight.BOLD if isBold else wyvern.FontWeight.NORMAL
+    italic = wyvern.FontSlant.ITALIC if isItalic else wyvern.FontSlant.NORMAL
 
-    return (fontName, italic, bold)
+    return (fontName, bold, italic)
 
 
 def maybe_show_font_warning(fontName):
@@ -2342,6 +2324,9 @@ def maybe_show_font_warning(fontName):
         print('available on your computer. You could change this font to any')
         print(f"font installed on your system, or install ('{fontName}').")
         print('To stop showing this warning, set app.showFontWarnings = False.\n')
+
+
+fontCtx = wyvern.ImageSurface(1, 1).canvas
 
 
 class Label(Shape):
@@ -2360,7 +2345,6 @@ class Label(Shape):
         self.setDims()
 
     def setDims(self):
-        fontCtx.save()
         fontCtx.select_font_face(*getFont(self.font, self.bold, self.italic))
         fontCtx.set_font_size(self.size)
 
@@ -2399,7 +2383,6 @@ class Label(Shape):
         self.set({'approxPoints': pts, 'xAdjust': 0 if hasOuterSpaces else xBearing})
         box = utils.getBoxDims(pts)
         self.set({'width': box['width'], 'height': box['height']})
-        fontCtx.restore()
 
     def get_area(self):
         return self.width * self.height
@@ -2421,7 +2404,7 @@ class Label(Shape):
             [[cx, cy]] = utils.rotatePoints(
                 [[cx, cy]], -self.rotateAngle, targetX, targetY
             )
-            return cairo.RadialGradient(cx, cy, 0, cx, cy, r)
+            return wyvern.Gradient.RadialGradient(cx, cy, r)
 
         startToPointIndex = {
             'left-top': 0,
@@ -2446,7 +2429,7 @@ class Label(Shape):
                 [[x0, y0], [x1, y1]], -self.rotateAngle, targetX, targetY
             )
 
-        return cairo.LinearGradient(x0, y0, x1, y1)
+        return wyvern.Gradient.LinearGradient(x0, y0, x1, y1)
 
     def get_width(self):
         return self.get('width')
@@ -2739,10 +2722,7 @@ class Polygon(Shape):
             if isinstance(self, Star):
                 r *= 0.8
 
-            return cairo.RadialGradient(
-                rotateAnchor[0],
-                rotateAnchor[1],
-                0,
+            return wyvern.Gradient.RadialGradient(
                 rotateAnchor[0],
                 rotateAnchor[1],
                 r,
@@ -2797,7 +2777,7 @@ class Polygon(Shape):
                 [[x0, y0], [x1, y1]], self.rotateAngle, rotateAnchor[0], rotateAnchor[1]
             )
 
-        return cairo.LinearGradient(x0, y0, x1, y1)
+        return wyvern.Gradient.LinearGradient(x0, y0, x1, y1)
 
 
 class Rect(Polygon):
@@ -2964,13 +2944,13 @@ class Line(Polygon):
 
     def drawArrows(self, ctx):
         if not self.arrowEnd and not self.arrowStart:
-            return
+            return ctx
 
         dx = self.x2 - self.x1
         dy = self.y2 - self.y1
         dist = math.sqrt(dy * dy + dx * dx)
         if dist < 0.01:
-            return
+            return ctx
         dx /= dist
         dy /= dist
 
@@ -3219,10 +3199,29 @@ class CMUImage(PolygonWithTransform):
 
     def drawImage(self, ctx):
         mat = self.transformMatrix
-        ctx.translate(self.pointList[0][0], self.pointList[0][1])
-        ctx.transform(cairo.Matrix(mat[0][0], mat[1][0], mat[0][1], mat[1][1], 0, 0))
-        ctx.set_source_surface(activeDrawing.images[hashReference(self.url)], 0, 0)
-        ctx.paint_with_alpha(self.opacity / 100)
+        src = activeDrawing.images[hashReference(self.url)]
+        x, y = self.pointList[0][0], self.pointList[0][1]
+
+        # Fast path: pure (non-negative) scale with no rotation/shear. Resample
+        # the image to its on-screen size once, cache it, and blit that 1:1 on
+        # subsequent frames instead of resampling every frame.
+        if mat[0][1] == 0 and mat[1][0] == 0 and mat[0][0] > 0 and mat[1][1] > 0:
+            tw = round(src.width * mat[0][0])
+            th = round(src.height * mat[1][1])
+            if tw == src.width and th == src.height:
+                image = src
+            else:
+                cache = getattr(self, '_scaledImage', None)
+                if cache is None or cache[0] != (tw, th):
+                    cache = ((tw, th), src.scaled(tw, th))
+                    self._scaledImage = cache
+                image = cache[1]
+            ctx.translate(x, y)
+            ctx.draw_image(image, 0, 0, self.opacity / 100)
+            return
+        ctx.translate(x, y)
+        ctx.transform(mat[0][0], mat[1][0], mat[0][1], mat[1][1], 0, 0)
+        ctx.draw_image(src, 0, 0, self.opacity / 100)
 
     def toString(self):
         args = [self.left, self.top, self.width, self.height]
@@ -3314,24 +3313,26 @@ class Oval(PolygonWithTransform):
     translation = shape_property(get_translation, set_translation)
 
     def makePath(self, ctx):
-        ctx.save()
+        # this code used to use translate, but now performs translation as part of bp calculation
         ctx.new_path()
-        ctx.translate(self.translation[0], self.translation[1])
+        tx, ty = self.translation[0], self.translation[1]
         bp = list(
             map(
                 (
                     lambda p: [
                         self.transformMatrix[0][0] * p[0]
-                        + self.transformMatrix[0][1] * p[1],
+                        + self.transformMatrix[0][1] * p[1]
+                        + tx,
                         self.transformMatrix[1][0] * p[0]
-                        + self.transformMatrix[1][1] * p[1],
+                        + self.transformMatrix[1][1] * p[1]
+                        + ty,
                     ]
                 ),
                 self.bezierPoints,
             )
         )
         if isinstance(self, Arc):
-            ctx.move_to(0, 0)
+            ctx.move_to(tx, ty)
             ctx.line_to(bp[0][0], bp[0][1])
         else:
             ctx.move_to(bp[0][0], bp[0][1])
@@ -3348,7 +3349,6 @@ class Oval(PolygonWithTransform):
             )
 
         ctx.close_path()
-        ctx.restore()
 
     def addxy(self, varName, d):
         super().addxy(varName, d)
@@ -3862,10 +3862,11 @@ class Inspector(object):
         if self.bestX is None or self.bestY is None:
             return
 
+        # BGR, in the 0-1 range set_source_rgb/set_source_rgba expect
         black = (0, 0, 0)
-        red = (0, 0, 255)
-        gold = (0, 215, 255)
-        white = (255, 255, 255)
+        red = (0, 0, 1)
+        gold = (0, 215 / 255, 1)
+        white = (1, 1, 1)
 
         for pt in self.keyPoints:
             ctx.new_path()
@@ -3909,7 +3910,10 @@ class Inspector(object):
 
         ctx.set_source_rgba(*white, 0.5)
         ctx.rectangle(
-            pointLabelCenterX - w / 2 - 2, pointLabelCenterY - h / 2 - 2, w + 4, h + 4
+            pointLabelCenterX - w / 2 - 2,
+            pointLabelCenterY - h / 2 - 2,
+            w + 4,
+            h + 4,
         )
         ctx.fill()
 
