@@ -868,32 +868,6 @@ pub struct ResizeEvent {
 
 #[pyclass(from_py_object)]
 #[derive(Clone)]
-pub struct InitEvent {
-    #[pyo3(get, set)]
-    pub width: u32,
-    #[pyo3(get, set)]
-    pub height: u32,
-    #[pyo3(get, set)]
-    pub resizable: bool,
-    #[pyo3(get, set)]
-    pub title: String,
-}
-
-#[pymethods]
-impl InitEvent {
-    #[new]
-    fn create(width: u32, height: u32, resizable: bool, title: String) -> Self {
-        InitEvent {
-            width,
-            height,
-            resizable,
-            title,
-        }
-    }
-}
-
-#[pyclass(from_py_object)]
-#[derive(Clone)]
 pub struct PythonEvent {
     #[pyo3(get)]
     pub event_type: String,
@@ -977,15 +951,6 @@ impl PythonEvent {
         }
     }
 
-    pub fn init() -> Self {
-        PythonEvent {
-            event_type: "init".to_string(),
-            mouse: None,
-            key: None,
-            resize: None,
-        }
-    }
-
     pub fn quit() -> Self {
         PythonEvent {
             event_type: "quit".to_string(),
@@ -1019,73 +984,36 @@ impl WinitApp {
         &mut self,
         event_loop: &ActiveEventLoop,
         event: PythonEvent,
-    ) -> Option<InitEvent> {
-        let mut request_redraw = true;
-        let handler_result = Python::attach(|py| -> PyResult<Option<InitEvent>> {
-            if event.event_type == "init" {
-                let attributes = self.on_event.call1(py, (event,))?.extract(py)?;
-                request_redraw = false;
-                Ok(Some(attributes))
-            } else {
-                let Some(py_surface) = self.py_surface.as_ref() else {
-                    self.error = Some(PyRuntimeError::new_err(
-                        "Surface does not exist for event handler",
-                    ));
-                    event_loop.exit();
-                    return Ok(None);
-                };
+    ) {
+        let handler_result = Python::attach(|py| -> PyResult<()> {
+            let Some(py_surface) = self.py_surface.as_ref() else {
+                self.error = Some(PyRuntimeError::new_err(
+                    "Surface does not exist for event handler",
+                ));
+                event_loop.exit();
+                return Ok(());
+            };
                 self.on_event.call1(py, (event, py_surface.clone_ref(py)))?;
-                Ok(None)
-            }
+                Ok(())
         });
 
-        let res = match handler_result {
-            Ok(res) => res,
-            Err(err) => {
-                self.error = Some(err);
-                event_loop.exit();
-                return None;
-            }
+        if let Err(err) = handler_result {
+            self.error = Some(err);
+            event_loop.exit();
+            return;
         };
-        if request_redraw {
-            if let Some(internals) = self.internals.as_ref() {
-                internals.window.request_redraw()
-            } else {
-                println!("why are we here");
-                self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
-                event_loop.exit();
-            }
+        if let Some(internals) = self.internals.as_ref() {
+            internals.window.request_redraw()
+        } else {
+            println!("why are we here");
+            self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
+            event_loop.exit();
         }
-        res
     }
 }
 
 impl ApplicationHandler<UserEvent> for WinitApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        if self.internals.is_none() {
-            let Some(attribs) = self.call_event_handler(event_loop, PythonEvent::init()) else {
-                self.error = Some(PyRuntimeError::new_err("Issue with init event"));
-                return;
-            };
-            let Ok(image) = image::open("scotty.png") else {
-                self.error = Some(PyRuntimeError::new_err("Issue with opening icon image"));
-                return;
-            };
-            let image_rgba = image.into_rgba8();
-            let (width, height) = image_rgba.dimensions();
-            let rgba = image_rgba.into_raw();
-            let Ok(icon) = winit::window::Icon::from_rgba(rgba, width, height) else {
-                self.error = Some(PyRuntimeError::new_err("Issue with creating icon image"));
-                return;
-            };
-            self.window_attributes = std::mem::take(&mut self.window_attributes)
-                .with_inner_size(PhysicalSize::new(attribs.width, attribs.height))
-                .with_resizable(attribs.resizable)
-                .with_title(attribs.title)
-                .with_window_icon(Some(icon))
-                .with_visible(false);
-        }
-
         let window = if let Ok(window) = event_loop.create_window(self.window_attributes.clone()) {
             // make the window centered
             if let Some(monitor) = window.current_monitor() {
@@ -1147,6 +1075,9 @@ impl ApplicationHandler<UserEvent> for WinitApp {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        if self.internals.is_none() {
+            return;
+        }
         let fps = 30;
         let elapsed = self.last_tick.elapsed();
         if elapsed >= Duration::from_millis(1000 / fps) {
@@ -1353,9 +1284,26 @@ impl ApplicationHandler<UserEvent> for WinitApp {
 }
 
 #[pyfunction]
-fn run(on_event: Py<PyAny>) -> PyResult<()> {
+// possible more settings can be added
+fn run(on_event: Py<PyAny>, app_width: u32, app_height: u32, resizable: bool, title: String) -> PyResult<()> {
+    let Ok(image) = image::open("scotty.png") else {
+        return Err(PyRuntimeError::new_err("Issue with opening icon image"));
+    };
+    let image_rgba = image.into_rgba8();
+    let (width, height) = image_rgba.dimensions();
+    let rgba = image_rgba.into_raw();
+    let Ok(icon) = winit::window::Icon::from_rgba(rgba, width, height) else {
+        return Err(PyRuntimeError::new_err("Issue with creating icon image"));
+    };
+    let window_attributes = Window::default_attributes()
+        .with_inner_size(PhysicalSize::new(app_width, app_height))
+        .with_resizable(resizable)
+        .with_title(title)
+        .with_window_icon(Some(icon))
+        .with_visible(false);
+
     let mut app = WinitApp {
-        window_attributes: Window::default_attributes(),
+        window_attributes,
         internals: None,
         last_tick: Instant::now(),
         last_mouse: Instant::now(),
@@ -1415,7 +1363,6 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<MouseEvent>()?;
     wyvern.add_class::<KeyEvent>()?;
     wyvern.add_class::<ResizeEvent>()?;
-    wyvern.add_class::<InitEvent>()?;
     wyvern.add_function(wrap_pyfunction!(run, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(quit, &wyvern)?)?;
     m.add_submodule(&wyvern)?;
