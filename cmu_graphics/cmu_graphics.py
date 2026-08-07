@@ -1086,17 +1086,23 @@ class App(object):
             self.redrawAll(surface, self._ctx)
 
         elif event.event_type == 'mouse_press':
-            self.callUserFn('onMousePress', (event.mouse.x, event.mouse.y, event.mouse.button))
+            self.callUserFn(
+                'onMousePress', (event.mouse.x, event.mouse.y, event.mouse.button)
+            )
 
         elif event.event_type == 'mouse_release':
-            self.callUserFn('onMouseRelease', (event.mouse.x, event.mouse.y, event.mouse.button))
+            self.callUserFn(
+                'onMouseRelease', (event.mouse.x, event.mouse.y, event.mouse.button)
+            )
 
         elif event.event_type == 'mouse_move':
             self.inspector.setMousePosition(event.mouse.x, event.mouse.y)
             self.callUserFn('onMouseMove', (event.mouse.x, event.mouse.y))
 
         elif event.event_type == 'mouse_drag':
-            self.callUserFn('onMouseDrag', (event.mouse.x, event.mouse.y, [event.mouse.button]))
+            self.callUserFn(
+                'onMouseDrag', (event.mouse.x, event.mouse.y, [event.mouse.button])
+            )
 
         elif event.event_type == 'key_press':
             if event.key.key == 'ctrl':
@@ -1110,7 +1116,6 @@ class App(object):
 
         elif event.event_type == 'resize':
             self.handleResize(event.resize.width, event.resize.height)
-
 
     def _handleStep(self):
         now = time.monotonic()
