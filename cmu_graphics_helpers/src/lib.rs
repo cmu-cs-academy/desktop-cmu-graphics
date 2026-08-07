@@ -658,10 +658,11 @@ impl Canvas {
         );
     }
 
-    fn scale_canvas(&mut self, scale_factor: f64) {
-        self.skia_surface
-            .canvas()
-            .scale((scale_factor as f32, scale_factor as f32));
+    fn resize_canvas(&mut self, width: i32, height: i32, scale_factor: f64) -> PyResult<()> {
+        self.skia_surface = create_skia_surface(width, height, scale_factor)?;
+        self.path = None;
+        self.state_stack.clear();
+        Ok(())
     }
 
     fn save_png(&mut self, path: String) -> PyResult<()> {
@@ -764,7 +765,7 @@ use std::rc::Rc;
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
-use winit::dpi::{PhysicalPosition, PhysicalSize};
+use winit::dpi::{PhysicalPosition, LogicalSize};
 use winit::event::{Modifiers, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
 use winit::keyboard::{Key, NamedKey};
@@ -1124,18 +1125,28 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     event_loop.exit()
                 };
 
-                Python::attach(|py| {
+                let resize_result = Python::attach(|py| -> PyResult<()> {
                     let mut surface_ref = py_surface.borrow_mut(py);
                     let mut canvas = surface_ref.canvas.bind(py).borrow_mut();
-                    canvas.scale_canvas(window.scale_factor());
-                    surface_ref.width = new_size.width as i32;
-                    surface_ref.height = new_size.height as i32;
-                });
+                    canvas.resize_canvas(
+                        new_size.width as i32,
+                        new_size.height as i32,
+                        window.scale_factor(),
+                    )?;
+                     surface_ref.width = new_size.width as i32;
+                     surface_ref.height = new_size.height as i32;
+                    Ok(())
+                 });
+                if let Err(err) = resize_result {
+                    self.error = Some(err);
+                    event_loop.exit();
+                    return;
+                }
 
-                // self.call_event_handler(
-                //     event_loop,
-                //     PythonEvent::resize(new_size.width, new_size.height),
-                // );
+                self.call_event_handler(
+                    event_loop,
+                    PythonEvent::resize(new_size.width, new_size.height),
+                );
             }
             WindowEvent::CursorMoved {
                 device_id: _,
@@ -1286,7 +1297,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
 #[pyfunction]
 // possible more settings can be added
 fn run(on_event: Py<PyAny>, app_width: u32, app_height: u32, resizable: bool, title: String) -> PyResult<()> {
-    let Ok(image) = image::open("scotty.png") else {
+    let Ok(image) = image::open("C:\\Users\\sonya\\Documents\\desktop-cmu-graphics\\cmu_graphics_helpers\\scotty.png") else {
         return Err(PyRuntimeError::new_err("Issue with opening icon image"));
     };
     let image_rgba = image.into_rgba8();
@@ -1296,7 +1307,7 @@ fn run(on_event: Py<PyAny>, app_width: u32, app_height: u32, resizable: bool, ti
         return Err(PyRuntimeError::new_err("Issue with creating icon image"));
     };
     let window_attributes = Window::default_attributes()
-        .with_inner_size(PhysicalSize::new(app_width, app_height))
+        .with_inner_size(LogicalSize::new(app_width, app_height))
         .with_resizable(resizable)
         .with_title(title)
         .with_window_icon(Some(icon))

@@ -1054,20 +1054,15 @@ class App(object):
         )
         return p
 
-    # --- unified event dispatcher, called by wyvern.run for every event ---
-    def on_event(self, event, surface=None):
-        self._ctx = None
-        self._width = None
-        self._height = None
-        if surface is not None:
-            self._ctx = surface.canvas
-            self._width = surface.width
-            self._height = surface.height
+    def on_event(self, event, surface):
+        self._ctx = surface.canvas
+        self._width = surface.width
+        self._height = surface.height
 
         if self.stopped and event.event_type not in ('redraw', 'step'):
             return
 
-        if event.event_type == 'step':
+        elif event.event_type == 'step':
             self._handleStep()
 
         elif event.event_type == 'redraw':
@@ -1076,14 +1071,14 @@ class App(object):
                     self.callUserFn('onMousePress', (200, 200, 0))
                     self._screenshotTriggered = True
                     self.inspector.clearCache()
-                    self.redrawAll(surface, self._ctx)
+                    self.redrawAll(self._ctx)
                 else:
                     self.getScreenshot(self._takeScreenshotPath)
                     self._running = False
                     self.quit()
                 return
             self.inspector.clearCache()
-            self.redrawAll(surface, self._ctx)
+            self.redrawAll(self._ctx)
 
         elif event.event_type == 'mouse_press':
             self.callUserFn(
@@ -1134,13 +1129,13 @@ class App(object):
 
         onMainLoopEvent.send_robust(interval * 1000, self.callUserFn, self._wrapper)
 
-    @_safeMethod
+    # @_safeMethod
     def run(self, takeScreenshotPath=None):
         self._takeScreenshotPath = takeScreenshotPath
         self._screenshotTriggered = False
         self._running = True
 
-        wyvern.run(self.on_event)
+        wyvern.run(self.on_event, int(self.width), int(self.height), True, self.title)
 
         cleanAndClose()
 
@@ -1600,7 +1595,7 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 import math
 
 ### ZIPFILE VERSION ###
-from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
+# from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 from cmu_graphics_helpers import wyvern
