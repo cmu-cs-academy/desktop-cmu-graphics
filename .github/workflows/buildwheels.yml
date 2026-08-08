@@ -1,6 +1,7 @@
-name: Build rust wheels
+name: Build cmu_graphics_helpers (+ deploy to PyPI if on main)
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
   build_wheels:
@@ -31,6 +32,13 @@ jobs:
           manylinux: auto
           target: ${{ matrix.target }}
           args: --release
+          before-script-linux: |
+            if command -v yum &> /dev/null; then
+              yum install -y freetype-devel fontconfig-devel
+            elif command -v apt &> /dev/null; then
+              apt update -y
+              apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
+            fi
 
       - name: Upload wheels
         uses: actions/upload-artifact@v6
@@ -52,6 +60,13 @@ jobs:
         working-directory: cmu_graphics_helpers
         manylinux: auto
         args: --sdist
+        before-script-linux: |
+          if command -v yum &> /dev/null; then
+            yum install -y freetype-devel fontconfig-devel
+          elif command -v apt &> /dev/null; then
+            apt update -y
+            apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
+          fi
 
     - uses: actions/upload-artifact@v6
       with:
@@ -60,6 +75,7 @@ jobs:
   upload_all:
     name: Upload to PyPi
     needs: [build_wheels, make_sdist]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     environment: pypi
     permissions:
       id-token: write

@@ -4,7 +4,7 @@ import platform
 import os
 
 # Don't import cmu_graphics._dist here. This module is also reached from the
-# modal.py subprocess (via libs.cairo_loader), whose sys.path[0] is the package
+# modal.py subprocess (via libs.pygame_loader), whose sys.path[0] is the package
 # directory itself -- there the name `cmu_graphics` resolves to the sibling
 # cmu_graphics.py module rather than the package. The distribution switch is
 # passed in to verify_support() instead.

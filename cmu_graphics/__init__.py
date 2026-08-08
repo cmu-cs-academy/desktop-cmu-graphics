@@ -86,7 +86,6 @@ def check_for_shadowing():
             'bisect',
             'builtins',
             'bz2',
-            'cairo',
             'calendar',
             'cmu_graphics',
             'code',
