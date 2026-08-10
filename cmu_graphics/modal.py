@@ -1,16 +1,9 @@
 import math
 
-# modal.py runs as a standalone subprocess whose sys.path is the package
-# directory itself, so it imports libs.* flatly and reads the distribution
-# switch flatly too (see _dist.py / _deps.py -- it can't use that shim here).
-from _dist import VENDORED
-
-if VENDORED:
-    import libs.pygame_loader as pygame
-    import libs.cmu_graphics_helpers_loader as cmu_graphics_helpers
-else:
-    import pygame
-    import cmu_graphics_helpers
+# modal.py runs as a standalone subprocess whose sys.path[0] is the package
+# directory itself, so the shim has to be imported flatly rather than as
+# cmu_graphics._deps. See the comment in _deps.py.
+from _deps import pygame, cmu_graphics_helpers
 
 from cmu_graphics_helpers import wyvern
 import json
