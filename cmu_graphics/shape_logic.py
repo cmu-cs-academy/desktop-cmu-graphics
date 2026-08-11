@@ -5,7 +5,7 @@ from cmu_graphics import utils
 
 ### ZIPFILE VERSION ###
 from cmu_graphics.libs import pygame_loader as pygame
-from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
+# from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 ### PYPI VERSION ###
@@ -1560,11 +1560,10 @@ class Shape(object):
             return g
         if isinstance(fillOrBorder, str):
             fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
-        # Flips RGBA to BGRA because Wyvern is going to flip it back
         rgba = (
-            fillOrBorder.blue / 255,
-            fillOrBorder.green / 255,
             fillOrBorder.red / 255,
+            fillOrBorder.green / 255,
+            fillOrBorder.blue / 255,
             self.opacity / 100,
         )
         return rgba

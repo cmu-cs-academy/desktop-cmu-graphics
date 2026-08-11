@@ -1006,7 +1006,6 @@ impl WinitApp {
         if let Some(internals) = self.internals.as_ref() {
             internals.window.request_redraw()
         } else {
-            println!("why are we here");
             self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
             event_loop.exit();
         }
@@ -1072,7 +1071,12 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             softbuffer_surface,
         });
 
-        self.call_event_handler(event_loop, PythonEvent::redraw());
+        if let Some(internals) = self.internals.as_ref() {
+            internals.window.request_redraw()
+        } else {
+            self.error = Some(PyRuntimeError::new_err("Issue with redrawing window in resumed"));
+            event_loop.exit();
+        }
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
@@ -1088,23 +1092,17 @@ impl ApplicationHandler<UserEvent> for WinitApp {
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
-        let Some(app_internals) = self.internals.as_mut() else {
-            return;
-        };
-        let Some(py_surface) = self.py_surface.as_mut() else {
-            return;
-        };
-
-        let AppInternals {
-            window,
-            softbuffer_surface,
-        } = app_internals;
-
         match event {
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
             WindowEvent::Resized(new_size) => {
+                let Some(app_internals) = self.internals.as_mut() else {
+                    return;
+                };
+                let Some(py_surface) = self.py_surface.as_ref() else {
+                    return;
+                };
                 let Some(new_width) = NonZero::new(new_size.width) else {
                     self.error = Some(PyRuntimeError::new_err("New window width must be non-zero"));
                     event_loop.exit();
@@ -1118,7 +1116,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     return;
                 };
 
-                if softbuffer_surface.resize(new_width, new_height).is_err() {
+                if app_internals.softbuffer_surface.resize(new_width, new_height).is_err() {
                     self.error = Some(PyRuntimeError::new_err(
                         "Issue with resizing softbuffer surface",
                     ));
@@ -1131,7 +1129,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     canvas.resize_canvas(
                         new_size.width as i32,
                         new_size.height as i32,
-                        window.scale_factor(),
+                        app_internals.window.scale_factor(),
                     )?;
                      surface_ref.width = new_size.width as i32;
                      surface_ref.height = new_size.height as i32;
@@ -1152,11 +1150,14 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 device_id: _,
                 position,
             } => {
+                let Some(app_internals) = self.internals.as_ref() else {
+                    return;
+                };
                 if self.last_mouse.elapsed() < Duration::from_millis(1000 / 30) {
                     return;
                 }
                 self.cursor_position = position;
-                let scale = window.scale_factor();
+                let scale = app_internals.window.scale_factor();
                 self.call_event_handler(
                     event_loop,
                     PythonEvent::mouse_move(position.x / scale, position.y / scale),
@@ -1168,7 +1169,10 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 state,
                 button,
             } => {
-                let scale = window.scale_factor();
+                let Some(app_internals) = self.internals.as_mut() else {
+                    return;
+                };
+                let scale = app_internals.window.scale_factor();
                 match state {
                     winit::event::ElementState::Pressed => {
                         self.call_event_handler(
@@ -1193,46 +1197,58 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 }
             }
             WindowEvent::RedrawRequested => {
-                let Ok(mut buffer) = softbuffer_surface.buffer_mut() else {
+                self.call_event_handler(event_loop, PythonEvent::redraw());
+
+                let Some(app_internals) = self.internals.as_mut() else {
+                    return;
+                };
+                let Some(py_surface) = self.py_surface.as_mut() else {
+                    return;
+                };
+
+                let Ok(mut buffer) = app_internals.softbuffer_surface.buffer_mut() else {
                     self.error = Some(PyRuntimeError::new_err(
                         "Issue with obtaining softbuffer surface",
                     ));
                     event_loop.exit();
                     return;
                 };
-                Python::attach(|py| {
+                let result = Python::attach(|py| -> PyResult<()> {
                     let surface_ref = py_surface.borrow(py);
                     let mut canvas_ref = surface_ref.canvas.bind(py).borrow_mut();
-                    let Some(pixmap) = canvas_ref.skia_surface.peek_pixels() else {
-                        self.error = Some(PyRuntimeError::new_err("Issue getting canvas data"));
-                        event_loop.exit();
-                        return;
-                    };
-                    let Some(bytes) = pixmap.bytes() else {
-                        self.error = Some(PyRuntimeError::new_err(
-                            "Issue getting bytes from pixel data",
-                        ));
-                        event_loop.exit();
-                        return;
-                    };
+                    let pixmap = canvas_ref
+                        .skia_surface
+                        .peek_pixels()
+                        .ok_or_else(|| {
+                            PyRuntimeError::new_err("Issue getting canvas data")
+                        })?;
+
+                    let bytes = pixmap
+                        .bytes()
+                        .ok_or_else(|| {
+                            PyRuntimeError::new_err("Issue getting bytes from pixel data")
+                        })?;
                     let safe_len = buffer.len().min(bytes.len() / 4);
                     for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
                         let offset = i * 4;
-                        let r = bytes[offset] as u32;
+                        let b = bytes[offset] as u32;
                         let g = bytes[offset + 1] as u32;
-                        let b = bytes[offset + 2] as u32;
+                        let r = bytes[offset + 2] as u32;
                         *pixel = (r << 16) | (g << 8) | b;
                     }
                     if safe_len < buffer.len() {
-                        return;
+                        return Ok(());
                     }
                     if buffer.present().is_err() {
-                        self.error = Some(PyRuntimeError::new_err("Issue presenting to buffer"));
-                        event_loop.exit()
+                        return Err(PyRuntimeError::new_err("Issue presenting to buffer"));
                     }
+                    Ok(())
                 });
 
-                self.call_event_handler(event_loop, PythonEvent::redraw());
+                if let Err(err) = result {
+                    self.error = Some(err);
+                    event_loop.exit();
+                }
             }
             WindowEvent::KeyboardInput {
                 device_id: _,

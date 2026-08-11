@@ -623,10 +623,10 @@ class App(object):
 
     def getScreenshot(self, path):
         with DRAWING_LOCK:
-            # TODO: make this function
             self._ctx.save_png(path)
 
     def quit(self):
+        self._running = False
         wyvern.quit()
 
     def getPosArgCount(self, fn):
@@ -947,7 +947,6 @@ class App(object):
 
     def setRight(self, value):
         self._width = value
-        self.updateScreenSize()
 
     right = property(getRight, setRight)
 
@@ -964,7 +963,6 @@ class App(object):
 
     def setBottom(self, value):
         self._height = value
-        self.updateScreenSize()
 
     bottom = property(getBottom, setBottom)
 
@@ -973,7 +971,6 @@ class App(object):
 
     def setWidth(self, value):
         self._width = value
-        self.updateScreenSize()
 
     width = property(getWidth, setWidth)
 
@@ -982,7 +979,6 @@ class App(object):
 
     def setHeight(self, value):
         self._height = value
-        self.updateScreenSize()
 
     height = property(getHeight, setHeight)
 
@@ -1129,7 +1125,7 @@ class App(object):
 
         onMainLoopEvent.send_robust(interval * 1000, self.callUserFn, self._wrapper)
 
-    # @_safeMethod
+    @_safeMethod
     def run(self, takeScreenshotPath=None):
         self._takeScreenshotPath = takeScreenshotPath
         self._screenshotTriggered = False
@@ -1137,6 +1133,7 @@ class App(object):
 
         wyvern.run(self.on_event, int(self.width), int(self.height), True, self.title)
 
+        self._running = False
         cleanAndClose()
 
 
@@ -1343,6 +1340,7 @@ def setActiveScreen(screen, fromRunApp=False):
                 },
             )
         )
+
     app._app.handleSetActiveScreen(screen, redraw=not fromRunApp)
 
 
