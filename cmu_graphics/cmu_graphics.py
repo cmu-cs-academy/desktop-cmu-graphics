@@ -615,8 +615,6 @@ def _safeMethod(appMethod):
     return m
 
 
-# Based on Lukas Peraza's pygame framework
-# https://github.com/LBPeraza/Pygame-Asteroids
 class App(object):
     def printFullTracebacks(self):
         shape_logic.printFullTracebacks()
@@ -1108,6 +1106,9 @@ class App(object):
         elif event.event_type == 'resize':
             self.handleResize(event.resize.width, event.resize.height)
 
+        elif event.event_type == 'set_active_screen':
+            self.handleSetActiveScreen(event.new_screen)
+
     def _handleStep(self):
         now = time.monotonic()
         interval = 1.0 / self.stepsPerSecond
@@ -1341,7 +1342,10 @@ def setActiveScreen(screen, fromRunApp=False):
             )
         )
 
-    app._app.handleSetActiveScreen(screen, redraw=not fromRunApp)
+    if fromRunApp:
+        app._app.handleSetActiveScreen(screen, redraw=not fromRunApp)
+    else:
+        wyvern.set_active_screen(screen)
 
 
 def runAppWithScreens(initialScreen, *args, **kwargs):

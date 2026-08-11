@@ -773,6 +773,7 @@ use winit::window::{Window, WindowAttributes, WindowId};
 
 enum UserEvent {
     Quit,
+    SetActiveScreen(String),
 }
 
 // apparently this is idiomatic
@@ -878,6 +879,8 @@ pub struct PythonEvent {
     pub key: Option<KeyEvent>,
     #[pyo3(get)]
     pub resize: Option<ResizeEvent>,
+    #[pyo3(get)]
+    pub new_screen: Option<String>,
 }
 
 impl PythonEvent {
@@ -887,6 +890,7 @@ impl PythonEvent {
             mouse: Some(MouseEvent { x, y, button }),
             key: None,
             resize: None,
+            new_screen: None,
         }
     }
 
@@ -896,6 +900,7 @@ impl PythonEvent {
             mouse: Some(MouseEvent { x, y, button }),
             key: None,
             resize: None,
+            new_screen: None,
         }
     }
 
@@ -905,6 +910,7 @@ impl PythonEvent {
             mouse: Some(MouseEvent { x, y, button: 0 }),
             key: None,
             resize: None,
+            new_screen: None,
         }
     }
 
@@ -914,6 +920,7 @@ impl PythonEvent {
             mouse: Some(MouseEvent { x, y, button }),
             key: None,
             resize: None,
+            new_screen: None,
         }
     }
 
@@ -927,6 +934,7 @@ impl PythonEvent {
                 modifiers,
             }),
             resize: None,
+            new_screen: None,
         }
     }
 
@@ -940,6 +948,7 @@ impl PythonEvent {
                 modifiers,
             }),
             resize: None,
+            new_screen: None,
         }
     }
 
@@ -949,6 +958,7 @@ impl PythonEvent {
             mouse: None,
             key: None,
             resize: Some(ResizeEvent { width, height }),
+            new_screen: None,
         }
     }
 
@@ -958,6 +968,7 @@ impl PythonEvent {
             mouse: None,
             key: None,
             resize: None,
+            new_screen: None,
         }
     }
 
@@ -967,6 +978,7 @@ impl PythonEvent {
             mouse: None,
             key: None,
             resize: None,
+            new_screen: None,
         }
     }
 
@@ -976,6 +988,17 @@ impl PythonEvent {
             mouse: None,
             key: None,
             resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn set_active_screen(new_screen: String) -> Self {
+        PythonEvent {
+            event_type: "set_active_screen".to_string(),
+            mouse: None,
+            key: None,
+            resize: None,
+            new_screen: Some(new_screen),
         }
     }
 }
@@ -1305,6 +1328,9 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             UserEvent::Quit => {
                 self.call_event_handler(event_loop, PythonEvent::quit());
                 event_loop.exit()
+            },
+            UserEvent::SetActiveScreen(screen) => {
+                self.call_event_handler(event_loop, PythonEvent::set_active_screen(screen));
             }
         }
     }
@@ -1366,6 +1392,17 @@ fn quit() -> PyResult<()> {
         .map_err(|_| PyRuntimeError::new_err("Failed to send quit event"))?;
     Ok(())
 }
+
+#[pyfunction]
+fn set_active_screen(new_screen: String) -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::SetActiveScreen(new_screen))
+        .map_err(|_| PyRuntimeError::new_err("Failed to send set_active_screen event"))?;
+    Ok(())
+}
 /* BYEGAME */
 
 #[pymodule]
@@ -1392,6 +1429,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<ResizeEvent>()?;
     wyvern.add_function(wrap_pyfunction!(run, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(quit, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(set_active_screen, &wyvern)?)?;
     m.add_submodule(&wyvern)?;
     m.py()
         .import("sys")?
