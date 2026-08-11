@@ -1349,6 +1349,7 @@ fn run(on_event: Py<PyAny>, app_width: u32, app_height: u32, resizable: bool, ti
         return Err(PyRuntimeError::new_err("Issue with creating icon image"));
     };
     let window_attributes = Window::default_attributes()
+        .with_min_inner_size(LogicalSize::new(1, 1))
         .with_inner_size(LogicalSize::new(app_width, app_height))
         .with_resizable(resizable)
         .with_title(title)
