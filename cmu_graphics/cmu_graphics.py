@@ -1064,9 +1064,9 @@ class App(object):
                 if not self._screenshotTriggered:
                     self.callUserFn('onMousePress', (200, 200, 0))
                     self._screenshotTriggered = True
+                else:
                     self.inspector.clearCache()
                     self.redrawAll(self._ctx)
-                else:
                     self.getScreenshot(self._takeScreenshotPath)
                     self._running = False
                     self.quit()
