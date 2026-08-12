@@ -4,14 +4,9 @@ from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 
 ### ZIPFILE VERSION ###
-from cmu_graphics.libs import pygame_loader as pygame
 # from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
-### PYPI VERSION ###
-import pygame
-
-### END PYPI VERSION ###
 
 from cmu_graphics_helpers import pygeo, wyvern
 from cmu_graphics.libs import webrequest
@@ -558,10 +553,10 @@ def wyvernImageFromPilImage(image):
     return (a, image.size[0], image.size[1], image.size[0] * 4)
 
 
-def wyvernImageFromPygameSurface(pygameSurface):
-    a = pygame.image.tobytes(pygameSurface, 'RGBA')
-    width, height = pygameSurface.get_size()
-    return (bytearray(a), width, height, width * 4)
+# def wyvernImageFromPygameSurface(pygameSurface):
+#     a = pygame.image.tobytes(pygameSurface, 'RGBA')
+#     width, height = pygameSurface.get_size()
+#     return (bytearray(a), width, height, width * 4)
 
 
 class PILWrapper(object):
@@ -588,13 +583,13 @@ def loadImageFromStringReference(reference):
     if reference.startswith('http'):
         # reference is a url
         try:
-            response = webrequest.get(reference)
-            image = pygame.image.load(BytesIO(response.read()))
+            webrequest.get(reference)
+            image = wyvern.load_image_from_url(reference)
         except Exception:
             pyThrow(t('Failed to load image data'))
     else:
         # reference is a path
-        image = pygame.image.load(reference)
+        image = wyvern.load_image_from_path(reference)
     return image
 
 
@@ -603,10 +598,9 @@ def loadImage(reference):
     if referenceHash not in activeDrawing.images:
         if isinstance(reference, PILWrapper):
             imageParams = reference.params
+            wyvernImage = wyvern.WyvernImage(*imageParams)
         else:
-            pygameSurface = loadImageFromStringReference(reference)
-            imageParams = wyvernImageFromPygameSurface(pygameSurface)
-        wyvernImage = wyvern.WyvernImage(*imageParams)
+            wyvernImage = loadImageFromStringReference(reference)
         activeDrawing.images[referenceHash] = wyvernImage
     return {
         'width': activeDrawing.images[referenceHash].width,

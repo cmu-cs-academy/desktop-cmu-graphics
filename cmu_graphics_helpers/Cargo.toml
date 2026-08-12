@@ -13,6 +13,7 @@ geo = "0.33.1"
 geo-booleanop = "0.3.2"
 geo-types = "0.7.18"
 image = "0.25.10"
+reqwest = {version = "0.13.4", features = ["blocking"]}
 rodio = "0.22.2"
 skia-safe = "0.99.0"
 softbuffer = "0.4.8"

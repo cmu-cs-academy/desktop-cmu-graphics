@@ -64,6 +64,7 @@ fn union(py_polys: Vec<PyMultiPolygon>) -> PyResult<PyMultiPolygon> {
 use std::f32::consts::PI;
 use std::fs::File;
 use std::io::Write;
+use std::io::Read;
 
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::types::PyByteArray;
@@ -82,7 +83,7 @@ fn create_skia_surface(width: i32, height: i32, scale_factor: f64) -> PyResult<s
     let height = height.max(1);
     let image_info = ImageInfo::new(
         (width, height),
-        ColorType::BGRA8888,
+        ColorType::RGBA8888,
         skia_safe::AlphaType::Premul,
         ColorSpace::new_srgb(),
     );
@@ -174,7 +175,7 @@ fn image_info_for(width: i32, height: i32, opaque: bool) -> ImageInfo {
     };
     ImageInfo::new(
         (width, height),
-        ColorType::BGRA8888,
+        ColorType::RGBA8888,
         alpha,
         ColorSpace::new_srgb(),
     )
@@ -676,6 +677,44 @@ impl Canvas {
     }
 }
 
+fn create_image(data: skia_safe::Data) -> PyResult<WyvernImage> {
+    let image = Image::from_encoded(&data)
+        .ok_or(PyRuntimeError::new_err("Failed to create image"))?;
+
+    let bytes = data.as_bytes();
+    let opaque = bytes.iter().skip(3).step_by(4).all(|&a| a == 255);
+
+    let bounds = image.bounds();
+
+    Ok(WyvernImage {
+        image,
+        width: bounds.width(),
+        height: bounds.height(),
+        opaque,
+    })
+}
+
+#[pyfunction]
+fn load_image_from_path(path: &str) -> PyResult<WyvernImage> {
+    let mut file = File::open(path)?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+    let skia_data = skia_safe::Data::new_copy(&bytes);
+
+    create_image(skia_data)
+}
+
+#[pyfunction]
+fn load_image_from_url(url: &str) -> PyResult<WyvernImage> {
+    let response_bytes = reqwest::blocking::get(url)
+    .map_err(|_| PyRuntimeError::new_err("Issue with getting image from URL"))?
+    .bytes()
+    .map_err(|_| PyRuntimeError::new_err("Issue with getting bytes from image in load_image_from_url"))?;
+    let skia_data = skia_safe::Data::new_copy(&response_bytes);
+
+    create_image(skia_data)
+}
+
 #[pyclass(module = "wyvern", subclass)]
 struct ImageSurface {
     width: i32,
@@ -794,6 +833,7 @@ struct WinitApp {
     on_event: Py<PyAny>,
     modifiers: Modifiers,
     error: Option<PyErr>,
+    needs_redraw: bool,
 }
 
 #[pyclass(from_py_object)]
@@ -1026,12 +1066,15 @@ impl WinitApp {
             event_loop.exit();
             return;
         };
+
         if let Some(internals) = self.internals.as_ref() {
             internals.window.request_redraw()
         } else {
             self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
             event_loop.exit();
         }
+
+        self.needs_redraw = true;
     }
 }
 
@@ -1111,6 +1154,16 @@ impl ApplicationHandler<UserEvent> for WinitApp {
         if elapsed >= Duration::from_millis(1000 / fps) {
             self.call_event_handler(event_loop, PythonEvent::step());
             self.last_tick = Instant::now();
+        }
+
+        if self.needs_redraw {
+            if let Some(internals) = self.internals.as_ref() {
+                internals.window.request_redraw();
+            } else {
+                self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
+                event_loop.exit();
+            }
+            self.needs_redraw = false;
         }
     }
 
@@ -1254,9 +1307,9 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     let safe_len = buffer.len().min(bytes.len() / 4);
                     for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
                         let offset = i * 4;
-                        let b = bytes[offset] as u32;
+                        let r = bytes[offset] as u32;
                         let g = bytes[offset + 1] as u32;
-                        let r = bytes[offset + 2] as u32;
+                        let b = bytes[offset + 2] as u32;
                         *pixel = (r << 16) | (g << 8) | b;
                     }
                     if safe_len < buffer.len() {
@@ -1366,6 +1419,7 @@ fn run(on_event: Py<PyAny>, app_width: u32, app_height: u32, resizable: bool, ti
         on_event,
         modifiers: Modifiers::default(),
         error: None,
+        needs_redraw: false,
     };
 
     let event_loop = EventLoop::<UserEvent>::with_user_event()
@@ -1424,6 +1478,8 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<FontSlant>()?;
     wyvern.add_class::<Gradient>()?;
     wyvern.add_class::<WyvernImage>()?;
+    wyvern.add_function(wrap_pyfunction!(load_image_from_path, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(load_image_from_url, &wyvern)?)?;
     wyvern.add_class::<PythonEvent>()?;
     wyvern.add_class::<MouseEvent>()?;
     wyvern.add_class::<KeyEvent>()?;
