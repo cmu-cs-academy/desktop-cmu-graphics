@@ -553,12 +553,6 @@ def wyvernImageFromPilImage(image):
     return (a, image.size[0], image.size[1], image.size[0] * 4)
 
 
-# def wyvernImageFromPygameSurface(pygameSurface):
-#     a = pygame.image.tobytes(pygameSurface, 'RGBA')
-#     width, height = pygameSurface.get_size()
-#     return (bytearray(a), width, height, width * 4)
-
-
 class PILWrapper(object):
     def __init__(self, image):
         self.image = image

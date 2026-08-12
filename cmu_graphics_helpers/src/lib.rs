@@ -63,8 +63,8 @@ fn union(py_polys: Vec<PyMultiPolygon>) -> PyResult<PyMultiPolygon> {
 /* WYVERN */
 use std::f32::consts::PI;
 use std::fs::File;
-use std::io::Write;
 use std::io::Read;
+use std::io::Write;
 
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::types::{PyByteArray, PyBytes};
@@ -678,8 +678,8 @@ impl Canvas {
 }
 
 fn create_image(data: skia_safe::Data) -> PyResult<WyvernImage> {
-    let image = Image::from_encoded(&data)
-        .ok_or(PyRuntimeError::new_err("Failed to create image"))?;
+    let image =
+        Image::from_encoded(&data).ok_or(PyRuntimeError::new_err("Failed to create image"))?;
 
     let bytes = data.as_bytes();
     let opaque = bytes.iter().skip(3).step_by(4).all(|&a| a == 255);
@@ -794,16 +794,109 @@ impl ImageSurface {
 /* WYVERN */
 
 /* BYEGAME */
+use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player, Source};
+use std::io::Cursor;
 use std::num::NonZero;
 use std::rc::Rc;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
-use winit::dpi::{PhysicalPosition, LogicalSize};
+use winit::dpi::{LogicalSize, PhysicalPosition};
 use winit::event::{Modifiers, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
 use winit::keyboard::{Key, NamedKey};
 use winit::window::{Window, WindowAttributes, WindowId};
+
+fn get_stream() -> PyResult<&'static MixerDeviceSink> {
+    static STREAM: OnceLock<MixerDeviceSink> = OnceLock::new();
+
+    if let Some(stream) = STREAM.get() {
+        return Ok(stream);
+    }
+
+    let stream = DeviceSinkBuilder::open_default_sink()
+        .map_err(|e| PyRuntimeError::new_err(format!("Failed to open audio output: {e}")))?;
+
+    Ok(STREAM.get_or_init(|| stream))
+}
+
+#[pyclass(module = "wyvern")]
+struct WyvernSound {
+    data: Arc<Vec<u8>>,
+    sink: Option<Player>,
+    volume: f32,
+}
+
+impl WyvernSound {
+    fn start_new(&mut self, looped: bool) -> PyResult<()> {
+        let stream = get_stream()?;
+        let player = Player::connect_new(stream.mixer());
+        let cursor = Cursor::new((*self.data).clone());
+        let source = Decoder::try_from(cursor)
+            .map_err(|e| PyRuntimeError::new_err(format!("Failed to decode sound data: {e}")))?;
+
+        player.set_volume(self.volume);
+
+        if looped {
+            player.append(source.repeat_infinite());
+        } else {
+            player.append(source);
+        }
+
+        self.sink = Some(player);
+        
+        Ok(())
+    }
+}
+
+#[pymethods]
+impl WyvernSound {
+    #[new]
+    fn create(bytes: &Bound<'_, PyBytes>) -> PyResult<Self> {
+        let data: Vec<u8> = bytes.extract()?;
+        Ok(WyvernSound {
+            data: Arc::new(data),
+            sink: None,
+            volume: 1.0,
+        })
+    }
+
+    #[pyo3(signature = (looped = false, restart = false))]
+    fn play(&mut self, looped: bool, restart: bool) -> PyResult<()> {
+        let is_busy = self.sink.as_ref().map(|s| !s.empty()).unwrap_or(false);
+        if !is_busy {
+            self.start_new(looped)?;
+        } else if restart {
+            if let Some(player) = self.sink.take() {
+                player.stop();
+            }
+            self.start_new(looped)?;
+        } else if let Some(player) = &self.sink {
+            player.play();
+        }
+        Ok(())
+    }
+
+    fn pause(&self) {
+        if let Some(player) = &self.sink {
+            player.pause();
+        }
+    }
+
+    fn set_volume(&mut self, volume: f32) {
+        if volume < 0.0 {
+            return;
+        }
+        self.volume = volume.min(1.0);
+        if let Some(player) = &self.sink {
+            player.set_volume(self.volume);
+        }
+    }
+
+    fn get_volume(&self) -> f32 {
+        self.volume
+    }
+}
 
 enum UserEvent {
     Quit,
@@ -1039,11 +1132,7 @@ impl PythonEvent {
 }
 
 impl WinitApp {
-    fn call_event_handler(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        event: PythonEvent,
-    ) {
+    fn call_event_handler(&mut self, event_loop: &ActiveEventLoop, event: PythonEvent) {
         let handler_result = Python::attach(|py| -> PyResult<()> {
             let Some(py_surface) = self.py_surface.as_ref() else {
                 self.error = Some(PyRuntimeError::new_err(
@@ -1052,8 +1141,8 @@ impl WinitApp {
                 event_loop.exit();
                 return Ok(());
             };
-                self.on_event.call1(py, (event, py_surface.clone_ref(py)))?;
-                Ok(())
+            self.on_event.call1(py, (event, py_surface.clone_ref(py)))?;
+            Ok(())
         });
 
         if let Err(err) = handler_result {
@@ -1135,7 +1224,9 @@ impl ApplicationHandler<UserEvent> for WinitApp {
         if let Some(internals) = self.internals.as_ref() {
             internals.window.request_redraw()
         } else {
-            self.error = Some(PyRuntimeError::new_err("Issue with redrawing window in resumed"));
+            self.error = Some(PyRuntimeError::new_err(
+                "Issue with redrawing window in resumed",
+            ));
             event_loop.exit();
         }
     }
@@ -1187,7 +1278,11 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     return;
                 };
 
-                if app_internals.softbuffer_surface.resize(new_width, new_height).is_err() {
+                if app_internals
+                    .softbuffer_surface
+                    .resize(new_width, new_height)
+                    .is_err()
+                {
                     self.error = Some(PyRuntimeError::new_err(
                         "Issue with resizing softbuffer surface",
                     ));
@@ -1202,10 +1297,10 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                         new_size.height as i32,
                         app_internals.window.scale_factor(),
                     )?;
-                     surface_ref.width = new_size.width as i32;
-                     surface_ref.height = new_size.height as i32;
+                    surface_ref.width = new_size.width as i32;
+                    surface_ref.height = new_size.height as i32;
                     Ok(())
-                 });
+                });
                 if let Err(err) = resize_result {
                     self.error = Some(err);
                     event_loop.exit();
@@ -1290,15 +1385,11 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     let pixmap = canvas_ref
                         .skia_surface
                         .peek_pixels()
-                        .ok_or_else(|| {
-                            PyRuntimeError::new_err("Issue getting canvas data")
-                        })?;
+                        .ok_or_else(|| PyRuntimeError::new_err("Issue getting canvas data"))?;
 
-                    let bytes = pixmap
-                        .bytes()
-                        .ok_or_else(|| {
-                            PyRuntimeError::new_err("Issue getting bytes from pixel data")
-                        })?;
+                    let bytes = pixmap.bytes().ok_or_else(|| {
+                        PyRuntimeError::new_err("Issue getting bytes from pixel data")
+                    })?;
                     let safe_len = buffer.len().min(bytes.len() / 4);
                     for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
                         let offset = i * 4;
@@ -1376,7 +1467,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             UserEvent::Quit => {
                 self.call_event_handler(event_loop, PythonEvent::quit());
                 event_loop.exit()
-            },
+            }
             UserEvent::SetActiveScreen(screen) => {
                 self.call_event_handler(event_loop, PythonEvent::set_active_screen(screen));
             }
@@ -1385,9 +1476,17 @@ impl ApplicationHandler<UserEvent> for WinitApp {
 }
 
 #[pyfunction]
-// possible more settings can be added
-fn run(on_event: Py<PyAny>, app_width: u32, app_height: u32, resizable: bool, title: String) -> PyResult<()> {
-    let Ok(image) = image::open("C:\\Users\\sonya\\Documents\\desktop-cmu-graphics\\cmu_graphics_helpers\\scotty.png") else {
+// possibly more settings can be added
+fn run(
+    on_event: Py<PyAny>,
+    app_width: u32,
+    app_height: u32,
+    resizable: bool,
+    title: String,
+) -> PyResult<()> {
+    let Ok(image) = image::open(
+        "C:\\Users\\sonya\\Documents\\desktop-cmu-graphics\\cmu_graphics_helpers\\scotty.png",
+    ) else {
         return Err(PyRuntimeError::new_err("Issue with opening icon image"));
     };
     let image_rgba = image.into_rgba8();
@@ -1475,6 +1574,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<WyvernImage>()?;
     wyvern.add_function(wrap_pyfunction!(load_image_from_path, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(load_image_from_bytes, &wyvern)?)?;
+    wyvern.add_class::<WyvernSound>()?;
     wyvern.add_class::<PythonEvent>()?;
     wyvern.add_class::<MouseEvent>()?;
     wyvern.add_class::<KeyEvent>()?;
