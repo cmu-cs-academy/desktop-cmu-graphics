@@ -844,7 +844,7 @@ impl WyvernSound {
         }
 
         self.sink = Some(player);
-        
+
         Ok(())
     }
 }
