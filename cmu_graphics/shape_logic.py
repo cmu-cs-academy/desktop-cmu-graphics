@@ -583,8 +583,8 @@ def loadImageFromStringReference(reference):
     if reference.startswith('http'):
         # reference is a url
         try:
-            webrequest.get(reference)
-            image = wyvern.load_image_from_url(reference)
+            response = webrequest.get(reference)
+            image = wyvern.load_image_from_bytes(BytesIO(response.read()).getvalue())
         except Exception:
             pyThrow(t('Failed to load image data'))
     else:

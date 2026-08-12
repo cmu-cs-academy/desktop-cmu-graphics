@@ -67,7 +67,7 @@ use std::io::Write;
 use std::io::Read;
 
 use pyo3::exceptions::PyRuntimeError;
-use pyo3::types::PyByteArray;
+use pyo3::types::{PyByteArray, PyBytes};
 
 use skia_safe::{
     Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, Image, ImageInfo, Matrix,
@@ -705,13 +705,8 @@ fn load_image_from_path(path: &str) -> PyResult<WyvernImage> {
 }
 
 #[pyfunction]
-fn load_image_from_url(url: &str) -> PyResult<WyvernImage> {
-    let response_bytes = reqwest::blocking::get(url)
-    .map_err(|_| PyRuntimeError::new_err("Issue with getting image from URL"))?
-    .bytes()
-    .map_err(|_| PyRuntimeError::new_err("Issue with getting bytes from image in load_image_from_url"))?;
-    let skia_data = skia_safe::Data::new_copy(&response_bytes);
-
+fn load_image_from_bytes(py_bytes: &Bound<'_, PyBytes>) -> PyResult<WyvernImage> {
+    let skia_data = skia_safe::Data::new_copy(py_bytes.as_bytes());
     create_image(skia_data)
 }
 
@@ -1479,7 +1474,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<Gradient>()?;
     wyvern.add_class::<WyvernImage>()?;
     wyvern.add_function(wrap_pyfunction!(load_image_from_path, &wyvern)?)?;
-    wyvern.add_function(wrap_pyfunction!(load_image_from_url, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(load_image_from_bytes, &wyvern)?)?;
     wyvern.add_class::<PythonEvent>()?;
     wyvern.add_class::<MouseEvent>()?;
     wyvern.add_class::<KeyEvent>()?;
