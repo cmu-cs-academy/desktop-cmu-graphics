@@ -34,10 +34,10 @@ jobs:
           args: --release
           before-script-linux: |
             if command -v yum &> /dev/null; then
-              yum install -y freetype-devel fontconfig-devel alsa-devel
+              yum install -y freetype-devel fontconfig-devel alsa-utils
             elif command -v apt &> /dev/null; then
               apt update -y
-              apt install -y pkg-config libfreetype6-dev libfontconfig1-dev alsa-dev
+              apt install -y pkg-config libfreetype6-dev libfontconfig1-dev alsa-utils
             fi
 
       - name: Upload wheels
@@ -62,10 +62,10 @@ jobs:
         args: --sdist
         before-script-linux: |
           if command -v yum &> /dev/null; then
-            yum install -y freetype-devel fontconfig-devel alsa-devel
+            yum install -y freetype-devel fontconfig-devel alsa-utils
           elif command -v apt &> /dev/null; then
             apt update -y
-            apt install -y pkg-config libfreetype6-dev libfontconfig1-dev alsa-dev
+            apt install -y pkg-config libfreetype6-dev libfontconfig1-dev alsa-utils
           fi
 
     - uses: actions/upload-artifact@v6
