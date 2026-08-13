@@ -1014,6 +1014,7 @@ fn named_keys_to_name(name: &NamedKey) -> Option<&str> {
         NamedKey::Backspace => Some("backspace"),
         NamedKey::Delete => Some("delete"),
         NamedKey::Space => Some("space"),
+        NamedKey::Control => Some("control"),
         _ => None,
     }
 }
@@ -1480,6 +1481,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     }
                     _ => return,
                 };
+                println!("{}", key);
                 match event.state {
                     winit::event::ElementState::Pressed => {
                         self.call_event_handler(

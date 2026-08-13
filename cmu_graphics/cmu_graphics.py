@@ -761,7 +761,7 @@ class App(object):
 
         if key is None:
             return
-        if key == 'ctrl':
+        if key == 'control':
             self.isCtrlKeyDown = True
             return
         if key == 'space' and 'shift' in modifiers:
@@ -776,7 +776,7 @@ class App(object):
 
         if key is None:
             return
-        if key == 'ctrl':
+        if key == 'control':
             self.isCtrlKeyDown = False
             return
         if key.upper() in self._allKeysDown:
@@ -1083,12 +1083,12 @@ class App(object):
             )
 
         elif event.event_type == 'key_press':
-            if event.key.key == 'ctrl':
+            if event.key.key == 'control':
                 self.isCtrlKeyDown = True
             self.handleKeyPress(event.key.key, event.key.modifiers)
 
         elif event.event_type == 'key_release':
-            if event.key.key == 'ctrl':
+            if event.key.key == 'control':
                 self.isCtrlKeyDown = False
             self.handleKeyRelease(event.key.key, event.key.modifiers)
 
