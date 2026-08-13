@@ -1481,7 +1481,6 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     }
                     _ => return,
                 };
-                println!("{}", key);
                 match event.state {
                     winit::event::ElementState::Pressed => {
                         self.call_event_handler(
