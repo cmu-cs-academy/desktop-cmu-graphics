@@ -15,6 +15,8 @@
 
 import importlib
 
+__all__ = ['cmu_graphics_helpers', 'pygame', 'pygeo', 'wyvern']
+
 _prefix = __package__ + '.' if __package__ else ''
 
 VENDORED = importlib.import_module(_prefix + 'dist').VENDORED
@@ -24,8 +26,10 @@ if VENDORED:
     cmu_graphics_helpers = importlib.import_module(
         _prefix + 'libs.cmu_graphics_helpers_loader'
     )
-    wyvern = cmu_graphics_helpers.wyvern
-    pygeo = cmu_graphics_helpers.pygeo
 else:
     import pygame
+
     import cmu_graphics_helpers
+
+wyvern = cmu_graphics_helpers.wyvern
+pygeo = cmu_graphics_helpers.pygeo

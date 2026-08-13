@@ -1,7 +1,7 @@
 import json
 import math
 
-from cmu_graphics.deps import pygame, wyvern
+from deps import pygame, wyvern
 
 keyNameMap = {
     pygame.K_TAB: 'tab',
