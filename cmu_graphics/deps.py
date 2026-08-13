@@ -1,5 +1,5 @@
 # Resolves the native dependencies for the package modules,
-# based on which distribution we are (see _dist.py).
+# based on which distribution we are (see dist.py).
 #
 # Import these from here rather than importing pygame/cmu_graphics_helpers
 # directly, so the vendored-vs-pip choice lives in exactly one place:

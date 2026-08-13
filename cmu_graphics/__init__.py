@@ -183,7 +183,7 @@ def check_for_shadowing():
 
 check_for_shadowing()
 
-from cmu_graphics._dist import VENDORED
+from cmu_graphics.dist import VENDORED
 from .libs import loader_util
 
 loader_util.verify_support(VENDORED)

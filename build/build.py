@@ -16,7 +16,7 @@ def copyfile_log(src, dest, **kwargs):
     shutil.copy2(src, dest, **kwargs)
 
 def set_vendored(dist_py_path, vendored):
-    # Bake the distribution switch (see cmu_graphics/_dist.py) into a build
+    # Bake the distribution switch (see cmu_graphics/dist.py) into a build
     # copy. The source is checked in as VENDORED = True (used by the zip
     # installer and local development); this flips it for the pip build.
     with open(dist_py_path, "r", encoding="utf-8") as f:
@@ -68,7 +68,7 @@ def build_pypi_package(pypi_dest):
 
     # The zip copy keeps the checked-in VENDORED = True; only the pip copy
     # needs flipping to load dependencies from the system instead of libs.
-    set_vendored(f"{pypi_dest}/cmu_graphics/_dist.py", False)
+    set_vendored(f"{pypi_dest}/cmu_graphics/dist.py", False)
 
     print('Running python -m build...')
     subprocess.run([sys.executable, '-m', 'build'], cwd=pypi_dest, check=True)
