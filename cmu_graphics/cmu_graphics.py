@@ -5,7 +5,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
-from cmu_graphics._dist import VENDORED
+from cmu_graphics.dist import VENDORED
 
 
 class Signal:
@@ -1726,8 +1726,7 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 import math
 
-from cmu_graphics._deps import pygame, cmu_graphics_helpers
-from cmu_graphics_helpers import wyvern
+from cmu_graphics.deps import pygame, wyvern
 from random import *
 from cmu_graphics.utils import *
 import atexit

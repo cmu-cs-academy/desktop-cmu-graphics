@@ -3,9 +3,8 @@ import copy
 from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 
-from cmu_graphics._deps import pygame, cmu_graphics_helpers
+from cmu_graphics.deps import pygame, wyvern, pygeo
 
-from cmu_graphics_helpers import pygeo, wyvern
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import sys

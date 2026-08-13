@@ -1,12 +1,7 @@
+import json
 import math
 
-# modal.py runs as a standalone subprocess whose sys.path[0] is the package
-# directory itself, so the shim has to be imported flatly rather than as
-# cmu_graphics._deps. See the comment in _deps.py.
-from _deps import pygame, cmu_graphics_helpers
-
-from cmu_graphics_helpers import wyvern
-import json
+from cmu_graphics.deps import pygame, wyvern
 
 keyNameMap = {
     pygame.K_TAB: 'tab',
