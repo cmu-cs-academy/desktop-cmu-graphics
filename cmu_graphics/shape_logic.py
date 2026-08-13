@@ -3847,10 +3847,10 @@ class Inspector(object):
         if self.bestX is None or self.bestY is None:
             return
 
-        # BGR, in the 0-1 range set_source_rgb/set_source_rgba expect
+        # in the 0-1 range set_source_rgb/set_source_rgba expect
         black = (0, 0, 0)
-        red = (0, 0, 1)
-        gold = (0, 215 / 255, 1)
+        red = (1, 0, 0)
+        gold = (1, 215 / 255, 0)
         white = (1, 1, 1)
 
         for pt in self.keyPoints:
