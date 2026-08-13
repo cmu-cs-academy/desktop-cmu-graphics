@@ -62,7 +62,7 @@ def helpers_changes():
     changed = git('diff', '--name-only', MAIN_REF, '--', HELPERS_DIR)
     if changed is None:
         raise SystemExit(f'could not diff {HELPERS_DIR}/ against {MAIN_REF}')
-    return sorted(changed.split())
+    return changed.split()
 
 
 def main_version():
@@ -113,25 +113,35 @@ def check_version_bumped(version):
     """
     require_main_ref()
 
-    changed = helpers_changes()
-    if not changed:
+    if not helpers_changes():
         return
 
     published = main_version()
+    current_key = release_sort_key(version)
+    main_key = release_sort_key(published)
+
+    if current_key is not None and main_key is not None and current_key > main_key:
+        return
+
     if version == published:
         problem = f'the version is still {version}'
+        fix = 'Bump it'
+    elif current_key is None or main_key is None:
+        unparsed = version if current_key is None else published
+        problem = (
+            f"the version went from {published} to {version}, and {unparsed} isn't a "
+            f"plain X.Y.Z release, so this check can't tell whether that's ahead"
+        )
+        fix = 'Use a plain X.Y.Z version'
     else:
-        current_key = release_sort_key(version)
-        main_key = release_sort_key(published)
-        if current_key is not None and main_key is not None and current_key > main_key:
-            return
         problem = f'the version went backwards, from {published} to {version}'
+        fix = 'Bump it'
 
     print(
-        f'{HELPERS_DIR}/ differs from main, but {problem}:\n'
-        f'Bump the version in {HELPERS_DIR}/Cargo.toml (and pyproject.toml and '
-        f'tox.ini to match), so that installs use the wheel built from this source '
-        f'instead of the published {published} from PyPI.',
+        f'{HELPERS_DIR}/ differs from main, but {problem}.\n'
+        f'{fix} in {HELPERS_DIR}/Cargo.toml (and pyproject.toml and tox.ini to '
+        f'match), so that installs use the wheel built from this source instead of '
+        f'the published {published} from PyPI.',
         file=sys.stderr,
     )
     sys.exit(1)
