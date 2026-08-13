@@ -8,7 +8,7 @@ use geo::BooleanOps;
 use geo::{LineString, MultiPolygon, Polygon};
 
 // type aliases
-type PyLineString = Vec<(f64, f64)>;
+type PyLineString = Vec<[f64; 2]>;
 type PyPolygon = Vec<PyLineString>;
 type PyMultiPolygon = Vec<PyPolygon>;
 
@@ -29,7 +29,7 @@ fn py_multi_polygon_to_multi_polygon(multi_poly: PyMultiPolygon) -> MultiPolygon
 
 // conversions from Rust to Python
 fn line_string_to_vec(line_string: &LineString<f64>) -> PyLineString {
-    line_string.points().map(|p| (p.x(), p.y())).collect()
+    line_string.points().map(|p| [p.x(), p.y()]).collect()
 }
 
 fn polygon_to_py_polygon(poly: Polygon<f64>) -> PyPolygon {
@@ -57,6 +57,52 @@ fn union(py_polys: Vec<PyMultiPolygon>) -> PyResult<PyMultiPolygon> {
             "union must be given at least one MultiPolygon as input",
         )),
     }
+}
+
+fn segmentsIntersect(
+    x1: f64,
+    y1: f64,
+    x2: f64,
+    y2: f64,
+    x3: f64,
+    y3: f64,
+    x4: f64,
+    y4: f64,
+) -> bool {
+    let dxa = x2 - x1;
+    let dya = y2 - y1;
+    let dxb = x4 - x3;
+    let dyb = y4 - y3;
+    let s = if (-dxb * dya + dxa * dyb) == 0.0 {
+        f64::INFINITY
+    } else {
+        (-dya * (x1 - x3) + dxa * (y1 - y3)) / (-dxb * dya + dxa * dyb)
+    };
+    let t = if (-dxb * dya + dxa * dyb) == 0.0 {
+        f64::INFINITY
+    } else {
+        (dxb * (y1 - y3) - dyb * (x1 - x3)) / (-dxb * dya + dxa * dyb)
+    };
+    return s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0;
+}
+
+#[pyfunction]
+fn edgesIntersect(pts1: Vec<[f64; 2]>, pts2: Vec<[f64; 2]>) -> bool {
+    let mut k;
+    for i in 0..pts1.len() {
+        let (x1, y1) = (pts1[i][0], pts1[i][1]);
+        k = (i + 1) % pts1.len();
+        let (x2, y2) = (pts1[k][0], pts1[k][1]);
+        for j in 0..pts2.len() {
+            let (x3, y3) = (pts2[j][0], pts2[j][1]);
+            k = (j + 1) % pts2.len();
+            let (x4, y4) = (pts2[k][0], pts2[k][1]);
+            if segmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 /* PYGEO */
 
@@ -1561,6 +1607,7 @@ fn set_active_screen(new_screen: String) -> PyResult<()> {
 fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     let pygeo = PyModule::new(m.py(), "pygeo")?;
     pygeo.add_function(wrap_pyfunction!(union, &pygeo)?)?;
+    pygeo.add_function(wrap_pyfunction!(edgesIntersect, &pygeo)?)?;
     m.add_submodule(&pygeo)?;
     m.py()
         .import("sys")?
