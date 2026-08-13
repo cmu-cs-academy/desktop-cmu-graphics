@@ -1,12 +1,8 @@
+import json
+import math
 import time
 
-### ZIPFILE VERSION ###
-import libs.cmu_graphics_helpers_loader as cmu_graphics_helpers
-
-### END ZIPFILE VERSION ###
-
-from cmu_graphics_helpers import wyvern
-import json
+from deps import wyvern
 
 
 def nowMs():

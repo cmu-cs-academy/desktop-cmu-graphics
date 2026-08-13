@@ -4,6 +4,7 @@ import time
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
+from cmu_graphics.dist import VENDORED
 
 
 class Signal:
@@ -1549,12 +1550,10 @@ def check_for_update():
             print(
                 f'\n\nYou are running cmu-graphics version {version}, but a newer version {most_recent_version} is available.'
             )
-            ### ZIPFILE VERSION ###
-            print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
-            ### END ZIPFILE VERSION ###
-            ### PYPI VERSION ###
-            print('Run "pip install --upgrade cmu-graphics" to upgrade.')
-            ### END PYPI VERSION ###
+            if VENDORED:
+                print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
+            else:
+                print('Run "pip install --upgrade cmu-graphics" to upgrade.')
             print('\n\n')
     except Exception:
         pass
@@ -1585,11 +1584,7 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 import math
 
-### ZIPFILE VERSION ###
-from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
-
-### END ZIPFILE VERSION ###
-from cmu_graphics_helpers import wyvern
+from cmu_graphics.deps import pygame, wyvern
 from random import *
 from cmu_graphics.utils import *
 import atexit
