@@ -39,7 +39,10 @@ for:
     test_script:
       - set PATH=%USERPROFILE%\.cargo\bin;C:\Program Files\LLVM\bin;%PATH%
       - set LIBCLANG_PATH=C:\Program Files\LLVM\bin
-      - C:\Python311-x64\python.exe -m tox --parallel 2
+      # -o streams each env's output as it runs instead of buffering it until
+      # the env finishes, so a slow or hung env is still diagnosable. The
+      # spinner is pure noise in a log file.
+      - C:\Python311-x64\python.exe -m tox --parallel 2 -o --parallel-no-spinner
 
     # See more info on RDP here:
     #   https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
@@ -76,7 +79,8 @@ for:
 
     test_script:
       - export PATH=$PATH:~/venv3.11/bin/:$HOME/.cargo/bin
-      - $PYBIN -m tox --parallel 2
+      # See the note on the Windows job above.
+      - $PYBIN -m tox --parallel 2 -o --parallel-no-spinner
 
     # on_finish:
     #   - export APPVEYOR_SSH_BLOCK=true
