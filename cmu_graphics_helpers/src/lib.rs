@@ -1307,9 +1307,11 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     return;
                 }
 
+                let logical_size: LogicalSize<u32> =
+                    new_size.to_logical(app_internals.window.scale_factor());
                 self.call_event_handler(
                     event_loop,
-                    PythonEvent::resize(new_size.width, new_size.height),
+                    PythonEvent::resize(logical_size.width, logical_size.height),
                 );
             }
             WindowEvent::CursorMoved {
@@ -1484,9 +1486,10 @@ fn run(
     resizable: bool,
     title: String,
 ) -> PyResult<()> {
-    let Ok(image) = image::open(
-        "C:\\Users\\sonya\\Documents\\desktop-cmu-graphics\\cmu_graphics_helpers\\scotty.png",
-    ) else {
+    let Ok(image) = image::load_from_memory(include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/scotty.png"
+    ))) else {
         return Err(PyRuntimeError::new_err("Issue with opening icon image"));
     };
     let image_rgba = image.into_rgba8();

@@ -904,6 +904,9 @@ class App(object):
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
     def handleResize(self, newWidth, newHeight):
+        if (newWidth, newHeight) == (self._width, self._height):
+            return
+
         self._width = newWidth
         self._height = newHeight
 
@@ -1038,8 +1041,6 @@ class App(object):
 
     def on_event(self, event, surface):
         self._ctx = surface.canvas
-        self._width = surface.width
-        self._height = surface.height
 
         if self.stopped and event.event_type not in ('redraw', 'step'):
             return
@@ -1585,7 +1586,7 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 import math
 
 ### ZIPFILE VERSION ###
-# from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
+from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
 
 ### END ZIPFILE VERSION ###
 from cmu_graphics_helpers import wyvern
