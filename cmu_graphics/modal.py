@@ -1,16 +1,7 @@
+import json
 import math
 
-### ZIPFILE VERSION ###
-import libs.pygame_loader as pygame
-import libs.cmu_graphics_helpers_loader as cmu_graphics_helpers
-
-### END ZIPFILE VERSION ###
-### PYPI VERSION ###
-import pygame
-
-### END PYPI VERSION ###
-from cmu_graphics_helpers import wyvern
-import json
+from deps import pygame, wyvern
 
 keyNameMap = {
     pygame.K_TAB: 'tab',

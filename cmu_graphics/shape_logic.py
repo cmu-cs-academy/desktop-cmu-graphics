@@ -3,17 +3,8 @@ import copy
 from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 
-### ZIPFILE VERSION ###
-from cmu_graphics.libs import pygame_loader as pygame
-from cmu_graphics.libs import cmu_graphics_helpers_loader as cmu_graphics_helpers
+from cmu_graphics.deps import pygame, wyvern, pygeo
 
-### END ZIPFILE VERSION ###
-### PYPI VERSION ###
-import pygame
-
-### END PYPI VERSION ###
-
-from cmu_graphics_helpers import pygeo, wyvern
 from cmu_graphics.libs import webrequest
 from io import BytesIO
 import sys
