@@ -813,20 +813,6 @@ impl ImageSurface {
         self.canvas.clone_ref(py)
     }
 
-    // this can probably be deleted once the pygame windowing has been replaced
-    #[getter]
-    fn data(&self, py: Python<'_>) -> PyResult<Py<PyByteArray>> {
-        let mut canvas_ref = self.canvas.bind(py).borrow_mut();
-        let pixmap = canvas_ref
-            .skia_surface
-            .peek_pixels()
-            .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
-        let bytes = pixmap
-            .bytes()
-            .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
-        Ok(PyByteArray::new(py, bytes).unbind())
-    }
-
     #[setter]
     fn set_width(&mut self, width: i32) {
         self.width = width;
