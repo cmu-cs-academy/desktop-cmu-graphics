@@ -31,8 +31,22 @@ Inside of `desktop-cmu-graphics` you will find the following...
 
 There are a number of dependencies that need to be installed:
 
-        cd <path/to/desktop-cmu-graphics>
-        uv run pre-commit install --install-hooks
+```
+cd <path/to/desktop-cmu-graphics>
+uv run pre-commit install --install-hooks
+```
+
+If you're working on the Rust helpers library, the Mac Rust setup looks like
+
+```
+brew install rustup
+```
+
+Then adding this line to your shell profile:
+
+```
+export PATH="$(brew --prefix rustup)/bin:$HOME/.cargo/bin:$PATH"
+```
 
 
 # Running a Build
