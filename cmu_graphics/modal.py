@@ -1,5 +1,4 @@
 import json
-import math
 import time
 
 from deps import wyvern

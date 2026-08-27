@@ -22,13 +22,10 @@ _prefix = __package__ + '.' if __package__ else ''
 VENDORED = importlib.import_module(_prefix + 'dist').VENDORED
 
 if VENDORED:
-    pygame = importlib.import_module(_prefix + 'libs.pygame_loader')
     cmu_graphics_helpers = importlib.import_module(
         _prefix + 'libs.cmu_graphics_helpers_loader'
     )
 else:
-    import pygame
-
     import cmu_graphics_helpers
 
 wyvern = cmu_graphics_helpers.wyvern

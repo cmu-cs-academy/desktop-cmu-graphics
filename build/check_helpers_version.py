@@ -1,6 +1,6 @@
 import re
 import sys
-import tomllib
+import tomli
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -8,12 +8,12 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def cargo_version():
     with open(ROOT / 'cmu_graphics_helpers' / 'Cargo.toml', 'rb') as f:
-        return tomllib.load(f)['package']['version']
+        return tomli.load(f)['package']['version']
 
 
 def pyproject_pin():
     with open(ROOT / 'pyproject.toml', 'rb') as f:
-        data = tomllib.load(f)
+        data = tomli.load(f)
 
     for dep in data['project']['dependencies']:
         match = re.fullmatch(r'cmu-graphics-helpers==(.+)', dep)
