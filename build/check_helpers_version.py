@@ -71,8 +71,8 @@ def main_version():
     if cargo_toml is None:
         raise SystemExit(f'could not read {HELPERS_DIR}/Cargo.toml at {MAIN_REF}')
     try:
-        return tomllib.loads(cargo_toml)['package']['version']
-    except (tomllib.TOMLDecodeError, KeyError):
+        return tomli.loads(cargo_toml)['package']['version']
+    except (tomli.TOMLDecodeError, KeyError):
         raise SystemExit(
             f'could not parse the version out of {HELPERS_DIR}/Cargo.toml at {MAIN_REF}'
         )
