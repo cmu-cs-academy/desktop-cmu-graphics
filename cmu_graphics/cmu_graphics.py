@@ -863,8 +863,8 @@ class App(object):
         self._takeScreenshotPath = None
         self._screenshotTriggered = False
 
-        self._fullscreen = False
         self._cursorVisible = True
+        self._fullscreen = False
 
     def get_group(self):
         return self._tlg
@@ -992,14 +992,6 @@ class App(object):
 
     showFontWarnings = property(get_showFontWarnings, set_showFontWarnings)
 
-    def get_fullscreen(self):
-        return self._fullscreen
-
-    def set_fullscreen(self, value):
-        self._fullscreen = value
-
-    fullscreen = property(get_fullscreen, set_fullscreen)
-
     def get_cursorVisible(self):
         return self._cursorVisible
 
@@ -1062,6 +1054,20 @@ class App(object):
             cwd=current_directory,
         )
         return p
+
+    def enableFullscreen(self):
+        self._fullscreen = True
+        try:
+            wyvern.set_fullscreen(True)
+        except:
+            return
+
+    def disableFullscreen(self):
+        self._fullscreen = False
+        try:
+            wyvern.set_fullscreen(False)
+        except:
+            return
 
     def on_event(self, event, surface):
         self._ctx = surface.canvas
@@ -1171,6 +1177,8 @@ class AppWrapper(object):
             'top',
             'setMaxShapeCount',
             'printFullTracebacks',
+            'enableFullscreen',
+            'disableFullscreen',
         ]
     )
     readWriteAttrs = set(
@@ -1186,7 +1194,6 @@ class AppWrapper(object):
             'maxShapeCount',
             'inspectorEnabled',
             'showFontWarnings',
-            'fullscreen',
             'cursorVisible',
         ]
     )

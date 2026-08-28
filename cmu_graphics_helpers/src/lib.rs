@@ -935,6 +935,7 @@ enum UserEvent {
     Quit,
     SetActiveScreen(String),
     CursorVisible(bool),
+    Fullscreen(bool),
 }
 
 // apparently this is idiomatic
@@ -956,6 +957,7 @@ struct WinitApp {
     on_event: Py<PyAny>,
     modifiers: Modifiers,
     error: Option<PyErr>,
+    fullscreen: bool,
     needs_redraw: bool,
 }
 
@@ -1411,6 +1413,11 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 };
 
                 app_internals.window.set_cursor_visible(self.cursor_visible);
+                if self.fullscreen {
+                    app_internals.window.set_fullscreen(Some(Borderless(None)));
+                } else {
+                    app_internals.window.set_fullscreen(None);
+                }
 
                 let Ok(mut buffer) = app_internals.softbuffer_surface.buffer_mut() else {
                     self.error = Some(PyRuntimeError::new_err(
@@ -1518,6 +1525,13 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 };
                 internals.window.request_redraw();
             }
+            UserEvent::Fullscreen(fullscreen) => {
+                self.fullscreen = fullscreen;
+                let Some(internals) = &self.internals else {
+                    return
+                };
+                internals.window.request_redraw();
+            }
         }
     }
 }
@@ -1531,7 +1545,7 @@ fn run(
     resizable: bool,
     title: String,
     fullscreen: bool,
-    cursor_visible: bool,
+    cursor_visible: bool
 ) -> PyResult<()> {
     let Ok(image) = image::load_from_memory(include_bytes!(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -1545,14 +1559,12 @@ fn run(
     let Ok(icon) = winit::window::Icon::from_rgba(rgba, width, height) else {
         return Err(PyRuntimeError::new_err("Issue with creating icon image"));
     };
-    let fullscreen = if fullscreen { Some(Borderless(None)) } else { None };
     let window_attributes = Window::default_attributes()
         .with_min_inner_size(LogicalSize::new(1, 1))
         .with_inner_size(LogicalSize::new(app_width, app_height))
         .with_resizable(resizable)
         .with_title(title)
         .with_window_icon(Some(icon))
-        .with_fullscreen(fullscreen)
         .with_visible(false);
 
     let mut app = WinitApp {
@@ -1566,6 +1578,7 @@ fn run(
         on_event,
         modifiers: Modifiers::default(),
         error: None,
+        fullscreen,
         needs_redraw: false,
     };
 
@@ -1616,6 +1629,17 @@ fn set_cursor_visible(visible: bool) -> PyResult<()> {
         .map_err(|_| PyRuntimeError::new_err("Failed to send cursor_visible event"))?;
     Ok(())
 }
+
+#[pyfunction]
+fn set_fullscreen(fullscreen: bool) -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::Fullscreen(fullscreen))
+        .map_err(|_| PyRuntimeError::new_err("Failed to send fullscreen event"))?;
+    Ok(())
+}
 /* BYEGAME */
 
 #[pymodule]
@@ -1648,6 +1672,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_function(wrap_pyfunction!(quit, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(set_active_screen, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(set_cursor_visible, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(set_fullscreen, &wyvern)?)?;
     m.add_submodule(&wyvern)?;
     m.py()
         .import("sys")?
