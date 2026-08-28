@@ -6,6 +6,7 @@ use pyo3::types::PyModule;
 
 use geo::BooleanOps;
 use geo::{LineString, MultiPolygon, Polygon};
+use winit::window::Fullscreen::Borderless;
 
 // type aliases
 type PyLineString = Vec<[f64; 2]>;
@@ -933,6 +934,7 @@ impl WyvernSound {
 enum UserEvent {
     Quit,
     SetActiveScreen(String),
+    CursorVisible(bool),
 }
 
 // apparently this is idiomatic
@@ -949,6 +951,7 @@ struct WinitApp {
     last_tick: Instant,
     last_mouse: Instant,
     cursor_position: PhysicalPosition<f64>,
+    cursor_visible: bool,
     py_surface: Option<Py<ImageSurface>>,
     on_event: Py<PyAny>,
     modifiers: Modifiers,
@@ -1407,6 +1410,8 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                     return;
                 };
 
+                app_internals.window.set_cursor_visible(self.cursor_visible);
+
                 let Ok(mut buffer) = app_internals.softbuffer_surface.buffer_mut() else {
                     self.error = Some(PyRuntimeError::new_err(
                         "Issue with obtaining softbuffer surface",
@@ -1506,6 +1511,13 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             UserEvent::SetActiveScreen(screen) => {
                 self.call_event_handler(event_loop, PythonEvent::set_active_screen(screen));
             }
+            UserEvent::CursorVisible(visible) => {
+                self.cursor_visible = visible;
+                let Some(internals) = &self.internals else {
+                    return
+                };
+                internals.window.request_redraw();
+            }
         }
     }
 }
@@ -1518,6 +1530,8 @@ fn run(
     app_height: u32,
     resizable: bool,
     title: String,
+    fullscreen: bool,
+    cursor_visible: bool,
 ) -> PyResult<()> {
     let Ok(image) = image::load_from_memory(include_bytes!(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -1531,12 +1545,14 @@ fn run(
     let Ok(icon) = winit::window::Icon::from_rgba(rgba, width, height) else {
         return Err(PyRuntimeError::new_err("Issue with creating icon image"));
     };
+    let fullscreen = if fullscreen { Some(Borderless(None)) } else { None };
     let window_attributes = Window::default_attributes()
         .with_min_inner_size(LogicalSize::new(1, 1))
         .with_inner_size(LogicalSize::new(app_width, app_height))
         .with_resizable(resizable)
         .with_title(title)
         .with_window_icon(Some(icon))
+        .with_fullscreen(fullscreen)
         .with_visible(false);
 
     let mut app = WinitApp {
@@ -1545,6 +1561,7 @@ fn run(
         last_tick: Instant::now(),
         last_mouse: Instant::now(),
         cursor_position: PhysicalPosition { x: 0.0, y: 0.0 },
+        cursor_visible,
         py_surface: None,
         on_event,
         modifiers: Modifiers::default(),
@@ -1588,6 +1605,17 @@ fn set_active_screen(new_screen: String) -> PyResult<()> {
         .map_err(|_| PyRuntimeError::new_err("Failed to send set_active_screen event"))?;
     Ok(())
 }
+
+#[pyfunction]
+fn set_cursor_visible(visible: bool) -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::CursorVisible(visible))
+        .map_err(|_| PyRuntimeError::new_err("Failed to send cursor_visible event"))?;
+    Ok(())
+}
 /* BYEGAME */
 
 #[pymodule]
@@ -1619,6 +1647,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_function(wrap_pyfunction!(run, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(quit, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(set_active_screen, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(set_cursor_visible, &wyvern)?)?;
     m.add_submodule(&wyvern)?;
     m.py()
         .import("sys")?

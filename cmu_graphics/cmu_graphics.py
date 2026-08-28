@@ -863,6 +863,9 @@ class App(object):
         self._takeScreenshotPath = None
         self._screenshotTriggered = False
 
+        self._fullscreen = False
+        self._cursorVisible = True
+
     def get_group(self):
         return self._tlg
 
@@ -988,6 +991,26 @@ class App(object):
         shape_logic.SHOW_FONT_WARNINGS = value
 
     showFontWarnings = property(get_showFontWarnings, set_showFontWarnings)
+
+    def get_fullscreen(self):
+        return self._fullscreen
+
+    def set_fullscreen(self, value):
+        self._fullscreen = value
+
+    fullscreen = property(get_fullscreen, set_fullscreen)
+
+    def get_cursorVisible(self):
+        return self._cursorVisible
+
+    def set_cursorVisible(self, value):
+        self._cursorVisible = value
+        try:
+            wyvern.set_cursor_visible(value)
+        except:
+            return
+
+    cursorVisible = property(get_cursorVisible, set_cursorVisible)
 
     def stop(self):
         self._stopped = True
@@ -1122,7 +1145,7 @@ class App(object):
         self._screenshotTriggered = False
         self._running = True
 
-        wyvern.run(self.on_event, int(self.width), int(self.height), True, self.title)
+        wyvern.run(self.on_event, int(self.width), int(self.height), True, self.title, self._fullscreen, self._cursorVisible)
 
         self._running = False
         cleanAndClose()
@@ -1163,6 +1186,8 @@ class AppWrapper(object):
             'maxShapeCount',
             'inspectorEnabled',
             'showFontWarnings',
+            'fullscreen',
+            'cursorVisible',
         ]
     )
     allAttrs = readOnlyAttrs | readWriteAttrs
