@@ -1000,7 +1000,7 @@ class App(object):
         try:
             wyvern.set_cursor_visible(value)
         except RuntimeError as e:
-            if str(e) == "Event loop proxy is not running":
+            if str(e) == 'Event loop proxy is not running':
                 return
             else:
                 raise e
@@ -1063,7 +1063,7 @@ class App(object):
         try:
             wyvern.set_fullscreen(True)
         except RuntimeError as e:
-            if str(e) == "Event loop proxy is not running":
+            if str(e) == 'Event loop proxy is not running':
                 return
             else:
                 raise e
@@ -1073,7 +1073,7 @@ class App(object):
         try:
             wyvern.set_fullscreen(False)
         except RuntimeError as e:
-            if str(e) == "Event loop proxy is not running":
+            if str(e) == 'Event loop proxy is not running':
                 return
             else:
                 raise e
