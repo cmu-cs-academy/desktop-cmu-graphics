@@ -1002,6 +1002,8 @@ class App(object):
         except RuntimeError as e:
             if str(e) == "Event loop proxy is not running":
                 return
+            else:
+                raise e
 
     cursorVisible = property(get_cursorVisible, set_cursorVisible)
 
@@ -1063,6 +1065,8 @@ class App(object):
         except RuntimeError as e:
             if str(e) == "Event loop proxy is not running":
                 return
+            else:
+                raise e
 
     def disableFullscreen(self):
         self._fullscreen = False
@@ -1071,6 +1075,8 @@ class App(object):
         except RuntimeError as e:
             if str(e) == "Event loop proxy is not running":
                 return
+            else:
+                raise e
 
     def on_event(self, event, surface):
         self._ctx = surface.canvas

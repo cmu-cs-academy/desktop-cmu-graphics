@@ -349,7 +349,8 @@ class TextBoxModal(object):
         self.mouseIsDown = False
         self.lastMousePosition = None
 
-        wyvern.run(self.on_event, int(self.width), int(self.height), False, self.title)
+        # cursor visible by default?
+        wyvern.run(self.on_event, int(self.width), int(self.height), False, self.title, False, True)
 
     def get_height(self):
         return (self.dividerY - self.top) + self.inputHeight
