@@ -999,8 +999,9 @@ class App(object):
         self._cursorVisible = value
         try:
             wyvern.set_cursor_visible(value)
-        except:
-            return
+        except RuntimeError as e:
+            if str(e) == "Event loop proxy is not running":
+                return
 
     cursorVisible = property(get_cursorVisible, set_cursorVisible)
 
@@ -1059,15 +1060,17 @@ class App(object):
         self._fullscreen = True
         try:
             wyvern.set_fullscreen(True)
-        except:
-            return
+        except RuntimeError as e:
+            if str(e) == "Event loop proxy is not running":
+                return
 
     def disableFullscreen(self):
         self._fullscreen = False
         try:
             wyvern.set_fullscreen(False)
-        except:
-            return
+        except RuntimeError as e:
+            if str(e) == "Event loop proxy is not running":
+                return
 
     def on_event(self, event, surface):
         self._ctx = surface.canvas
