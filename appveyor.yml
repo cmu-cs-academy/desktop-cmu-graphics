@@ -73,12 +73,12 @@ for:
       - export PATH="$HOME/.cargo/bin:$PATH"
 
     before_test:
-      - export PATH=$PATH:~/venv3.11/bin/:$HOME/.cargo/bin
+      - export PATH=$PATH:~/venv3.8/bin/:~/venv3.10/bin/:~/venv3.11/bin/:$HOME/.cargo/bin
       - export ARCHFLAGS="-arch x86_64"
       - $PYBIN build/build.py
 
     test_script:
-      - export PATH=$PATH:~/venv3.11/bin/:$HOME/.cargo/bin
+      - export PATH=$PATH:~/venv3.8/bin/:~/venv3.10/bin/:~/venv3.11/bin/:$HOME/.cargo/bin
       # See the note on the Windows job above.
       - $PYBIN -m tox --parallel 2 -o --parallel-no-spinner
 
