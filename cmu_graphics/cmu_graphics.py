@@ -1151,7 +1151,15 @@ class App(object):
         self._screenshotTriggered = False
         self._running = True
 
-        wyvern.run(self.on_event, int(self.width), int(self.height), True, self.title, self._fullscreen, self._cursorVisible)
+        wyvern.run(
+            self.on_event,
+            int(self.width),
+            int(self.height),
+            True,
+            self.title,
+            self._fullscreen,
+            self._cursorVisible,
+        )
 
         self._running = False
         cleanAndClose()
