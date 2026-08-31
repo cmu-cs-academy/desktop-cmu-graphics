@@ -36,17 +36,8 @@ cd <path/to/desktop-cmu-graphics>
 uv run pre-commit install --install-hooks
 ```
 
-If you're working on the Rust helpers library, the Mac Rust setup looks like
-
-```
-brew install rustup
-```
-
-Then adding this line to your shell profile:
-
-```
-export PATH="$(brew --prefix rustup)/bin:$HOME/.cargo/bin:$PATH"
-```
+If you're working on the Rust helpers library, install Rust via rustup as described [here](https://rust-lang.org/tools/install/). See the section about configuration your `PATH` environment
+variable to ensure `cargo` and `rustc` are both available.
 
 
 # Running a Build
