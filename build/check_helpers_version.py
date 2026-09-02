@@ -1,7 +1,7 @@
 import re
 import subprocess
 import sys
-import tomllib
+import tomli
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -13,12 +13,12 @@ MAIN_REF = 'origin/main'
 
 def cargo_version():
     with open(ROOT / 'cmu_graphics_helpers' / 'Cargo.toml', 'rb') as f:
-        return tomllib.load(f)['package']['version']
+        return tomli.load(f)['package']['version']
 
 
 def pyproject_pin():
     with open(ROOT / 'pyproject.toml', 'rb') as f:
-        data = tomllib.load(f)
+        data = tomli.load(f)
 
     for dep in data['project']['dependencies']:
         match = re.fullmatch(r'cmu-graphics-helpers==(.+)', dep)
@@ -71,8 +71,8 @@ def main_version():
     if cargo_toml is None:
         raise SystemExit(f'could not read {HELPERS_DIR}/Cargo.toml at {MAIN_REF}')
     try:
-        return tomllib.loads(cargo_toml)['package']['version']
-    except (tomllib.TOMLDecodeError, KeyError):
+        return tomli.loads(cargo_toml)['package']['version']
+    except (tomli.TOMLDecodeError, KeyError):
         raise SystemExit(
             f'could not parse the version out of {HELPERS_DIR}/Cargo.toml at {MAIN_REF}'
         )

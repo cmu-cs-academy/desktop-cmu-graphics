@@ -1,7 +1,6 @@
 import inspect
 import os
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
+import time
 
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
@@ -26,7 +25,6 @@ class Signal:
                 traceback.print_exc()
 
 
-pygameEvent = Signal()
 onStepEvent = Signal()
 onMainLoopEvent = Signal()
 
@@ -383,10 +381,6 @@ class Sound(object):
     number_of_sounds = 0
 
     def __init__(self, url):
-        if not pygame.mixer.get_init():
-            pygame.mixer.init()
-            pygame.mixer.set_num_channels(1)
-
         if not isinstance(url, str):
             callSpec = '{className}.{attr}'.format(className=t('Sound'), attr=t('url'))
             err = t(
@@ -402,8 +396,6 @@ class Sound(object):
             raise Exception(err)
 
         Sound.number_of_sounds += 1
-        if pygame.mixer.get_num_channels() == Sound.number_of_sounds:
-            pygame.mixer.set_num_channels(Sound.number_of_sounds * 2)
 
         if url.startswith('file://'):
             url = url.split('//')[-1]
@@ -411,17 +403,21 @@ class Sound(object):
         if url.startswith('http'):
             try:
                 response = webrequest.get(url)
-                self.sound = io.BytesIO(response.read())
+                data = io.BytesIO(response.read()).getvalue()
+            except Exception:
+                raise Exception('Failed to load sound data')
+        else:
+            if hasattr(__main__, '__file__'):
+                path = os.path.abspath(os.path.join(__main__.__file__, '..', url))
+            else:
+                path = os.path.abspath(os.path.join(os.getcwd(), url))
+            try:
+                with open(path, 'rb') as f:
+                    data = f.read()
             except Exception:
                 raise Exception('Failed to load sound data')
 
-        elif hasattr(__main__, '__file__'):
-            self.sound = os.path.abspath(os.path.join(__main__.__file__, '..', url))
-        else:
-            self.sound = os.path.abspath(os.path.join(os.getcwd(), url))
-
-        self.sound = pygame.mixer.Sound(self.sound)
-        self.channel = None
+        self._sound = wyvern.WyvernSound(data)
 
     def play(self, **kwargs):
         default_kwargs = {'loop': False, 'restart': False}
@@ -449,19 +445,10 @@ class Sound(object):
                 + repr(restart)
             )
 
-        loop = -1 if loop else 0
-        if not self.channel or not self.channel.get_busy():
-            self.channel = self.sound.play(loops=loop)
-        elif restart and self.channel.get_sound() != self.sound:
-            self.channel = self.sound.play(loops=loop)
-        elif restart:
-            self.channel.stop()
-            self.channel = self.sound.play(loops=loop)
-        else:
-            self.channel.unpause()
+        self._sound.play(loop, restart)
 
     def pause(self):
-        self.channel.pause()
+        self._sound.pause()
 
     def setVolume(self, volume: float):
         """
@@ -469,13 +456,13 @@ class Sound(object):
         If value < 0.0, the volume will not be changed\n
         If value > 1.0, the volume will be set to 1.0
         """
-        self.sound.set_volume(volume)
+        self._sound.set_volume(volume)
 
     def getVolume(self):
         """
         Returns the volume (range: 0.0 - 1.0 (inclusive))
         """
-        return self.sound.get_volume()
+        return self._sound.get_volume()
 
 
 SHAPES = [
@@ -617,18 +604,17 @@ def _safeMethod(appMethod):
     return m
 
 
-# Based on Lukas Peraza's pygame framework
-# https://github.com/LBPeraza/Pygame-Asteroids
 class App(object):
     def printFullTracebacks(self):
         shape_logic.printFullTracebacks()
 
     def getScreenshot(self, path):
         with DRAWING_LOCK:
-            pygame.image.save(self._screen, path)
+            self._ctx.save_png(path)
 
     def quit(self):
         self._running = False
+        wyvern.quit()
 
     def getPosArgCount(self, fn):
         fn_code = fn.__code__
@@ -735,55 +721,6 @@ class App(object):
         self.callUserFn('redrawAll', ())
         self.inRedrawAll = False
 
-    @staticmethod
-    def getKey(keyCode, modifierMask):
-        keyNameMap = {
-            pygame.K_TAB: 'tab',
-            pygame.K_RETURN: 'enter',
-            pygame.K_BACKSPACE: 'backspace',
-            pygame.K_DELETE: 'delete',
-            pygame.K_ESCAPE: 'escape',
-            pygame.K_SPACE: 'space',
-            pygame.K_RIGHT: 'right',
-            pygame.K_LEFT: 'left',
-            pygame.K_UP: 'up',
-            pygame.K_DOWN: 'down',
-            pygame.K_RCTRL: 'ctrl',
-            pygame.K_LCTRL: 'ctrl',
-        }
-
-        shiftMap = {
-            '1': '!',
-            '2': '@',
-            '3': '#',
-            '4': '$',
-            '5': '%',
-            '6': '^',
-            '7': '&',
-            '8': '*',
-            '9': '(',
-            '0': ')',
-            '[': '{',
-            ']': '}',
-            '/': '?',
-            '=': '+',
-            '\\': '|',
-            "'": '"',
-            ',': '<',
-            '.': '>',
-            '-': '_',
-            ';': ':',
-            '`': '~',
-        }
-
-        # Punctuation, numbers, and letters
-        if 33 < keyCode < 127:
-            key = chr(keyCode)
-            if modifierMask & pygame.KMOD_SHIFT:
-                key = shiftMap.get(key, key).upper()
-            return key
-        return keyNameMap.get(keyCode, None)
-
     def drawErrorScreen(self):
         wyvern_surface = wyvern.ImageSurface(self.width, self.height)
         ctx = wyvern_surface.canvas
@@ -818,43 +755,29 @@ class App(object):
                 fill='red',
             )
 
-        self.redrawAll(self._screen, wyvern_surface, ctx)
+        self.redrawAll(ctx)
 
-    def getModifiers(self, modifierMask):
-        modifiers = list()
-        if modifierMask & pygame.KMOD_SHIFT:
-            modifiers.append('shift')
-        if modifierMask & pygame.KMOD_CTRL:
-            modifiers.append('control')
-        if modifierMask & pygame.KMOD_META:
-            modifiers.append('meta')
-        return modifiers
-
-    def handleKeyPress(self, keyCode, modifierMask):
-        self._modifiers = self.getModifiers(modifierMask)
-        key = App.getKey(keyCode, modifierMask)
+    def handleKeyPress(self, key, modifiers):
+        self._modifiers = list(modifiers)
 
         if key is None:
             return
-        if key == 'ctrl':
+        if key == 'control':
             self.isCtrlKeyDown = True
             return
-        if key == 'space' and (modifierMask & pygame.KMOD_SHIFT):
+        if key == 'space' and 'shift' in modifiers:
             self.paused = not self.paused
             return
 
         self._allKeysDown.add(key)
-
-        modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyPress', (key, modifiers))
 
-    def handleKeyRelease(self, keyCode, modifierMask):
-        self._modifiers = self.getModifiers(modifierMask)
-        key = App.getKey(keyCode, modifierMask)
+    def handleKeyRelease(self, key, modifiers):
+        self._modifiers = list(modifiers)
 
         if key is None:
             return
-        if key == 'ctrl':
+        if key == 'control':
             self.isCtrlKeyDown = False
             return
         if key.upper() in self._allKeysDown:
@@ -862,10 +785,9 @@ class App(object):
         if key.lower() in self._allKeysDown:
             self._allKeysDown.remove(key.lower())
 
-        modifiers = self.getModifiers(modifierMask)
         self.callUserFn('onKeyRelease', (key, modifiers))
 
-    def redrawAll(self, screen, wyvern_surface, ctx):
+    def redrawAll(self, ctx):
         shape = shape_logic.Rect(
             {
                 'noGroup': True,
@@ -891,18 +813,6 @@ class App(object):
         finally:
             ctx.restore()
 
-        # Get the wyvern buffer and convert it from BGRA to RGBA
-        data_string = wyvern_surface.data
-
-        # Create PyGame surface
-        pygame_surface = pygame.image.frombuffer(
-            data_string, (self.width, self.height), 'RGBA'
-        )
-
-        # Show PyGame surface
-        screen.blit(pygame_surface, (0, 0))
-        pygame.display.flip()
-
         self.frameworkRedrew = True
 
     def shouldDrawInspector(self):
@@ -922,7 +832,7 @@ class App(object):
         self._width = 400
         self._height = 400
         self._allKeysDown = set()
-        self._modifiers = set()
+        self._modifiers = []
         self.background = None
 
         self._stepsPerSecond = 30
@@ -944,6 +854,17 @@ class App(object):
 
         self._isMvc = False
         self._initialScreen = None
+
+        self._lastTick = 0.0
+        self._lastMouseMoveTime = 0.0
+        self._lastMouseDragTime = 0.0
+        self._pendingMouseMove = None
+        self._pendingMouseDrag = None
+        self._takeScreenshotPath = None
+        self._screenshotTriggered = False
+
+        self._cursorVisible = True
+        self._fullscreen = False
 
     def get_group(self):
         return self._tlg
@@ -986,14 +907,12 @@ class App(object):
 
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
 
-    def updateScreenSize(self):
-        if self._running:
-            self.updateScreen(True)
-
     def handleResize(self, newWidth, newHeight):
+        if (newWidth, newHeight) == (self._width, self._height):
+            return
+
         self._width = newWidth
         self._height = newHeight
-        self.updateScreen(False)
 
         # Redraw even if onResize is not present in the user's globals
         self.callUserFn('onResize', (), redraw=False)
@@ -1021,7 +940,6 @@ class App(object):
 
     def setRight(self, value):
         self._width = value
-        self.updateScreenSize()
 
     right = property(getRight, setRight)
 
@@ -1038,7 +956,6 @@ class App(object):
 
     def setBottom(self, value):
         self._height = value
-        self.updateScreenSize()
 
     bottom = property(getBottom, setBottom)
 
@@ -1047,7 +964,6 @@ class App(object):
 
     def setWidth(self, value):
         self._width = value
-        self.updateScreenSize()
 
     width = property(getWidth, setWidth)
 
@@ -1056,7 +972,6 @@ class App(object):
 
     def setHeight(self, value):
         self._height = value
-        self.updateScreenSize()
 
     height = property(getHeight, setHeight)
 
@@ -1076,6 +991,16 @@ class App(object):
         shape_logic.SHOW_FONT_WARNINGS = value
 
     showFontWarnings = property(get_showFontWarnings, set_showFontWarnings)
+
+    def get_cursorVisible(self):
+        return self._cursorVisible
+
+    def set_cursorVisible(self, value):
+        self._cursorVisible = value
+        if self._running:
+            wyvern.set_cursor_visible(value)
+
+    cursorVisible = property(get_cursorVisible, set_cursorVisible)
 
     def stop(self):
         self._stopped = True
@@ -1128,146 +1053,109 @@ class App(object):
         )
         return p
 
-    def updateScreen(self, newScreen):
-        if newScreen:
-            self._screen = pygame.display.set_mode(
-                (self.width, self.height), pygame.RESIZABLE
+    def enableFullscreen(self):
+        self._fullscreen = True
+        if self._running:
+            wyvern.set_fullscreen(True)
+
+    def disableFullscreen(self):
+        self._fullscreen = False
+        if self._running:
+            wyvern.set_fullscreen(False)
+
+    def on_event(self, event, surface):
+        self._ctx = surface.canvas
+
+        if self.stopped and event.event_type not in ('redraw', 'step'):
+            return
+
+        elif event.event_type == 'step':
+            self._handleStep()
+
+        elif event.event_type == 'redraw':
+            if self._takeScreenshotPath is not None:
+                if not self._screenshotTriggered:
+                    self.callUserFn('onMousePress', (200, 200, 0))
+                    self._screenshotTriggered = True
+                else:
+                    self.inspector.clearCache()
+                    self.redrawAll(self._ctx)
+                    self.getScreenshot(self._takeScreenshotPath)
+                    self._running = False
+                    self.quit()
+                return
+            self.inspector.clearCache()
+            self.redrawAll(self._ctx)
+
+        elif event.event_type == 'mouse_press':
+            self.callUserFn(
+                'onMousePress', (event.mouse.x, event.mouse.y, event.mouse.button)
             )
-        self._wyvern_surface = wyvern.ImageSurface(self.width, self.height)
-        self._ctx = self._wyvern_surface.canvas
 
-    def throttleEvent(self, fn, delay):
-        lastCall = -delay
-        prevArgs = None
+        elif event.event_type == 'mouse_release':
+            self.callUserFn(
+                'onMouseRelease', (event.mouse.x, event.mouse.y, event.mouse.button)
+            )
 
-        def throttle(*args):
-            nonlocal lastCall, prevArgs
+        elif event.event_type == 'mouse_move':
+            self.inspector.setMousePosition(event.mouse.x, event.mouse.y)
+            self.callUserFn('onMouseMove', (event.mouse.x, event.mouse.y))
 
-            now = pygame.time.get_ticks()
-            if now - lastCall >= delay:
-                lastCall = now
-                fn(*args)
-                prevArgs = None
-            else:
-                prevArgs = args
+        elif event.event_type == 'mouse_drag':
+            self.callUserFn(
+                'onMouseDrag', (event.mouse.x, event.mouse.y, [event.mouse.button])
+            )
 
-        def flush():
-            nonlocal lastCall, prevArgs
+        elif event.event_type == 'key_press':
+            if event.key.key == 'control':
+                self.isCtrlKeyDown = True
+            self.handleKeyPress(event.key.key, event.key.modifiers)
 
-            if prevArgs is None:
-                return False
+        elif event.event_type == 'key_release':
+            if event.key.key == 'control':
+                self.isCtrlKeyDown = False
+            self.handleKeyRelease(event.key.key, event.key.modifiers)
 
-            now = pygame.time.get_ticks()
-            if now - lastCall >= delay:
-                lastCall = now
-                fn(*prevArgs)
-                prevArgs = None
-                return True
+        elif event.event_type == 'resize':
+            self.handleResize(event.resize.width, event.resize.height)
 
-            return False
+        elif event.event_type == 'set_active_screen':
+            self.handleSetActiveScreen(event.new_screen)
 
-        throttle.flush = flush
-        return throttle
+    def _handleStep(self):
+        now = time.monotonic()
+        interval = 1.0 / self.stepsPerSecond
+        if now - self._lastTick < interval:
+            return
+        self._lastTick = now
+
+        if not (self.paused or self.stopped):
+            self.callUserFn('onStep', ())
+            if len(self._allKeysDown) > 0:
+                self.callUserFn(
+                    'onKeyHold', (list(self._allKeysDown), list(self._modifiers))
+                )
+            onStepEvent.send_robust(self.callUserFn, self._wrapper)
+
+        onMainLoopEvent.send_robust(interval * 1000, self.callUserFn, self._wrapper)
 
     @_safeMethod
     def run(self, takeScreenshotPath=None):
-        pygame.init()
-        pygame.display.set_caption(self.title)
-
-        self._screen = None
-        self.updateScreen(True)
-
-        lastTick = 0
-        throttledMouseMove = self.throttleEvent(
-            lambda arg: self.callUserFn('onMouseMove', arg), 30
-        )
-        throttledMouseDrag = self.throttleEvent(
-            lambda arg: self.callUserFn('onMouseDrag', arg), 30
-        )
+        self._takeScreenshotPath = takeScreenshotPath
+        self._screenshotTriggered = False
         self._running = True
 
-        screenshotTriggered = False
+        wyvern.run(
+            self.on_event,
+            int(self.width),
+            int(self.height),
+            True,
+            self.title,
+            self._fullscreen,
+            self._cursorVisible,
+        )
 
-        while self._running:
-            sys.stdout.flush()
-            if takeScreenshotPath is not None:
-                if not screenshotTriggered:
-                    app._app.callUserFn(
-                        'onMousePress',
-                        (200, 200, 0),
-                    )
-                    screenshotTriggered = True
-                else:
-                    self.getScreenshot(takeScreenshotPath)
-                    self._running = False
-            with DRAWING_LOCK:
-                had_event = False
-                for event in pygame.event.get():
-                    had_event = True
-                    if not self.stopped:
-                        if event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
-                            self.callUserFn(
-                                'onMousePress', (*event.pos, event.button - 1)
-                            )
-                        elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
-                            self.callUserFn(
-                                'onMouseRelease', (*event.pos, event.button - 1)
-                            )
-                        elif event.type == pygame.MOUSEMOTION:
-                            if event.buttons == (0, 0, 0):
-                                throttledMouseMove(event.pos)
-                            else:
-                                throttledMouseDrag(
-                                    (
-                                        *event.pos,
-                                        [i for i in range(3) if event.buttons[i] != 0],
-                                    )
-                                )
-                        elif event.type == pygame.KEYDOWN:
-                            self.handleKeyPress(event.key, event.mod)
-                        elif event.type == pygame.KEYUP:
-                            self.handleKeyRelease(event.key, event.mod)
-                        elif event.type == SET_ACTIVE_SCREEN:
-                            self.handleSetActiveScreen(event.newScreen)
-                        elif event.type == pygame.WINDOWSIZECHANGED:
-                            self.handleResize(event.x, event.y)
-                    if event.type == pygame.QUIT:
-                        self._running = False
-                    elif event.type == pygame.MOUSEMOTION:
-                        self.inspector.setMousePosition(*event.pos)
-                    elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
-                        key = App.getKey(event.key, event.mod)
-                        if key == 'ctrl':
-                            self.isCtrlKeyDown = event.type == pygame.KEYDOWN
-
-                    pygameEvent.send_robust(event, self.callUserFn, self._wrapper)
-
-                did_move = throttledMouseMove.flush()
-                did_drag = throttledMouseDrag.flush()
-                should_redraw = had_event or did_move or did_drag
-
-                msPassed = pygame.time.get_ticks() - lastTick
-                if 1000 / self.stepsPerSecond - msPassed < 1:
-                    lastTick = pygame.time.get_ticks()
-                    if not (self.paused or self.stopped):
-                        self.callUserFn('onStep', ())
-                        if len(self._allKeysDown) > 0:
-                            self.callUserFn(
-                                'onKeyHold',
-                                (list(self._allKeysDown), list(self._modifiers)),
-                            )
-                        onStepEvent.send_robust(self.callUserFn, self._wrapper)
-                        should_redraw = True
-
-                if should_redraw:
-                    self.inspector.clearCache()
-                    self.redrawAll(self._screen, self._wyvern_surface, self._ctx)
-
-                onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
-
-                pygame.time.wait(1)
-
-        pygame.quit()
+        self._running = False
         cleanAndClose()
 
 
@@ -1291,6 +1179,8 @@ class AppWrapper(object):
             'top',
             'setMaxShapeCount',
             'printFullTracebacks',
+            'enableFullscreen',
+            'disableFullscreen',
         ]
     )
     readWriteAttrs = set(
@@ -1306,6 +1196,7 @@ class AppWrapper(object):
             'maxShapeCount',
             'inspectorEnabled',
             'showFontWarnings',
+            'cursorVisible',
         ]
     )
     allAttrs = readOnlyAttrs | readWriteAttrs
@@ -1474,10 +1365,11 @@ def setActiveScreen(screen, fromRunApp=False):
                 },
             )
         )
+
     if fromRunApp:
-        app._app.handleSetActiveScreen(screen, redraw=False)
+        app._app.handleSetActiveScreen(screen, redraw=not fromRunApp)
     else:
-        pygame.event.post(pygame.event.Event(SET_ACTIVE_SCREEN, newScreen=screen))
+        wyvern.set_active_screen(screen)
 
 
 def runAppWithScreens(initialScreen, *args, **kwargs):
@@ -1726,7 +1618,7 @@ if 'CMU_GRAPHICS_DEBUG' in __main__.__dict__:
 
 import math
 
-from cmu_graphics.deps import pygame, wyvern
+from cmu_graphics.deps import wyvern
 from random import *
 from cmu_graphics.utils import *
 import atexit
@@ -1746,7 +1638,6 @@ t = sli.t
 
 SHAPES_CREATED = 0
 MAINLOOP_RUN = False
-SET_ACTIVE_SCREEN = pygame.event.custom_type()
 
 
 # Checks to see if a user created shapes but did not call

@@ -3,7 +3,9 @@ import copy
 from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 
-from cmu_graphics.deps import pygame, wyvern, pygeo
+
+from cmu_graphics.deps import wyvern, pygeo
+
 
 from cmu_graphics.libs import webrequest
 from io import BytesIO
@@ -549,12 +551,6 @@ def wyvernImageFromPilImage(image):
     return (a, image.size[0], image.size[1], image.size[0] * 4)
 
 
-def wyvernImageFromPygameSurface(pygameSurface):
-    a = pygame.image.tobytes(pygameSurface, 'RGBA')
-    width, height = pygameSurface.get_size()
-    return (bytearray(a), width, height, width * 4)
-
-
 class PILWrapper(object):
     def __init__(self, image):
         self.image = image
@@ -580,12 +576,12 @@ def loadImageFromStringReference(reference):
         # reference is a url
         try:
             response = webrequest.get(reference)
-            image = pygame.image.load(BytesIO(response.read()))
+            image = wyvern.load_image_from_bytes(BytesIO(response.read()).getvalue())
         except Exception:
             pyThrow(t('Failed to load image data'))
     else:
         # reference is a path
-        image = pygame.image.load(reference)
+        image = wyvern.load_image_from_path(reference)
     return image
 
 
@@ -594,10 +590,9 @@ def loadImage(reference):
     if referenceHash not in activeDrawing.images:
         if isinstance(reference, PILWrapper):
             imageParams = reference.params
+            wyvernImage = wyvern.WyvernImage(*imageParams)
         else:
-            pygameSurface = loadImageFromStringReference(reference)
-            imageParams = wyvernImageFromPygameSurface(pygameSurface)
-        wyvernImage = wyvern.WyvernImage(*imageParams)
+            wyvernImage = loadImageFromStringReference(reference)
         activeDrawing.images[referenceHash] = wyvernImage
     return {
         'width': activeDrawing.images[referenceHash].width,
@@ -1536,11 +1531,10 @@ class Shape(object):
             return g
         if isinstance(fillOrBorder, str):
             fillOrBorder = CSS3_COLORS_TO_RGB[toEnglish(fillOrBorder, 'color').lower()]
-        # Flips RGBA to BGRA because Wyvern is going to flip it back
         rgba = (
-            fillOrBorder.blue / 255,
-            fillOrBorder.green / 255,
             fillOrBorder.red / 255,
+            fillOrBorder.green / 255,
+            fillOrBorder.blue / 255,
             self.opacity / 100,
         )
         return rgba
@@ -3853,10 +3847,10 @@ class Inspector(object):
         if self.bestX is None or self.bestY is None:
             return
 
-        # BGR, in the 0-1 range set_source_rgb/set_source_rgba expect
+        # in the 0-1 range set_source_rgb/set_source_rgba expect
         black = (0, 0, 0)
-        red = (0, 0, 1)
-        gold = (0, 215 / 255, 1)
+        red = (1, 0, 0)
+        gold = (1, 215 / 255, 0)
         white = (1, 1, 1)
 
         for pt in self.keyPoints:

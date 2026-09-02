@@ -1,44 +1,11 @@
 import json
-import math
+import time
 
-from deps import pygame, wyvern
+from deps import wyvern
 
-keyNameMap = {
-    pygame.K_TAB: 'tab',
-    pygame.K_RETURN: 'enter',
-    pygame.K_BACKSPACE: 'backspace',
-    pygame.K_DELETE: 'delete',
-    pygame.K_ESCAPE: 'escape',
-    pygame.K_SPACE: 'space',
-    pygame.K_RIGHT: 'right',
-    pygame.K_LEFT: 'left',
-    pygame.K_UP: 'up',
-    pygame.K_DOWN: 'down',
-}
 
-shiftMap = {
-    '1': '!',
-    '2': '@',
-    '3': '#',
-    '4': '$',
-    '5': '%',
-    '6': '^',
-    '7': '&',
-    '8': '*',
-    '9': '(',
-    '0': ')',
-    '[': '{',
-    ']': '}',
-    '/': '?',
-    '=': '+',
-    '\\': '|',
-    "'": '"',
-    ',': '<',
-    '.': '>',
-    '-': '_',
-    ';': ':',
-    '`': '~',
-}
+def nowMs():
+    return time.monotonic() * 1000
 
 
 class KeyHoldData(object):
@@ -53,7 +20,7 @@ class TextBox(object):
         self.modal = modal
         self.height = 25
         self.cursorActive = True
-        self.cursorTimer = pygame.time.get_ticks()
+        self.cursorTimer = nowMs()
         self.blinkDelay = 400
         self.font = ('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         self.textSize = 15
@@ -72,7 +39,7 @@ class TextBox(object):
     def focus(self):
         self.active = True
         self.cursorActive = True
-        self.cursorTimer = pygame.time.get_ticks()
+        self.cursorTimer = nowMs()
 
     def get_left(self):
         return self.modal.left + self.modal.textXMargin
@@ -186,19 +153,16 @@ class TextBox(object):
         return (xInBounds or checkYOnly) and (yInBounds)
 
     def onStep(self):
-        if pygame.time.get_ticks() - self.cursorTimer > self.blinkDelay:
+        if nowMs() - self.cursorTimer > self.blinkDelay:
             self.cursorActive = not self.cursorActive
-            self.cursorTimer = pygame.time.get_ticks()
+            self.cursorTimer = nowMs()
         for key in self.keysHeldData:
             data = self.keysHeldData[key]
             if data.timer is None and data.isDown:
-                data.timer = pygame.time.get_ticks()
+                data.timer = nowMs()
                 data.delay = 400
-            elif (
-                data.timer is not None
-                and pygame.time.get_ticks() - data.timer > data.delay
-            ):
-                data.timer = pygame.time.get_ticks()
+            elif data.timer is not None and nowMs() - data.timer > data.delay:
+                data.timer = nowMs()
                 data.delay = 50
                 if key == 'backspace':
                     self.onBackSpace()
@@ -235,24 +199,18 @@ class TextBox(object):
         else:
             self.cursorPos = min(self.cursorPos + 1, len(self.buf))
 
-    def onKeyPress(self, keyCode, modifier):
+    def onKeyPress(self, key, is_named, modifiers):
         if not self.active:
             return
-        # Punctuation, space, numbers, and letters
-        if 31 < keyCode < 127:
-            key = chr(keyCode)
-            if modifier & pygame.KMOD_SHIFT:
-                key = shiftMap.get(key, key).upper()
 
-            if (modifier & pygame.KMOD_CTRL) or (modifier & pygame.KMOD_LMETA):
+        if not is_named and len(key) == 1:
+            if 'control' in modifiers or 'meta' in modifiers:
                 return
-
             if self.anchorPos is not None:
                 self.onBackSpace()
             self.buf.insert(self.cursorPos, key)
             self.cursorPos += 1
         else:
-            key = keyNameMap.get(keyCode, None)
             if key == 'left':
                 self.onKeyLeft()
             elif key == 'right':
@@ -265,12 +223,15 @@ class TextBox(object):
             elif key == 'down':
                 self.anchorPos = None
                 self.cursorPos = len(self.buf)
+            elif key == 'space':
+                self.buf.insert(self.cursorPos, ' ')
+                self.cursorPos += 1
             elif key == 'enter':
                 self.modal.execute()
             if key not in self.keysHeldData:
                 self.keysHeldData[key] = KeyHoldData()
             self.keysHeldData[key].isDown = True
-            self.resetTextOffset()
+        self.resetTextOffset()
 
     def resetTextOffset(self):
         maxCursorX = self.left + self.width - self.padding
@@ -285,9 +246,8 @@ class TextBox(object):
         elif cursorX < minCursorX:
             self.textOffset += minCursorX - cursorX
 
-    def onKeyRelease(self, keyCode, mod):
-        key = keyNameMap.get(keyCode, None)
-        if key is not None and key in self.keysHeldData:
+    def onKeyRelease(self, key, is_named, modifiers):
+        if is_named and key in self.keysHeldData:
             data = self.keysHeldData[key]
             data.isDown = False
             data.delay = 400
@@ -387,24 +347,23 @@ class TextBoxModal(object):
         self.button = Button(self)
 
         self.mouseIsDown = False
+        self.lastMousePosition = None
 
-        pygame.display.set_caption(self.title)
-        pygame.init()
-
-        self.run()
+        # cursor visible by default?
+        wyvern.run(
+            self.on_event,
+            int(self.width),
+            int(self.height),
+            False,
+            self.title,
+            False,
+            True,
+        )
 
     def get_height(self):
         return (self.dividerY - self.top) + self.inputHeight
 
     height = property(get_height)
-
-    def redrawAll(self, screen, wyvern_surface, ctx):
-        self.draw(ctx)
-        data_string = wyvern_surface.data
-        pygame_surface = pygame.image.frombuffer(
-            data_string, (int(self.width), int(self.height)), 'RGBA'
-        )
-        screen.blit(pygame_surface, (0, 0))
 
     def draw(self, ctx):
         ctx.save()
@@ -465,84 +424,60 @@ class TextBoxModal(object):
     def onStep(self):
         if self.textBox:
             self.textBox.onStep()
+            if self.mouseIsDown and self.lastMousePosition:
+                self.textBox.onMouseDrag(self.lastMousePosition)
 
     def execute(self):
         if self.textBox:
             print(''.join(self.textBox.buf), end='')
-        self.running = False
+        wyvern.quit()
 
-    def run(self):
-        self._msPassed = 0
-        self._refreshDelay = 60
-        self._stepsPerSecond = 30
+    def on_event(self, event, surface):
+        ctx = surface.canvas
 
-        clock = pygame.time.Clock()
+        if event.event_type == 'step':
+            self.onStep()
 
-        # Make antialiasing possible
-        screen = pygame.display.set_mode((int(self.width), int(self.height)))
-        wyvern_surface = wyvern.ImageSurface(int(self.width), int(self.height))
-        ctx = wyvern_surface.canvas
+        elif event.event_type == 'redraw':
+            self.draw(ctx)
 
-        self.running = True
-        lastMousePosition = None
-        while self.running:
-            self._msPassed += clock.tick(self._refreshDelay)
-            tickHadMouseDownEvent = False
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self.button.onMousePress(event.pos)
+        elif event.event_type == 'mouse_press':
+            pos = (event.mouse.x, event.mouse.y)
+            if event.mouse.button == 0:
+                self.button.onMousePress(pos)
+                if self.textBox:
+                    if self.textBox.contains(*pos):
+                        self.textBox.focus()
+                    else:
+                        self.textBox.active = False
+                    if self.textBox.active:
+                        self.lastMousePosition = pos
+                        self.textBox.anchorPos = None
+                        self.textBox.cursorPos = self.textBox.cursorPosFromCoord(pos[0])
+                        self.mouseIsDown = True
 
-                    if self.textBox:
-                        if self.textBox.contains(*event.pos):
-                            self.textBox.focus()
-                        else:
-                            self.textBox.active = False
-                            self.cursorPos = None
+        elif event.event_type == 'mouse_release':
+            if event.mouse.button == 0:
+                self.lastMousePosition = (event.mouse.x, event.mouse.y)
+                self.mouseIsDown = False
 
-                        if self.textBox.active:
-                            lastMousePosition = event.pos
-                            self.textBox.anchorPos = None
-                            self.textBox.cursorPos = self.textBox.cursorPosFromCoord(
-                                event.pos[0]
-                            )
-                            tickHadMouseDownEvent = True
-                            self.mouseIsDown = True
-                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                    lastMousePosition = event.pos
-                    self.mouseIsDown = False
-                elif event.type == pygame.MOUSEMOTION and event.buttons == (0, 0, 0):
-                    self.button.onMouseMove(event.pos)
-                    lastMousePosition = event.pos
-                elif event.type == pygame.MOUSEMOTION and event.buttons[0] == 1:
-                    # On drag
-                    lastMousePosition = event.pos
-                    tickHadMouseDownEvent = True
-                    self.mouseIsDown = True
-                    if self.textBox:
-                        self.textBox.onMouseDrag(event.pos)
-                elif event.type == pygame.KEYDOWN:
-                    if self.textBox:
-                        self.textBox.onKeyPress(event.key, event.mod)
-                elif event.type == pygame.KEYUP:
-                    if self.textBox:
-                        self.textBox.onKeyRelease(event.key, event.mod)
-                elif event.type == pygame.QUIT:
-                    self.running = False
+        elif event.event_type == 'mouse_move':
+            pos = (event.mouse.x, event.mouse.y)
+            self.button.onMouseMove(pos)
+            if not self.mouseIsDown:
+                self.lastMousePosition = pos
 
-            if (
-                self._msPassed > math.floor((1000 / self._stepsPerSecond))
-                or abs(self._msPassed - math.floor((1000 / self._stepsPerSecond))) < 10
-            ):
-                self._msPassed = 0
-                self.onStep()
-                if self.textBox and self.mouseIsDown and not tickHadMouseDownEvent:
-                    self.textBox.onMouseDrag(lastMousePosition)
+        elif event.event_type == 'key_press':
+            if self.textBox:
+                self.textBox.onKeyPress(
+                    event.key.key, event.key.is_named, event.key.modifiers
+                )
 
-            self.redrawAll(screen, wyvern_surface, ctx)
-            pygame.display.flip()
-
-        pygame.display.quit()
-        pygame.quit()
+        elif event.event_type == 'key_release':
+            if self.textBox:
+                self.textBox.onKeyRelease(
+                    event.key.key, event.key.is_named, event.key.modifiers
+                )
 
 
 def main():

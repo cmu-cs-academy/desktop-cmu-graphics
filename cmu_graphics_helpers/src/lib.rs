@@ -6,6 +6,7 @@ use pyo3::types::PyModule;
 
 use geo::BooleanOps;
 use geo::{LineString, MultiPolygon, Polygon};
+use winit::window::Fullscreen::Borderless;
 
 // type aliases
 type PyLineString = Vec<[f64; 2]>;
@@ -108,9 +109,12 @@ fn edgesIntersect(pts1: Vec<[f64; 2]>, pts2: Vec<[f64; 2]>) -> bool {
 
 /* WYVERN */
 use std::f32::consts::PI;
+use std::fs::File;
+use std::io::Read;
+use std::io::Write;
 
 use pyo3::exceptions::PyRuntimeError;
-use pyo3::types::PyByteArray;
+use pyo3::types::{PyByteArray, PyBytes};
 
 use skia_safe::{
     Color, Color4f, ColorSpace, ColorType, Font, FontMgr, FontStyle, Image, ImageInfo, Matrix,
@@ -121,17 +125,19 @@ use skia_safe::{
 const RAD_TO_DEG: f32 = 180.0 / PI;
 const ORIGIN: Point = Point::new(0.0, 0.0);
 
-fn create_skia_surface(width: i32, height: i32) -> PyResult<skia_safe::Surface> {
+fn create_skia_surface(width: i32, height: i32, scale_factor: f64) -> PyResult<skia_safe::Surface> {
     let width = width.max(1);
     let height = height.max(1);
     let image_info = ImageInfo::new(
         (width, height),
-        ColorType::BGRA8888,
+        ColorType::RGBA8888,
         skia_safe::AlphaType::Premul,
         ColorSpace::new_srgb(),
     );
     let mut surface = surfaces::raster(&image_info, None, None)
         .ok_or_else(|| PyRuntimeError::new_err("Failed to create Skia raster surface"))?;
+    let scale = scale_factor as f32;
+    surface.canvas().scale((scale, scale));
     surface.canvas().clear(Color::WHITE);
     Ok(surface)
 }
@@ -216,7 +222,7 @@ fn image_info_for(width: i32, height: i32, opaque: bool) -> ImageInfo {
     };
     ImageInfo::new(
         (width, height),
-        ColorType::BGRA8888,
+        ColorType::RGBA8888,
         alpha,
         ColorSpace::new_srgb(),
     )
@@ -699,6 +705,56 @@ impl Canvas {
             Some(&paint),
         );
     }
+
+    fn resize_canvas(&mut self, width: i32, height: i32, scale_factor: f64) -> PyResult<()> {
+        self.skia_surface = create_skia_surface(width, height, scale_factor)?;
+        self.path = None;
+        self.state_stack.clear();
+        Ok(())
+    }
+
+    fn save_png(&mut self, path: String) -> PyResult<()> {
+        let image = self.skia_surface.image_snapshot();
+        let data = image
+            .encode(None, skia_safe::EncodedImageFormat::PNG, 100)
+            .ok_or(PyRuntimeError::new_err("Failed to encode image data"))?;
+        let mut file = File::create(path)?;
+        file.write_all(data.as_bytes())?;
+        Ok(())
+    }
+}
+
+fn create_image(data: skia_safe::Data) -> PyResult<WyvernImage> {
+    let image =
+        Image::from_encoded(&data).ok_or(PyRuntimeError::new_err("Failed to create image"))?;
+
+    let bytes = data.as_bytes();
+    let opaque = bytes.iter().skip(3).step_by(4).all(|&a| a == 255);
+
+    let bounds = image.bounds();
+
+    Ok(WyvernImage {
+        image,
+        width: bounds.width(),
+        height: bounds.height(),
+        opaque,
+    })
+}
+
+#[pyfunction]
+fn load_image_from_path(path: &str) -> PyResult<WyvernImage> {
+    let mut file = File::open(path)?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+    let skia_data = skia_safe::Data::new_copy(&bytes);
+
+    create_image(skia_data)
+}
+
+#[pyfunction]
+fn load_image_from_bytes(py_bytes: &Bound<'_, PyBytes>) -> PyResult<WyvernImage> {
+    let skia_data = skia_safe::Data::new_copy(py_bytes.as_bytes());
+    create_image(skia_data)
 }
 
 #[pyclass(module = "wyvern", subclass)]
@@ -711,9 +767,10 @@ struct ImageSurface {
 #[pymethods]
 impl ImageSurface {
     #[new]
-    fn create(width: i32, height: i32) -> PyResult<Self> {
+    #[pyo3(signature = (width, height, scale_factor = 1.0))]
+    fn create(width: i32, height: i32, scale_factor: f64) -> PyResult<Self> {
         Python::attach(|py| {
-            let skia_surface = create_skia_surface(width, height)?;
+            let skia_surface = create_skia_surface(width, height, scale_factor)?;
             let font_mgr = FontMgr::new();
             let style = FontStyle::new(
                 font_style::Weight::NORMAL,
@@ -757,20 +814,833 @@ impl ImageSurface {
         self.canvas.clone_ref(py)
     }
 
-    #[getter]
-    fn data(&self, py: Python<'_>) -> PyResult<Py<PyByteArray>> {
-        let mut canvas_ref = self.canvas.bind(py).borrow_mut();
-        let pixmap = canvas_ref
-            .skia_surface
-            .peek_pixels()
-            .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
-        let bytes = pixmap
-            .bytes()
-            .ok_or_else(|| PyRuntimeError::new_err("Could not read pixel data from canvas"))?;
-        Ok(PyByteArray::new(py, bytes).unbind())
+    #[setter]
+    fn set_width(&mut self, width: i32) {
+        self.width = width;
+    }
+
+    #[setter]
+    fn set_height(&mut self, height: i32) {
+        self.height = height;
     }
 }
 /* WYVERN */
+
+/* BYEGAME */
+use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player, Source};
+use std::io::Cursor;
+use std::num::NonZero;
+use std::rc::Rc;
+use std::sync::{Arc, OnceLock};
+use std::time::{Duration, Instant};
+use winit::application::ApplicationHandler;
+use winit::dpi::{LogicalSize, PhysicalPosition};
+use winit::event::{Modifiers, WindowEvent};
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
+use winit::keyboard::{Key, NamedKey};
+use winit::window::{Window, WindowAttributes, WindowId};
+
+fn get_stream() -> PyResult<&'static MixerDeviceSink> {
+    static STREAM: OnceLock<MixerDeviceSink> = OnceLock::new();
+
+    if let Some(stream) = STREAM.get() {
+        return Ok(stream);
+    }
+
+    let stream = DeviceSinkBuilder::open_default_sink()
+        .map_err(|e| PyRuntimeError::new_err(format!("Failed to open audio output: {e}")))?;
+
+    Ok(STREAM.get_or_init(|| stream))
+}
+
+#[pyclass(module = "wyvern")]
+struct WyvernSound {
+    data: Arc<Vec<u8>>,
+    sink: Option<Player>,
+    volume: f32,
+}
+
+impl WyvernSound {
+    fn start_new(&mut self, looped: bool) -> PyResult<()> {
+        let stream = get_stream()?;
+        let player = Player::connect_new(stream.mixer());
+        let cursor = Cursor::new((*self.data).clone());
+        let source = Decoder::try_from(cursor)
+            .map_err(|e| PyRuntimeError::new_err(format!("Failed to decode sound data: {e}")))?;
+
+        player.set_volume(self.volume);
+
+        if looped {
+            player.append(source.repeat_infinite());
+        } else {
+            player.append(source);
+        }
+
+        self.sink = Some(player);
+
+        Ok(())
+    }
+}
+
+#[pymethods]
+impl WyvernSound {
+    #[new]
+    fn create(bytes: &Bound<'_, PyBytes>) -> PyResult<Self> {
+        let data: Vec<u8> = bytes.extract()?;
+        Ok(WyvernSound {
+            data: Arc::new(data),
+            sink: None,
+            volume: 1.0,
+        })
+    }
+
+    #[pyo3(signature = (looped = false, restart = false))]
+    fn play(&mut self, looped: bool, restart: bool) -> PyResult<()> {
+        let is_busy = self.sink.as_ref().map(|s| !s.empty()).unwrap_or(false);
+        if !is_busy {
+            self.start_new(looped)?;
+        } else if restart {
+            if let Some(player) = self.sink.take() {
+                player.stop();
+            }
+            self.start_new(looped)?;
+        } else if let Some(player) = &self.sink {
+            player.play();
+        }
+        Ok(())
+    }
+
+    fn pause(&self) {
+        if let Some(player) = &self.sink {
+            player.pause();
+        }
+    }
+
+    fn set_volume(&mut self, volume: f32) {
+        if volume < 0.0 {
+            return;
+        }
+        self.volume = volume.min(1.0);
+        if let Some(player) = &self.sink {
+            player.set_volume(self.volume);
+        }
+    }
+
+    fn get_volume(&self) -> f32 {
+        self.volume
+    }
+}
+
+enum UserEvent {
+    Quit,
+    SetActiveScreen(String),
+    CursorVisible(bool),
+    Fullscreen(bool),
+}
+
+// apparently this is idiomatic
+static PROXY: OnceLock<EventLoopProxy<UserEvent>> = OnceLock::new();
+
+struct AppInternals {
+    window: Rc<Window>,
+    softbuffer_surface: softbuffer::Surface<Rc<Window>, Rc<Window>>,
+}
+
+struct WinitApp {
+    window_attributes: WindowAttributes,
+    internals: Option<AppInternals>,
+    last_tick: Instant,
+    last_mouse: Instant,
+    cursor_position: PhysicalPosition<f64>,
+    cursor_visible: bool,
+    py_surface: Option<Py<ImageSurface>>,
+    on_event: Py<PyAny>,
+    modifiers: Modifiers,
+    error: Option<PyErr>,
+    fullscreen: bool,
+    needs_redraw: bool,
+}
+
+#[pyclass(from_py_object)]
+#[derive(Clone)]
+pub struct MouseEvent {
+    #[pyo3(get)]
+    pub x: f64,
+    #[pyo3(get)]
+    pub y: f64,
+    #[pyo3(get)]
+    pub button: u8,
+}
+
+fn winit_button_to_int(button: winit::event::MouseButton) -> u8 {
+    match button {
+        winit::event::MouseButton::Left => 0,
+        winit::event::MouseButton::Middle => 1,
+        winit::event::MouseButton::Right => 2,
+        _ => 0,
+    }
+}
+
+#[pyclass(from_py_object)]
+#[derive(Clone)]
+pub struct KeyEvent {
+    #[pyo3(get)]
+    pub key: String,
+    #[pyo3(get)]
+    pub is_named: bool,
+    #[pyo3(get)]
+    pub modifiers: Vec<String>,
+}
+
+fn named_keys_to_name(name: &NamedKey) -> Option<&str> {
+    match name {
+        NamedKey::ArrowLeft => Some("left"),
+        NamedKey::ArrowRight => Some("right"),
+        NamedKey::ArrowDown => Some("down"),
+        NamedKey::ArrowUp => Some("up"),
+
+        NamedKey::Enter => Some("enter"),
+        NamedKey::Tab => Some("tab"),
+        NamedKey::Escape => Some("escape"),
+        NamedKey::Backspace => Some("backspace"),
+        NamedKey::Delete => Some("delete"),
+        NamedKey::Space => Some("space"),
+        NamedKey::Control => Some("control"),
+        _ => None,
+    }
+}
+
+fn modifiers_to_vec(modifiers: &winit::event::Modifiers) -> Vec<String> {
+    let mut result = Vec::new();
+    let state = modifiers.state();
+    if state.shift_key() {
+        result.push("shift".to_string());
+    }
+    if state.control_key() {
+        result.push("control".to_string());
+    }
+    if state.alt_key() {
+        result.push("meta".to_string());
+    }
+    result
+}
+
+#[pyclass(from_py_object)]
+#[derive(Clone)]
+pub struct ResizeEvent {
+    #[pyo3(get)]
+    pub width: u32,
+    #[pyo3(get)]
+    pub height: u32,
+}
+
+#[pyclass(from_py_object)]
+#[derive(Clone)]
+pub struct PythonEvent {
+    #[pyo3(get)]
+    pub event_type: String,
+    #[pyo3(get)]
+    pub mouse: Option<MouseEvent>,
+    #[pyo3(get)]
+    pub key: Option<KeyEvent>,
+    #[pyo3(get)]
+    pub resize: Option<ResizeEvent>,
+    #[pyo3(get)]
+    pub new_screen: Option<String>,
+}
+
+impl PythonEvent {
+    pub fn mouse_press(x: f64, y: f64, button: u8) -> Self {
+        PythonEvent {
+            event_type: "mouse_press".to_string(),
+            mouse: Some(MouseEvent { x, y, button }),
+            key: None,
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn mouse_release(x: f64, y: f64, button: u8) -> Self {
+        PythonEvent {
+            event_type: "mouse_release".to_string(),
+            mouse: Some(MouseEvent { x, y, button }),
+            key: None,
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn mouse_move(x: f64, y: f64) -> Self {
+        PythonEvent {
+            event_type: "mouse_move".to_string(),
+            mouse: Some(MouseEvent { x, y, button: 0 }),
+            key: None,
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn mouse_drag(x: f64, y: f64, button: u8) -> Self {
+        PythonEvent {
+            event_type: "mouse_drag".to_string(),
+            mouse: Some(MouseEvent { x, y, button }),
+            key: None,
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn key_press(key: String, is_named: bool, modifiers: Vec<String>) -> Self {
+        PythonEvent {
+            event_type: "key_press".to_string(),
+            mouse: None,
+            key: Some(KeyEvent {
+                key,
+                is_named,
+                modifiers,
+            }),
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn key_release(key: String, is_named: bool, modifiers: Vec<String>) -> Self {
+        PythonEvent {
+            event_type: "key_release".to_string(),
+            mouse: None,
+            key: Some(KeyEvent {
+                key,
+                is_named,
+                modifiers,
+            }),
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn resize(width: u32, height: u32) -> Self {
+        PythonEvent {
+            event_type: "resize".to_string(),
+            mouse: None,
+            key: None,
+            resize: Some(ResizeEvent { width, height }),
+            new_screen: None,
+        }
+    }
+
+    pub fn quit() -> Self {
+        PythonEvent {
+            event_type: "quit".to_string(),
+            mouse: None,
+            key: None,
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn step() -> Self {
+        PythonEvent {
+            event_type: "step".to_string(),
+            mouse: None,
+            key: None,
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn redraw() -> Self {
+        PythonEvent {
+            event_type: "redraw".to_string(),
+            mouse: None,
+            key: None,
+            resize: None,
+            new_screen: None,
+        }
+    }
+
+    pub fn set_active_screen(new_screen: String) -> Self {
+        PythonEvent {
+            event_type: "set_active_screen".to_string(),
+            mouse: None,
+            key: None,
+            resize: None,
+            new_screen: Some(new_screen),
+        }
+    }
+}
+
+impl WinitApp {
+    fn call_event_handler(&mut self, event_loop: &ActiveEventLoop, event: PythonEvent) {
+        let handler_result = Python::attach(|py| -> PyResult<()> {
+            let Some(py_surface) = self.py_surface.as_ref() else {
+                self.error = Some(PyRuntimeError::new_err(
+                    "Surface does not exist for event handler",
+                ));
+                event_loop.exit();
+                return Ok(());
+            };
+            self.on_event.call1(py, (event, py_surface.clone_ref(py)))?;
+            Ok(())
+        });
+
+        if let Err(err) = handler_result {
+            self.error = Some(err);
+            event_loop.exit();
+            return;
+        };
+
+        if let Some(internals) = self.internals.as_ref() {
+            internals.window.request_redraw()
+        } else {
+            self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
+            event_loop.exit();
+        }
+
+        self.needs_redraw = true;
+    }
+}
+
+impl ApplicationHandler<UserEvent> for WinitApp {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        let window = if let Ok(window) = event_loop.create_window(self.window_attributes.clone()) {
+            // make the window centered
+            if let Some(monitor) = window.current_monitor() {
+                let screen_size = monitor.size();
+                let window_size = window.outer_size();
+
+                let x = (screen_size.width.saturating_sub(window_size.width) / 2) as i32
+                    + monitor.position().x;
+                let y = (screen_size.height.saturating_sub(window_size.height) / 2) as i32
+                    + monitor.position().y;
+
+                window.set_outer_position(PhysicalPosition::new(x, y));
+            }
+            Rc::new(window)
+        } else {
+            self.error = Some(PyRuntimeError::new_err("Issue with creating window"));
+            return;
+        };
+        let softbuffer_surface = {
+            let Ok(context) = softbuffer::Context::new(window.clone()) else {
+                self.error = Some(PyRuntimeError::new_err(
+                    "Issue with creating context for softbuffer surface",
+                ));
+                return;
+            };
+            let Ok(surface) = softbuffer::Surface::new(&context, window.clone()) else {
+                self.error = Some(PyRuntimeError::new_err(
+                    "Issue with creating softbuffer surface",
+                ));
+                return;
+            };
+            surface
+        };
+
+        let scale_factor = window.scale_factor();
+        let (phys_width, phys_height) = {
+            let size = window.inner_size();
+            (size.width, size.height)
+        };
+        let py_surface = ImageSurface::create(phys_width as i32, phys_height as i32, scale_factor);
+
+        if let Err(err) = Python::attach(|py| -> PyResult<()> {
+            let py_surface = Py::new(py, py_surface?)?;
+            self.py_surface = Some(py_surface);
+            Ok(())
+        }) {
+            self.error = Some(err);
+            event_loop.exit();
+        };
+
+        window.set_visible(true);
+
+        self.internals = Some(AppInternals {
+            window,
+            softbuffer_surface,
+        });
+
+        if let Some(internals) = self.internals.as_ref() {
+            internals.window.request_redraw()
+        } else {
+            self.error = Some(PyRuntimeError::new_err(
+                "Issue with redrawing window in resumed",
+            ));
+            event_loop.exit();
+        }
+    }
+
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        if self.internals.is_none() {
+            return;
+        }
+        let fps = 30;
+        let elapsed = self.last_tick.elapsed();
+        if elapsed >= Duration::from_millis(1000 / fps) {
+            self.call_event_handler(event_loop, PythonEvent::step());
+            self.last_tick = Instant::now();
+        }
+
+        if self.needs_redraw {
+            if let Some(internals) = self.internals.as_ref() {
+                internals.window.request_redraw();
+            } else {
+                self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
+                event_loop.exit();
+            }
+            self.needs_redraw = false;
+        }
+    }
+
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
+        match event {
+            WindowEvent::CloseRequested => {
+                event_loop.exit();
+            }
+            WindowEvent::Resized(new_size) => {
+                let Some(app_internals) = self.internals.as_mut() else {
+                    return;
+                };
+                let Some(py_surface) = self.py_surface.as_ref() else {
+                    return;
+                };
+                let Some(new_width) = NonZero::new(new_size.width) else {
+                    self.error = Some(PyRuntimeError::new_err("New window width must be non-zero"));
+                    event_loop.exit();
+                    return;
+                };
+                let Some(new_height) = NonZero::new(new_size.height) else {
+                    self.error = Some(PyRuntimeError::new_err(
+                        "New window height must be non-zero",
+                    ));
+                    event_loop.exit();
+                    return;
+                };
+
+                if app_internals
+                    .softbuffer_surface
+                    .resize(new_width, new_height)
+                    .is_err()
+                {
+                    self.error = Some(PyRuntimeError::new_err(
+                        "Issue with resizing softbuffer surface",
+                    ));
+                    event_loop.exit()
+                };
+
+                let resize_result = Python::attach(|py| -> PyResult<()> {
+                    let mut surface_ref = py_surface.borrow_mut(py);
+                    let mut canvas = surface_ref.canvas.bind(py).borrow_mut();
+                    canvas.resize_canvas(
+                        new_size.width as i32,
+                        new_size.height as i32,
+                        app_internals.window.scale_factor(),
+                    )?;
+                    surface_ref.width = new_size.width as i32;
+                    surface_ref.height = new_size.height as i32;
+                    Ok(())
+                });
+                if let Err(err) = resize_result {
+                    self.error = Some(err);
+                    event_loop.exit();
+                    return;
+                }
+
+                let logical_size: LogicalSize<u32> =
+                    new_size.to_logical(app_internals.window.scale_factor());
+                self.call_event_handler(
+                    event_loop,
+                    PythonEvent::resize(logical_size.width, logical_size.height),
+                );
+            }
+            WindowEvent::CursorMoved {
+                device_id: _,
+                position,
+            } => {
+                let Some(app_internals) = self.internals.as_ref() else {
+                    return;
+                };
+                if self.last_mouse.elapsed() < Duration::from_millis(1000 / 30) {
+                    return;
+                }
+                self.cursor_position = position;
+                let scale = app_internals.window.scale_factor();
+                self.call_event_handler(
+                    event_loop,
+                    PythonEvent::mouse_move(position.x / scale, position.y / scale),
+                );
+                self.last_mouse = Instant::now();
+            }
+            WindowEvent::MouseInput {
+                device_id: _,
+                state,
+                button,
+            } => {
+                let Some(app_internals) = self.internals.as_mut() else {
+                    return;
+                };
+                let scale = app_internals.window.scale_factor();
+                match state {
+                    winit::event::ElementState::Pressed => {
+                        self.call_event_handler(
+                            event_loop,
+                            PythonEvent::mouse_press(
+                                self.cursor_position.x / scale,
+                                self.cursor_position.y / scale,
+                                winit_button_to_int(button),
+                            ),
+                        );
+                    }
+                    winit::event::ElementState::Released => {
+                        self.call_event_handler(
+                            event_loop,
+                            PythonEvent::mouse_release(
+                                self.cursor_position.x / scale,
+                                self.cursor_position.y / scale,
+                                winit_button_to_int(button),
+                            ),
+                        );
+                    }
+                }
+            }
+            WindowEvent::RedrawRequested => {
+                self.call_event_handler(event_loop, PythonEvent::redraw());
+
+                let Some(app_internals) = self.internals.as_mut() else {
+                    return;
+                };
+                let Some(py_surface) = self.py_surface.as_mut() else {
+                    return;
+                };
+
+                app_internals.window.set_cursor_visible(self.cursor_visible);
+                if self.fullscreen {
+                    app_internals.window.set_fullscreen(Some(Borderless(None)));
+                } else {
+                    app_internals.window.set_fullscreen(None);
+                }
+
+                let Ok(mut buffer) = app_internals.softbuffer_surface.buffer_mut() else {
+                    self.error = Some(PyRuntimeError::new_err(
+                        "Issue with obtaining softbuffer surface",
+                    ));
+                    event_loop.exit();
+                    return;
+                };
+                let result = Python::attach(|py| -> PyResult<()> {
+                    let surface_ref = py_surface.borrow(py);
+                    let mut canvas_ref = surface_ref.canvas.bind(py).borrow_mut();
+                    let pixmap = canvas_ref
+                        .skia_surface
+                        .peek_pixels()
+                        .ok_or_else(|| PyRuntimeError::new_err("Issue getting canvas data"))?;
+
+                    let bytes = pixmap.bytes().ok_or_else(|| {
+                        PyRuntimeError::new_err("Issue getting bytes from pixel data")
+                    })?;
+                    let safe_len = buffer.len().min(bytes.len() / 4);
+                    for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
+                        let offset = i * 4;
+                        let r = bytes[offset] as u32;
+                        let g = bytes[offset + 1] as u32;
+                        let b = bytes[offset + 2] as u32;
+                        *pixel = (r << 16) | (g << 8) | b;
+                    }
+                    if safe_len < buffer.len() {
+                        return Ok(());
+                    }
+                    if buffer.present().is_err() {
+                        return Err(PyRuntimeError::new_err("Issue presenting to buffer"));
+                    }
+                    Ok(())
+                });
+
+                if let Err(err) = result {
+                    self.error = Some(err);
+                    event_loop.exit();
+                }
+            }
+            WindowEvent::KeyboardInput {
+                device_id: _,
+                event,
+                is_synthetic,
+            } => {
+                if is_synthetic {
+                    return;
+                }
+                let mut is_named = false;
+                let key = match &event.logical_key {
+                    Key::Character(s) => s,
+                    Key::Named(name) => {
+                        is_named = true;
+                        let Some(name) = named_keys_to_name(name) else {
+                            return;
+                        };
+                        name
+                    }
+                    _ => return,
+                };
+                match event.state {
+                    winit::event::ElementState::Pressed => {
+                        self.call_event_handler(
+                            event_loop,
+                            PythonEvent::key_press(
+                                key.to_string(),
+                                is_named,
+                                modifiers_to_vec(&self.modifiers),
+                            ),
+                        );
+                    }
+                    winit::event::ElementState::Released => {
+                        self.call_event_handler(
+                            event_loop,
+                            PythonEvent::key_release(
+                                key.to_string(),
+                                is_named,
+                                modifiers_to_vec(&self.modifiers),
+                            ),
+                        );
+                    }
+                }
+            }
+            WindowEvent::ModifiersChanged(new_modifiers) => {
+                self.modifiers = new_modifiers;
+            }
+            _ => (),
+        }
+    }
+
+    fn user_event(&mut self, event_loop: &ActiveEventLoop, event: UserEvent) {
+        match event {
+            UserEvent::Quit => {
+                self.call_event_handler(event_loop, PythonEvent::quit());
+                event_loop.exit()
+            }
+            UserEvent::SetActiveScreen(screen) => {
+                self.call_event_handler(event_loop, PythonEvent::set_active_screen(screen));
+            }
+            UserEvent::CursorVisible(visible) => {
+                self.cursor_visible = visible;
+                let Some(internals) = &self.internals else {
+                    return
+                };
+                internals.window.request_redraw();
+            }
+            UserEvent::Fullscreen(fullscreen) => {
+                self.fullscreen = fullscreen;
+                let Some(internals) = &self.internals else {
+                    return
+                };
+                internals.window.request_redraw();
+            }
+        }
+    }
+}
+
+#[pyfunction]
+// possibly more settings can be added
+fn run(
+    on_event: Py<PyAny>,
+    app_width: u32,
+    app_height: u32,
+    resizable: bool,
+    title: String,
+    fullscreen: bool,
+    cursor_visible: bool
+) -> PyResult<()> {
+    let Ok(image) = image::load_from_memory(include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/scotty.png"
+    ))) else {
+        return Err(PyRuntimeError::new_err("Issue with opening icon image"));
+    };
+    let image_rgba = image.into_rgba8();
+    let (width, height) = image_rgba.dimensions();
+    let rgba = image_rgba.into_raw();
+    let Ok(icon) = winit::window::Icon::from_rgba(rgba, width, height) else {
+        return Err(PyRuntimeError::new_err("Issue with creating icon image"));
+    };
+    let window_attributes = Window::default_attributes()
+        .with_min_inner_size(LogicalSize::new(1, 1))
+        .with_inner_size(LogicalSize::new(app_width, app_height))
+        .with_resizable(resizable)
+        .with_title(title)
+        .with_window_icon(Some(icon))
+        .with_visible(false);
+
+    let mut app = WinitApp {
+        window_attributes,
+        internals: None,
+        last_tick: Instant::now(),
+        last_mouse: Instant::now(),
+        cursor_position: PhysicalPosition { x: 0.0, y: 0.0 },
+        cursor_visible,
+        py_surface: None,
+        on_event,
+        modifiers: Modifiers::default(),
+        error: None,
+        fullscreen,
+        needs_redraw: false,
+    };
+
+    let event_loop = EventLoop::<UserEvent>::with_user_event()
+        .build()
+        .map_err(|_| PyRuntimeError::new_err("Issue with starting event loop"))?;
+    event_loop.set_control_flow(ControlFlow::Poll);
+    PROXY
+        .set(event_loop.create_proxy())
+        .map_err(|_| PyRuntimeError::new_err("Issue with starting proxy event loop"))?;
+    let _ = event_loop.run_app(&mut app);
+
+    match app.error {
+        None => Ok(()),
+        Some(err) => Err(err),
+    }
+}
+
+#[pyfunction]
+fn quit() -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::Quit)
+        .map_err(|_| PyRuntimeError::new_err("Failed to send quit event"))?;
+    Ok(())
+}
+
+#[pyfunction]
+fn set_active_screen(new_screen: String) -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::SetActiveScreen(new_screen))
+        .map_err(|_| PyRuntimeError::new_err("Failed to send set_active_screen event"))?;
+    Ok(())
+}
+
+#[pyfunction]
+fn set_cursor_visible(visible: bool) -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::CursorVisible(visible))
+        .map_err(|_| PyRuntimeError::new_err("Failed to send cursor_visible event"))?;
+    Ok(())
+}
+
+#[pyfunction]
+fn set_fullscreen(fullscreen: bool) -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::Fullscreen(fullscreen))
+        .map_err(|_| PyRuntimeError::new_err("Failed to send fullscreen event"))?;
+    Ok(())
+}
+/* BYEGAME */
 
 #[pymodule]
 fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -791,6 +1661,18 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_class::<FontSlant>()?;
     wyvern.add_class::<Gradient>()?;
     wyvern.add_class::<WyvernImage>()?;
+    wyvern.add_function(wrap_pyfunction!(load_image_from_path, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(load_image_from_bytes, &wyvern)?)?;
+    wyvern.add_class::<WyvernSound>()?;
+    wyvern.add_class::<PythonEvent>()?;
+    wyvern.add_class::<MouseEvent>()?;
+    wyvern.add_class::<KeyEvent>()?;
+    wyvern.add_class::<ResizeEvent>()?;
+    wyvern.add_function(wrap_pyfunction!(run, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(quit, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(set_active_screen, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(set_cursor_visible, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(set_fullscreen, &wyvern)?)?;
     m.add_submodule(&wyvern)?;
     m.py()
         .import("sys")?
