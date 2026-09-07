@@ -2,7 +2,7 @@ import os
 import subprocess
 import tqdm
 
-ZIPNAME = 'cmu_graphics_installer.zip'
+ZIPNAME = 'cmu_graphics_notarize.zip'
 TEAM_ID = 'LXH25PRRZ2'
 
 ################################################################################
@@ -64,7 +64,12 @@ def sign_files():
 
 def notarize():
     print("Zipping the cmu_graphics directory ...")
-    subprocess.check_call(['zip', '-r', ZIPNAME, 'cmu_graphics'], cwd='..')
+    # Apple recommends ditto for notarization submissions
+    zip_path = os.path.join('..', ZIPNAME)
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
+    subprocess.check_call(
+        ['ditto', '-c', '-k', '--keepParent', 'cmu_graphics', ZIPNAME], cwd='..')
     print()
 
     print("Notarizing ...")
@@ -73,12 +78,12 @@ def notarize():
         '--apple-id', os.environ['APPLE_ID'], '--password', os.environ['APPLE_PASSWORD'],
         '--team-id', TEAM_ID,
         '--wait',
-         f'../{ZIPNAME}',
+        zip_path,
     ])
     print()
 
     print('Deleting zip file ...')
-    os.remove(f'../{ZIPNAME}')
+    os.remove(zip_path)
     print()
 
     print('Done notarizing!')
