@@ -1,0 +1,92 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+# One live run per branch. main is exempt: a post-merge run is the one whose
+# result gets looked at later, so it shouldn't be cancelled by the next merge.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  SDL_VIDEODRIVER: dummy
+  # Drive build.py and tox with 3.11, matching what CI used before. Without
+  # this, uv picks "the first compatible version" for requires-python, which is
+  # under-specified enough to differ between runners.
+  UV_PYTHON: '3.11'
+
+jobs:
+  test:
+    name: Tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      # Both arches always run: with an arch matrix, whether a failure is
+      # arch-specific or universal is the first thing you want to know.
+      fail-fast: false
+      matrix:
+        # We ship vendored binaries for both mac arches, so both get tested.
+        # macos-15-intel is the last x86_64 macOS image GitHub will offer; it
+        # goes away in August 2027, at which point either the x86_64 binaries
+        # under cmu_graphics/libs/ ship untested or they stop shipping.
+        os: [macos-latest, macos-15-intel]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+
+      # tox needs all four interpreters on PATH. uv installs them to
+      # ~/.local/bin as python3.11 ... python3.14.
+      - name: Install Python interpreters
+        run: |
+          uv python install 3.11 3.12 3.13 3.14
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Build the installer zip and pypi package
+        run: uv run build/build.py
+
+      - name: Run tests
+        run: uv run tox --parallel 3
+
+      # test_image_gen.py writes diff_*.png and an HTML report into tox's
+      # {envtmpdir} when a rendered image doesn't match its reference. Without
+      # these, an image failure on an arch you don't own is undiagnosable.
+      - name: Upload image comparison failures
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: image-gen-failures-${{ matrix.os }}
+          path: .tox/*/tmp/image_gen/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # A single stable check to require in branch protection. The per-matrix
+  # contexts are named after the matrix entries, so requiring those directly
+  # would silently stop gating merges the next time the matrix changes.
+  tests-passed:
+    name: Tests passed
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "Tests did not pass: ${{ needs.test.result }}"
+            exit 1
+          fi
