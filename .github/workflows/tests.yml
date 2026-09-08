@@ -67,7 +67,9 @@ jobs:
         run: uv run build/build.py
 
       - name: Run tests
-        run: uv run tox run-parallel -p 3
+        run: |
+          echo "cores: $(sysctl -n hw.ncpu)"
+          uv run tox run-parallel -p auto
 
       # test_image_gen.py writes diff_*.png and an HTML report into tox's
       # {envtmpdir} when a rendered image doesn't match its reference. Without
