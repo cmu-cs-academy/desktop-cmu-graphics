@@ -67,7 +67,7 @@ jobs:
         run: uv run build/build.py
 
       - name: Run tests
-        run: uv run tox --parallel 3
+        run: uv run tox run-parallel -p 3
 
       # test_image_gen.py writes diff_*.png and an HTML report into tox's
       # {envtmpdir} when a rendered image doesn't match its reference. Without
