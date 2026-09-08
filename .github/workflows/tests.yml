@@ -43,7 +43,13 @@ jobs:
         os: [macos-latest, macos-15-intel]
 
     steps:
+      # build/check_helpers_version.py compares against origin/main, so the
+      # default shallow single-ref checkout isn't enough. blob:none keeps the
+      # full history without pulling ~324MB of vendored binaries.
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: blob:none
 
       - name: Install uv
         uses: astral-sh/setup-uv@v10.0.1
