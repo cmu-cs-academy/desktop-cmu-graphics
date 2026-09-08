@@ -82,9 +82,13 @@ def publish(pypi_dest, zip_dest, zipfile_name, is_prod):
 
     s3_dest = ('s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/' if is_prod else 's3://cmu-cs-academy.lib.prod/desktop-cmu-graphics-test/'
         )
-    subprocess.run(['aws', 's3', 'cp', zip_dest + '/cmu_graphics/meta/version.txt',
-        s3_dest], check=True)
-    subprocess.run(['aws', 's3', 'cp', zipfile_name, s3_dest], check=True)
+
+    # Cache-control: no-cache means that the zip file can be cached by the browser,
+    # but the browser has to validate that it has the latest version before giving
+    # it to the user. This should make it so that all users get that latest version ASAP.
+    subprocess.run(['aws', 's3', 'cp', '--cache-control', 'no-cache',
+        zip_dest + '/cmu_graphics/meta/version.txt', s3_dest], check=True)
+    subprocess.run(['aws', 's3', 'cp', '--cache-control', 'no-cache', zipfile_name, s3_dest], check=True)
 
 def main():
     parser = argparse.ArgumentParser()
