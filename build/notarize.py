@@ -65,7 +65,6 @@ def sign_files():
 ################################################################################
 
 def fail(reason, zip_path, submission_id=None):
-    """Report a notarization failure as loudly as possible, then exit non-zero."""
     print()
     print('*' * 79)
     print('*** NOTARIZATION FAILED')
