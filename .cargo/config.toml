@@ -1,0 +1,21 @@
+# EXPERIMENT: statically link the C runtime into the Windows extension module.
+#
+# With +crt-static, skia-bindings compiles Skia with /MT (see its
+# build_support/platform/windows.rs) and rustc links the static CRT, so
+# cmu_graphics_helpers.pyd should stop importing MSVCP140.dll, VCRUNTIME140.dll
+# and the api-ms-win-crt-* set entirely -- removing any need to ship Microsoft's
+# redistributable, and with it the delvewheel step, the notice, and the
+# redistribution licensing question.
+#
+# The cost this experiment is measuring: skia-bindings' prebuilt binary cache key
+# gains a "static" component (build_support/binary_cache/binaries.rs), and
+# rust-skia publishes no static Windows build -- the 0.99.0 release has 137
+# assets, 24 for Windows, none of them static. So Skia gets compiled from source
+# rather than downloaded, turning a 75-second cargo build into a long one.
+#
+# This lives at the repo root rather than in cmu_graphics_helpers/ because cargo
+# discovers config relative to the working directory, not the manifest path: the
+# build workflow runs from cmu_graphics_helpers/, but tox runs from the repo root
+# with -m cmu_graphics_helpers/Cargo.toml. The root covers both.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

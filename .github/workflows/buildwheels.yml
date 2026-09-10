@@ -25,6 +25,23 @@ jobs:
         if: ${{ matrix.os != 'ubuntu-latest' }}
         run: rustup target add ${{ matrix.target }}
 
+      # Building Skia from source (see .cargo/config.toml) runs bindgen, which
+      # needs libclang. The prebuilt binaries carry pre-generated bindings, so
+      # this was not needed before. LLVM is preinstalled on the runner image;
+      # locate it rather than hardcoding a path.
+      - name: Point bindgen at the runner's LLVM
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          $lib = Get-ChildItem -Path "C:\Program Files\LLVM", "C:\Program Files (x86)\LLVM" `
+            -Filter libclang.dll -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($lib) {
+            "found $($lib.FullName)"
+            "LIBCLANG_PATH=$($lib.DirectoryName)" >> $env:GITHUB_ENV
+          } else {
+            "libclang.dll not found; leaving bindgen to search PATH"
+          }
+
       - name: Build wheels with maturin
         uses: PyO3/maturin-action@v1
         with:
