@@ -40,10 +40,8 @@ jobs:
               apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
             fi
 
-      # Fail here, in the job that produced the wheel, rather than downstream in
-      # the clean-Windows import test. This walks the .pyd's dependencies (and
-      # its bundled DLLs' dependencies) and checks each one is either bundled or
-      # guaranteed present on a stock Windows machine.
+      # Most failures will be caught quickly here without having to run
+      # test_clean_windows below
       - name: Check the Windows wheel bundles every DLL it needs
         if: ${{ matrix.os == 'windows-latest' }}
         run: python tests/check_binaries.py --wheel cmu_graphics_helpers/target/wheels
@@ -97,6 +95,7 @@ jobs:
     - uses: actions/upload-artifact@v6
       with:
         path: cmu_graphics_helpers/target/wheels/*.tar.gz
+        name: source-distribution
 
   upload_all:
     name: Upload to PyPi
