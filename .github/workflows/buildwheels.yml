@@ -26,9 +26,9 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       # Building Skia from source (see .cargo/config.toml) runs bindgen, which
-      # needs libclang. The prebuilt Skia binaries carry pre-generated bindings,
-      # so this was not needed while they were being downloaded. LLVM is
-      # preinstalled on the runner image; locate it rather than hardcoding a path.
+      # needs libclang. The prebuilt binaries carry pre-generated bindings, so
+      # this was not needed before. LLVM is preinstalled on the runner image;
+      # locate it rather than hardcoding a path.
       - name: Point bindgen at the runner's LLVM
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
@@ -42,11 +42,12 @@ jobs:
             "libclang.dll not found; leaving bindgen to search PATH"
           }
 
-      # Windows only: it is the one job that builds Skia from source, so it is
-      # the only one where this pays for itself. The macOS jobs download a
-      # prebuilt Skia archive and finish in under a minute, and the Linux job
-      # builds inside maturin-action's manylinux container, whose CARGO_HOME is
-      # not the host's -- a host-level cache would do nothing for it.
+      # Windows only: it is the one job that builds Skia from source (see
+      # .cargo/config.toml), so it is the only one where this pays for itself.
+      # The macOS jobs download a prebuilt Skia archive and finish in under a
+      # minute, and the Linux job builds inside maturin-action's manylinux
+      # container, whose CARGO_HOME is not the host's -- a host-level cache
+      # would do nothing for it.
       - name: Cache cargo registry and build artifacts
         if: ${{ matrix.os == 'windows-latest' }}
         uses: Swatinem/rust-cache@v2
@@ -55,18 +56,18 @@ jobs:
           workspaces: cmu_graphics_helpers
 
       # rust-cache restores all of target/, which includes the wheels maturin
-      # wrote on the previous run. After a version bump the new wheel has a
-      # different filename, so a stale one would survive and be picked up by the
-      # upload step's glob. Clear the output directory after the cache is
-      # restored and before the build.
+      # wrote on the previous run. A stale wheel left there would be picked up
+      # by the delvewheel step's glob and by the upload, so clear the output
+      # directories after the cache is restored and before the build.
       - name: Clear stale wheels restored from the cache
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-          $dir = "cmu_graphics_helpers/target/wheels"
-          if (Test-Path $dir) {
-            "removing $dir"
-            Remove-Item -Recurse -Force $dir
+          foreach ($dir in "cmu_graphics_helpers/target/wheels", "cmu_graphics_helpers/target/repaired") {
+            if (Test-Path $dir) {
+              "removing $dir"
+              Remove-Item -Recurse -Force $dir
+            }
           }
 
       - name: Build wheels with maturin
@@ -84,11 +85,81 @@ jobs:
               apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
             fi
 
+      - name: Install uv
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: astral-sh/setup-uv@v6
+
+      - name: Bundle the VC++ runtime into the Windows wheel
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          $wheel = Get-ChildItem cmu_graphics_helpers/target/wheels/*.whl
+          # Repair into a separate directory and move the result back, rather
+          # than passing -w the wheel's own directory. When delvewheel has
+          # nothing to vendor it copies the wheel to the target instead of
+          # repackaging it, and copying a file onto itself fails on Windows with
+          # "WinError 32: the process cannot access the file".
+          uv run --only-group delvewheel delvewheel repair --no-mangle-all -w cmu_graphics_helpers/target/repaired $wheel
+          Move-Item -Force cmu_graphics_helpers/target/repaired/*.whl cmu_graphics_helpers/target/wheels/
+
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.target }}
           path: cmu_graphics_helpers/target/wheels/*.whl
+
+  test_clean_windows:
+    name: Import test on Windows without the VC++ Redistributable
+    needs: build_wheels
+    # Not windows-latest: process isolation needs the container's OS build to
+    # match the host's (ltsc2022), and windows-2022 pre-caches the Server Core
+    # image so this does not pay a multi-gigabyte pull.
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: wheels-windows-latest-x86_64-pc-windows-msvc
+          path: wheels
+
+      - name: Import cmu_graphics_helpers in a clean Windows container
+        run: python tests/clean_windows_import_test.py --wheel wheels
+
+  vendor_binaries:
+    name: Commit built binaries to the branch
+    needs: [build_wheels, test_clean_windows]
+    # Don't run on main, where main the wheels are published to PyPI instead.
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v5
+        with:
+          path: wheels
+          merge-multiple: true
+
+      # Wheels for platforms the zip distribution does not ship (Linux) and the
+      # sdist are ignored by the script.
+      - name: Vendor the wheels into cmu_graphics/libs
+        run: python build/helpers/build_cmuhelp_modules.py --wheels wheels
+
+      - name: Commit the vendored binaries
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cmu_graphics/libs/cmu_graphics_helpers_loader/modules
+          if git diff --cached --quiet; then
+            echo "Vendored binaries are already up to date; nothing to commit."
+            exit 0
+          fi
+          git commit -m "Update vendored cmu_graphics_helpers binaries
+
+          Built by $GITHUB_WORKFLOW run $GITHUB_RUN_ID from $GITHUB_SHA."
+          git push
 
   make_sdist:
     name: Make SDist
@@ -115,10 +186,11 @@ jobs:
     - uses: actions/upload-artifact@v6
       with:
         path: cmu_graphics_helpers/target/wheels/*.tar.gz
+        name: source-distribution
 
   upload_all:
     name: Upload to PyPi
-    needs: [build_wheels, make_sdist]
+    needs: [build_wheels, test_clean_windows, make_sdist]
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     environment: pypi
     permissions:
