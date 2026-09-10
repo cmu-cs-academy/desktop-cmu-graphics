@@ -3,7 +3,7 @@ import struct
 import platform
 import os
 
-min_minor_version = 11
+min_minor_version = 8
 max_minor_version = 14
 
 def get_platform_string():
