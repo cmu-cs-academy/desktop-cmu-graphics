@@ -21,6 +21,7 @@ signed or notarized -- see build/README.md.
 """
 
 import argparse
+import os
 import shutil
 import sys
 import tempfile
@@ -56,13 +57,24 @@ def module_for_wheel(filename):
     return None
 
 
+def extract_preserving_modes(zf, destination):
+    """
+    Extract a wheel, keeping the Unix permissions it records.
+    """
+    for info in zf.infolist():
+        extracted = zf.extract(info, destination)
+        mode = (info.external_attr >> 16) & 0o777
+        if mode and not info.is_dir():
+            os.chmod(extracted, mode)
+
+
 def vendor_wheel(wheel_path, module_dir):
     """Replace module_dir's package directory with the one inside wheel_path."""
     destination = module_dir / PACKAGE_NAME
 
     with tempfile.TemporaryDirectory() as unpacked:
         with zipfile.ZipFile(wheel_path) as zf:
-            zf.extractall(unpacked)
+            extract_preserving_modes(zf, unpacked)
 
         source = Path(unpacked, PACKAGE_NAME)
         if not source.is_dir():
@@ -75,10 +87,9 @@ def vendor_wheel(wheel_path, module_dir):
         module_dir.mkdir(parents=True, exist_ok=True)
         shutil.move(str(source), str(destination))
 
-    contents = sorted(path.name for path in destination.iterdir())
     print(f'{wheel_path.name} -> {destination}')
-    for name in contents:
-        print(f'    {name}')
+    for path in sorted(destination.iterdir()):
+        print(f'    {path.name} ({path.stat().st_mode & 0o777:o})')
 
 
 def main():
