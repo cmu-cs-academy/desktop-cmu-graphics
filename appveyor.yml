@@ -19,6 +19,17 @@ for:
         - job_name: Windows Tests
 
     install:
+      # Skia is built from source here, because .cargo/config.toml links the C
+      # runtime statically and rust-skia publishes no static prebuilt -- the
+      # download 404s and skia-bindings falls back to a full build. Fetching
+      # Skia's source pulls in third-party test data (harfbuzz, SPIRV-Cross)
+      # whose paths exceed the 260-character Windows MAX_PATH limit, under an
+      # already-deep prefix in the cargo registry, and the checkout fails with
+      # "Filename too long". GitHub's runner images enable long paths already;
+      # this image does not.
+      - git config --system core.longpaths true
+      - reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
+
       - C:\Python311-x64\python.exe -m pip install tox twine build maturin
       # Rust + cargo, needed to build cmu_graphics_helpers.
       - curl -sSf -o rustup-init.exe https://win.rustup.rs/x86_64
