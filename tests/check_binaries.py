@@ -1,3 +1,4 @@
+import argparse
 import importlib.util
 import os
 import platform
@@ -5,6 +6,8 @@ import re
 import struct
 import subprocess
 import sys
+import tempfile
+import zipfile
 from pathlib import Path
 
 def is_properly_signed(path):
@@ -182,7 +185,7 @@ def find_helpers_dir():
     )
 
 
-def verify_windows_dll_dependencies():
+def verify_windows_dll_dependencies(helpers_dir, source=None):
     """
     Check that every DLL needed to import cmu_graphics_helpers will actually
     resolve on a student's machine: either Windows/CPython provides it, or we
@@ -194,7 +197,9 @@ def verify_windows_dll_dependencies():
     bundle does, so bundling msvcp140.dll alone would still fail to load on a
     machine without the Visual C++ Redistributable.
     """
-    helpers_dir = find_helpers_dir()
+    # When checking an unpacked wheel, name the wheel in any error rather than
+    # the temporary directory it happens to be unpacked into.
+    source = source or helpers_dir
     pyd_path = os.path.join(helpers_dir, 'cmu_graphics_helpers.pyd')
     if not os.path.exists(pyd_path):
         print(f'{pyd_path} does not exist')
@@ -225,7 +230,7 @@ def verify_windows_dll_dependencies():
     if missing:
         for dll, needed_by in sorted(missing.items()):
             print(
-                f'{needed_by} imports {dll}, which is neither bundled in {helpers_dir} '
+                f'{needed_by} imports {dll}, which is neither bundled in {source} '
                 f'nor guaranteed to exist on a stock Windows machine.'
             )
         print(
@@ -240,9 +245,43 @@ def verify_windows_dll_dependencies():
     print(f'All DLLs needed to import cmu_graphics_helpers are resolvable ({checked}).')
 
 
+def verify_wheel(wheel):
+    """
+    Run the same dependency check against a freshly built wheel, before it is
+    installed anywhere.
+    """
+    wheel_path = Path(wheel)
+    if wheel_path.is_dir():
+        wheels = sorted(wheel_path.glob('*win_amd64.whl'), key=lambda p: p.stat().st_mtime)
+        if not wheels:
+            print(f'no win_amd64 wheel found in {wheel_path}')
+            sys.exit(1)
+        wheel_path = wheels[-1]
+    print(f'Checking {wheel_path.name}')
+
+    with tempfile.TemporaryDirectory() as unpacked:
+        with zipfile.ZipFile(wheel_path) as zf:
+            zf.extractall(unpacked)
+        verify_windows_dll_dependencies(
+            os.path.join(unpacked, 'cmu_graphics_helpers'), source=wheel_path.name
+        )
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        '--wheel',
+        help='check a built Windows wheel (or a directory holding one) instead of '
+             'whichever cmu_graphics_helpers is installed',
+    )
+    args = parser.parse_args()
+
+    if args.wheel:
+        verify_wheel(args.wheel)
+        return
+
     if platform.system() == 'Windows':
-        verify_windows_dll_dependencies()
+        verify_windows_dll_dependencies(find_helpers_dir())
         return
 
     if platform.system() != 'Darwin':
@@ -252,4 +291,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

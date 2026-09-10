@@ -16,12 +16,9 @@ dynamic = ["version"]
 [tool.maturin]
 # The Windows wheel ships the Visual C++ runtime DLLs that cmu_graphics_helpers.pyd
 # needs to load; build.rs copies them into OUT_DIR and these entries place them
-# next to the .pyd, inside the wheel's package directory. See build.rs for why.
-# On macOS and Linux build.rs writes nothing, so maturin logs "No files matched"
-# and those wheels are unaffected.
+# next to the .pyd, inside the wheel's package directory.
 include = [
-  { path = "msvcp140.dll", from = "out-dir", to = "cmu_graphics_helpers/" },
-  { path = "vcruntime140.dll", from = "out-dir", to = "cmu_graphics_helpers/" },
+  { path = "*.dll", from = "out-dir", to = "cmu_graphics_helpers/" },
   { path = "VC_REDIST_NOTICE.txt", from = "out-dir", to = "cmu_graphics_helpers/" },
 ]
 
