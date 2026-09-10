@@ -20,11 +20,6 @@ To vendor wheels by hand instead — a local `maturin build`, or wheels
   that directory are ignored.
 
 
-The Windows wheel bundles the Visual C++ runtime DLLs the compiled helper
-  needs (see `cmu_graphics_helpers/build.rs`), so the vendored Windows module
-  picks them up automatically.
-
-
 ## MacOS code signing
 Sign and notarize binaries with `notarize.py`. **The macOS binaries the
   workflow commits are not signed or notarized.** `tests/check_binaries.py`

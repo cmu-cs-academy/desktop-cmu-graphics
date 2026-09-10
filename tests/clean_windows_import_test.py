@@ -78,12 +78,17 @@ def stage_wheel(staging, wheel_path):
     with zipfile.ZipFile(wheel_path) as zf:
         zf.extractall(target)
 
-    matches = [p for p in (target / 'cmu_graphics_helpers').iterdir()
-               if p.name.lower() == 'msvcp140.dll']
+    matches = [
+        path
+        for directory in ('cmu_graphics_helpers.libs', 'cmu_graphics_helpers')
+        if (target / directory).is_dir()
+        for path in (target / directory).iterdir()
+        if path.name.lower() == 'msvcp140.dll'
+    ]
     if not matches:
         raise SystemExit(
-            f'{wheel_path} does not contain cmu_graphics_helpers/msvcp140.dll. '
-            f'See the [tool.maturin] include section of cmu_graphics_helpers/pyproject.toml.'
+            f'{wheel_path} does not contain msvcp140.dll. delvewheel should have '
+            f'vendored it; see the build workflow.'
         )
     return target, matches[0]
 

@@ -69,27 +69,37 @@ def extract_preserving_modes(zf, destination):
 
 
 def vendor_wheel(wheel_path, module_dir):
-    """Replace module_dir's package directory with the one inside wheel_path."""
-    destination = module_dir / PACKAGE_NAME
+    """
+    Replace module_dir's contents with the package directory inside wheel_path.
 
+    The Windows wheel also carries a sibling cmu_graphics_helpers.libs directory
+    holding the Visual C++ runtime DLLs that delvewheel vendored.
+    """
     with tempfile.TemporaryDirectory() as unpacked:
         with zipfile.ZipFile(wheel_path) as zf:
             extract_preserving_modes(zf, unpacked)
 
-        source = Path(unpacked, PACKAGE_NAME)
-        if not source.is_dir():
+        if not Path(unpacked, PACKAGE_NAME).is_dir():
             raise SystemExit(f'{wheel_path.name} does not contain a {PACKAGE_NAME}/ directory')
 
-        # Replace rather than merge, so that a file which is no longer shipped
-        # (or a stale __pycache__) does not survive in the vendored copy.
-        if destination.exists():
-            shutil.rmtree(destination)
         module_dir.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(source), str(destination))
+        for name in (PACKAGE_NAME, f'{PACKAGE_NAME}.libs'):
+            source = Path(unpacked, name)
+            destination = module_dir / name
 
-    print(f'{wheel_path.name} -> {destination}')
-    for path in sorted(destination.iterdir()):
-        print(f'    {path.name} ({path.stat().st_mode & 0o777:o})')
+            # Replace rather than merge, so that a file which is no longer
+            # shipped (a stale __pycache__, or a .libs directory from a build
+            # that no longer needs one) does not survive in the vendored copy.
+            if destination.exists():
+                shutil.rmtree(destination)
+            if source.is_dir():
+                shutil.move(str(source), str(destination))
+
+    print(f'{wheel_path.name} -> {module_dir}')
+    for path in sorted(module_dir.rglob('*')):
+        if path.is_file():
+            rel = path.relative_to(module_dir)
+            print(f'    {rel} ({path.stat().st_mode & 0o777:o})')
 
 
 def main():

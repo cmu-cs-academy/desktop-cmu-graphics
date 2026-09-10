@@ -13,11 +13,13 @@ classifiers = [
 dynamic = ["version"]
 
 [tool.maturin]
-# The Windows wheel ships the Visual C++ runtime DLLs that cmu_graphics_helpers.pyd
-# needs to load; build.rs copies them into OUT_DIR and these entries place them
-# next to the .pyd, inside the wheel's package directory.
+# The Windows wheel carries the Visual C++ runtime DLLs that
+# cmu_graphics_helpers.pyd needs to load, but delvewheel adds those after the
+# build (see .github/workflows/buildwheels.yml). All maturin has to place is the
+# redistribution notice that ships alongside them, which build.rs writes into
+# OUT_DIR. On macOS and Linux build.rs writes nothing, so maturin logs
+# "No files matched" and those wheels are unaffected.
 include = [
-  { path = "*.dll", from = "out-dir", to = "cmu_graphics_helpers/" },
   { path = "VC_REDIST_NOTICE.txt", from = "out-dir", to = "cmu_graphics_helpers/" },
 ]
 

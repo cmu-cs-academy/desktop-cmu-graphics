@@ -40,11 +40,16 @@ jobs:
               apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
             fi
 
-      # Most failures will be caught quickly here without having to run
-      # test_clean_windows below
-      - name: Check the Windows wheel bundles every DLL it needs
+      - name: Install uv
         if: ${{ matrix.os == 'windows-latest' }}
-        run: python tests/check_binaries.py --wheel cmu_graphics_helpers/target/wheels
+        uses: astral-sh/setup-uv@v6
+
+      - name: Bundle the VC++ runtime into the Windows wheel
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          $wheel = Get-ChildItem cmu_graphics_helpers/target/wheels/*.whl
+          uv run --only-group delvewheel delvewheel repair --no-mangle-all -w cmu_graphics_helpers/target/wheels $wheel
 
       - name: Upload wheels
         uses: actions/upload-artifact@v6
