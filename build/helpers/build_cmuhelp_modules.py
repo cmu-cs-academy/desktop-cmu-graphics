@@ -72,8 +72,10 @@ def vendor_wheel(wheel_path, module_dir):
     """
     Replace module_dir's contents with the package directory inside wheel_path.
 
-    The Windows wheel also carries a sibling cmu_graphics_helpers.libs directory
-    holding the Visual C++ runtime DLLs that delvewheel vendored.
+    A wheel may also carry a sibling cmu_graphics_helpers.libs directory holding
+    vendored DLLs, in which case both directories have to move together to keep
+    the layout intact. The Windows wheel has none, because .cargo/config.toml
+    links the C runtime statically, so nothing needs vendoring alongside it.
     """
     with tempfile.TemporaryDirectory() as unpacked:
         with zipfile.ZipFile(wheel_path) as zf:
