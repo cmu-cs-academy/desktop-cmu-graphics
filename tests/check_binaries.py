@@ -43,13 +43,18 @@ def has_correct_architecture(path):
     return True
 
 def verify_codesignatures():
+    # tox only runs this in the zip envs, from {envtmpdir}, where
+    # tests/install.py has unpacked the installer into ./cmu_graphics.
+    base_path = 'cmu_graphics'
+
     success = True
-    base_path = os.path.join('..', 'cmu_graphics')
+    checked = 0
     for path, _, files in os.walk(base_path):
         for filename in files:
             _, extension = os.path.splitext(filename)
             if extension in ('.so', '.dylib'):
-                filepath = os.path.abspath(os.path.join(base_path, path, filename))
+                filepath = os.path.abspath(os.path.join(path, filename))
+                checked += 1
                 if not is_properly_signed(filepath):
                     print(f'{filepath} was not appropriately signed')
                     success = False
@@ -57,6 +62,15 @@ def verify_codesignatures():
                 if not has_correct_architecture(filepath):
                     print(f'{filepath} does not have the correct architecture')
                     success = False
+
+    # Guard against this check silently passing because it was looking in the
+    # wrong place, which is how it went unnoticed that for a long time it
+    # checked nothing at all.
+    if checked == 0:
+        sys.exit(f'no .so or .dylib files were found under '
+                 f'{os.path.abspath(base_path)}')
+
+    print(f'Checked {checked} binaries.')
     if not success:
         sys.exit(1)
 
