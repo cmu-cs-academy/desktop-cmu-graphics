@@ -66,7 +66,13 @@ jobs:
         shell: pwsh
         run: |
           $wheel = Get-ChildItem cmu_graphics_helpers/target/wheels/*.whl
-          uv run --only-group delvewheel delvewheel repair --no-mangle-all -w cmu_graphics_helpers/target/wheels $wheel
+          # Repair into a separate directory and move the result back, rather
+          # than passing -w the wheel's own directory. When delvewheel has
+          # nothing to vendor it copies the wheel to the target instead of
+          # repackaging it, and copying a file onto itself fails on Windows with
+          # "WinError 32: the process cannot access the file".
+          uv run --only-group delvewheel delvewheel repair --no-mangle-all -w cmu_graphics_helpers/target/repaired $wheel
+          Move-Item -Force cmu_graphics_helpers/target/repaired/*.whl cmu_graphics_helpers/target/wheels/
 
       - name: Upload wheels
         uses: actions/upload-artifact@v6
