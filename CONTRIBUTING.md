@@ -31,8 +31,13 @@ Inside of `desktop-cmu-graphics` you will find the following...
 
 There are a number of dependencies that need to be installed:
 
-        cd <path/to/desktop-cmu-graphics>
-        uv run pre-commit install --install-hooks
+```
+cd <path/to/desktop-cmu-graphics>
+uv run pre-commit install --install-hooks
+```
+
+If you're working on the Rust helpers library, install Rust via rustup as described [here](https://rust-lang.org/tools/install/). See the section about configuration your `PATH` environment
+variable to ensure `cargo` and `rustc` are both available.
 
 
 # Running a Build
