@@ -1,5 +1,4 @@
 [build-system]
-# >=1.12.1 for `from = "out-dir"` include support, used below.
 requires = ["maturin>=1.12.1,<2.0"]
 build-backend = "maturin"
 
