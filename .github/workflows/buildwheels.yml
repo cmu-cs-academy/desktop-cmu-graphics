@@ -42,6 +42,33 @@ jobs:
             "libclang.dll not found; leaving bindgen to search PATH"
           }
 
+      # Windows only: it is the one job that builds Skia from source, so it is
+      # the only one where this pays for itself. The macOS jobs download a
+      # prebuilt Skia archive and finish in under a minute, and the Linux job
+      # builds inside maturin-action's manylinux container, whose CARGO_HOME is
+      # not the host's -- a host-level cache would do nothing for it.
+      - name: Cache cargo registry and build artifacts
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: Swatinem/rust-cache@v2
+        with:
+          # The crate is not at the repository root.
+          workspaces: cmu_graphics_helpers
+
+      # rust-cache restores all of target/, which includes the wheels maturin
+      # wrote on the previous run. After a version bump the new wheel has a
+      # different filename, so a stale one would survive and be picked up by the
+      # upload step's glob. Clear the output directory after the cache is
+      # restored and before the build.
+      - name: Clear stale wheels restored from the cache
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          $dir = "cmu_graphics_helpers/target/wheels"
+          if (Test-Path $dir) {
+            "removing $dir"
+            Remove-Item -Recurse -Force $dir
+          }
+
       - name: Build wheels with maturin
         uses: PyO3/maturin-action@v1
         with:
