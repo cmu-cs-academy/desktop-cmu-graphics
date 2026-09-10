@@ -70,6 +70,47 @@ jobs:
       - name: Import cmu_graphics_helpers in a clean Windows container
         run: python tests/clean_windows_import_test.py --wheel wheels
 
+  vendor_binaries:
+    name: Commit built binaries to the branch
+    needs: [build_wheels, test_clean_windows]
+    # Only off main. On main the wheels are published to PyPI (see upload_all),
+    # and the pip install pulls them from there; committing binaries onto main
+    # from CI would race that release. Off main this is how a branch gets a zip
+    # distribution built from its own code, without a PyPI round trip.
+    #
+    # Depends on test_clean_windows so a Windows binary that cannot be imported
+    # on a stock machine never reaches the repository.
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v5
+        with:
+          path: wheels
+          merge-multiple: true
+
+      # Wheels for platforms the zip distribution does not ship (Linux) and the
+      # sdist are ignored by the script.
+      - name: Vendor the wheels into cmu_graphics/libs
+        run: python build/helpers/build_cmuhelp_modules.py --wheels wheels
+
+      - name: Commit the vendored binaries
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cmu_graphics/libs/cmu_graphics_helpers_loader/modules
+          if git diff --cached --quiet; then
+            echo "Vendored binaries are already up to date; nothing to commit."
+            exit 0
+          fi
+          git commit -m "Update vendored cmu_graphics_helpers binaries
+
+          Built by $GITHUB_WORKFLOW run $GITHUB_RUN_ID from $GITHUB_SHA."
+          git push
+
   make_sdist:
     name: Make SDist
     runs-on: ubuntu-latest
