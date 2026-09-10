@@ -1,14 +1,11 @@
-### ZIPFILE VERSION ###
 import sys
 import struct
-### END ZIPFILE VERSION ###
 import platform
 import os
 
 min_minor_version = 11
 max_minor_version = 14
 
-### ZIPFILE VERSION ###
 def get_platform_string():
     plat = "unsupported"
     if sys.platform == "darwin":
@@ -31,14 +28,13 @@ It looks like your computer is using a(n) %(os)s operating system.
 through Python 3.%(max_minor_version)d on Windows and MacOS.""" 
 % {'os': sys.platform, 'max_minor_version': max_minor_version, 'min_minor_version': min_minor_version})
         os._exit(1)
-        
-### END ZIPFILE VERSION ###
 
-def verify_support():
+
+def verify_support(vendored):
     python_major, python_minor, _ = platform.python_version_tuple()
-    ### ZIPFILE VERSION ###
-    verify_os()
-    ### END ZIPFILE VERSION ###
+    # The vendored distribution only ships binaries for Windows and MacOS.
+    if vendored:
+        verify_os()
 
     if python_major != '3':
         print("""\
@@ -48,15 +44,13 @@ We recommend installing Python 3.%(max_minor_version)d from python.org"""
 % {'max_minor_version': max_minor_version})
         os._exit(1)
 
-    ### ZIPFILE VERSION ###
-    if int(python_minor) > max_minor_version:
+    if vendored and int(python_minor) > max_minor_version:
         print("""\
 It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
 supported by CMU Graphics. We support Python 3.%(min_minor_version)d-3.%(max_minor_version)d. We recommend
 installing Python 3.%(max_minor_version)d from python.org""" %
 {"minor": python_minor, 'max_minor_version': max_minor_version, 'min_minor_version': min_minor_version})
         os._exit(1)
-    ### END ZIPFILE VERSION ###
 
     if int(python_minor) < min_minor_version:
         print("""\
