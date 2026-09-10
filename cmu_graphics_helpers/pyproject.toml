@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.12,<2.0"]
+requires = ["maturin>=1.12.1,<2.0"]
 build-backend = "maturin"
 
 [project]
@@ -12,6 +12,17 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[tool.maturin]
+# The Windows wheel carries the Visual C++ runtime DLLs that
+# cmu_graphics_helpers.pyd needs to load, but delvewheel adds those after the
+# build (see .github/workflows/buildwheels.yml). All maturin has to place is the
+# redistribution notice that ships alongside them, which build.rs writes into
+# OUT_DIR. On macOS and Linux build.rs writes nothing, so maturin logs
+# "No files matched" and those wheels are unaffected.
+include = [
+  { path = "VC_REDIST_NOTICE.txt", from = "out-dir", to = "cmu_graphics_helpers/" },
+]
+
 [tool.uv]
 # uv's default cache invalidation for this path dependency doesn't notice
 # edits to the Rust source, so `uv run` would keep using a stale build.
@@ -20,4 +31,5 @@ cache-keys = [
     { file = "Cargo.lock" },
     { file = "pyproject.toml" },
     { file = "src/**/*.rs" },
+    { file = "build.rs" },
 ]

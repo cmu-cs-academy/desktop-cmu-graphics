@@ -1,0 +1,17 @@
+===============================================================================
+Microsoft Visual C++ Runtime Libraries
+===============================================================================
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+This application includes redistributable binary files from the Microsoft Visual
+C++ Runtime, distributed under the Microsoft Software License Terms for
+Microsoft Visual Studio / Microsoft Visual C++ Redistributable package.
+
+This package includes the following files, redistributed unmodified, in the
+cmu_graphics_helpers.libs directory:
+
+    msvcp140.dll
+    vcruntime140_1.dll
+
+For official Microsoft Visual Studio license terms, see:
+https://visualstudio.microsoft.com/license-terms/
