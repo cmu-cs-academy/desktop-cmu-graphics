@@ -73,13 +73,7 @@ jobs:
   vendor_binaries:
     name: Commit built binaries to the branch
     needs: [build_wheels, test_clean_windows]
-    # Only off main. On main the wheels are published to PyPI (see upload_all),
-    # and the pip install pulls them from there; committing binaries onto main
-    # from CI would race that release. Off main this is how a branch gets a zip
-    # distribution built from its own code, without a PyPI round trip.
-    #
-    # Depends on test_clean_windows so a Windows binary that cannot be imported
-    # on a stock machine never reaches the repository.
+    # Don't run on main, where main the wheels are published to PyPI instead.
     if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
