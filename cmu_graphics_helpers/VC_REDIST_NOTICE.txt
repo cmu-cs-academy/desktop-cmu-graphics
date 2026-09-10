@@ -1,0 +1,25 @@
+Third-party notice: Microsoft Visual C++ Runtime
+================================================
+
+This package includes the following files, redistributed unmodified:
+
+    msvcp140.dll
+    vcruntime140.dll
+
+These are Microsoft Visual C++ Runtime redistributable files.
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+They are included because cmu_graphics_helpers is compiled C++ code (Rust plus
+Skia) and cannot be loaded without them. They are not part of a stock Windows
+installation, so without them CMU Graphics fails to import on machines that do
+not have the Microsoft Visual C++ Redistributable installed.
+
+These files are listed as REDIST ("Distributable Code") by Microsoft for Visual
+Studio, and are redistributed here under the Microsoft Visual Studio license
+terms, which permit distributing unmodified copies of REDIST files together with
+the program that requires them. They are provided by Microsoft, not by Carnegie
+Mellon University, and are not covered by the CMU Graphics license in LICENSE.
+
+Note that, unlike a system-wide installation of the Microsoft Visual C++
+Redistributable, these bundled copies are not updated by Windows Update. They
+are refreshed when this package is rebuilt. See build/helpers/vendor_vcruntime.py.

@@ -1,5 +1,6 @@
 [build-system]
-requires = ["maturin>=1.12,<2.0"]
+# >=1.12.1 for `from = "out-dir"` include support, used below.
+requires = ["maturin>=1.12.1,<2.0"]
 build-backend = "maturin"
 
 [project]
@@ -12,6 +13,18 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[tool.maturin]
+# The Windows wheel ships the Visual C++ runtime DLLs that cmu_graphics_helpers.pyd
+# needs to load; build.rs copies them into OUT_DIR and these entries place them
+# next to the .pyd, inside the wheel's package directory. See build.rs for why.
+# On macOS and Linux build.rs writes nothing, so maturin logs "No files matched"
+# and those wheels are unaffected.
+include = [
+  { path = "msvcp140.dll", from = "out-dir", to = "cmu_graphics_helpers/" },
+  { path = "vcruntime140.dll", from = "out-dir", to = "cmu_graphics_helpers/" },
+  { path = "VC_REDIST_NOTICE.txt", from = "out-dir", to = "cmu_graphics_helpers/" },
+]
+
 [tool.uv]
 # uv's default cache invalidation for this path dependency doesn't notice
 # edits to the Rust source, so `uv run` would keep using a stale build.
@@ -20,4 +33,5 @@ cache-keys = [
     { file = "Cargo.lock" },
     { file = "pyproject.toml" },
     { file = "src/**/*.rs" },
+    { file = "build.rs" },
 ]

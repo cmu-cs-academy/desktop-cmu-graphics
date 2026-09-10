@@ -2,6 +2,9 @@
 
 * To update bundled pygame, run `python3 ../../../build/helpers/build_pygame_modules.py` from `cmu_graphics/libs/pygame_loader`. Then run `python3 helpers/replace_images.py` from `build` to replace the Pygame logo with the CMU Graphics icon.
 * Similarly, to update bundled cmu_graphics_helpers, run `python3 ../../../build/helpers/build_cmuhelp_modules.py` from `cmu_graphics/libs/cmu_graphics_helpers_loader`.
+* The Windows wheel bundles `msvcp140.dll` (see `cmu_graphics_helpers/build.rs`),
+  so the vendored Windows module picks it up when you re-run
+  `build_cmuhelp_modules.py`.
 * Sign and notarize binaries with `notarize.py`
 
 These scripts use a variety of passwords, certificates, and keys. For notarization and deployment, use the following environment variables
