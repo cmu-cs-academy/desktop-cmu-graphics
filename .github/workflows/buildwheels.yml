@@ -109,22 +109,52 @@ jobs:
 
       # Wheels for platforms the zip distribution does not ship (Linux) and the
       # sdist are ignored by the script.
-      - name: Vendor the wheels into cmu_graphics/libs
-        run: python build/helpers/build_cmuhelp_modules.py --wheels wheels
-
-      - name: Commit the vendored binaries
+      #
+      # Retry if the branch moves while this run is in flight, which is easy to
+      # do: the build takes minutes, and any push during it makes the checkout
+      # here stale, so the push below is rejected as non-fast-forward.
+      #
+      # Each attempt resets to the current remote tip and re-vendors from the
+      # downloaded wheels rather than rebasing. The vendored tree is generated
+      # output, so regenerating it on top of whatever landed is always correct
+      # and cannot conflict -- which matters because these are binaries, and a
+      # rebase conflict on them would need a human. It also avoids rebasing in
+      # the shallow clone actions/checkout leaves behind.
+      - name: Vendor the wheels and commit them
+        shell: bash
         run: |
+          set -euo pipefail
+          branch="$GITHUB_REF_NAME"
+          modules=cmu_graphics/libs/cmu_graphics_helpers_loader/modules
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cmu_graphics/libs/cmu_graphics_helpers_loader/modules
-          if git diff --cached --quiet; then
-            echo "Vendored binaries are already up to date; nothing to commit."
-            exit 0
-          fi
-          git commit -m "Update vendored cmu_graphics_helpers binaries
 
-          Built by $GITHUB_WORKFLOW run $GITHUB_RUN_ID from $GITHUB_SHA."
-          git push
+          for attempt in 1 2 3; do
+            python build/helpers/build_cmuhelp_modules.py --wheels wheels
+            git add "$modules"
+
+            if git diff --cached --quiet; then
+              echo "Vendored binaries are already up to date; nothing to commit."
+              exit 0
+            fi
+
+            git commit \
+              -m "Update vendored cmu_graphics_helpers binaries" \
+              -m "Built by $GITHUB_WORKFLOW run $GITHUB_RUN_ID from $GITHUB_SHA."
+
+            if git push origin "HEAD:$branch"; then
+              exit 0
+            fi
+
+            echo "Push rejected on attempt $attempt: $branch moved while this run was building."
+            echo "Resetting to its current tip and re-vendoring on top of it."
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+          done
+
+          echo "Gave up after 3 attempts; $branch is moving faster than this job can keep up."
+          exit 1
 
   make_sdist:
     name: Make SDist
