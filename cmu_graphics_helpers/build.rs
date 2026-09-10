@@ -16,7 +16,7 @@
 //! this wheel into the zip distribution.
 //!
 //! See [tool.maturin] include in pyproject.toml for the other half of this, and
-//! VC_REDIST_NOTICE.txt for the redistribution terms.
+//! NOTICE_TEXT below for the redistribution terms.
 
 use std::env;
 use std::error::Error;
@@ -25,7 +25,7 @@ use std::path::{Path, PathBuf};
 
 /// Anything listed here must be a REDIST file that Microsoft's Visual Studio
 /// license terms allow us to redistribute. Do not add DLLs without checking
-/// that, and see VC_REDIST_NOTICE.txt.
+/// that, and see NOTICE_TEXT below.
 ///
 /// The .pyd itself only imports msvcp140.dll and vcruntime140.dll, but
 /// msvcp140.dll in turn imports vcruntime140_1.dll (which holds the x64
@@ -36,6 +36,26 @@ const DLL_NAMES: [&str; 3] = ["msvcp140.dll", "vcruntime140.dll", "vcruntime140_
 
 /// Redistributing Microsoft's DLLs requires shipping a notice alongside them.
 const NOTICE_NAME: &str = "VC_REDIST_NOTICE.txt";
+
+/// The text of the notice. It lives here, rather than in a .txt
+/// file, so that it ships only in the wheels that actually carry the DLLs.
+const NOTICE_TEXT: &str = r#"===============================================================================
+Microsoft Visual C++ Runtime Libraries
+===============================================================================
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+This application includes redistributable binary files from the Microsoft Visual
+C++ Runtime, distributed under the Microsoft Software License Terms for
+Microsoft Visual Studio / Microsoft Visual C++ Redistributable package.
+
+This package includes the following files, redistributed unmodified:
+
+    msvcp140.dll
+    vcruntime140.dll
+    vcruntime140_1.dll
+
+For official Microsoft Visual Studio license terms, see:
+https://visualstudio.microsoft.com/license-terms/"#;
 
 /// Directories that may hold a Visual Studio installation.
 const PROGRAM_FILES: [&str; 2] = ["C:\\Program Files", "C:\\Program Files (x86)"];
@@ -116,12 +136,17 @@ fn copy_dll(redist_dir: &Path, name: &str, out_dir: &Path) -> Result<(), Box<dyn
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed={NOTICE_NAME}");
     println!("cargo:rerun-if-env-changed=VCToolsRedistDir");
 
-    let is_windows_msvc = env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")
-        && env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc");
-    if !is_windows_msvc {
+    // The redistributable directory we read from below is the x64 one, so this
+    // only applies to x86_64 Windows builds. On win-arm64 (only reachable by
+    // building from the sdist, since we publish no arm64 wheel) bundling x64
+    // DLLs would produce a wheel that cannot load at all, so bundle nothing and
+    // leave that build depending on an installed redistributable.
+    let is_windows_x64_msvc = env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")
+        && env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc")
+        && env::var("CARGO_CFG_TARGET_ARCH").as_deref() == Ok("x86_64");
+    if !is_windows_x64_msvc {
         return Ok(());
     }
 
@@ -135,8 +160,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         copy_dll(&redist_dir, name, &out_dir)?;
     }
 
-    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR")?);
-    fs::copy(manifest_dir.join(NOTICE_NAME), out_dir.join(NOTICE_NAME))?;
+    fs::write(out_dir.join(NOTICE_NAME), NOTICE_TEXT)?;
 
     Ok(())
 }
