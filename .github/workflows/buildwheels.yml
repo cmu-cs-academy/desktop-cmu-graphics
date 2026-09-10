@@ -51,9 +51,7 @@ jobs:
     needs: build_wheels
     # Not windows-latest: process isolation needs the container's OS build to
     # match the host's (ltsc2022), and windows-2022 pre-caches the Server Core
-    # image so this does not pay a multi-gigabyte pull. Every hosted Windows
-    # image has Visual Studio, and therefore MSVCP140.dll, installed -- the
-    # container is the only way to see what a student's machine sees.
+    # image so this does not pay a multi-gigabyte pull.
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v6

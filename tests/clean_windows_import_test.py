@@ -3,18 +3,15 @@ Verify that cmu_graphics_helpers imports on a Windows machine that does NOT have
 the Microsoft Visual C++ Redistributable installed.
 
 This cannot be tested on a normal CI runner: every GitHub Actions and AppVeyor
-Windows image has Visual Studio, and therefore MSVCP140.dll, installed. An import
-test there passes whether or not we bundled anything. So instead we run the import
+Windows image has Visual Studio, and therefore MSVCP140.dll, installed.
+So instead we run the import
 inside a Windows Server Core container, which has no redistributable, against a
 Python embeddable distribution -- roughly what a student's machine looks like.
 
-The test has two halves, and the second is the important one:
+The test has two halves:
 
   1. Positive: import cmu_graphics_helpers from the wheel. Must succeed.
   2. Negative: delete the bundled msvcp140.dll and import again. Must FAIL.
-
-Without (2), a green run would not distinguish "we bundled the DLL correctly" from
-"the container had the DLL all along", which would make the whole test worthless.
 
 Run from the repo root on a Windows host with Docker in Windows-container mode:
 
@@ -56,6 +53,22 @@ def stage_python(staging):
     target = staging / 'python'
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
         zf.extractall(target)
+
+    # The embeddable distribution ships its own vcruntime140_1.dll. Leaving it in
+    # place would satisfy the bundled msvcp140.dll's dependency on it, so the test
+    # would pass even if we had failed to bundle our own copy -- it would be
+    # measuring CPython's packaging rather than ours. Removing it makes the test
+    # exercise only what the wheel ships.
+    #
+    # vcruntime140.dll has to stay: python.exe imports it directly and will not
+    # start without it. (vcruntime140_1.dll is not imported by python.exe or
+    # python3NN.dll, only by msvcp140.dll, so removing it is safe.)
+    for path in target.iterdir():
+        if path.name.lower() == 'vcruntime140_1.dll':
+            print(f'Removing {path.name} from the staged Python so only the '
+                  f'wheel can supply it')
+            path.unlink()
+
     return target
 
 

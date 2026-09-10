@@ -26,7 +26,13 @@ use std::path::{Path, PathBuf};
 /// Anything listed here must be a REDIST file that Microsoft's Visual Studio
 /// license terms allow us to redistribute. Do not add DLLs without checking
 /// that, and see VC_REDIST_NOTICE.txt.
-const DLL_NAMES: [&str; 2] = ["msvcp140.dll", "vcruntime140.dll"];
+///
+/// The .pyd itself only imports msvcp140.dll and vcruntime140.dll, but
+/// msvcp140.dll in turn imports vcruntime140_1.dll (which holds the x64
+/// exception-handling runtime), so all three have to travel together or
+/// msvcp140.dll cannot load. tests/check_binaries.py walks these dependencies
+/// transitively to keep this list honest.
+const DLL_NAMES: [&str; 3] = ["msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll"];
 
 /// Redistributing Microsoft's DLLs requires shipping a notice alongside them.
 const NOTICE_NAME: &str = "VC_REDIST_NOTICE.txt";

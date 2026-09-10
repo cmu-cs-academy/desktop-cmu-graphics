@@ -96,9 +96,9 @@ ALWAYS_AVAILABLE_DLLS = {
     'shell32.dll',
     'user32.dll',
     'ucrtbase.dll',
-    # Shipped alongside python.exe by the python.org installer.
+    # Shipped alongside python.exe by the python.org installer. We bundle our
+    # own copy too, so this only matters if that bundling is ever dropped.
     'vcruntime140.dll',
-    'vcruntime140_1.dll',
 }
 
 
@@ -184,10 +184,15 @@ def find_helpers_dir():
 
 def verify_windows_dll_dependencies():
     """
-    Check that every DLL cmu_graphics_helpers.pyd imports will actually resolve
-    on a student's machine: either Windows/CPython provides it, or we ship it
-    next to the .pyd. CPython loads extension modules with
+    Check that every DLL needed to import cmu_graphics_helpers will actually
+    resolve on a student's machine: either Windows/CPython provides it, or we
+    ship it next to the .pyd. CPython loads extension modules with
     LOAD_WITH_ALTERED_SEARCH_PATH, so a DLL in that directory is found.
+
+    This walks dependencies transitively, not just the .pyd's own imports. That
+    matters: the .pyd does not import vcruntime140_1.dll, but the msvcp140.dll we
+    bundle does, so bundling msvcp140.dll alone would still fail to load on a
+    machine without the Visual C++ Redistributable.
     """
     helpers_dir = find_helpers_dir()
     pyd_path = os.path.join(helpers_dir, 'cmu_graphics_helpers.pyd')
@@ -195,24 +200,44 @@ def verify_windows_dll_dependencies():
         print(f'{pyd_path} does not exist')
         sys.exit(1)
 
-    bundled = {name.lower() for name in os.listdir(helpers_dir) if name.lower().endswith('.dll')}
+    bundled = {
+        name.lower(): os.path.join(helpers_dir, name)
+        for name in os.listdir(helpers_dir)
+        if name.lower().endswith('.dll')
+    }
 
-    missing = [
-        dll for dll in imported_dlls(pyd_path)
-        if dll not in bundled and not is_always_available(dll)
-    ]
+    # Breadth-first over everything that has to load, starting at the .pyd and
+    # following into each bundled DLL we find along the way.
+    missing = {}
+    inspected = set()
+    queue = [('cmu_graphics_helpers.pyd', pyd_path)]
+    while queue:
+        needed_by, path = queue.pop(0)
+        inspected.add(needed_by.lower())
+        for dll in imported_dlls(path):
+            if dll in bundled:
+                if dll not in inspected:
+                    inspected.add(dll)
+                    queue.append((dll, bundled[dll]))
+            elif not is_always_available(dll):
+                missing.setdefault(dll, needed_by)
 
     if missing:
+        for dll, needed_by in sorted(missing.items()):
+            print(
+                f'{needed_by} imports {dll}, which is neither bundled in {helpers_dir} '
+                f'nor guaranteed to exist on a stock Windows machine.'
+            )
         print(
-            f'{pyd_path} imports {", ".join(sorted(missing))}, which is neither bundled '
-            f'in {helpers_dir} nor guaranteed to exist on a stock Windows machine.\n'
-            f'Students without it will get "ImportError: DLL load failed while importing '
-            f'cmu_graphics_helpers". Bundle it (see cmu_graphics_helpers/build.rs) or, '
-            f'if Windows really does always provide it, add it to ALWAYS_AVAILABLE_DLLS.'
+            f'\nStudents without it will get "ImportError: DLL load failed while importing '
+            f'cmu_graphics_helpers". Bundle it (add it to DLL_NAMES in '
+            f'cmu_graphics_helpers/build.rs) or, if Windows really does always provide it, '
+            f'add it to ALWAYS_AVAILABLE_DLLS.'
         )
         sys.exit(1)
 
-    print(f'All DLLs imported by {pyd_path} are resolvable.')
+    checked = ', '.join(sorted(inspected))
+    print(f'All DLLs needed to import cmu_graphics_helpers are resolvable ({checked}).')
 
 
 def main():
