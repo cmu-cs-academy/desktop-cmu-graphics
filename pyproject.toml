@@ -65,6 +65,8 @@ dev = [
     "psutil>=7.1.2",
     "ruff>=0.14.2",
     "tox>=4.32.0",
+    # Runs the tox environments with uv instead of virtualenv+pip.
+    "tox-uv>=1.36.0",
     "twine>=6.2.0",
 ]
 
