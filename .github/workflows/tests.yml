@@ -73,6 +73,19 @@ jobs:
             "libclang.dll not found; leaving bindgen to search PATH"
           }
 
+      # Must come before build.py: [tool.uv.sources] points cmu-graphics-helpers
+      # at the local crate, so `uv run` syncs the project by compiling it -- that
+      # step, not tox, is where Skia gets built (485s on the first Windows run).
+      #
+      # shared-key matches buildwheels.yml so both workflows use one cache
+      # instead of each storing its own copy of the same build.
+      - name: Cache cargo registry and build artifacts
+        if: ${{ runner.os == 'Windows' }}
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: cmu_graphics_helpers
+          shared-key: windows-skia
+
       - name: Build the installer zip and pypi package
         run: uv run build/build.py
 

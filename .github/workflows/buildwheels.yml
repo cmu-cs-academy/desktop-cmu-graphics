@@ -54,6 +54,10 @@ jobs:
         with:
           # The crate is not at the repository root.
           workspaces: cmu_graphics_helpers
+          # Share one cache with the Windows job in tests.yml. Without this,
+          # rust-cache appends GITHUB_JOB to the key, so each workflow would
+          # compile and store its own copy of the same Skia build.
+          shared-key: windows-skia
 
       # rust-cache restores all of target/, which includes the wheels maturin
       # wrote on the previous run. After a version bump the new wheel has a
