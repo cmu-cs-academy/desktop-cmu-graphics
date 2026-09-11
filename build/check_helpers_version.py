@@ -8,6 +8,17 @@ ROOT = Path(__file__).resolve().parent.parent
 
 HELPERS_DIR = 'cmu_graphics_helpers'
 
+# Paths whose contents change the wheel that gets built from this tree. A change
+# to any of them needs a version bump, or installs may silently resolve the
+# published wheel from PyPI instead of the one built here.
+#
+# .cargo/config.toml is watched because it carries the +crt-static rustflags that
+# statically link the C runtime into the Windows build. It alters the binary
+# without touching cmu_graphics_helpers/, so without it here a change to how the
+# helpers are linked could go out under an already-published version number --
+# and the tests would then exercise PyPI's wheel rather than the local one.
+WATCHED_PATHS = [HELPERS_DIR, '.cargo/config.toml']
+
 MAIN_REF = 'origin/main'
 
 
@@ -58,10 +69,12 @@ def require_main_ref():
 
 
 def helpers_changes():
-    """Files under cmu_graphics_helpers/ that differ between main and this tree."""
-    changed = git('diff', '--name-only', MAIN_REF, '--', HELPERS_DIR)
+    """Watched files that differ between main and this tree."""
+    changed = git('diff', '--name-only', MAIN_REF, '--', *WATCHED_PATHS)
     if changed is None:
-        raise SystemExit(f'could not diff {HELPERS_DIR}/ against {MAIN_REF}')
+        raise SystemExit(
+            f'could not diff {", ".join(WATCHED_PATHS)} against {MAIN_REF}'
+        )
     return changed.split()
 
 
@@ -105,16 +118,24 @@ def check_version_bumped(version):
     """
     Fail if the helpers changed relative to main without the version being bumped.
 
-    Once a version has been published, pip is free to install that wheel from PyPI
-    rather than the one built locally from cmu_graphics_helpers/. That's fine as
-    long as they're the same code, so any change to the helpers has to come with a
-    new version number. main's version is the one that gets published, so it's
-    enough to require that we're ahead of main whenever we've changed the helpers.
+    Once a version has been published, the installer is free to resolve that wheel
+    from PyPI rather than the one built locally -- it will, in fact, even with
+    UV_FIND_LINKS pointing at the local build. That's fine as long as they're the
+    same code, so any change that alters the built wheel has to come with a new
+    version number. main's version is the one that gets published, so it's enough
+    to require that we're ahead of main whenever a watched path has changed.
+
+    See WATCHED_PATHS for what counts as altering the wheel.
     """
     require_main_ref()
 
-    if not helpers_changes():
+    changed = helpers_changes()
+    if not changed:
         return
+
+    changed_summary = ', '.join(sorted(changed)[:4])
+    if len(changed) > 4:
+        changed_summary += f' (+{len(changed) - 4} more)'
 
     published = main_version()
     current_key = release_sort_key(version)
@@ -138,7 +159,7 @@ def check_version_bumped(version):
         fix = 'Bump it'
 
     print(
-        f'{HELPERS_DIR}/ differs from main, but {problem}.\n'
+        f'{changed_summary} differs from main, but {problem}.\n'
         f'{fix} in {HELPERS_DIR}/Cargo.toml (and pyproject.toml and tox.ini to '
         f'match), so that installs use the wheel built from this source instead of '
         f'the published {published} from PyPI.',
