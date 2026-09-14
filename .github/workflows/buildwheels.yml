@@ -25,10 +25,7 @@ jobs:
         if: ${{ matrix.os != 'ubuntu-latest' }}
         run: rustup target add ${{ matrix.target }}
 
-      # Building Skia from source (see .cargo/config.toml) runs bindgen, which
-      # needs libclang. The prebuilt binaries carry pre-generated bindings, so
-      # this was not needed before. LLVM is preinstalled on the runner image;
-      # locate it rather than hardcoding a path.
+      # Needed to build Skia from source (see .cargo/config.toml)
       - name: Point bindgen at the runner's LLVM
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
@@ -42,21 +39,15 @@ jobs:
             "libclang.dll not found; leaving bindgen to search PATH"
           }
 
-      # Windows only: it is the one job that builds Skia from source (see
-      # .cargo/config.toml), so it is the only one where this pays for itself.
-      # The macOS jobs download a prebuilt Skia archive and finish in under a
-      # minute, and the Linux job builds inside maturin-action's manylinux
-      # container, whose CARGO_HOME is not the host's -- a host-level cache
-      # would do nothing for it.
+      # Windows only: it is the one job that builds Skia from source,
+      # so it is the only one where this pays for itself.
       - name: Cache cargo registry and build artifacts
         if: ${{ matrix.os == 'windows-latest' }}
         uses: Swatinem/rust-cache@v2
         with:
           # The crate is not at the repository root.
           workspaces: cmu_graphics_helpers
-          # Share one cache with the Windows job in tests.yml. Without this,
-          # rust-cache appends GITHUB_JOB to the key, so each workflow would
-          # compile and store its own copy of the same Skia build.
+          # Share one cache with the Windows job in tests.yml.
           shared-key: windows-skia
 
       # rust-cache restores all of target/, which includes the wheels maturin
@@ -113,17 +104,6 @@ jobs:
 
       # Wheels for platforms the zip distribution does not ship (Linux) and the
       # sdist are ignored by the script.
-      #
-      # Retry if the branch moves while this run is in flight, which is easy to
-      # do: the build takes minutes, and any push during it makes the checkout
-      # here stale, so the push below is rejected as non-fast-forward.
-      #
-      # Each attempt resets to the current remote tip and re-vendors from the
-      # downloaded wheels rather than rebasing. The vendored tree is generated
-      # output, so regenerating it on top of whatever landed is always correct
-      # and cannot conflict -- which matters because these are binaries, and a
-      # rebase conflict on them would need a human. It also avoids rebasing in
-      # the shallow clone actions/checkout leaves behind.
       - name: Vendor the wheels and commit them
         shell: bash
         run: |
@@ -166,7 +146,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
-        persist-credentials: false # Highly recommended as a good security practice to not store credentials in disk, unless you need this for your specific use case
+        persist-credentials: false
 
     - name: Build SDist
       uses: PyO3/maturin-action@v1

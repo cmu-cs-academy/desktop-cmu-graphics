@@ -11,12 +11,6 @@ HELPERS_DIR = 'cmu_graphics_helpers'
 # Paths whose contents change the wheel that gets built from this tree. A change
 # to any of them needs a version bump, or installs may silently resolve the
 # published wheel from PyPI instead of the one built here.
-#
-# .cargo/config.toml is watched because it carries the +crt-static rustflags that
-# statically link the C runtime into the Windows build. It alters the binary
-# without touching cmu_graphics_helpers/, so without it here a change to how the
-# helpers are linked could go out under an already-published version number --
-# and the tests would then exercise PyPI's wheel rather than the local one.
 WATCHED_PATHS = [HELPERS_DIR, '.cargo/config.toml']
 
 MAIN_REF = 'origin/main'

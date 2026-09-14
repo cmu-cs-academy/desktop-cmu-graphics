@@ -10,8 +10,7 @@ def uv_pip(*args):
     """
     Run `uv pip` against this tox environment.
 
-    tox-uv builds these environments with uv, which does not install pip into
-    them, so this script can't shell out to pip. --python pins the operation to
+    --python pins the operation to
     the interpreter running this script rather than whatever uv would discover
     on its own. UV_FIND_LINKS comes from tox.ini's set_env and is inherited
     here, so uv resolves cmu-graphics-helpers from the locally built wheel.
