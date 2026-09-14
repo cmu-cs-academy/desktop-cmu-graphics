@@ -25,30 +25,7 @@ jobs:
         if: ${{ matrix.os != 'ubuntu-latest' }}
         run: rustup target add ${{ matrix.target }}
 
-      # Needed to build Skia from source (see .cargo/config.toml)
-      - name: Point bindgen at the runner's LLVM
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        run: |
-          $lib = Get-ChildItem -Path "C:\Program Files\LLVM", "C:\Program Files (x86)\LLVM" `
-            -Filter libclang.dll -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($lib) {
-            "found $($lib.FullName)"
-            "LIBCLANG_PATH=$($lib.DirectoryName)" >> $env:GITHUB_ENV
-          } else {
-            "libclang.dll not found; leaving bindgen to search PATH"
-          }
-
-      # Windows only: it is the one job that builds Skia from source,
-      # so it is the only one where this pays for itself.
-      - name: Cache cargo registry and build artifacts
-        if: ${{ matrix.os == 'windows-latest' }}
-        uses: Swatinem/rust-cache@v2
-        with:
-          # The crate is not at the repository root.
-          workspaces: cmu_graphics_helpers
-          # Share one cache with the Windows job in tests.yml.
-          shared-key: windows-skia
+      - uses: ./.github/actions/skia-windows-build-env
 
       # rust-cache restores all of target/, which includes the wheels maturin
       # wrote on the previous run. After a version bump the new wheel has a
@@ -56,7 +33,7 @@ jobs:
       # upload step's glob. Clear the output directory after the cache is
       # restored and before the build.
       - name: Clear stale wheels restored from the cache
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ runner.os == 'Windows' }}
         shell: pwsh
         run: |
           $dir = "cmu_graphics_helpers/target/wheels"
@@ -72,7 +49,7 @@ jobs:
           manylinux: auto
           target: ${{ matrix.target }}
           args: --release
-          before-script-linux: |
+          before-script-linux: &linux-skia-deps |
             if command -v yum &> /dev/null; then
               yum install -y freetype-devel fontconfig-devel
             elif command -v apt &> /dev/null; then
@@ -154,13 +131,7 @@ jobs:
         working-directory: cmu_graphics_helpers
         manylinux: auto
         args: --sdist
-        before-script-linux: |
-          if command -v yum &> /dev/null; then
-            yum install -y freetype-devel fontconfig-devel
-          elif command -v apt &> /dev/null; then
-            apt update -y
-            apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
-          fi
+        before-script-linux: *linux-skia-deps
 
     - uses: actions/upload-artifact@v6
       with:
