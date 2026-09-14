@@ -25,6 +25,8 @@ jobs:
         if: ${{ matrix.os != 'ubuntu-latest' }}
         run: rustup target add ${{ matrix.target }}
 
+      - uses: ./.github/actions/skia-windows-build-env
+
       - name: Build wheels with maturin
         uses: PyO3/maturin-action@v1
         with:
@@ -32,7 +34,7 @@ jobs:
           manylinux: auto
           target: ${{ matrix.target }}
           args: --release
-          before-script-linux: |
+          before-script-linux: &linux-skia-deps |
             if command -v yum &> /dev/null; then
               yum install -y freetype-devel fontconfig-devel
             elif command -v apt &> /dev/null; then
@@ -46,13 +48,67 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.target }}
           path: cmu_graphics_helpers/target/wheels/*.whl
 
+  vendor_binaries:
+    name: Commit built binaries to the branch
+    needs: build_wheels
+    # Don't run on main, where main the wheels are published to PyPI instead.
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v5
+        with:
+          path: wheels
+          merge-multiple: true
+
+      # Wheels for platforms the zip distribution does not ship (Linux) and the
+      # sdist are ignored by the script.
+      - name: Vendor the wheels and commit them
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="$GITHUB_REF_NAME"
+          modules=cmu_graphics/libs/cmu_graphics_helpers_loader/modules
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            python build/helpers/build_cmuhelp_modules.py --wheels wheels
+            git add "$modules"
+
+            if git diff --cached --quiet; then
+              echo "Vendored binaries are already up to date; nothing to commit."
+              exit 0
+            fi
+
+            git commit \
+              -m "Update vendored cmu_graphics_helpers binaries" \
+              -m "Built by $GITHUB_WORKFLOW run $GITHUB_RUN_ID from $GITHUB_SHA."
+
+            if git push origin "HEAD:$branch"; then
+              exit 0
+            fi
+
+            echo "Push rejected on attempt $attempt: $branch moved while this run was building."
+            echo "Resetting to its current tip and re-vendoring on top of it."
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+          done
+
+          echo "Gave up after 3 attempts; $branch is moving faster than this job can keep up."
+          exit 1
+
   make_sdist:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
       with:
-        persist-credentials: false # Highly recommended as a good security practice to not store credentials in disk, unless you need this for your specific use case
+        persist-credentials: false
 
     - name: Build SDist
       uses: PyO3/maturin-action@v1
@@ -60,17 +116,12 @@ jobs:
         working-directory: cmu_graphics_helpers
         manylinux: auto
         args: --sdist
-        before-script-linux: |
-          if command -v yum &> /dev/null; then
-            yum install -y freetype-devel fontconfig-devel
-          elif command -v apt &> /dev/null; then
-            apt update -y
-            apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
-          fi
+        before-script-linux: *linux-skia-deps
 
     - uses: actions/upload-artifact@v6
       with:
         path: cmu_graphics_helpers/target/wheels/*.tar.gz
+        name: source-distribution
 
   upload_all:
     name: Upload to PyPi
