@@ -11,7 +11,7 @@ runs:
     # bundles the build container's FreeType, and Skia needs FreeType 2.10+
     # (FT_Palette_Data_Get). manylinux2014 ships 2.8, which makes the wheel
     # fail to import. manylinux_2_34 ships 2.10.4, and needs glibc 2.34+
-    # (Ubuntu 22.04+). See docs/adr/0001-manylinux-2-34-for-linux-helpers-wheel.md.
+    # (Ubuntu 22.04+).
     - name: Build wheel with maturin
       if: runner.os == 'Linux'
       uses: PyO3/maturin-action@v1
