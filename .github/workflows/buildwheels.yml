@@ -110,7 +110,9 @@ jobs:
       uses: PyO3/maturin-action@v1
       with:
         working-directory: cmu_graphics_helpers
-        args: --sdist
+        # Only the sdist: `build --sdist` also compiles a wheel, which would
+        # need Skia's Linux build dependencies.
+        command: sdist
 
     - uses: actions/upload-artifact@v6
       with:
