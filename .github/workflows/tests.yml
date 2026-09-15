@@ -31,8 +31,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ubuntu-24.04 is pinned, not ubuntu-latest: the Linux image baselines
-        # (tests/image_gen/*/linux_correct_N.png) depend on the runner's fonts.
         os: [macos-latest, macos-15-intel, windows-latest, ubuntu-24.04]
         include:
           # The zip distribution doesn't support Linux, so only the pip envs
@@ -40,9 +38,7 @@ jobs:
           # wheel built by linux-helpers-wheel instead of building its own.
           - os: ubuntu-24.04
             tox-args: -e py311-pip,py312-pip,py313-pip,py314-pip
-            # The dev environment would otherwise build the helpers from
-            # source, which isn't needed here and fails on the root-owned
-            # target/ directory the manylinux container leaves behind.
+            # Don't build cmu-graphics-helpers from source; use our wheel
             uv-sync-args: --no-install-package cmu-graphics-helpers
 
     steps:
@@ -68,7 +64,6 @@ jobs:
       # Before uv sync, which compiles the helpers crate
       - uses: ./.github/actions/skia-windows-build-env
 
-      # Into cmu_graphics_helpers/target/wheels, where tox looks for it
       - uses: ./.github/actions/linux-helpers-wheel
 
       # Text rendering needs a font that fontconfig maps to Arial

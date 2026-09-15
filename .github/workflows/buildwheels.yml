@@ -35,7 +35,6 @@ jobs:
           target: ${{ matrix.target }}
           args: --release
 
-      # Shared with tests.yml, so CI tests the same Linux wheel that's published
       - uses: ./.github/actions/linux-helpers-wheel
 
       - name: Upload wheels
@@ -110,8 +109,6 @@ jobs:
       uses: PyO3/maturin-action@v1
       with:
         working-directory: cmu_graphics_helpers
-        # Only the sdist: `build --sdist` also compiles a wheel, which would
-        # need Skia's Linux build dependencies.
         command: sdist
 
     - uses: actions/upload-artifact@v6

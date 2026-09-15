@@ -186,17 +186,15 @@ fn py_to_skia_slant(slant: FontSlant) -> font_style::Slant {
     }
 }
 
-// Arial, or the platform's default face when no font maps to Arial. Linux
-// systems without a metric-compatible alias (e.g. only DejaVu installed) have
-// no Arial, and rendering in a different face beats failing to start.
+// Arial, or the platform's default face when no font maps to Arial.
+// Linux systems may not have Arial installed, so don't crash!
 fn get_arial(font_mgr: &FontMgr, style: FontStyle) -> PyResult<Typeface> {
     font_mgr
         .match_family_style("Arial", style)
         .or_else(|| font_mgr.legacy_make_typeface(None, style))
         .ok_or_else(|| {
             PyRuntimeError::new_err(
-                "No fonts were found on this computer. Install a font package \
-                 (for example, fonts-liberation or ttf-liberation) and try again.",
+                "No fonts were found on this computer.",
             )
         })
 }
