@@ -21,6 +21,13 @@ REPORT_FILE = None
 
 TEST_FILE_PATH = 'runner.py'
 
+# The checked-in image_gen directory, as opposed to the copy main() makes in the
+# working directory.
+SOURCE_IMAGE_GEN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'image_gen')
+
+# Set by --write-linux-baselines
+WRITE_LINUX_BASELINES = False
+
 REPORT_HEADER = '''
 <html>
 <head>
@@ -128,10 +135,16 @@ def run_test(test_name, all_source_code):
         if not os.path.exists('image_gen/%s' % test_name):
             os.mkdir('image_gen/%s' % test_name)
 
-        correct_path_fmt = 'image_gen/%s/correct_%d.png'
-        correct_path = correct_path_fmt % (test_name, i)
-        if (test_name[-3:] in ('_es', '_de')):
-            correct_path = correct_path_fmt % (test_name[:-3], i)
+        is_translation = test_name[-3:] in ('_es', '_de')
+        baseline_test_name = test_name[:-3] if is_translation else test_name
+        correct_path = 'image_gen/%s/correct_%d.png' % (baseline_test_name, i)
+
+        # Linux renders text with different fonts than the shared baselines
+        # were made with, so a test can have a Linux-specific baseline.
+        linux_correct_name = 'linux_correct_%d.png' % i
+        linux_correct_path = 'image_gen/%s/%s' % (baseline_test_name, linux_correct_name)
+        if sys.platform == 'linux' and os.path.exists(linux_correct_path):
+            correct_path = linux_correct_path
 
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
@@ -193,6 +206,13 @@ def run_test(test_name, all_source_code):
                 REPORT_FILE.write(
                     '<p>Source code for part %d:</p><pre>%s</pre>' % (i, html.escape(source_code)))
                 all_passed = False
+
+                # Translations share their English test's baseline, so only
+                # the English output is written.
+                if WRITE_LINUX_BASELINES and not is_translation:
+                    dest = os.path.join(SOURCE_IMAGE_GEN_DIR, baseline_test_name, linux_correct_name)
+                    print('Writing %s' % dest)
+                    shutil.copy(output_path, dest)
 
     return all_passed
 
@@ -257,12 +277,20 @@ def redrawAll(app):
     return True
 
 def main():
-    global REPORT_FILE, WAIT
+    global REPORT_FILE, WAIT, WRITE_LINUX_BASELINES
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--only', type=str, help='The name of a single python file to run')
+    parser.add_argument(
+        '--write-linux-baselines',
+        action='store_true',
+        help='Save the output of each failing image as its linux_correct_N.png baseline in tests/image_gen',
+    )
 
     args = parser.parse_args()
+    if args.write_linux_baselines and sys.platform != 'linux':
+        parser.error('--write-linux-baselines must be run on Linux')
+    WRITE_LINUX_BASELINES = args.write_linux_baselines
 
     num_failures = 0
     num_successes = 0

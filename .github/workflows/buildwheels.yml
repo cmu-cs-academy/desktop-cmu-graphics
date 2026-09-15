@@ -28,19 +28,15 @@ jobs:
       - uses: ./.github/actions/skia-windows-build-env
 
       - name: Build wheels with maturin
+        if: ${{ matrix.os != 'ubuntu-latest' }}
         uses: PyO3/maturin-action@v1
         with:
           working-directory: cmu_graphics_helpers
-          manylinux: auto
           target: ${{ matrix.target }}
           args: --release
-          before-script-linux: &linux-skia-deps |
-            if command -v yum &> /dev/null; then
-              yum install -y freetype-devel fontconfig-devel
-            elif command -v apt &> /dev/null; then
-              apt update -y
-              apt install -y pkg-config libfreetype6-dev libfontconfig1-dev
-            fi
+
+      # Shared with tests.yml, so CI tests the same Linux wheel that's published
+      - uses: ./.github/actions/linux-helpers-wheel
 
       - name: Upload wheels
         uses: actions/upload-artifact@v6
@@ -114,9 +110,7 @@ jobs:
       uses: PyO3/maturin-action@v1
       with:
         working-directory: cmu_graphics_helpers
-        manylinux: auto
         args: --sdist
-        before-script-linux: *linux-skia-deps
 
     - uses: actions/upload-artifact@v6
       with:
