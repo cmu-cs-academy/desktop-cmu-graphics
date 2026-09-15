@@ -102,6 +102,8 @@ jobs:
           path: |
             .tox/*/tmp/report.html
             .tox/*/tmp/image_gen/**
+          # .tox is a hidden directory, which upload-artifact skips by default
+          include-hidden-files: true
           retention-days: 7
           if-no-files-found: ignore
 
