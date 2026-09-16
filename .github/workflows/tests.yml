@@ -51,7 +51,7 @@ jobs:
       # ~/.local/bin as python3.11 ... python3.14.
       - name: Install Python interpreters
         run: |
-          uv python install 3.11 3.12 3.13 3.14
+          uv python install 3.8 3.10 3.11 3.12 3.13 3.14
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Build the installer zip and pypi package

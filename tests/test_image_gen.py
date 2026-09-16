@@ -6,9 +6,7 @@ import sys
 import time
 import platform
 
-import imageio.v2 as imageio
 from PIL import Image
-import numpy
 
 import subprocess
 import functools
@@ -50,37 +48,56 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     image_1 = Image.open(path_1)
     image_1 = image_1.convert("RGB")
     image_1.save(path_1)
-    image_1_data = imageio.imread(path_1)
 
     image_2 = Image.open(path_2)
     image_2 = image_2.convert("RGB")
     image_2.save(path_2)
-    image_2_data = imageio.imread(path_2)
 
-    assert image_1_data.shape == (SIZE, SIZE, 3)
-    assert image_2_data.shape == (SIZE, SIZE, 3)
-    assert image_1_data.shape == image_2_data.shape, image_2_data.shape
+    assert image_1.size == (SIZE, SIZE)
+    assert image_2.size == (SIZE, SIZE)
+    assert image_1.size == image_2.size
 
-    error_array = (image_1_data.astype('float') - image_2_data.astype('float')) ** 2
-    mean_squared_error = numpy.sum(error_array) / float(SIZE * SIZE)
+    pixels_1 = image_1.load()
+    pixels_2 = image_2.load()
+
+    mean_squared_error = 0
+
+    pixel_errors = [[0] * SIZE for _ in range(SIZE)]
+
+    for y in range(SIZE):
+        for x in range(SIZE):
+            r1, g1, b1 = pixels_1[x, y]
+            r2, g2, b2 = pixels_2[x, y]
+
+            error = (
+                (r1 - r2) ** 2 +
+                (g1 - g2) ** 2 +
+                (b1 - b2) ** 2
+            )
+
+            pixel_errors[y][x] = error
+            mean_squared_error += error
+
+    mean_squared_error /= float(SIZE * SIZE)
 
     if mean_squared_error >= threshold:
         diff_image_path = 'image_gen/%s/diff_%d.png' % (test_name, test_piece_i)
 
-        per_pixel_error = error_array.sum(axis=2)
+        visual_diff = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+        diff_pixels = visual_diff.load()
 
-        visual_diff = numpy.zeros((SIZE, SIZE, 4), dtype=numpy.uint8)
-        for i in range(SIZE):
-            for j in range(SIZE):
-                this_error = per_pixel_error[i][j]
+        for y in range(SIZE):
+            for x in range(SIZE):
+                this_error = pixel_errors[y][x]
+
                 if this_error > 0:
                     if this_error < threshold:
-                        visual_diff[i][j][2] = 255  # blue
+                        diff_pixels[x, y] = (0, 0, 255, 128)  # blue
                     else:
-                        visual_diff[i][j][0] = 255  # red
-                    visual_diff[i][j][3] = 128  # half alpha
+                        diff_pixels[x, y] = (255, 0, 0, 128)  # red
 
-        imageio.imwrite(diff_image_path, visual_diff)
+        visual_diff.save(diff_image_path)
+
         print("Part %d MSE %.0f" % (test_piece_i, mean_squared_error))
         REPORT_FILE.write("<div class='error'><p>Part %d MSE %.0f</p>" %
             (test_piece_i, mean_squared_error))

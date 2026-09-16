@@ -2,7 +2,7 @@
 #
 # Checked in as VENDORED = True, which is what BOTH the desktop zip installer
 # and local development use: they always load the vendored
-# pygame/cmu_graphics_helpers binaries shipped under cmu_graphics/libs, never
+# cmu_graphics_helpers binaries shipped under cmu_graphics/libs, never
 # whatever might be installed on the system (student machines often have
 # broken system installs).
 #
