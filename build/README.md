@@ -7,17 +7,13 @@
 The bundled cmu_graphics_helpers binaries are built by
   `.github/workflows/buildwheels.yml`.
 
-On any branch other than `main`, that
-  workflow copies the wheels it built into
+On any branch other than `main`, that workflow copies the wheels it built into
   `cmu_graphics/libs/cmu_graphics_helpers_loader/modules/` and commits them back
-  to the branch, so a branch gets a zip distribution built from its own code.
+  to the branch, so the branch carries binaries built from its own code.
 
-To vendor wheels by hand instead — a local `maturin build`, or wheels
-  downloaded from the workflow run or from PyPI — run
-  `python3 build/helpers/build_cmuhelp_modules.py --wheels <dir>` from anywhere.
-  It defaults to `cmu_graphics_helpers/target/wheels`, the local maturin output.
-  Wheels for platforms the zip distribution doesn't ship (Linux) and sdists in
-  that directory are ignored.
+To vendor by hand instead, run `python3 build/helpers/build_cmuhelp_modules.py`
+  from anywhere, after a local `maturin build`. Pass `--wheels <dir>` to vendor
+  wheels from somewhere else, such as a workflow run or PyPI.
 
 
 ## MacOS code signing

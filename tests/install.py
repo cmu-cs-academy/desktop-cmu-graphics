@@ -30,8 +30,7 @@ if mode == 'zip':
     shutil.move(os.path.join('cmu_graphics_installer', 'cmu_cpcs_utils.py'), '.')
     shutil.rmtree('cmu_graphics_installer')
 else:
-    # Remove any old version installed. uv exits 0 when the package isn't
-    # present, the same as `pip uninstall -y` did.
+    # Remove any old version installed. uv exits 0 if it isn't there.
     uv_pip('uninstall', 'cmu-graphics')
 
     dist_dir = os.path.join(base_path, 'pypi_upload', 'dist')

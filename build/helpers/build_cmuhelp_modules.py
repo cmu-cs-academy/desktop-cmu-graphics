@@ -21,7 +21,6 @@ signed or notarized -- see build/README.md.
 """
 
 import argparse
-import os
 import shutil
 import sys
 import tempfile
@@ -57,51 +56,31 @@ def module_for_wheel(filename):
     return None
 
 
-def extract_preserving_modes(zf, destination):
-    """
-    Extract a wheel, keeping the Unix permissions it records.
-    """
-    for info in zf.infolist():
-        extracted = zf.extract(info, destination)
-        mode = (info.external_attr >> 16) & 0o777
-        if mode and not info.is_dir():
-            os.chmod(extracted, mode)
-
-
 def vendor_wheel(wheel_path, module_dir):
-    """
-    Replace module_dir's contents with the package directory inside wheel_path.
-
-    A wheel may also carry a sibling cmu_graphics_helpers.libs directory holding
-    vendored DLLs, in which case both directories have to move together to keep
-    the layout intact. The Windows wheel has none, because .cargo/config.toml
-    links the C runtime statically, so nothing needs vendoring alongside it.
-    """
+    """Replace module_dir's package directory with the one inside wheel_path."""
     with tempfile.TemporaryDirectory() as unpacked:
         with zipfile.ZipFile(wheel_path) as zf:
-            extract_preserving_modes(zf, unpacked)
+            zf.extractall(unpacked)
 
         if not Path(unpacked, PACKAGE_NAME).is_dir():
             raise SystemExit(f'{wheel_path.name} does not contain a {PACKAGE_NAME}/ directory')
 
-        module_dir.mkdir(parents=True, exist_ok=True)
-        for name in (PACKAGE_NAME, f'{PACKAGE_NAME}.libs'):
-            source = Path(unpacked, name)
-            destination = module_dir / name
+        # The module directories are checked in; creating one here would mean a
+        # platform name that does not match what the loader looks for.
+        if not module_dir.is_dir():
+            raise SystemExit(f'{module_dir} does not exist')
 
-            # Replace rather than merge, so that a file which is no longer
-            # shipped (a stale __pycache__, or a .libs directory from a build
-            # that no longer needs one) does not survive in the vendored copy.
-            if destination.exists():
-                shutil.rmtree(destination)
-            if source.is_dir():
-                shutil.move(str(source), str(destination))
+        destination = module_dir / PACKAGE_NAME
+        # Replace rather than merge, so a file that is no longer shipped does
+        # not survive in the vendored copy.
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.move(str(Path(unpacked, PACKAGE_NAME)), str(destination))
 
     print(f'{wheel_path.name} -> {module_dir}')
     for path in sorted(module_dir.rglob('*')):
         if path.is_file():
-            rel = path.relative_to(module_dir)
-            print(f'    {rel} ({path.stat().st_mode & 0o777:o})')
+            print(f'    {path.relative_to(module_dir)}')
 
 
 def main():
@@ -125,12 +104,19 @@ def main():
     modules_dir = Path(args.repo_root) / MODULES_DIR
 
     vendored = []
+    skipped = []
     for wheel_path in sorted(wheels_dir.iterdir()):
         module = module_for_wheel(wheel_path.name)
         if module is None:
+            skipped.append(wheel_path.name)
             continue
         vendor_wheel(wheel_path, modules_dir / module)
         vendored.append(module)
+
+    if skipped:
+        print('\nSkipped (no module ships this platform):')
+        for name in skipped:
+            print(f'    {name}')
 
     if not vendored:
         raise SystemExit(
