@@ -17,7 +17,7 @@ runs:
           "found $($lib.FullName)"
           "LIBCLANG_PATH=$($lib.DirectoryName)" >> $env:GITHUB_ENV
         } else {
-          "libclang.dll not found; leaving bindgen to search PATH"
+          throw "libclang.dll not found under C:\Program Files\LLVM. bindgen needs it to build Skia from source."
         }
 
     - name: Cache cargo registry and build artifacts

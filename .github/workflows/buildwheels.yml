@@ -1,4 +1,4 @@
-name: Build cmu_graphics_helpers (+ deploy to PyPI if on main)
+name: Build cmu_graphics_helpers (vendor to the branch, or deploy to PyPI on main)
 
 on:
   workflow_dispatch:

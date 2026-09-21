@@ -55,12 +55,6 @@ jobs:
         with:
           enable-cache: true
 
-      # tox needs all four interpreters on PATH
-      - name: Install Python interpreters
-        run: |
-          uv python install 3.11 3.12 3.13 3.14
-          uv python dir --bin >> "$GITHUB_PATH"
-
       # Before uv sync, which compiles the helpers crate
       - uses: ./.github/actions/skia-windows-build-env
 
