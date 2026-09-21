@@ -33,11 +33,12 @@ jobs:
       matrix:
         os: [macos-latest, macos-15-intel, windows-latest, ubuntu-24.04]
         include:
-          # The zip distribution doesn't support Linux, so only the pip envs
-          # run. build-helpers is skipped too, so tox installs the manylinux
-          # wheel built by linux-helpers-wheel instead of building its own.
           - os: ubuntu-24.04
-            tox-args: -e py311-pip,py312-pip,py313-pip,py314-pip
+            # The zip distribution doesn't support Linux, so only the pip envs
+            # run. We also don't run the tox "build-helpers" step/environment
+            # so that tox installs the wheel built by linux-helpers-wheel instead
+            # of building its own.
+            tox-args: -f pip
             # Don't build cmu-graphics-helpers from source; use our wheel
             uv-sync-args: --no-install-package cmu-graphics-helpers
 
