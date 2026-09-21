@@ -34,6 +34,7 @@ jobs:
           manylinux: auto
           target: ${{ matrix.target }}
           args: --release
+          # linux-skia-deps is a variable declaration here. It is reused below.
           before-script-linux: &linux-skia-deps |
             if command -v yum &> /dev/null; then
               yum install -y freetype-devel fontconfig-devel
