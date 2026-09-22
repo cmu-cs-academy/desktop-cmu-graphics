@@ -13,7 +13,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "cmu-graphics-helpers==0.1.7",
+    "cmu-graphics-helpers==0.1.8",
     "tqdm>=4.70.0",
 ]
 
