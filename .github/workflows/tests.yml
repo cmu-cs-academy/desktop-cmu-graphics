@@ -68,9 +68,11 @@ jobs:
       # Text rendering needs a font that fontconfig maps to Arial. xvfb-run
       # gives winit's event loop a virtual X display to attach to -- unlike
       # the old SDL backend, winit has no truly headless/dummy mode.
+      # libxkbcommon-x11-0 is winit's X11 keyboard backend, not installed by
+      # default on the runner image.
       - name: Install fonts and Xvfb
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y fonts-liberation xvfb
+        run: sudo apt-get update && sudo apt-get install -y fonts-liberation xvfb libxkbcommon-x11-0
 
       # Sync here so that the "uv run" below doesn't re-sync without
       # uv-sync-args
