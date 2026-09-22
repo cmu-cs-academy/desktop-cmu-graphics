@@ -20,6 +20,5 @@ runs:
         manylinux: 2_34
         # maturin-action has no default container for 2_34
         container: quay.io/pypa/manylinux_2_34_x86_64:latest
-        args: --release
         before-script-linux: |
           dnf install -y freetype-devel fontconfig-devel

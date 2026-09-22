@@ -54,7 +54,6 @@ jobs:
         with:
           working-directory: cmu_graphics_helpers
           target: ${{ matrix.target }}
-          args: --release
 
       - uses: ./.github/actions/linux-helpers-wheel
 
