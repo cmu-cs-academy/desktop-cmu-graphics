@@ -36,4 +36,9 @@ else:
     dist_dir = os.path.join(base_path, 'pypi_upload', 'dist')
     for path in os.listdir(dist_dir):
         if path.endswith('.whl'):
-            uv_pip('install', os.path.join(dist_dir, path))
+            # --no-cache because this install is what pulls cmu-graphics-helpers
+            # out of UV_FIND_LINKS, and uv caches wheels from there by name and
+            # version, ignoring size and mtime -- so a cached wheel from an
+            # earlier build of the same version would win over the one just
+            # built.
+            uv_pip('install', '--no-cache', os.path.join(dist_dir, path))
