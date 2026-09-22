@@ -2,6 +2,27 @@ name: Build cmu_graphics_helpers (vendor to the branch, or deploy to PyPI on mai
 
 on:
   workflow_dispatch:
+  push:
+    # Not main: there vendor_binaries is skipped and publishing to PyPI is
+    # workflow_dispatch-only, so a run would build wheels nothing consumes.
+    branches-ignore:
+      - main
+    # The inputs that change the built wheel -- keep in sync with WATCHED_PATHS
+    # in build/check_helpers_version.py -- plus the script that vendors the
+    # wheels and the workflow machinery that builds them.
+    paths:
+      - cmu_graphics_helpers/**
+      - .cargo/config.toml
+      - build/helpers/build_cmuhelp_modules.py
+      - .github/workflows/buildwheels.yml
+      - .github/actions/linux-helpers-wheel/**
+      - .github/actions/skia-windows-build-env/**
+
+# One live run per branch. A superseded run would only vendor wheels built from
+# an older commit, and vendor_binaries pushes to the branch, so let it go.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build_wheels:

@@ -11,6 +11,8 @@ HELPERS_DIR = 'cmu_graphics_helpers'
 # Paths whose contents change the wheel that gets built from this tree. A change
 # to any of them needs a version bump, or installs may silently resolve the
 # published wheel from PyPI instead of the one built here.
+# Values in this list should also be in .github/workflows/buildwheels.yml's
+# push paths.
 WATCHED_PATHS = [HELPERS_DIR, '.cargo/config.toml']
 
 MAIN_REF = 'origin/main'
