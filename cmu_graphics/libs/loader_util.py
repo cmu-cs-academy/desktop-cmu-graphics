@@ -4,7 +4,7 @@ import platform
 import os
 
 min_minor_version = 8
-max_minor_version = 14
+max_minor_version = 15
 
 def get_platform_string():
     plat = "unsupported"
