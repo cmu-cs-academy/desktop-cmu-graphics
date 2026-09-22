@@ -1,0 +1,6 @@
+# Statically link the C runtime into the Windows extension module.
+# This makes it so that Skia doesn't need MSVCP140.dll -- the C++ standard library,
+# which only exists on machines that have the Microsoft Visual C++ Redistributable
+# installed.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

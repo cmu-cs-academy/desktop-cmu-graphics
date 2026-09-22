@@ -1,0 +1,24 @@
+name: Build the cmu_graphics_helpers wheel on Linux
+description: >
+  Build the manylinux cmu_graphics_helpers wheel into
+  cmu_graphics_helpers/target/wheels, the same way for publishing and for
+  tests. Does nothing on other platforms.
+
+runs:
+  using: composite
+  steps:
+    # manylinux_2_34 rather than the maturin-action default (2014): the wheel
+    # bundles the build container's FreeType, and Skia needs FreeType 2.10+
+    # (FT_Palette_Data_Get). manylinux2014 ships 2.8, which makes the wheel
+    # fail to import. manylinux_2_34 ships 2.10.4, and needs glibc 2.34+
+    # (Ubuntu 22.04+).
+    - name: Build wheel with maturin
+      if: runner.os == 'Linux'
+      uses: PyO3/maturin-action@v1
+      with:
+        working-directory: cmu_graphics_helpers
+        manylinux: 2_34
+        # maturin-action has no default container for 2_34
+        container: quay.io/pypa/manylinux_2_34_x86_64:latest
+        before-script-linux: |
+          dnf install -y freetype-devel fontconfig-devel alsa-lib-devel

@@ -8,6 +8,13 @@ ROOT = Path(__file__).resolve().parent.parent
 
 HELPERS_DIR = 'cmu_graphics_helpers'
 
+# Paths whose contents change the wheel that gets built from this tree. A change
+# to any of them needs a version bump, or installs may silently resolve the
+# published wheel from PyPI instead of the one built here.
+# Values in this list should also be in .github/workflows/buildwheels.yml's
+# push paths.
+WATCHED_PATHS = [HELPERS_DIR, '.cargo/config.toml']
+
 MAIN_REF = 'origin/main'
 
 
@@ -26,14 +33,6 @@ def pyproject_pin():
             return match.group(1)
 
     raise SystemExit('cmu-graphics-helpers dependency not found in pyproject.toml')
-
-
-def tox_ini_pin():
-    text = (ROOT / 'tox.ini').read_text()
-    match = re.search(r'cmu-graphics-helpers==(\S+)', text)
-    if not match:
-        raise SystemExit('cmu-graphics-helpers dependency not found in tox.ini')
-    return match.group(1)
 
 
 def git(*args):
@@ -58,10 +57,12 @@ def require_main_ref():
 
 
 def helpers_changes():
-    """Files under cmu_graphics_helpers/ that differ between main and this tree."""
-    changed = git('diff', '--name-only', MAIN_REF, '--', HELPERS_DIR)
+    """Watched files that differ between main and this tree."""
+    changed = git('diff', '--name-only', MAIN_REF, '--', *WATCHED_PATHS)
     if changed is None:
-        raise SystemExit(f'could not diff {HELPERS_DIR}/ against {MAIN_REF}')
+        raise SystemExit(
+            f'could not diff {", ".join(WATCHED_PATHS)} against {MAIN_REF}'
+        )
     return changed.split()
 
 
@@ -89,7 +90,6 @@ def check_versions_in_sync():
     versions = {
         'cmu_graphics_helpers/Cargo.toml': cargo_version(),
         'pyproject.toml': pyproject_pin(),
-        'tox.ini': tox_ini_pin(),
     }
 
     if len(set(versions.values())) > 1:
@@ -105,16 +105,24 @@ def check_version_bumped(version):
     """
     Fail if the helpers changed relative to main without the version being bumped.
 
-    Once a version has been published, pip is free to install that wheel from PyPI
-    rather than the one built locally from cmu_graphics_helpers/. That's fine as
-    long as they're the same code, so any change to the helpers has to come with a
-    new version number. main's version is the one that gets published, so it's
-    enough to require that we're ahead of main whenever we've changed the helpers.
+    Once a version has been published, the installer is free to resolve that wheel
+    from PyPI rather than the one built locally -- it will, in fact, even with
+    UV_FIND_LINKS pointing at the local build. That's fine as long as they're the
+    same code, so any change that alters the built wheel has to come with a new
+    version number. main's version is the one that gets published, so it's enough
+    to require that we're ahead of main whenever a watched path has changed.
+
+    See WATCHED_PATHS for what counts as altering the wheel.
     """
     require_main_ref()
 
-    if not helpers_changes():
+    changed = helpers_changes()
+    if not changed:
         return
+
+    changed_summary = ', '.join(sorted(changed)[:4])
+    if len(changed) > 4:
+        changed_summary += f' (+{len(changed) - 4} more)'
 
     published = main_version()
     current_key = release_sort_key(version)
@@ -138,10 +146,10 @@ def check_version_bumped(version):
         fix = 'Bump it'
 
     print(
-        f'{HELPERS_DIR}/ differs from main, but {problem}.\n'
-        f'{fix} in {HELPERS_DIR}/Cargo.toml (and pyproject.toml and tox.ini to '
-        f'match), so that installs use the wheel built from this source instead of '
-        f'the published {published} from PyPI.',
+        f'{changed_summary} differs from main, but {problem}.\n'
+        f'{fix} in {HELPERS_DIR}/Cargo.toml (and pyproject.toml to match), so '
+        f'that installs use the wheel built from this source instead of the '
+        f'published {published} from PyPI.',
         file=sys.stderr,
     )
     sys.exit(1)

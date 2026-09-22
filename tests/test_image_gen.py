@@ -19,6 +19,10 @@ REPORT_FILE = None
 
 TEST_FILE_PATH = 'runner.py'
 
+# The checked-in image_gen directory, as opposed to the copy main() makes in the
+# working directory.
+SOURCE_IMAGE_GEN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'image_gen')
+
 REPORT_HEADER = '''
 <html>
 <head>
@@ -145,10 +149,16 @@ def run_test(test_name, all_source_code):
         if not os.path.exists('image_gen/%s' % test_name):
             os.mkdir('image_gen/%s' % test_name)
 
-        correct_path_fmt = 'image_gen/%s/correct_%d.png'
-        correct_path = correct_path_fmt % (test_name, i)
-        if (test_name[-3:] in ('_es', '_de')):
-            correct_path = correct_path_fmt % (test_name[:-3], i)
+        is_translation = test_name[-3:] in ('_es', '_de')
+        baseline_test_name = test_name[:-3] if is_translation else test_name
+        correct_path = 'image_gen/%s/correct_%d.png' % (baseline_test_name, i)
+
+        # Linux renders text with different fonts than the shared baselines
+        # were made with, so a test can have a Linux-specific baseline.
+        linux_correct_name = 'linux_correct_%d.png' % i
+        linux_correct_path = 'image_gen/%s/%s' % (baseline_test_name, linux_correct_name)
+        if sys.platform == 'linux' and os.path.exists(linux_correct_path):
+            correct_path = linux_correct_path
 
         output_path = 'image_gen/%s/output_%d.png' % (test_name, i)
 
