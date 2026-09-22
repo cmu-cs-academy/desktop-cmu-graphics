@@ -16,7 +16,6 @@ permissions:
   contents: read
 
 env:
-  SDL_VIDEODRIVER: dummy
   # Drive build.py and tox with 3.11
   UV_PYTHON: '3.11'
 
