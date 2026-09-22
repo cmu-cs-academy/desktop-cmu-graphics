@@ -1,8 +1,10 @@
 name: Prepare to build Skia on Windows
 description: >
-  Windows builds Skia from source (see .cargo/config.toml). Locate libclang for
-  bindgen and restore the cargo cache shared by every workflow that builds it.
-  Does nothing on other platforms, which download prebuilt Skia.
+  Windows builds Skia from source (see .cargo/config.toml); locate libclang for
+  bindgen there. Also restore the cargo registry/build cache for the
+  cmu_graphics_helpers crate on Windows and macOS -- Linux builds the wheel in
+  a separate Docker container (see linux-helpers-wheel) that this cache can't
+  reach.
 
 runs:
   using: composite
@@ -21,10 +23,13 @@ runs:
         }
 
     - name: Cache cargo registry and build artifacts
-      if: runner.os == 'Windows'
+      if: runner.os != 'Linux'
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: cmu_graphics_helpers
-        # One key for every caller, so they share a cache instead of each
-        # storing a copy of the same build.
-        shared-key: windows-skia
+        # One key for every caller on a given OS/arch, so they share a cache
+        # instead of each storing a copy of the same build. rust-cache keys
+        # by runner.os automatically, but not by arch -- and target/ isn't
+        # arch-namespaced, so macos-latest (arm64) and macos-15-intel (x86_64)
+        # need separate keys or they'd clobber each other's build artifacts.
+        shared-key: skia-${{ runner.arch }}
