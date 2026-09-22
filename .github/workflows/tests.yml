@@ -39,7 +39,8 @@ jobs:
             # so that tox installs the wheel built by linux-helpers-wheel instead
             # of building its own.
             tox-args: -f pip
-            # Don't build cmu-graphics-helpers from source; use our wheel
+            # Don't build cmu-graphics-helpers in the default way; use the wheel
+            # built by actions/linux-helpers-wheel
             uv-sync-args: --no-install-package cmu-graphics-helpers
 
     steps:
@@ -59,6 +60,7 @@ jobs:
       # Before uv sync, which compiles the helpers crate
       - uses: ./.github/actions/skia-windows-build-env
 
+      # Build the Linux cmu_graphics_helpers wheel for manylinux rather than Ubuntu
       - uses: ./.github/actions/linux-helpers-wheel
 
       # Text rendering needs a font that fontconfig maps to Arial
@@ -66,7 +68,7 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y fonts-liberation
 
-      # Synced once here, so the uv runs below don't re-sync without
+      # Sync here so that the "uv run" below doesn't re-sync without
       # uv-sync-args
       - name: Install dev dependencies
         run: uv sync ${{ matrix.uv-sync-args }}
