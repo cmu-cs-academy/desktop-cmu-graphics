@@ -14,9 +14,8 @@ dynamic = ["version"]
 
 [tool.maturin]
 # maturin's CLI builds debug unless told otherwise, while its PEP 517 backend
-# (what uv uses) always builds release. Setting the profile here gets every call
-# site -- uv, tox's build-helpers, and maturin-action in CI -- an optimized
-# wheel, so none of them has to pass --release.
+# (what uv uses) always builds release. Set the profile here so that all call
+# sites use release.
 profile = "release"
 
 [tool.uv]

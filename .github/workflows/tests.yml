@@ -35,9 +35,7 @@ jobs:
         include:
           - os: ubuntu-24.04
             # The zip distribution doesn't support Linux, so only the pip envs
-            # run. We also don't run the tox "build-helpers" step/environment
-            # so that tox installs the wheel built by linux-helpers-wheel instead
-            # of building its own.
+            # run.
             tox-args: -f pip
             # Don't build cmu-graphics-helpers in the default way; use the wheel
             # built by actions/linux-helpers-wheel
@@ -56,6 +54,11 @@ jobs:
         uses: astral-sh/setup-uv@v10.1.0
         with:
           enable-cache: true
+
+      - name: Check the cmu_graphics_helpers version
+        # Only needs the standard library, hence --no-project rather than the
+        # synced environment, which doesn't exist yet.
+        run: uv run --no-project python build/check_helpers_version.py
 
       # Before uv sync, which compiles the helpers crate
       - uses: ./.github/actions/skia-windows-build-env
