@@ -60,7 +60,7 @@ jobs:
         run: uv run --no-project python build/check_helpers_version.py
 
       # Before uv sync, which compiles the helpers crate
-      - uses: ./.github/actions/skia-windows-build-env
+      - uses: ./.github/actions/rust-build-env
 
       # Build the Linux cmu_graphics_helpers wheel for manylinux rather than Ubuntu
       - uses: ./.github/actions/linux-helpers-wheel

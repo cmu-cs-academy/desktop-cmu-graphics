@@ -1,4 +1,4 @@
-name: Prepare to build Skia on Windows
+name: Prepare to build cmu_graphics_helpers
 description: >
   Windows builds Skia from source (see .cargo/config.toml); locate libclang for
   bindgen there. Also restore the cargo registry/build cache for the
