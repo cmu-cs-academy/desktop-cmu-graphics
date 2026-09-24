@@ -36,8 +36,10 @@ cd <path/to/desktop-cmu-graphics>
 uv run pre-commit install --install-hooks
 ```
 
-If you're working on the Rust helpers library, install Rust via rustup as described [here](https://rust-lang.org/tools/install/). See the section about configuration your `PATH` environment
+Install Rust via rustup as described [here](https://rust-lang.org/tools/install/). See the section about configuration your `PATH` environment
 variable to ensure `cargo` and `rustc` are both available.
+
+Run code from this repository with `uv run`, for example `uv run samples/highscore.py`. uv builds the Rust helpers library (`cmu_graphics_helpers/`) into its virtual environment, and rebuilds it when its source changes, so changes to the Rust code take effect without any other steps. Only the zip installer uses the binaries vendored under `cmu_graphics/libs` (see `cmu_graphics/dist.py`).
 
 
 # Running a Build
@@ -92,6 +94,31 @@ To run a test in isolation, run (change py314-pip to the name of the tox environ
 The report will have 3 images on top (correct image, output image and difference image respectively) as well as the entire test code. Copy that test code in a new python file and run it to reproduce the error.
 
 Prior to re-running `test_image_gen.py`, delete the generated folder `image_gen`.
+
+Test apps run in hidden windows, which are never shown and never take focus, so you can keep using your computer while the tests run. `tox.ini` and `test_image_gen.py` do this by setting the `CMU_GRAPHICS_HIDDEN_WINDOW` environment variable. To watch a failing test run, pass `--show-windows`:
+
+    python /path/to/desktop-cmu-graphics/tests/test_image_gen.py --show-windows --only <test_name.py>
+
+On a HiDPI screen (such as a Retina Mac), screenshots are taken at the screen's scale and scaled down to the app's size before comparison. Tests that draw images get a looser threshold there, since images are sampled from their source at a higher resolution.
+
+### Event tests
+
+Tests named `image_gen/events_*.py` run like a normal app that calls `runApp()` itself. They drive the app with injected mouse and resize events (`injectMouseMove`, `injectMousePress`, `injectMouseRelease`, `injectResize`), which go through the event loop's real handling of OS input, and call `screenshotAndQuit()` once they're done. Draw only axis-aligned rectangles at whole-pixel positions in these tests, so their correct images match on every screen scale.
+
+`test_image_gen.py` also runs behavior tests that check timing (step rate and idle redraws) and print `PASS`/`FAIL` lines instead of producing an image.
+
+To add a correct image for a new test, run it once; the missing `correct_1.png` is generated in the working copy of `image_gen`. Check that it looks right, then copy it into `tests/image_gen/<test name>/`.
+
+### Manual testing
+
+Some behavior can't be tested automatically, because keyboard input can't be injected and the text input modal runs in its own process. When changing event handling, check these by hand on macOS, Windows, and Linux:
+
+- Holding a key down calls `onKeyPress` once, then `onKeyHold` each step, until it's released.
+- While holding a key, pressing and releasing Shift, Control, or Cmd (Windows key on Windows) changes the modifiers `onKeyHold` receives right away. Cmd/Windows is reported as `'meta'`; Alt/Option isn't reported.
+- Keys like Home, End, Page Up, and F1 reach `onKeyPress` as `'home'`, `'end'`, `'pageup'`, and `'f1'`, the same names as the web version.
+- In the modal, Cmd+A, Cmd+C, and Cmd+V (Ctrl on Windows) don't type letters.
+- In the `app.getTextInput()` modal, dragging across typed text selects it, and the selection follows the mouse, including past either end of the box.
+- Holding backspace in the modal deletes one character, then repeats at a steady rate after a short delay.
 
 # Submitting Changes
 

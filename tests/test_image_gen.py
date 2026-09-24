@@ -6,9 +6,7 @@ import sys
 import time
 import platform
 
-import imageio.v2 as imageio
 from PIL import Image
-import numpy
 
 import subprocess
 import functools
@@ -16,6 +14,14 @@ import functools
 print = functools.partial(print, flush=True)
 
 SIZE = 400
+
+# Seconds before a test's app is assumed to be hung
+TEST_TIMEOUT = 60
+
+# Error threshold for tests that draw images, when the screenshot had to be
+# scaled down. Images are sampled from their source at a higher resolution on
+# a HiDPI screen, so they can't match a 1x render as closely as shapes do.
+DOWNSCALED_IMAGE_THRESHOLD = 75
 
 REPORT_FILE = None
 
@@ -50,41 +56,77 @@ def is_mac_pip_ci():
     is_ci = os.environ.get('CI', False)
     return is_ci and is_mac and is_pip
 
+def normalize_screenshot(path):
+    """
+    Scale a screenshot taken on a HiDPI screen (e.g. 800x800 physical pixels
+    on a Retina Mac) down to the app's SIZExSIZE logical size, in place.
+    Averaging each block of physical pixels is what a 1x render of the same
+    shapes would produce. Returns whether the screenshot was scaled.
+
+    A screenshot smaller than SIZE is left alone, so it fails comparison.
+    """
+    image = Image.open(path)
+    width, height = image.size
+    if width <= SIZE or height <= SIZE:
+        return False
+    image = image.convert('RGB').resize((SIZE, SIZE), Image.BOX)
+    image.save(path)
+    return True
+
 def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
     image_1 = Image.open(path_1)
     image_1 = image_1.convert("RGB")
     image_1.save(path_1)
-    image_1_data = imageio.imread(path_1)
 
     image_2 = Image.open(path_2)
     image_2 = image_2.convert("RGB")
     image_2.save(path_2)
-    image_2_data = imageio.imread(path_2)
 
-    assert image_1_data.shape == (SIZE, SIZE, 3)
-    assert image_2_data.shape == (SIZE, SIZE, 3)
-    assert image_1_data.shape == image_2_data.shape, image_2_data.shape
+    assert image_1.size == (SIZE, SIZE)
+    assert image_2.size == (SIZE, SIZE)
+    assert image_1.size == image_2.size
 
-    error_array = (image_1_data.astype('float') - image_2_data.astype('float')) ** 2
-    mean_squared_error = numpy.sum(error_array) / float(SIZE * SIZE)
+    pixels_1 = image_1.load()
+    pixels_2 = image_2.load()
+
+    mean_squared_error = 0
+
+    pixel_errors = [[0] * SIZE for _ in range(SIZE)]
+
+    for y in range(SIZE):
+        for x in range(SIZE):
+            r1, g1, b1 = pixels_1[x, y]
+            r2, g2, b2 = pixels_2[x, y]
+
+            error = (
+                (r1 - r2) ** 2 +
+                (g1 - g2) ** 2 +
+                (b1 - b2) ** 2
+            )
+
+            pixel_errors[y][x] = error
+            mean_squared_error += error
+
+    mean_squared_error /= float(SIZE * SIZE)
 
     if mean_squared_error >= threshold:
         diff_image_path = 'image_gen/%s/diff_%d.png' % (test_name, test_piece_i)
 
-        per_pixel_error = error_array.sum(axis=2)
+        visual_diff = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+        diff_pixels = visual_diff.load()
 
-        visual_diff = numpy.zeros((SIZE, SIZE, 4), dtype=numpy.uint8)
-        for i in range(SIZE):
-            for j in range(SIZE):
-                this_error = per_pixel_error[i][j]
+        for y in range(SIZE):
+            for x in range(SIZE):
+                this_error = pixel_errors[y][x]
+
                 if this_error > 0:
                     if this_error < threshold:
-                        visual_diff[i][j][2] = 255  # blue
+                        diff_pixels[x, y] = (0, 0, 255, 128)  # blue
                     else:
-                        visual_diff[i][j][0] = 255  # red
-                    visual_diff[i][j][3] = 128  # half alpha
+                        diff_pixels[x, y] = (255, 0, 0, 128)  # red
 
-        imageio.imwrite(diff_image_path, visual_diff)
+        visual_diff.save(diff_image_path)
+
         print("Part %d MSE %.0f" % (test_piece_i, mean_squared_error))
         REPORT_FILE.write("<div class='error'><p>Part %d MSE %.0f</p>" %
             (test_piece_i, mean_squared_error))
@@ -93,12 +135,33 @@ def compare_images(path_1, path_2, test_name, test_piece_i, threshold=25):
 
     return mean_squared_error < threshold
 
-def generate_test_source(test, run_fn, language='en'):
+# Helpers available to events_* tests, which run like a normal app and decide
+# for themselves when to take their screenshot.
+EVENTS_TEST_HELPERS = '''
+import cmu_graphics.cmu_graphics as _cg
+from cmu_graphics.deps import wyvern as _wyvern
+
+def screenshotAndQuit():
+    # Takes the screenshot on the next redraw, then quits
+    _cg.app._app._takeScreenshotPath = SCREENSHOT_PATH
+    _cg.app._app._screenshotTriggered = True
+
+# Injected events go through the event loop's real handling of OS input.
+# Coordinates and sizes are logical, like app.width and mouse events.
+injectMouseMove = _wyvern._inject_mouse_move
+injectResize = _wyvern._inject_resize
+
+def injectMousePress(button=0):
+    _wyvern._inject_mouse_button(button, True)
+
+def injectMouseRelease(button=0):
+    _wyvern._inject_mouse_button(button, False)
+'''
+
+def generate_test_source(test, run_fn, language='en', screenshot_path=None):
     source_code = ''
     source_code += 'import sys'
     source_code += '\nimport os'
-    source_code += '\nos.environ["SDL_VIDEODRIVER"] = "dummy"'
-    source_code += '\nos.environ["SDL_AUDIODRIVER"] = "dummy"'
     source_code += '\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))'
     source_code += '\nfrom cmu_graphics import *\n'
     source_code += "setLanguage('%s')\n" % (language)
@@ -114,6 +177,9 @@ def generate_test_source(test, run_fn, language='en'):
     if not raised:
         raise Exception('fn failed to raise an exception')
 '''
+    if screenshot_path is not None:
+        source_code += 'SCREENSHOT_PATH = %s\n' % screenshot_path
+        source_code += EVENTS_TEST_HELPERS
 
     source_code += '\n' + test
     source_code += '\n' + run_fn
@@ -148,7 +214,12 @@ def run_test(test_name, all_source_code):
         test = ''
         screenshot_path = repr(os.path.abspath(output_path))
         run_fn = 'cmu_graphics.run(takeScreenshotPath=%s)' % screenshot_path
-        if not test_name.startswith('cs3'):
+        is_events_test = test_name.startswith('events')
+        if is_events_test:
+            # The test calls runApp itself, and screenshotAndQuit when done
+            test += source_code_pieces[piece_i]
+            run_fn = ''
+        elif not test_name.startswith('cs3'):
             test += '\n######\n'.join(source_code_pieces[:piece_i])
             test += '\ndef onMousePress(x, y):\n'
             test += '\n'.join([('    ' + s) for s in source_code_pieces[piece_i].split('\n')])
@@ -160,10 +231,18 @@ def run_test(test_name, all_source_code):
         if '_screens' in test_name:
             run_fn = "runAppWithScreens('a', takeScreenshotPath=%s)" % screenshot_path
 
-        source_code = generate_test_source(test, run_fn, 'es' if test_name.endswith('_es') else 'en')
+        source_code = generate_test_source(
+            test,
+            run_fn,
+            'es' if test_name.endswith('_es') else 'en',
+            screenshot_path=screenshot_path if is_events_test else None,
+        )
 
         with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
             f.write(source_code)
+
+        if os.path.exists(output_path):
+            os.remove(output_path)
 
         p = subprocess.Popen(
             [sys.executable, f'../{TEST_FILE_PATH}'],
@@ -171,7 +250,15 @@ def run_test(test_name, all_source_code):
             stderr=subprocess.PIPE,
             cwd='image_gen'
         )
-        stdout, stderr = p.communicate()
+        try:
+            stdout, stderr = p.communicate(timeout=TEST_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            stdout, stderr = p.communicate()
+            print('Timed out after %ds' % TEST_TIMEOUT)
+            print(stdout.decode('utf-8'))
+            print(stderr.decode('utf-8'))
+            os._exit(1)
         console_output = stdout + stderr
 
         if p.returncode != 0:
@@ -179,6 +266,27 @@ def run_test(test_name, all_source_code):
             print(stdout.decode('utf-8'))
             print(stderr.decode('utf-8'))
             os._exit(1)
+
+        if not os.path.exists(output_path):
+            print('Part %d did not save a screenshot' % i)
+            REPORT_FILE.write(
+                '<div class="error"><p>Part %d did not save a screenshot</p>'
+                '<p>Console output:</p><pre>%s</pre><p>Source code:</p><pre>%s</pre>' %
+                (i, html.escape(console_output.decode('utf-8')), html.escape(source_code)))
+            all_passed = False
+            continue
+
+        downscaled = normalize_screenshot(output_path)
+
+        output_size = Image.open(output_path).size
+        if output_size != (SIZE, SIZE):
+            print('Part %d screenshot is %dx%d, not %dx%d' % (i, *output_size, SIZE, SIZE))
+            REPORT_FILE.write(
+                '<div class="error"><p>Part %d screenshot is %dx%d, not %dx%d</p>'
+                "<img src='%s' /><p>Source code:</p><pre>%s</pre>" %
+                (i, *output_size, SIZE, SIZE, output_path, html.escape(source_code)))
+            all_passed = False
+            continue
 
         if not os.path.exists(correct_path):
             print('Generating new %s' % correct_path)
@@ -194,6 +302,10 @@ def run_test(test_name, all_source_code):
                     threshold = 150
                 else:
                     threshold = 50
+            draws_image = any(
+                name in source_code for name in ('Image(', 'Imagen(', 'Bild('))
+            if downscaled and draws_image:
+                threshold = max(threshold, DOWNSCALED_IMAGE_THRESHOLD)
             if not compare_images(correct_path, output_path, test_name, i,
                     threshold=threshold):
                 if console_output.strip():
@@ -266,13 +378,157 @@ def redrawAll(app):
 
     return True
 
+# Timing checks, which report numbers rather than pictures. Each prints PASS or
+# FAIL lines; the test passes if there are exactly EXPECTED_PASSES of the
+# former and none of the latter.
+STEP_RATE_TEST = '''\
+import os
+import time
+import cmu_graphics.cmu_graphics as _cg
+
+STEP_RATES = [10, 30, 60]
+IDLE_RATE = 30
+WARMUP = 0.25
+DURATION = 1.5
+# Allowed error in the step rate implied by the median time between steps, as
+# a fraction of stepsPerSecond. The median rather than the mean, because on a
+# busy machine some steps run late, which lowers the mean even though steps
+# are scheduled correctly. Running too fast is always a bug, but CI runs
+# several tox envs at once on a few cores, which can leave too little CPU to
+# keep up with 60 steps a second, so CI allows a slower rate.
+STEP_RATE_TOO_FAST = 0.15
+STEP_RATE_TOO_SLOW = 0.30 if os.environ.get('CI') else 0.15
+# Allowed redraws while idle, as a multiple of the steps in the same period
+MAX_REDRAWS_PER_STEP = 1.1
+
+phases = STEP_RATES + ['idle']
+state = {'phase': 0, 'phaseStart': None, 'stepTimes': [], 'redraws': 0}
+
+def report(passed, message):
+    print(('PASS ' if passed else 'FAIL ') + message, flush=True)
+
+def startPhase(app, i):
+    state['phase'] = i
+    state['phaseStart'] = None
+    state['stepTimes'] = []
+    state['redraws'] = 0
+    rate = phases[i]
+    app.stepsPerSecond = IDLE_RATE if rate == 'idle' else rate
+
+def onAppStart(app):
+    startPhase(app, 0)
+
+# Count redraws of the window, not calls to the app's redrawAll, which only
+# runs after event handlers
+_frameworkRedrawAll = _cg.App.redrawAll
+
+def countingRedrawAll(self, ctx):
+    if state['stepTimes']:
+        state['redraws'] += 1
+    return _frameworkRedrawAll(self, ctx)
+
+_cg.App.redrawAll = countingRedrawAll
+
+def redrawAll(app):
+    pass
+
+def onStep(app):
+    now = time.monotonic()
+    if state['phaseStart'] is None:
+        state['phaseStart'] = now
+    elapsed = now - state['phaseStart']
+    if elapsed < WARMUP:
+        return
+    state['stepTimes'].append(now)
+    if elapsed < WARMUP + DURATION:
+        return
+
+    times = state['stepTimes']
+    steps = len(times) - 1
+    meanRate = steps / (times[-1] - times[0])
+    intervals = sorted(b - a for a, b in zip(times, times[1:]))
+    medianRate = 1 / intervals[len(intervals) // 2]
+    phase = phases[state['phase']]
+    if phase == 'idle':
+        # The redraw after the final step hasn't happened yet
+        redraws = state['redraws']
+        report(redraws <= steps * MAX_REDRAWS_PER_STEP,
+               'idle redraws: %d redraws for %d steps' % (redraws, steps))
+    else:
+        minRate = phase * (1 - STEP_RATE_TOO_SLOW)
+        maxRate = phase * (1 + STEP_RATE_TOO_FAST)
+        report(minRate <= medianRate <= maxRate,
+               'step rate: stepsPerSecond=%d median %.1f/s, mean %.1f/s' %
+               (phase, medianRate, meanRate))
+
+    if state['phase'] + 1 < len(phases):
+        startPhase(app, state['phase'] + 1)
+    else:
+        app.quit()
+'''
+
+BEHAVIOR_TESTS = [
+    # (name, source, run_fn, expected number of PASS lines)
+    ('step rate and idle redraws', STEP_RATE_TEST, 'runApp()', 4),
+]
+
+def run_behavior_tests():
+    print('behavior tests')
+
+    all_passed = True
+    for name, test, run_fn, expected_passes in BEHAVIOR_TESTS:
+        source_code = generate_test_source(test, run_fn)
+
+        with open(TEST_FILE_PATH, 'w', encoding='utf-8') as f:
+            f.write(source_code)
+
+        p = subprocess.Popen(
+            [sys.executable, '-u', f'../{TEST_FILE_PATH}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd='image_gen'
+        )
+        try:
+            stdout, stderr = p.communicate(timeout=TEST_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            stdout, stderr = p.communicate()
+        console_output = (stdout + stderr).decode('utf-8')
+        lines = console_output.splitlines()
+        passes = [line for line in lines if line.startswith('PASS ')]
+        failures = [line for line in lines if line.startswith('FAIL ')]
+
+        for line in passes + failures:
+            print('  ' + line)
+
+        if failures or len(passes) != expected_passes:
+            print('%s failed (expected %d PASS lines). Console output:' %
+                  (name, expected_passes))
+            print(console_output)
+            REPORT_FILE.write(
+                '<div class="error"><p>Behavior test "%s" failed</p><pre>%s</pre></div>' %
+                (html.escape(name), html.escape(console_output)))
+            all_passed = False
+
+    return all_passed
+
 def main():
     global REPORT_FILE, WAIT
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--only', type=str, help='The name of a single python file to run')
+    parser.add_argument(
+        '--show-windows', action='store_true',
+        help="Show each test's window, instead of running it hidden")
 
     args = parser.parse_args()
+
+    # Test apps inherit this. Hidden windows don't take focus, so the
+    # computer stays usable while the tests run.
+    if args.show_windows:
+        os.environ.pop('CMU_GRAPHICS_HIDDEN_WINDOW', None)
+    else:
+        os.environ['CMU_GRAPHICS_HIDDEN_WINDOW'] = '1'
 
     num_failures = 0
     num_successes = 0
@@ -291,6 +547,12 @@ def main():
             num_successes += 1
         else:
             num_failures += 1
+
+        if not args.only:
+            if run_behavior_tests():
+                num_successes += 1
+            else:
+                num_failures += 1
 
         for test_py_name in (args.only and [args.only] or os.listdir('image_gen')):
             if not test_py_name.endswith('.py'):

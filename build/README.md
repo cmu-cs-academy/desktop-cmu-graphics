@@ -1,7 +1,5 @@
 # Build Scripts
 
-* To update bundled pygame, run `python3 ../../../build/helpers/build_pygame_modules.py` from `cmu_graphics/libs/pygame_loader`. Then run `python3 helpers/replace_images.py` from `build` to replace the Pygame logo with the CMU Graphics icon.
-
 ## cmu_graphics_helpers
 
 The bundled cmu_graphics_helpers binaries are built by
@@ -14,6 +12,13 @@ On any branch other than `main`, that workflow copies the wheels it built into
 To vendor by hand instead, run `python3 build/helpers/build_cmuhelp_modules.py`
   from anywhere, after a local `maturin build`. Pass `--wheels <dir>` to vendor
   wheels from somewhere else, such as a workflow run or PyPI.
+
+Only the zip installer loads the vendored binaries: `build.py` sets
+  `VENDORED = True` in its copy of `cmu_graphics/dist.py`. Local development
+  (`uv run`) and the PyPI package use `VENDORED = False` and import the
+  installed `cmu_graphics_helpers` package, which uv builds from source. So you
+  don't need to vendor binaries to try out Rust changes locally; the `zip` tox
+  environments are the ones that test the vendored binaries.
 
 
 ## Linux image baselines

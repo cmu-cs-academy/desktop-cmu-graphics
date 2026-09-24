@@ -3,8 +3,8 @@ import struct
 import platform
 import os
 
-min_minor_version = 11
-max_minor_version = 14
+min_minor_version = 8
+max_minor_version = 15
 
 def get_platform_string():
     plat = "unsupported"

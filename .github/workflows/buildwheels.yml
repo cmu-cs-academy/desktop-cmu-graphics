@@ -16,7 +16,7 @@ on:
       - build/helpers/build_cmuhelp_modules.py
       - .github/workflows/buildwheels.yml
       - .github/actions/linux-helpers-wheel/**
-      - .github/actions/skia-windows-build-env/**
+      - .github/actions/rust-build-env/**
 
 # One live run per branch. A superseded run would only vendor wheels built from
 # an older commit, and vendor_binaries pushes to the branch, so let it go.
@@ -46,7 +46,7 @@ jobs:
         if: ${{ matrix.os != 'ubuntu-latest' }}
         run: rustup target add ${{ matrix.target }}
 
-      - uses: ./.github/actions/skia-windows-build-env
+      - uses: ./.github/actions/rust-build-env
 
       - name: Build wheels with maturin
         if: ${{ matrix.os != 'ubuntu-latest' }}
