@@ -11,6 +11,8 @@ HELPERS_DIR = 'cmu_graphics_helpers'
 # Paths whose contents change the wheel that gets built from this tree. A change
 # to any of them needs a version bump, or installs may silently resolve the
 # published wheel from PyPI instead of the one built here.
+# Values in this list should also be in .github/workflows/buildwheels.yml's
+# push paths.
 WATCHED_PATHS = [HELPERS_DIR, '.cargo/config.toml']
 
 MAIN_REF = 'origin/main'
@@ -31,14 +33,6 @@ def pyproject_pin():
             return match.group(1)
 
     raise SystemExit('cmu-graphics-helpers dependency not found in pyproject.toml')
-
-
-def tox_ini_pin():
-    text = (ROOT / 'tox.ini').read_text()
-    match = re.search(r'cmu-graphics-helpers==(\S+)', text)
-    if not match:
-        raise SystemExit('cmu-graphics-helpers dependency not found in tox.ini')
-    return match.group(1)
 
 
 def git(*args):
@@ -96,7 +90,6 @@ def check_versions_in_sync():
     versions = {
         'cmu_graphics_helpers/Cargo.toml': cargo_version(),
         'pyproject.toml': pyproject_pin(),
-        'tox.ini': tox_ini_pin(),
     }
 
     if len(set(versions.values())) > 1:
@@ -154,9 +147,9 @@ def check_version_bumped(version):
 
     print(
         f'{changed_summary} differs from main, but {problem}.\n'
-        f'{fix} in {HELPERS_DIR}/Cargo.toml (and pyproject.toml and tox.ini to '
-        f'match), so that installs use the wheel built from this source instead of '
-        f'the published {published} from PyPI.',
+        f'{fix} in {HELPERS_DIR}/Cargo.toml (and pyproject.toml to match), so '
+        f'that installs use the wheel built from this source instead of the '
+        f'published {published} from PyPI.',
         file=sys.stderr,
     )
     sys.exit(1)

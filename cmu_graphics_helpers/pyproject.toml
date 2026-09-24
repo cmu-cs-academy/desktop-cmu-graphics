@@ -12,6 +12,12 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[tool.maturin]
+# maturin's CLI builds debug unless told otherwise, while its PEP 517 backend
+# (what uv uses) always builds release. Set the profile here so that all call
+# sites use release.
+profile = "release"
+
 [tool.uv]
 # uv's default cache invalidation for this path dependency doesn't notice
 # edits to the Rust source, so `uv run` would keep using a stale build.
