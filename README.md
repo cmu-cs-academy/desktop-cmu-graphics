@@ -32,12 +32,6 @@ package offers a larger degree of versatility.
 
 The remainder of these installation instructions are only for the pip version.
 
-### Install dependencies
-
-If you're using Windows, you don't need to install any dependencies. Skip ahead to "Install CMU Graphics" below.
-
-If you're using a Mac, install [Homebrew](https://brew.sh/).
-
 ### Install CMU Graphics
 
 Run the following command:
