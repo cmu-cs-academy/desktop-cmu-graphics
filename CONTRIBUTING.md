@@ -112,6 +112,9 @@ To add a correct image for a new test, run it once; the missing `correct_1.png` 
 Some behavior can't be tested automatically, because keyboard input can't be injected and the text input modal runs in its own process. When changing event handling, check these by hand on macOS, Windows, and Linux:
 
 - Holding a key down calls `onKeyPress` once, then `onKeyHold` each step, until it's released.
+- While holding a key, pressing and releasing Shift, Control, or Cmd (Windows key on Windows) changes the modifiers `onKeyHold` receives right away. Cmd/Windows is reported as `'meta'`; Alt/Option isn't reported.
+- Keys like Home, End, Page Up, and F1 reach `onKeyPress` as `'home'`, `'end'`, `'pageup'`, and `'f1'`, the same names as the web version.
+- In the modal, Cmd+A, Cmd+C, and Cmd+V (Ctrl on Windows) don't type letters.
 - In the `app.getTextInput()` modal, dragging across typed text selects it, and the selection follows the mouse, including past either end of the box.
 - Holding backspace in the modal deletes one character, then repeats at a steady rate after a short delay.
 

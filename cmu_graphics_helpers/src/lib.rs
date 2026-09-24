@@ -1035,21 +1035,28 @@ pub struct KeyEvent {
     pub modifiers: Vec<String>,
 }
 
-fn named_keys_to_name(name: &NamedKey) -> Option<&str> {
+// The name the app sees for a named (non-character) key. This matches the web
+// version, which lowercases the browser's key name: winit's NamedKey variants
+// are the same W3C key names, so "PageUp" becomes "pageup" and "F1" becomes
+// "f1". Arrow keys drop the "arrow", so "ArrowLeft" becomes "left".
+fn named_key_name(name: &NamedKey) -> Option<String> {
     match name {
-        NamedKey::ArrowLeft => Some("left"),
-        NamedKey::ArrowRight => Some("right"),
-        NamedKey::ArrowDown => Some("down"),
-        NamedKey::ArrowUp => Some("up"),
-
-        NamedKey::Enter => Some("enter"),
-        NamedKey::Tab => Some("tab"),
-        NamedKey::Escape => Some("escape"),
-        NamedKey::Backspace => Some("backspace"),
-        NamedKey::Delete => Some("delete"),
-        NamedKey::Space => Some("space"),
-        NamedKey::Control => Some("control"),
-        _ => None,
+        // Modifier keys only change other keys, so the app doesn't see them,
+        // like the web version. Control is the exception: the framework uses
+        // it for the inspector, and doesn't pass it on to the app either.
+        NamedKey::Shift
+        | NamedKey::Alt
+        | NamedKey::Super
+        | NamedKey::Meta
+        | NamedKey::Hyper
+        | NamedKey::CapsLock => None,
+        _ => {
+            let name = format!("{name:?}").to_lowercase();
+            Some(match name.strip_prefix("arrow") {
+                Some(direction) => direction.to_string(),
+                None => name,
+            })
+        }
     }
 }
 
@@ -1062,7 +1069,9 @@ fn modifiers_to_vec(modifiers: &winit::event::Modifiers) -> Vec<String> {
     if state.control_key() {
         result.push("control".to_string());
     }
-    if state.alt_key() {
+    // "meta" is Cmd on macOS and the Windows key on Windows, as it was with
+    // pygame and is in the web version. Alt isn't reported.
+    if state.super_key() {
         result.push("meta".to_string());
     }
     result
@@ -1090,6 +1099,8 @@ pub struct PythonEvent {
     pub resize: Option<ResizeEvent>,
     #[pyo3(get)]
     pub new_screen: Option<String>,
+    #[pyo3(get)]
+    pub modifiers: Option<Vec<String>>,
 }
 
 impl PythonEvent {
@@ -1105,6 +1116,7 @@ impl PythonEvent {
             key: None,
             resize: None,
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1120,6 +1132,7 @@ impl PythonEvent {
             key: None,
             resize: None,
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1135,6 +1148,7 @@ impl PythonEvent {
             key: None,
             resize: None,
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1150,6 +1164,7 @@ impl PythonEvent {
             key: None,
             resize: None,
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1164,6 +1179,7 @@ impl PythonEvent {
             }),
             resize: None,
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1178,6 +1194,7 @@ impl PythonEvent {
             }),
             resize: None,
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1188,6 +1205,7 @@ impl PythonEvent {
             key: None,
             resize: Some(ResizeEvent { width, height }),
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1198,6 +1216,7 @@ impl PythonEvent {
             key: None,
             resize: None,
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1208,6 +1227,7 @@ impl PythonEvent {
             key: None,
             resize: None,
             new_screen: None,
+            modifiers: None,
         }
     }
 
@@ -1218,6 +1238,20 @@ impl PythonEvent {
             key: None,
             resize: None,
             new_screen: None,
+            modifiers: None,
+        }
+    }
+
+    // Sent when only modifier keys change, since those keys don't send key
+    // events, so onKeyHold sees the current modifiers
+    pub fn modifiers_changed(modifiers: Vec<String>) -> Self {
+        PythonEvent {
+            event_type: "modifiers_changed".to_string(),
+            mouse: None,
+            key: None,
+            resize: None,
+            new_screen: None,
+            modifiers: Some(modifiers),
         }
     }
 
@@ -1228,6 +1262,7 @@ impl PythonEvent {
             key: None,
             resize: None,
             new_screen: Some(new_screen),
+            modifiers: None,
         }
     }
 }
@@ -1607,10 +1642,10 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 }
                 let mut is_named = false;
                 let key = match &event.logical_key {
-                    Key::Character(s) => s,
+                    Key::Character(s) => s.to_string(),
                     Key::Named(name) => {
                         is_named = true;
-                        let Some(name) = named_keys_to_name(name) else {
+                        let Some(name) = named_key_name(name) else {
                             return;
                         };
                         name
@@ -1622,7 +1657,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                         self.call_event_handler(
                             event_loop,
                             PythonEvent::key_press(
-                                key.to_string(),
+                                key,
                                 is_named,
                                 modifiers_to_vec(&self.modifiers),
                             ),
@@ -1632,7 +1667,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                         self.call_event_handler(
                             event_loop,
                             PythonEvent::key_release(
-                                key.to_string(),
+                                key,
                                 is_named,
                                 modifiers_to_vec(&self.modifiers),
                             ),
@@ -1642,6 +1677,11 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             }
             WindowEvent::ModifiersChanged(new_modifiers) => {
                 self.modifiers = new_modifiers;
+                // Nothing to redraw, since only the modifiers changed
+                self.dispatch(
+                    event_loop,
+                    PythonEvent::modifiers_changed(modifiers_to_vec(&self.modifiers)),
+                );
             }
             _ => (),
         }

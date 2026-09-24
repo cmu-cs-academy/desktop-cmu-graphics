@@ -1133,6 +1133,11 @@ class App(object):
                 self.isCtrlKeyDown = False
             self.handleKeyRelease(event.key.key, event.key.modifiers)
 
+        elif event.event_type == 'modifiers_changed':
+            # Modifier keys don't send key events, but onKeyHold should see
+            # them as soon as they're pressed or released
+            self._modifiers = list(event.modifiers)
+
         elif event.event_type == 'resize':
             self.handleResize(event.resize.width, event.resize.height)
 
