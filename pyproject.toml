@@ -15,7 +15,6 @@ classifiers = [
 dependencies = [
     "pygame-ce>=2",
     "cmu-graphics-helpers==0.1.7",
-    "tqdm>=4.70.0",
 ]
 
 [project.urls]
@@ -66,6 +65,7 @@ dev = [
     "ruff>=0.14.2",
     "tox>=4.32.0",
     "tox-uv-bare>=1.36.0",
+    "tqdm>=4.70.0",
     "twine>=6.2.0",
 ]
 
