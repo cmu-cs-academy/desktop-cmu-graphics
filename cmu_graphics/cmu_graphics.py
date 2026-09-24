@@ -855,11 +855,8 @@ class App(object):
         self._isMvc = False
         self._initialScreen = None
 
-        self._lastTick = 0.0
-        self._lastMouseMoveTime = 0.0
-        self._lastMouseDragTime = 0.0
-        self._pendingMouseMove = None
-        self._pendingMouseDrag = None
+        self._lastStepTime = None
+        self._sizeChanged = False
         self._takeScreenshotPath = None
         self._screenshotTriggered = False
 
@@ -888,6 +885,7 @@ class App(object):
     def setStepsPerSecond(self, value):
         shape_logic.checkNumber(sli.t('app'), 'stepsPerSecond', value, False)
         self._stepsPerSecond = value
+        wyvern.set_steps_per_second(value)
 
     stepsPerSecond = property(getStepsPerSecond, setStepsPerSecond)
 
@@ -906,6 +904,12 @@ class App(object):
         return sli.slSetAppProperty('maxShapeCount', value)
 
     maxShapeCount = property(getMaxShapeCount, setMaxShapeCount)
+
+    def updateScreenSize(self):
+        # Resize the window once the current event is handled, so setting
+        # width and then height sends a single resize instead of two
+        if self._running:
+            self._sizeChanged = True
 
     def handleResize(self, newWidth, newHeight):
         if (newWidth, newHeight) == (self._width, self._height):
@@ -940,6 +944,7 @@ class App(object):
 
     def setRight(self, value):
         self._width = value
+        self.updateScreenSize()
 
     right = property(getRight, setRight)
 
@@ -956,6 +961,7 @@ class App(object):
 
     def setBottom(self, value):
         self._height = value
+        self.updateScreenSize()
 
     bottom = property(getBottom, setBottom)
 
@@ -964,6 +970,7 @@ class App(object):
 
     def setWidth(self, value):
         self._width = value
+        self.updateScreenSize()
 
     width = property(getWidth, setWidth)
 
@@ -972,6 +979,7 @@ class App(object):
 
     def setHeight(self, value):
         self._height = value
+        self.updateScreenSize()
 
     height = property(getHeight, setHeight)
 
@@ -1064,6 +1072,14 @@ class App(object):
             wyvern.set_fullscreen(False)
 
     def on_event(self, event, surface):
+        try:
+            self.handleEvent(event, surface)
+        finally:
+            if self._sizeChanged:
+                self._sizeChanged = False
+                wyvern.set_size(int(self._width), int(self._height))
+
+    def handleEvent(self, event, surface):
         self._ctx = surface.canvas
 
         if self.stopped and event.event_type not in ('redraw', 'step'):
@@ -1102,8 +1118,9 @@ class App(object):
             self.callUserFn('onMouseMove', (event.mouse.x, event.mouse.y))
 
         elif event.event_type == 'mouse_drag':
+            self.inspector.setMousePosition(event.mouse.x, event.mouse.y)
             self.callUserFn(
-                'onMouseDrag', (event.mouse.x, event.mouse.y, [event.mouse.button])
+                'onMouseDrag', (event.mouse.x, event.mouse.y, list(event.mouse.buttons))
             )
 
         elif event.event_type == 'key_press':
@@ -1123,11 +1140,13 @@ class App(object):
             self.handleSetActiveScreen(event.new_screen)
 
     def _handleStep(self):
+        # The event loop sends steps at stepsPerSecond (see setStepsPerSecond)
         now = time.monotonic()
-        interval = 1.0 / self.stepsPerSecond
-        if now - self._lastTick < interval:
-            return
-        self._lastTick = now
+        if self._lastStepTime is None:
+            msPassed = 1000 / self.stepsPerSecond
+        else:
+            msPassed = (now - self._lastStepTime) * 1000
+        self._lastStepTime = now
 
         if not (self.paused or self.stopped):
             self.callUserFn('onStep', ())
@@ -1137,13 +1156,14 @@ class App(object):
                 )
             onStepEvent.send_robust(self.callUserFn, self._wrapper)
 
-        onMainLoopEvent.send_robust(interval * 1000, self.callUserFn, self._wrapper)
+        onMainLoopEvent.send_robust(msPassed, self.callUserFn, self._wrapper)
 
     @_safeMethod
     def run(self, takeScreenshotPath=None):
         self._takeScreenshotPath = takeScreenshotPath
         self._screenshotTriggered = False
         self._running = True
+        wyvern.set_steps_per_second(self.stepsPerSecond)
 
         wyvern.run(
             self.on_event,
@@ -1153,6 +1173,8 @@ class App(object):
             self.title,
             self._fullscreen,
             self._cursorVisible,
+            # Set when running tests, so windows don't take focus
+            visible=not os.environ.get('CMU_GRAPHICS_HIDDEN_WINDOW'),
         )
 
         self._running = False

@@ -1,4 +1,5 @@
 import json
+import os
 import time
 
 from deps import wyvern
@@ -349,7 +350,6 @@ class TextBoxModal(object):
         self.mouseIsDown = False
         self.lastMousePosition = None
 
-        # cursor visible by default?
         wyvern.run(
             self.on_event,
             int(self.width),
@@ -358,6 +358,8 @@ class TextBoxModal(object):
             self.title,
             False,
             True,
+            # Set when running tests, so windows don't take focus
+            visible=not os.environ.get('CMU_GRAPHICS_HIDDEN_WINDOW'),
         )
 
     def get_height(self):
@@ -464,8 +466,14 @@ class TextBoxModal(object):
         elif event.event_type == 'mouse_move':
             pos = (event.mouse.x, event.mouse.y)
             self.button.onMouseMove(pos)
-            if not self.mouseIsDown:
-                self.lastMousePosition = pos
+            self.lastMousePosition = pos
+
+        elif event.event_type == 'mouse_drag':
+            pos = (event.mouse.x, event.mouse.y)
+            self.lastMousePosition = pos
+            if 0 in event.mouse.buttons and self.textBox:
+                self.mouseIsDown = True
+                self.textBox.onMouseDrag(pos)
 
         elif event.event_type == 'key_press':
             if self.textBox:

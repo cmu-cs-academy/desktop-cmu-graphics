@@ -93,6 +93,28 @@ The report will have 3 images on top (correct image, output image and difference
 
 Prior to re-running `test_image_gen.py`, delete the generated folder `image_gen`.
 
+Test apps run in hidden windows, which are never shown and never take focus, so you can keep using your computer while the tests run. `tox.ini` and `test_image_gen.py` do this by setting the `CMU_GRAPHICS_HIDDEN_WINDOW` environment variable. To watch a failing test run, pass `--show-windows`:
+
+    python /path/to/desktop-cmu-graphics/tests/test_image_gen.py --show-windows --only <test_name.py>
+
+On a HiDPI screen (such as a Retina Mac), screenshots are taken at the screen's scale and scaled down to the app's size before comparison. Tests that draw images get a looser threshold there, since images are sampled from their source at a higher resolution.
+
+### Event tests
+
+Tests named `image_gen/events_*.py` run like a normal app that calls `runApp()` itself. They drive the app with injected mouse and resize events (`injectMouseMove`, `injectMousePress`, `injectMouseRelease`, `injectResize`), which go through the event loop's real handling of OS input, and call `screenshotAndQuit()` once they're done. Draw only axis-aligned rectangles at whole-pixel positions in these tests, so their correct images match on every screen scale.
+
+`test_image_gen.py` also runs behavior tests that check timing (step rate and idle redraws) and print `PASS`/`FAIL` lines instead of producing an image.
+
+To add a correct image for a new test, run it once; the missing `correct_1.png` is generated in the working copy of `image_gen`. Check that it looks right, then copy it into `tests/image_gen/<test name>/`.
+
+### Manual testing
+
+Some behavior can't be tested automatically, because keyboard input can't be injected and the text input modal runs in its own process. When changing event handling, check these by hand on macOS, Windows, and Linux:
+
+- Holding a key down calls `onKeyPress` once, then `onKeyHold` each step, until it's released.
+- In the `app.getTextInput()` modal, dragging across typed text selects it, and the selection follows the mouse, including past either end of the box.
+- Holding backspace in the modal deletes one character, then repeats at a steady rate after a short delay.
+
 # Submitting Changes
 
 Once you have fixed a bug or added a new features, the next step is to submit your changes back to the project so that others can benefit.

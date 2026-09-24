@@ -837,11 +837,12 @@ use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player, Source};
 use std::io::Cursor;
 use std::num::NonZero;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
-use winit::dpi::{LogicalSize, PhysicalPosition};
-use winit::event::{Modifiers, WindowEvent};
+use winit::dpi::{LogicalSize, PhysicalPosition, PhysicalSize};
+use winit::event::{DeviceId, ElementState, Modifiers, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
 use winit::keyboard::{Key, NamedKey};
 use winit::window::{Window, WindowAttributes, WindowId};
@@ -942,6 +943,33 @@ enum UserEvent {
     SetActiveScreen(String),
     CursorVisible(bool),
     Fullscreen(bool),
+    SetSize(u32, u32),
+    Inject(InjectedEvent),
+}
+
+// Synthetic window events for tests, in logical coordinates. They go through
+// the same window_event handling as real OS input.
+enum InjectedEvent {
+    MouseMove(f64, f64),
+    MouseButton(u8, bool),
+    Resize(u32, u32),
+}
+
+// Mouse motion is throttled to roughly 30 events per second, like the old
+// pygame loop. The latest position is held back and sent once the throttle
+// window passes, so the final position is never dropped.
+const MOUSE_THROTTLE: Duration = Duration::from_nanos(1_000_000_000 / 30);
+
+// Time between step events, in nanoseconds. 0 means steps are disabled.
+// Python updates this whenever app.stepsPerSecond changes, including before
+// the event loop starts, so it's a global rather than a UserEvent.
+static STEP_INTERVAL_NANOS: AtomicU64 = AtomicU64::new(1_000_000_000 / 30);
+
+fn step_interval() -> Option<Duration> {
+    match STEP_INTERVAL_NANOS.load(Ordering::Relaxed) {
+        0 => None,
+        nanos => Some(Duration::from_nanos(nanos)),
+    }
 }
 
 // apparently this is idiomatic
@@ -957,6 +985,8 @@ struct WinitApp {
     internals: Option<AppInternals>,
     last_tick: Instant,
     last_mouse: Instant,
+    mouse_pending: bool,
+    pressed_buttons: Vec<u8>,
     cursor_position: PhysicalPosition<f64>,
     cursor_visible: bool,
     py_surface: Option<Py<ImageSurface>>,
@@ -964,7 +994,11 @@ struct WinitApp {
     modifiers: Modifiers,
     error: Option<PyErr>,
     fullscreen: bool,
-    needs_redraw: bool,
+    // False for a hidden window: never shown or focused, as when running
+    // tests. Redraws are then run from the event loop instead of waiting for
+    // the OS to paint the window, which it won't do for a hidden one.
+    visible: bool,
+    redraw_pending: bool,
 }
 
 #[pyclass(from_py_object)]
@@ -976,6 +1010,9 @@ pub struct MouseEvent {
     pub y: f64,
     #[pyo3(get)]
     pub button: u8,
+    // All buttons currently held down, for drag events
+    #[pyo3(get)]
+    pub buttons: Vec<u8>,
 }
 
 fn winit_button_to_int(button: winit::event::MouseButton) -> u8 {
@@ -1059,7 +1096,12 @@ impl PythonEvent {
     pub fn mouse_press(x: f64, y: f64, button: u8) -> Self {
         PythonEvent {
             event_type: "mouse_press".to_string(),
-            mouse: Some(MouseEvent { x, y, button }),
+            mouse: Some(MouseEvent {
+                x,
+                y,
+                button,
+                buttons: Vec::new(),
+            }),
             key: None,
             resize: None,
             new_screen: None,
@@ -1069,7 +1111,12 @@ impl PythonEvent {
     pub fn mouse_release(x: f64, y: f64, button: u8) -> Self {
         PythonEvent {
             event_type: "mouse_release".to_string(),
-            mouse: Some(MouseEvent { x, y, button }),
+            mouse: Some(MouseEvent {
+                x,
+                y,
+                button,
+                buttons: Vec::new(),
+            }),
             key: None,
             resize: None,
             new_screen: None,
@@ -1079,17 +1126,27 @@ impl PythonEvent {
     pub fn mouse_move(x: f64, y: f64) -> Self {
         PythonEvent {
             event_type: "mouse_move".to_string(),
-            mouse: Some(MouseEvent { x, y, button: 0 }),
+            mouse: Some(MouseEvent {
+                x,
+                y,
+                button: 0,
+                buttons: Vec::new(),
+            }),
             key: None,
             resize: None,
             new_screen: None,
         }
     }
 
-    pub fn mouse_drag(x: f64, y: f64, button: u8) -> Self {
+    pub fn mouse_drag(x: f64, y: f64, buttons: Vec<u8>) -> Self {
         PythonEvent {
             event_type: "mouse_drag".to_string(),
-            mouse: Some(MouseEvent { x, y, button }),
+            mouse: Some(MouseEvent {
+                x,
+                y,
+                button: buttons.first().copied().unwrap_or(0),
+                buttons,
+            }),
             key: None,
             resize: None,
             new_screen: None,
@@ -1176,7 +1233,31 @@ impl PythonEvent {
 }
 
 impl WinitApp {
+    // Sends an event to Python, then asks for a redraw so its effects show up.
     fn call_event_handler(&mut self, event_loop: &ActiveEventLoop, event: PythonEvent) {
+        if !self.dispatch(event_loop, event) {
+            return;
+        }
+        self.request_redraw(event_loop);
+    }
+
+    fn request_redraw(&mut self, event_loop: &ActiveEventLoop) {
+        if !self.visible {
+            // Run from about_to_wait, after the current events
+            self.redraw_pending = true;
+            return;
+        }
+        if let Some(internals) = self.internals.as_ref() {
+            internals.window.request_redraw()
+        } else {
+            self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
+            event_loop.exit();
+        }
+    }
+
+    // Sends an event to Python without requesting a redraw. Returns whether
+    // the handler succeeded.
+    fn dispatch(&mut self, event_loop: &ActiveEventLoop, event: PythonEvent) -> bool {
         let handler_result = Python::attach(|py| -> PyResult<()> {
             let Some(py_surface) = self.py_surface.as_ref() else {
                 self.error = Some(PyRuntimeError::new_err(
@@ -1192,17 +1273,154 @@ impl WinitApp {
         if let Err(err) = handler_result {
             self.error = Some(err);
             event_loop.exit();
+            return false;
+        };
+        self.error.is_none()
+    }
+
+    // Sends the current cursor position as a move or drag event.
+    fn send_mouse_motion(&mut self, event_loop: &ActiveEventLoop) {
+        let Some(app_internals) = self.internals.as_ref() else {
+            return;
+        };
+        let scale = app_internals.window.scale_factor();
+        let x = self.cursor_position.x / scale;
+        let y = self.cursor_position.y / scale;
+        let event = if self.pressed_buttons.is_empty() {
+            PythonEvent::mouse_move(x, y)
+        } else {
+            PythonEvent::mouse_drag(x, y, self.pressed_buttons.clone())
+        };
+        self.mouse_pending = false;
+        self.last_mouse = Instant::now();
+        self.call_event_handler(event_loop, event);
+    }
+
+    fn handle_resize(&mut self, event_loop: &ActiveEventLoop, new_size: PhysicalSize<u32>) {
+        let Some(app_internals) = self.internals.as_mut() else {
+            return;
+        };
+        let Some(py_surface) = self.py_surface.as_ref() else {
+            return;
+        };
+        // Windows reports a size of 0x0 when the window is minimized. Keep
+        // the current surfaces; a real Resized follows when it's restored.
+        let (Some(new_width), Some(new_height)) =
+            (NonZero::new(new_size.width), NonZero::new(new_size.height))
+        else {
             return;
         };
 
-        if let Some(internals) = self.internals.as_ref() {
-            internals.window.request_redraw()
-        } else {
-            self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
+        if app_internals
+            .softbuffer_surface
+            .resize(new_width, new_height)
+            .is_err()
+        {
+            self.error = Some(PyRuntimeError::new_err(
+                "Issue with resizing softbuffer surface",
+            ));
             event_loop.exit();
+            return;
+        };
+
+        let scale_factor = app_internals.window.scale_factor();
+        let resize_result = Python::attach(|py| -> PyResult<()> {
+            let mut surface_ref = py_surface.borrow_mut(py);
+            let mut canvas = surface_ref.canvas.bind(py).borrow_mut();
+            canvas.resize_canvas(new_size.width as i32, new_size.height as i32, scale_factor)?;
+            surface_ref.width = new_size.width as i32;
+            surface_ref.height = new_size.height as i32;
+            Ok(())
+        });
+        if let Err(err) = resize_result {
+            self.error = Some(err);
+            event_loop.exit();
+            return;
         }
 
-        self.needs_redraw = true;
+        let logical_size: LogicalSize<u32> = new_size.to_logical(scale_factor);
+        self.call_event_handler(
+            event_loop,
+            PythonEvent::resize(logical_size.width, logical_size.height),
+        );
+    }
+
+    // Draws the app to its canvas, and shows the canvas in the window
+    fn redraw(&mut self, event_loop: &ActiveEventLoop) {
+        // Don't request another redraw here, or we'd redraw forever
+        if !self.dispatch(event_loop, PythonEvent::redraw()) {
+            return;
+        }
+        // A hidden window's canvas is only used for screenshots
+        if !self.visible {
+            return;
+        }
+
+        let Some(app_internals) = self.internals.as_mut() else {
+            return;
+        };
+        let Some(py_surface) = self.py_surface.as_mut() else {
+            return;
+        };
+
+        let Ok(mut buffer) = app_internals.softbuffer_surface.buffer_mut() else {
+            self.error = Some(PyRuntimeError::new_err(
+                "Issue with obtaining softbuffer surface",
+            ));
+            event_loop.exit();
+            return;
+        };
+        let result = Python::attach(|py| -> PyResult<()> {
+            let surface_ref = py_surface.borrow(py);
+            let mut canvas_ref = surface_ref.canvas.bind(py).borrow_mut();
+            let pixmap = canvas_ref
+                .skia_surface
+                .peek_pixels()
+                .ok_or_else(|| PyRuntimeError::new_err("Issue getting canvas data"))?;
+
+            let bytes = pixmap.bytes().ok_or_else(|| {
+                PyRuntimeError::new_err("Issue getting bytes from pixel data")
+            })?;
+            let safe_len = buffer.len().min(bytes.len() / 4);
+            for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
+                let offset = i * 4;
+                let r = bytes[offset] as u32;
+                let g = bytes[offset + 1] as u32;
+                let b = bytes[offset + 2] as u32;
+                *pixel = (r << 16) | (g << 8) | b;
+            }
+            if safe_len < buffer.len() {
+                return Ok(());
+            }
+            if buffer.present().is_err() {
+                return Err(PyRuntimeError::new_err("Issue presenting to buffer"));
+            }
+            Ok(())
+        });
+
+        if let Err(err) = result {
+            self.error = Some(err);
+            event_loop.exit();
+        }
+    }
+
+    fn apply_window_state(&self) {
+        // Going fullscreen would show a hidden window
+        if !self.visible {
+            return;
+        }
+        let Some(internals) = self.internals.as_ref() else {
+            return;
+        };
+        internals.window.set_cursor_visible(self.cursor_visible);
+        let fullscreen = if self.fullscreen {
+            Some(Borderless(None))
+        } else {
+            None
+        };
+        if internals.window.fullscreen() != fullscreen {
+            internals.window.set_fullscreen(fullscreen);
+        }
     }
 }
 
@@ -1258,43 +1476,56 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             event_loop.exit();
         };
 
-        window.set_visible(true);
+        if self.visible {
+            window.set_visible(true);
+        }
 
         self.internals = Some(AppInternals {
             window,
             softbuffer_surface,
         });
-
-        if let Some(internals) = self.internals.as_ref() {
-            internals.window.request_redraw()
-        } else {
-            self.error = Some(PyRuntimeError::new_err(
-                "Issue with redrawing window in resumed",
-            ));
-            event_loop.exit();
-        }
+        self.apply_window_state();
+        self.request_redraw(event_loop);
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        if self.internals.is_none() {
+        if self.internals.is_none() || event_loop.exiting() {
             return;
         }
-        let fps = 30;
-        let elapsed = self.last_tick.elapsed();
-        if elapsed >= Duration::from_millis(1000 / fps) {
-            self.call_event_handler(event_loop, PythonEvent::step());
-            self.last_tick = Instant::now();
+
+        // None if steps are off, or so far apart that the time overflows
+        let interval = step_interval().filter(|i| self.last_tick.checked_add(*i).is_some());
+        if let Some(interval) = interval {
+            let due = self.last_tick + interval;
+            let now = Instant::now();
+            if now >= due {
+                // Keep steps on their schedule, unless we've fallen more than
+                // a whole step behind, in which case don't try to catch up.
+                self.last_tick = if now - due < interval { due } else { now };
+                self.call_event_handler(event_loop, PythonEvent::step());
+            }
         }
 
-        if self.needs_redraw {
-            if let Some(internals) = self.internals.as_ref() {
-                internals.window.request_redraw();
-            } else {
-                self.error = Some(PyRuntimeError::new_err("Issue with redrawing window"));
-                event_loop.exit();
-            }
-            self.needs_redraw = false;
+        if self.mouse_pending && self.last_mouse.elapsed() >= MOUSE_THROTTLE {
+            self.send_mouse_motion(event_loop);
         }
+
+        if self.redraw_pending && !event_loop.exiting() {
+            self.redraw_pending = false;
+            self.redraw(event_loop);
+        }
+
+        // Sleep until the next step or held-back mouse event is due, instead
+        // of spinning. Window and user events wake the loop early.
+        let mut wake: Option<Instant> = interval.and_then(|i| self.last_tick.checked_add(i));
+        if self.mouse_pending {
+            let mouse_due = self.last_mouse + MOUSE_THROTTLE;
+            wake = Some(wake.map_or(mouse_due, |w| w.min(mouse_due)));
+        }
+        event_loop.set_control_flow(match wake {
+            Some(instant) => ControlFlow::WaitUntil(instant),
+            None => ControlFlow::Wait,
+        });
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -1303,174 +1534,75 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 event_loop.exit();
             }
             WindowEvent::Resized(new_size) => {
-                let Some(app_internals) = self.internals.as_mut() else {
-                    return;
-                };
-                let Some(py_surface) = self.py_surface.as_ref() else {
-                    return;
-                };
-                let Some(new_width) = NonZero::new(new_size.width) else {
-                    self.error = Some(PyRuntimeError::new_err("New window width must be non-zero"));
-                    event_loop.exit();
-                    return;
-                };
-                let Some(new_height) = NonZero::new(new_size.height) else {
-                    self.error = Some(PyRuntimeError::new_err(
-                        "New window height must be non-zero",
-                    ));
-                    event_loop.exit();
-                    return;
-                };
-
-                if app_internals
-                    .softbuffer_surface
-                    .resize(new_width, new_height)
-                    .is_err()
-                {
-                    self.error = Some(PyRuntimeError::new_err(
-                        "Issue with resizing softbuffer surface",
-                    ));
-                    event_loop.exit()
-                };
-
-                let resize_result = Python::attach(|py| -> PyResult<()> {
-                    let mut surface_ref = py_surface.borrow_mut(py);
-                    let mut canvas = surface_ref.canvas.bind(py).borrow_mut();
-                    canvas.resize_canvas(
-                        new_size.width as i32,
-                        new_size.height as i32,
-                        app_internals.window.scale_factor(),
-                    )?;
-                    surface_ref.width = new_size.width as i32;
-                    surface_ref.height = new_size.height as i32;
-                    Ok(())
-                });
-                if let Err(err) = resize_result {
-                    self.error = Some(err);
-                    event_loop.exit();
-                    return;
-                }
-
-                let logical_size: LogicalSize<u32> =
-                    new_size.to_logical(app_internals.window.scale_factor());
-                self.call_event_handler(
-                    event_loop,
-                    PythonEvent::resize(logical_size.width, logical_size.height),
-                );
+                self.handle_resize(event_loop, new_size);
             }
             WindowEvent::CursorMoved {
                 device_id: _,
                 position,
             } => {
-                let Some(app_internals) = self.internals.as_ref() else {
-                    return;
-                };
-                if self.last_mouse.elapsed() < Duration::from_millis(1000 / 30) {
+                // Always track the position, so clicks use where the cursor
+                // really is even when the motion event itself is held back.
+                self.cursor_position = position;
+                if self.last_mouse.elapsed() < MOUSE_THROTTLE {
+                    self.mouse_pending = true;
                     return;
                 }
-                self.cursor_position = position;
-                let scale = app_internals.window.scale_factor();
-                self.call_event_handler(
-                    event_loop,
-                    PythonEvent::mouse_move(position.x / scale, position.y / scale),
-                );
-                self.last_mouse = Instant::now();
+                self.send_mouse_motion(event_loop);
             }
             WindowEvent::MouseInput {
                 device_id: _,
                 state,
                 button,
             } => {
-                let Some(app_internals) = self.internals.as_mut() else {
+                // Deliver any held-back motion first, so handlers see events
+                // in the order they happened.
+                if self.mouse_pending {
+                    self.send_mouse_motion(event_loop);
+                }
+                let Some(app_internals) = self.internals.as_ref() else {
                     return;
                 };
                 let scale = app_internals.window.scale_factor();
+                let button_int = winit_button_to_int(button);
                 match state {
                     winit::event::ElementState::Pressed => {
+                        if !self.pressed_buttons.contains(&button_int) {
+                            self.pressed_buttons.push(button_int);
+                            self.pressed_buttons.sort_unstable();
+                        }
                         self.call_event_handler(
                             event_loop,
                             PythonEvent::mouse_press(
                                 self.cursor_position.x / scale,
                                 self.cursor_position.y / scale,
-                                winit_button_to_int(button),
+                                button_int,
                             ),
                         );
                     }
                     winit::event::ElementState::Released => {
+                        self.pressed_buttons.retain(|&b| b != button_int);
                         self.call_event_handler(
                             event_loop,
                             PythonEvent::mouse_release(
                                 self.cursor_position.x / scale,
                                 self.cursor_position.y / scale,
-                                winit_button_to_int(button),
+                                button_int,
                             ),
                         );
                     }
                 }
             }
             WindowEvent::RedrawRequested => {
-                self.call_event_handler(event_loop, PythonEvent::redraw());
-
-                let Some(app_internals) = self.internals.as_mut() else {
-                    return;
-                };
-                let Some(py_surface) = self.py_surface.as_mut() else {
-                    return;
-                };
-
-                app_internals.window.set_cursor_visible(self.cursor_visible);
-                if self.fullscreen {
-                    app_internals.window.set_fullscreen(Some(Borderless(None)));
-                } else {
-                    app_internals.window.set_fullscreen(None);
-                }
-
-                let Ok(mut buffer) = app_internals.softbuffer_surface.buffer_mut() else {
-                    self.error = Some(PyRuntimeError::new_err(
-                        "Issue with obtaining softbuffer surface",
-                    ));
-                    event_loop.exit();
-                    return;
-                };
-                let result = Python::attach(|py| -> PyResult<()> {
-                    let surface_ref = py_surface.borrow(py);
-                    let mut canvas_ref = surface_ref.canvas.bind(py).borrow_mut();
-                    let pixmap = canvas_ref
-                        .skia_surface
-                        .peek_pixels()
-                        .ok_or_else(|| PyRuntimeError::new_err("Issue getting canvas data"))?;
-
-                    let bytes = pixmap.bytes().ok_or_else(|| {
-                        PyRuntimeError::new_err("Issue getting bytes from pixel data")
-                    })?;
-                    let safe_len = buffer.len().min(bytes.len() / 4);
-                    for (i, pixel) in buffer.iter_mut().take(safe_len).enumerate() {
-                        let offset = i * 4;
-                        let r = bytes[offset] as u32;
-                        let g = bytes[offset + 1] as u32;
-                        let b = bytes[offset + 2] as u32;
-                        *pixel = (r << 16) | (g << 8) | b;
-                    }
-                    if safe_len < buffer.len() {
-                        return Ok(());
-                    }
-                    if buffer.present().is_err() {
-                        return Err(PyRuntimeError::new_err("Issue presenting to buffer"));
-                    }
-                    Ok(())
-                });
-
-                if let Err(err) = result {
-                    self.error = Some(err);
-                    event_loop.exit();
-                }
+                self.redraw(event_loop);
             }
             WindowEvent::KeyboardInput {
                 device_id: _,
                 event,
                 is_synthetic,
             } => {
-                if is_synthetic {
+                // pygame had key repeat off, so a held key sends one press;
+                // apps use onKeyHold for repeated behavior
+                if is_synthetic || event.repeat {
                     return;
                 }
                 let mut is_named = false;
@@ -1526,24 +1658,65 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             }
             UserEvent::CursorVisible(visible) => {
                 self.cursor_visible = visible;
-                let Some(internals) = &self.internals else {
-                    return
-                };
-                internals.window.request_redraw();
+                self.apply_window_state();
             }
             UserEvent::Fullscreen(fullscreen) => {
                 self.fullscreen = fullscreen;
-                let Some(internals) = &self.internals else {
-                    return
+                self.apply_window_state();
+            }
+            UserEvent::Inject(injected) => {
+                let Some(internals) = self.internals.as_ref() else {
+                    return;
                 };
-                internals.window.request_redraw();
+                let window_id = internals.window.id();
+                let scale = internals.window.scale_factor();
+                let window_event = match injected {
+                    InjectedEvent::MouseMove(x, y) => WindowEvent::CursorMoved {
+                        device_id: DeviceId::dummy(),
+                        position: PhysicalPosition::new(x * scale, y * scale),
+                    },
+                    InjectedEvent::MouseButton(button, pressed) => WindowEvent::MouseInput {
+                        device_id: DeviceId::dummy(),
+                        state: if pressed {
+                            ElementState::Pressed
+                        } else {
+                            ElementState::Released
+                        },
+                        button: match button {
+                            1 => MouseButton::Middle,
+                            2 => MouseButton::Right,
+                            _ => MouseButton::Left,
+                        },
+                    },
+                    InjectedEvent::Resize(width, height) => {
+                        WindowEvent::Resized(LogicalSize::new(width, height).to_physical(scale))
+                    }
+                };
+                self.window_event(event_loop, window_id, window_event);
+            }
+            UserEvent::SetSize(width, height) => {
+                let Some(internals) = self.internals.as_ref() else {
+                    return;
+                };
+                // If the size is applied immediately, winit may not send
+                // Resized, so handle it here too
+                if let Some(new_size) = internals
+                    .window
+                    .request_inner_size(LogicalSize::new(width.max(1), height.max(1)))
+                {
+                    self.handle_resize(event_loop, new_size);
+                }
             }
         }
     }
 }
 
 #[pyfunction]
+#[pyo3(signature = (
+    on_event, app_width, app_height, resizable, title, fullscreen, cursor_visible, visible = true
+))]
 // possibly more settings can be added
+#[allow(clippy::too_many_arguments)]
 fn run(
     on_event: Py<PyAny>,
     app_width: u32,
@@ -1551,7 +1724,8 @@ fn run(
     resizable: bool,
     title: String,
     fullscreen: bool,
-    cursor_visible: bool
+    cursor_visible: bool,
+    visible: bool,
 ) -> PyResult<()> {
     let Ok(image) = image::load_from_memory(include_bytes!(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -1571,13 +1745,16 @@ fn run(
         .with_resizable(resizable)
         .with_title(title)
         .with_window_icon(Some(icon))
-        .with_visible(false);
+        .with_visible(false)
+        .with_active(visible);
 
     let mut app = WinitApp {
         window_attributes,
         internals: None,
         last_tick: Instant::now(),
         last_mouse: Instant::now(),
+        mouse_pending: false,
+        pressed_buttons: Vec::new(),
         cursor_position: PhysicalPosition { x: 0.0, y: 0.0 },
         cursor_visible,
         py_surface: None,
@@ -1585,13 +1762,23 @@ fn run(
         modifiers: Modifiers::default(),
         error: None,
         fullscreen,
-        needs_redraw: false,
+        visible,
+        redraw_pending: false,
     };
 
-    let event_loop = EventLoop::<UserEvent>::with_user_event()
+    let mut event_loop_builder = EventLoop::<UserEvent>::with_user_event();
+    // Keep a hidden app out of the Dock and from taking focus
+    #[cfg(target_os = "macos")]
+    if !visible {
+        use winit::platform::macos::{ActivationPolicy, EventLoopBuilderExtMacOS};
+        event_loop_builder
+            .with_activation_policy(ActivationPolicy::Accessory)
+            .with_activate_ignoring_other_apps(false);
+    }
+    let event_loop = event_loop_builder
         .build()
         .map_err(|_| PyRuntimeError::new_err("Issue with starting event loop"))?;
-    event_loop.set_control_flow(ControlFlow::Poll);
+    event_loop.set_control_flow(ControlFlow::Wait);
     PROXY
         .set(event_loop.create_proxy())
         .map_err(|_| PyRuntimeError::new_err("Issue with starting proxy event loop"))?;
@@ -1646,6 +1833,56 @@ fn set_fullscreen(fullscreen: bool) -> PyResult<()> {
         .map_err(|_| PyRuntimeError::new_err("Failed to send fullscreen event"))?;
     Ok(())
 }
+
+fn send_injected_event(event: InjectedEvent) -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::Inject(event))
+        .map_err(|_| PyRuntimeError::new_err("Failed to send injected event"))?;
+    Ok(())
+}
+
+// Test-only: inject synthetic input, in logical coordinates
+#[pyfunction]
+fn _inject_mouse_move(x: f64, y: f64) -> PyResult<()> {
+    send_injected_event(InjectedEvent::MouseMove(x, y))
+}
+
+// Test-only: button is 0 (left), 1 (middle), or 2 (right)
+#[pyfunction]
+fn _inject_mouse_button(button: u8, pressed: bool) -> PyResult<()> {
+    send_injected_event(InjectedEvent::MouseButton(button, pressed))
+}
+
+// Test-only: a resize to 0x0 is what Windows sends on minimize
+#[pyfunction]
+fn _inject_resize(width: u32, height: u32) -> PyResult<()> {
+    send_injected_event(InjectedEvent::Resize(width, height))
+}
+
+#[pyfunction]
+fn set_size(width: u32, height: u32) -> PyResult<()> {
+    let proxy = PROXY
+        .get()
+        .ok_or_else(|| PyRuntimeError::new_err("Event loop proxy is not running"))?;
+    proxy
+        .send_event(UserEvent::SetSize(width, height))
+        .map_err(|_| PyRuntimeError::new_err("Failed to send set_size event"))?;
+    Ok(())
+}
+
+#[pyfunction]
+fn set_steps_per_second(steps_per_second: f64) {
+    let nanos = if steps_per_second.is_finite() && steps_per_second > 0.0 {
+        // At least 1ns, so a huge rate can't turn into "disabled"
+        (1e9 / steps_per_second).max(1.0) as u64
+    } else {
+        0
+    };
+    STEP_INTERVAL_NANOS.store(nanos, Ordering::Relaxed);
+}
 /* BYEGAME */
 
 #[pymodule]
@@ -1679,6 +1916,11 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wyvern.add_function(wrap_pyfunction!(set_active_screen, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(set_cursor_visible, &wyvern)?)?;
     wyvern.add_function(wrap_pyfunction!(set_fullscreen, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(set_size, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(set_steps_per_second, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(_inject_mouse_move, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(_inject_mouse_button, &wyvern)?)?;
+    wyvern.add_function(wrap_pyfunction!(_inject_resize, &wyvern)?)?;
     m.add_submodule(&wyvern)?;
     m.py()
         .import("sys")?
