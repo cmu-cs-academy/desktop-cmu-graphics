@@ -36,8 +36,10 @@ cd <path/to/desktop-cmu-graphics>
 uv run pre-commit install --install-hooks
 ```
 
-If you're working on the Rust helpers library, install Rust via rustup as described [here](https://rust-lang.org/tools/install/). See the section about configuration your `PATH` environment
+Install Rust via rustup as described [here](https://rust-lang.org/tools/install/). See the section about configuration your `PATH` environment
 variable to ensure `cargo` and `rustc` are both available.
+
+Run code from this repository with `uv run`, for example `uv run samples/highscore.py`. uv builds the Rust helpers library (`cmu_graphics_helpers/`) into its virtual environment, and rebuilds it when its source changes, so changes to the Rust code take effect without any other steps. Only the zip installer uses the binaries vendored under `cmu_graphics/libs` (see `cmu_graphics/dist.py`).
 
 
 # Running a Build
