@@ -204,6 +204,10 @@ class TextBox(object):
         if not self.active:
             return
 
+        # Space is a named key, but types like any other character
+        if is_named and key == 'space':
+            key, is_named = ' ', False
+
         if not is_named and len(key) == 1:
             if 'control' in modifiers or 'meta' in modifiers:
                 return
@@ -224,9 +228,6 @@ class TextBox(object):
             elif key == 'down':
                 self.anchorPos = None
                 self.cursorPos = len(self.buf)
-            elif key == 'space':
-                self.buf.insert(self.cursorPos, ' ')
-                self.cursorPos += 1
             elif key == 'enter':
                 self.modal.execute()
             if key not in self.keysHeldData:

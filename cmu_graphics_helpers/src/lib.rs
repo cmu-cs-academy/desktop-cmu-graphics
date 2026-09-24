@@ -862,7 +862,8 @@ fn get_stream() -> PyResult<&'static MixerDeviceSink> {
 
 #[pyclass(module = "wyvern")]
 struct WyvernSound {
-    data: Arc<Vec<u8>>,
+    // Shared with each playback's decoder, so playing doesn't copy the data
+    data: Arc<[u8]>,
     sink: Option<Player>,
     volume: f32,
 }
@@ -871,7 +872,7 @@ impl WyvernSound {
     fn start_new(&mut self, looped: bool) -> PyResult<()> {
         let stream = get_stream()?;
         let player = Player::connect_new(stream.mixer());
-        let cursor = Cursor::new((*self.data).clone());
+        let cursor = Cursor::new(Arc::clone(&self.data));
         let source = Decoder::try_from(cursor)
             .map_err(|e| PyRuntimeError::new_err(format!("Failed to decode sound data: {e}")))?;
 
@@ -893,9 +894,8 @@ impl WyvernSound {
 impl WyvernSound {
     #[new]
     fn create(bytes: &Bound<'_, PyBytes>) -> PyResult<Self> {
-        let data: Vec<u8> = bytes.extract()?;
         Ok(WyvernSound {
-            data: Arc::new(data),
+            data: Arc::from(bytes.as_bytes()),
             sink: None,
             volume: 1.0,
         })
@@ -935,6 +935,17 @@ impl WyvernSound {
 
     fn get_volume(&self) -> f32 {
         self.volume
+    }
+}
+
+impl Drop for WyvernSound {
+    // Dropping a Player stops its sound, but a sound should keep playing
+    // after its Sound is garbage collected, as with Sound(url).play(), like
+    // it did with pygame. Detaching lets it play to the end (or loop forever).
+    fn drop(&mut self) {
+        if let Some(player) = self.sink.take() {
+            player.detach();
+        }
     }
 }
 
