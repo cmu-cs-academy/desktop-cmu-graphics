@@ -71,8 +71,10 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y fonts-liberation
 
+      # Syncing here builds the cmu-graphics-helpers wheel, which tox
+      # will later access directly via UV_FIND_LINKS in tox.ini.
       # Sync here so that the "uv run" below doesn't re-sync without
-      # uv-sync-args
+      # uv-sync-args, which would shadow the manylinux wheel on Linux.
       - name: Install dev dependencies
         run: uv sync ${{ matrix.uv-sync-args }}
 
