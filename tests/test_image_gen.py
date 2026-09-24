@@ -389,7 +389,10 @@ STEP_RATES = [10, 30, 60]
 IDLE_RATE = 30
 WARMUP = 0.25
 DURATION = 1.5
-# Allowed error in the measured step rate, as a fraction of stepsPerSecond
+# Allowed error in the step rate implied by the median time between steps, as
+# a fraction of stepsPerSecond. The median rather than the mean, because on a
+# busy machine (like CI running several tox envs at once) some steps run late,
+# which lowers the mean even though steps are scheduled correctly.
 STEP_RATE_TOLERANCE = 0.15
 # Allowed redraws while idle, as a multiple of the steps in the same period
 MAX_REDRAWS_PER_STEP = 1.1
@@ -438,7 +441,9 @@ def onStep(app):
 
     times = state['stepTimes']
     steps = len(times) - 1
-    rate = steps / (times[-1] - times[0])
+    meanRate = steps / (times[-1] - times[0])
+    intervals = sorted(b - a for a, b in zip(times, times[1:]))
+    medianRate = 1 / intervals[len(intervals) // 2]
     phase = phases[state['phase']]
     if phase == 'idle':
         # The redraw after the final step hasn't happened yet
@@ -446,8 +451,9 @@ def onStep(app):
         report(redraws <= steps * MAX_REDRAWS_PER_STEP,
                'idle redraws: %d redraws for %d steps' % (redraws, steps))
     else:
-        report(abs(rate - phase) <= phase * STEP_RATE_TOLERANCE,
-               'step rate: stepsPerSecond=%d measured %.1f' % (phase, rate))
+        report(abs(medianRate - phase) <= phase * STEP_RATE_TOLERANCE,
+               'step rate: stepsPerSecond=%d median %.1f/s, mean %.1f/s' %
+               (phase, medianRate, meanRate))
 
     if state['phase'] + 1 < len(phases):
         startPhase(app, state['phase'] + 1)
