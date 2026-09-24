@@ -1531,6 +1531,11 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             softbuffer_surface,
         });
         self.apply_window_state();
+        // A hidden window's app has no Dock icon
+        #[cfg(target_os = "macos")]
+        if self.visible {
+            set_dock_icon();
+        }
         self.request_redraw(event_loop);
     }
 
@@ -1762,6 +1767,31 @@ impl ApplicationHandler<UserEvent> for WinitApp {
     }
 }
 
+// The Scotty icon, shown for the window (Windows, Linux) and in the Dock
+// (macOS), as it was with pygame
+const ICON_PNG: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/scotty.png"));
+
+// macOS has no per-window icons, so winit ignores the window icon there; the
+// Dock shows the application's icon instead, which would otherwise be
+// Python's. Must be called on the main thread, after the event loop exists.
+#[cfg(target_os = "macos")]
+fn set_dock_icon() {
+    use objc2::ClassType;
+    use objc2_app_kit::{NSApplication, NSImage};
+    use objc2_foundation::{MainThreadMarker, NSData};
+
+    let Some(mtm) = MainThreadMarker::new() else {
+        return;
+    };
+    let data = NSData::with_bytes(ICON_PNG);
+    let Some(image) = NSImage::initWithData(NSImage::alloc(), &data) else {
+        return;
+    };
+    let app = NSApplication::sharedApplication(mtm);
+    // Safety: called on the main thread, with a valid image
+    unsafe { app.setApplicationIconImage(Some(&image)) };
+}
+
 #[pyfunction]
 #[pyo3(signature = (
     on_event, app_width, app_height, resizable, title, fullscreen, cursor_visible, visible = true
@@ -1778,10 +1808,7 @@ fn run(
     cursor_visible: bool,
     visible: bool,
 ) -> PyResult<()> {
-    let Ok(image) = image::load_from_memory(include_bytes!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/scotty.png"
-    ))) else {
+    let Ok(image) = image::load_from_memory(ICON_PNG) else {
         return Err(PyRuntimeError::new_err("Issue with opening icon image"));
     };
     let image_rgba = image.into_rgba8();
