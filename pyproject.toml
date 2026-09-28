@@ -14,7 +14,6 @@ classifiers = [
 ]
 dependencies = [
     "cmu-graphics-helpers==0.1.8",
-    "tqdm>=4.70.0",
 ]
 
 [project.urls]
@@ -63,6 +62,7 @@ dev = [
     "ruff>=0.14.2",
     "tox",
     "tox-uv-bare>=1.36.0",
+    "tqdm>=4.70.0",
 ]
 
 [tool.uv.sources]
