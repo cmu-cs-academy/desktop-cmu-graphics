@@ -182,7 +182,6 @@ source = { editable = "." }
 dependencies = [
     { name = "cmu-graphics-helpers" },
     { name = "pygame-ce" },
-    { name = "tqdm" },
 ]
 
 [package.dev-dependencies]
@@ -196,6 +195,7 @@ dev = [
     { name = "ruff" },
     { name = "tox" },
     { name = "tox-uv-bare" },
+    { name = "tqdm" },
     { name = "twine" },
 ]
 
@@ -203,7 +203,6 @@ dev = [
 requires-dist = [
     { name = "cmu-graphics-helpers", directory = "cmu_graphics_helpers" },
     { name = "pygame-ce", specifier = ">=2" },
-    { name = "tqdm", specifier = ">=4.70.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -217,6 +216,7 @@ dev = [
     { name = "ruff", specifier = ">=0.14.2" },
     { name = "tox", specifier = ">=4.32.0" },
     { name = "tox-uv-bare", specifier = ">=1.36.0" },
+    { name = "tqdm", specifier = ">=4.70.0" },
     { name = "twine", specifier = ">=6.2.0" },
 ]
 
