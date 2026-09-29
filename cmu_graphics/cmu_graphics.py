@@ -6,7 +6,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 from cmu_graphics import shape_logic
 from cmu_graphics.dist import VENDORED
-from cmu_graphics.mvc_checker import appHash
+from cmu_graphics import mvc_checker
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 
 
@@ -730,18 +730,6 @@ class App(object):
         if redraw and self._isMvc and baseFnName != 'redrawAll':
             self.redrawAllWrapper()
 
-    def getAppHash(self):
-        try:
-            return appHash(self._wrapper, AppWrapper.stateHashAttrs)
-        except RecursionError:
-            # Raised from None so students don't see a traceback through
-            # hundreds of deepHash frames
-            raise MvcException(
-                'Your app state (the model) is too deeply nested for the MVC '
-                'violation checker to check. You can disable the MVC violation '
-                'checker by setting app.disableMvcChecker to True in onAppStart.'
-            ) from None
-
     def redrawAllWrapper(self):
         self.group.clear()
 
@@ -752,14 +740,14 @@ class App(object):
             hash1 = None
             if checkerEnabled:
                 t0 = time.monotonic()
-                hash1 = self.getAppHash()
+                hash1 = appHash()
                 checkerSeconds += time.monotonic() - t0
 
             self.callUserFn('redrawAll', ())
 
             if checkerEnabled:
                 t0 = time.monotonic()
-                hash2 = self.getAppHash()
+                hash2 = appHash()
                 checkerSeconds += time.monotonic() - t0
                 if hash2 != hash1:
                     raise MvcException(
@@ -1400,6 +1388,19 @@ class AppWrapper(object):
         if attr in AppWrapper.readWriteAttrs:
             return self._app.__setattr__(attr, value)
         return super().__setattr__(attr, value)
+
+
+def appHash():
+    try:
+        return mvc_checker.appHash(app, AppWrapper.stateHashAttrs)
+    except RecursionError:
+        # Raised from None so students don't see a traceback through
+        # hundreds of deepHash frames
+        raise MvcException(
+            'Your app state (the model) is too deeply nested for the MVC '
+            'violation checker to check. You can disable the MVC violation '
+            'checker by setting app.disableMvcChecker to True in onAppStart.'
+        ) from None
 
 
 def processRunAppArgs(args, kwargs):
