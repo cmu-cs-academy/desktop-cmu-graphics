@@ -6,14 +6,17 @@ authors = [
 ]
 description = "The graphics framework used by CMU CS Academy, geared toward beginner CS students."
 readme = "README.md"
-requires-python = ">=3.11, <3.16"
+requires-python = ">=3.11"
 license = "BSD-3-Clause"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "cmu-graphics-helpers==0.1.8",
+    # No Windows ARM64 build exists, so pip would try (and fail) to compile it
+    # from source. Skipping it lets the install finish, and then
+    # loader_util.verify_support explains that ARM64 Python isn't supported.
+    "cmu-graphics-helpers==0.1.8; platform_machine != 'ARM64'",
 ]
 
 [project.urls]
