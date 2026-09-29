@@ -1771,6 +1771,21 @@ impl ApplicationHandler<UserEvent> for WinitApp {
 // (macOS), as it was with pygame
 const ICON_PNG: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/scotty.png"));
 
+// On Windows, the window icon only sets the small (title bar) icon. The
+// taskbar uses the big icon, and without one it shows python.exe's icon.
+// winit suggests at most 256x256 for it, so this is a pre-shrunk copy.
+#[cfg(target_os = "windows")]
+const TASKBAR_ICON_PNG: &[u8] =
+    include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/scotty_256.png"));
+
+// None (no taskbar icon, so the app still runs) if the image can't be used
+#[cfg(target_os = "windows")]
+fn taskbar_icon() -> Option<winit::window::Icon> {
+    let image = image::load_from_memory(TASKBAR_ICON_PNG).ok()?.into_rgba8();
+    let (width, height) = image.dimensions();
+    winit::window::Icon::from_rgba(image.into_raw(), width, height).ok()
+}
+
 // macOS has no per-window icons, so winit ignores the window icon there; the
 // Dock shows the application's icon instead, which would otherwise be
 // Python's. Must be called on the main thread, after the event loop exists.
@@ -1817,7 +1832,8 @@ fn run(
     let Ok(icon) = winit::window::Icon::from_rgba(rgba, width, height) else {
         return Err(PyRuntimeError::new_err("Issue with creating icon image"));
     };
-    let window_attributes = Window::default_attributes()
+    #[allow(unused_mut)]
+    let mut window_attributes = Window::default_attributes()
         .with_min_inner_size(LogicalSize::new(1, 1))
         .with_inner_size(LogicalSize::new(app_width, app_height))
         .with_resizable(resizable)
@@ -1825,6 +1841,11 @@ fn run(
         .with_window_icon(Some(icon))
         .with_visible(false)
         .with_active(visible);
+    #[cfg(target_os = "windows")]
+    {
+        use winit::platform::windows::WindowAttributesExtWindows;
+        window_attributes = window_attributes.with_taskbar_icon(taskbar_icon());
+    }
 
     let mut app = WinitApp {
         window_attributes,
