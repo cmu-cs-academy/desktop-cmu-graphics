@@ -8,7 +8,12 @@ def deepHash(obj, seen):
     objId = id(obj)
     if objId in seen:
         return 131
-    seen.add(objId)
+    # seen maps ids to the objects themselves rather than being a set of ids.
+    # Holding a reference keeps each object alive until hashing finishes.
+    # Otherwise a temporary object, like a (key, value) tuple from
+    # dict.items(), could be freed and have its id reused by a different
+    # object, which would then be wrongly skipped as already seen.
+    seen[objId] = obj
 
     if isinstance(obj, (list, tuple)):
         values = obj
@@ -28,7 +33,7 @@ def deepHash(obj, seen):
 
 
 def appHash(wrapper, stateHashAttrs):
-    seen = set()
+    seen = {}
     items = [(k, v) for k, v in vars(wrapper).items() if k != '_app']
     items += [(attr, getattr(wrapper, attr, None)) for attr in stateHashAttrs]
 

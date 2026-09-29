@@ -730,6 +730,18 @@ class App(object):
         if redraw and self._isMvc and baseFnName != 'redrawAll':
             self.redrawAllWrapper()
 
+    def getAppHash(self):
+        try:
+            return appHash(self._wrapper, AppWrapper.stateHashAttrs)
+        except RecursionError:
+            # Raised from None so students don't see a traceback through
+            # hundreds of deepHash frames
+            raise MvcException(
+                'Your app state (the model) is too deeply nested for the MVC '
+                'violation checker to check. You can disable the MVC violation '
+                'checker by setting app.disableMvcChecker to True in onAppStart.'
+            ) from None
+
     def redrawAllWrapper(self):
         self.group.clear()
 
@@ -740,14 +752,14 @@ class App(object):
             hash1 = None
             if checkerEnabled:
                 t0 = time.monotonic()
-                hash1 = appHash(self._wrapper, AppWrapper.stateHashAttrs)
+                hash1 = self.getAppHash()
                 checkerSeconds += time.monotonic() - t0
 
             self.callUserFn('redrawAll', ())
 
             if checkerEnabled:
                 t0 = time.monotonic()
-                hash2 = appHash(self._wrapper, AppWrapper.stateHashAttrs)
+                hash2 = self.getAppHash()
                 checkerSeconds += time.monotonic() - t0
                 if hash2 != hash1:
                     raise MvcException(
@@ -1377,7 +1389,10 @@ class AppWrapper(object):
         attr = toEnglish(attr, 'app-attr')
         if (attr != '_app') and (getattr(self._app, 'inRedrawAll', False)):
             if attr == 'disableMvcChecker':
-                raise MvcException('Cannot change app.disableMvcChecker in redrawAll')
+                raise MvcException(
+                    'Cannot change app.disableMvcChecker in redrawAll — '
+                    'set it in onAppStart instead'
+                )
             if not self._app.disableMvcChecker:
                 raise MvcException(f'Cannot change app.{attr} in redrawAll')
         if attr in AppWrapper.readOnlyAttrs:
