@@ -3,8 +3,7 @@ import struct
 import platform
 import os
 
-min_minor_version = 8
-max_minor_version = 15
+min_minor_version = 11
 
 def get_platform_string():
     plat = "unsupported"
@@ -25,8 +24,21 @@ def verify_os():
         print("""\
 It looks like your computer is using a(n) %(os)s operating system.
 %(os)s is not currently supported by CMU Graphics. We support Python 3.%(min_minor_version)d
-through Python 3.%(max_minor_version)d on Windows and MacOS.""" 
-% {'os': sys.platform, 'max_minor_version': max_minor_version, 'min_minor_version': min_minor_version})
+and higher on Windows and MacOS."""
+% {'os': sys.platform, 'min_minor_version': min_minor_version})
+        os._exit(1)
+
+
+def verify_cpu():
+    # platform.machine() describes the Python interpreter, not the hardware:
+    # x64 Python running under emulation on an ARM computer reports AMD64,
+    # which is supported. Only ARM64 Python reports ARM64.
+    if sys.platform == "win32" and platform.machine() == "ARM64":
+        print("""\
+It looks like your computer uses an ARM CPU. Windows ARM is not currently
+supported by CMU Graphics. Please install Python for Windows x64 instead.
+This will make your computer pretend to be using an x64 CPU, which is
+supported.""")
         os._exit(1)
 
 
@@ -36,26 +48,19 @@ def verify_support(vendored):
     if vendored:
         verify_os()
 
+    verify_cpu()
+
     if python_major != '3':
         print("""\
 It looks like you're running a version of Python 2. Since Python 2 is no
 longer maintaned as of January 1 2020, CMU Graphics does not support Python 2.
-We recommend installing Python 3.%(max_minor_version)d from python.org"""
-% {'max_minor_version': max_minor_version})
-        os._exit(1)
-
-    if vendored and int(python_minor) > max_minor_version:
-        print("""\
-It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
-supported by CMU Graphics. We support Python 3.%(min_minor_version)d-3.%(max_minor_version)d. We recommend
-installing Python 3.%(max_minor_version)d from python.org""" %
-{"minor": python_minor, 'max_minor_version': max_minor_version, 'min_minor_version': min_minor_version})
+We recommend installing the latest version of Python 3 from python.org""")
         os._exit(1)
 
     if int(python_minor) < min_minor_version:
         print("""\
 It looks like you're running Python 3.%(minor)s. Python 3.%(minor)s is not currently
-supported by CMU Graphics. We support Python 3.%(min_minor_version)d and higher. We recommend 
-installing Python 3.%(max_minor_version)d from python.org""" %
-{"minor": python_minor, 'max_minor_version': max_minor_version, 'min_minor_version': min_minor_version})
+supported by CMU Graphics. We support Python 3.%(min_minor_version)d and higher. We recommend
+installing the latest version of Python 3 from python.org""" %
+{"minor": python_minor, 'min_minor_version': min_minor_version})
         os._exit(1)
