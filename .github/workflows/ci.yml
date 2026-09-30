@@ -35,11 +35,9 @@ jobs:
             os: windows-latest
             target: x86_64-pc-windows-msvc
           # One universal2 binary for both kinds of Mac, so the zip
-          # distribution can hold it next to the Windows one (see build.py).
-          # Built on Intel: the x86_64 half cross-compiled on Apple Silicon
-          # ran the step-rate test at about half speed on Intel Macs.
+          # distribution can hold it next to the Windows one (see build.py)
           - platform: macos
-            os: macos-15-intel
+            os: macos-latest
             target: universal2-apple-darwin
           - platform: linux
             os: ubuntu-latest
