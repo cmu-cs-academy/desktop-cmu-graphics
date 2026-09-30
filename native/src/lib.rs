@@ -1807,6 +1807,28 @@ fn set_dock_icon() {
     unsafe { app.setApplicationIconImage(Some(&image)) };
 }
 
+// Turn off macOS window restoration for this process. Otherwise, after a
+// program crashes, the next one run with the same Python asks whether to
+// reopen the crashed program's windows -- and every program run with that
+// Python shares the one saved state, so they try to restore each other's
+// windows. This goes in the registration domain, which only lasts as long as
+// the process and is overridden by any explicit setting. Must be called
+// before the event loop starts, which is when AppKit restores windows.
+#[cfg(target_os = "macos")]
+fn disable_window_restoration() {
+    use objc2::rc::Retained;
+    use objc2::runtime::AnyObject;
+    use objc2_foundation::{NSDictionary, NSNumber, NSString, NSUserDefaults};
+
+    let key = NSString::from_str("ApplePersistenceIgnoreState");
+    let value: Retained<AnyObject> = Retained::into_super(Retained::into_super(
+        Retained::into_super(NSNumber::new_bool(true)),
+    ));
+    let defaults = NSDictionary::from_vec(&[&*key], vec![value]);
+    // Safety: the dictionary holds only property-list objects
+    unsafe { NSUserDefaults::standardUserDefaults().registerDefaults(&defaults) };
+}
+
 #[pyfunction]
 #[pyo3(signature = (
     on_event, app_width, app_height, resizable, title, fullscreen, cursor_visible, visible = true
@@ -1864,6 +1886,9 @@ fn run(
         visible,
         redraw_pending: false,
     };
+
+    #[cfg(target_os = "macos")]
+    disable_window_restoration();
 
     let mut event_loop_builder = EventLoop::<UserEvent>::with_user_event();
     // Keep a hidden app out of the Dock and from taking focus
