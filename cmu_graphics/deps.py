@@ -1,10 +1,10 @@
 # Resolves the native dependencies for the package modules,
 # based on which distribution we are (see dist.py).
 #
-# Import these from here rather than importing pygame/cmu_graphics_helpers
+# Import these from here rather than importing cmu_graphics_helpers
 # directly, so the vendored-vs-pip choice lives in exactly one place:
 #
-#     from cmu_graphics.deps import pygame, cmu_graphics_helpers
+#     from cmu_graphics.deps import cmu_graphics_helpers
 #
 # This module gets imported two ways. Usually it is `cmu_graphics.deps`. But
 # modal.py runs as a standalone subprocess whose sys.path[0] is the package
@@ -15,20 +15,17 @@
 
 import importlib
 
-__all__ = ['cmu_graphics_helpers', 'pygame', 'pygeo', 'wyvern']
+__all__ = ['cmu_graphics_helpers', 'pygeo', 'wyvern']
 
 _prefix = __package__ + '.' if __package__ else ''
 
 VENDORED = importlib.import_module(_prefix + 'dist').VENDORED
 
 if VENDORED:
-    pygame = importlib.import_module(_prefix + 'libs.pygame_loader')
     cmu_graphics_helpers = importlib.import_module(
         _prefix + 'libs.cmu_graphics_helpers_loader'
     )
 else:
-    import pygame
-
     import cmu_graphics_helpers
 
 wyvern = cmu_graphics_helpers.wyvern
