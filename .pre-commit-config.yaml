@@ -8,9 +8,19 @@ repos:
         stages: [pre-commit]
         exclude: libs
 
--   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.4
+# Run the ruff from uv.lock rather than ruff-pre-commit's own pinned copy, so
+# the hook, CI, and editors all use the same version.
+-   repo: local
     hooks:
     -   id: ruff
-        args: [ --fix ]
+        name: ruff
+        entry: uv run --no-sync ruff check --force-exclude --fix
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
     -   id: ruff-format
+        name: ruff-format
+        entry: uv run --no-sync ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
