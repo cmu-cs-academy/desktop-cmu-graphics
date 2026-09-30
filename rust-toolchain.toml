@@ -1,6 +1,0 @@
-# The Rust version for building cmu_graphics_helpers, locally and in CI.
-# rustup installs it automatically on first build.
-[toolchain]
-channel = "1.98.1"
-profile = "minimal"
-components = ["clippy", "rustfmt"]
