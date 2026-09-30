@@ -1,112 +1,193 @@
-# Run me from the root of the repo!
+"""
+Build the zip distribution from cmu-graphics wheels.
+
+The zip distribution is the cmu_graphics package out of the pip distribution's
+wheels, with each platform's native extension side by side in it: _native.pyd
+for Windows and a universal2 _native.abi3.so for macOS. Python picks the one for
+the running platform by its file extension, so no loader is needed. Linux
+shares macOS's extension, so the zip distribution can't support it.
+
+    python build/build.py
+        Build this platform's wheel into dist/ with uv, then the zip from it.
+        That zip only runs on this platform.
+
+    python build/build.py --wheels DIR [--all-platforms] [--sign]
+        Make the zip from wheels that are already built, such as CI's.
+        --all-platforms fails unless DIR has both a Windows and a macOS wheel.
+        --sign signs and notarizes the macOS native extension (on macOS only;
+        see notarize.py).
+
+Run it from anywhere. The zip is written to cmu_graphics_installer.zip at the
+root of the repo, unless --output says otherwise.
+"""
 
 import argparse
-import os
 import re
-import sys
-import subprocess
 import shutil
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
 
-def copytree_log(src, dest, **kwargs):
-    print(f"Copying {src} to {dest} ...")
-    shutil.copytree(src, dest, **kwargs)
+REPO_ROOT = Path(__file__).resolve().parent.parent
+BUILD_DIR = Path(__file__).resolve().parent
 
-def copyfile_log(src, dest, **kwargs):
-    print(f"Copying {src} to {dest} ...")
-    shutil.copy2(src, dest, **kwargs)
+# The directory the zip unpacks to. tests/install_zip.py relies on this name.
+ZIP_ROOT = 'cmu_graphics_installer'
 
-def set_vendored(dist_py_path, vendored):
-    # Bake the distribution switch (see cmu_graphics/dist.py) into a build
-    # copy. The source is checked in as VENDORED = False (used by local
-    # development and the pip build); this sets it for the zip installer.
-    with open(dist_py_path, "r", encoding="utf-8") as f:
-        old_text = f.read()
+NATIVE_PREFIX = 'cmu_graphics/_native.'
 
+
+def log(message):
+    print(message, flush=True)
+
+
+def build_local_wheel(dist_dir):
+    """Build this platform's wheel into dist_dir, replacing any older ones."""
+    dist_dir.mkdir(exist_ok=True)
+    for old in dist_dir.glob('cmu_graphics-*.whl'):
+        old.unlink()
+
+    uv = shutil.which('uv')
+    if uv is None:
+        sys.exit('uv was not found on PATH. Run this with `uv run build/build.py`.')
+
+    log(f'Building the wheel into {dist_dir} ...')
+    subprocess.run(
+        [uv, 'build', '--wheel', '--out-dir', str(dist_dir), str(REPO_ROOT)],
+        check=True,
+    )
+
+
+def platform_of_wheel(path):
+    """'windows' or 'macos' for a wheel the zip ships, or None."""
+    # The platform tag ends the filename, e.g.
+    # cmu_graphics-3.0.0-cp311-abi3-macosx_11_0_universal2.whl
+    tag = path.stem.split('-')[-1]
+    if tag == 'win_amd64':
+        return 'windows'
+    if tag.startswith('macosx_'):
+        return 'macos'
+    return None
+
+
+def find_wheels(wheels_dir, all_platforms):
+    wheels = {}
+    for path in sorted(wheels_dir.glob('cmu_graphics-*.whl')):
+        platform = platform_of_wheel(path)
+        if platform is None:
+            log(f'Skipping {path.name}: the zip distribution does not ship it.')
+            continue
+        if platform in wheels:
+            sys.exit(
+                f'Found more than one {platform} wheel in {wheels_dir}: '
+                f'{wheels[platform].name} and {path.name}'
+            )
+        wheels[platform] = path
+
+    if not wheels:
+        sys.exit(f'No Windows or macOS cmu_graphics wheels found in {wheels_dir}')
+
+    if all_platforms:
+        missing = {'windows', 'macos'} - wheels.keys()
+        if missing:
+            sys.exit(f'No {" or ".join(sorted(missing))} wheel found in {wheels_dir}')
+
+    return list(wheels.values())
+
+
+def unpack_wheels(wheels, stage):
+    """
+    Unpack the first wheel into stage, then just the native extension from each
+    of the others. They were all built from the same source, so their Python
+    files are the same.
+    """
+    for i, wheel in enumerate(wheels):
+        log(f'Unpacking {wheel.name} ...')
+        with zipfile.ZipFile(wheel) as zf:
+            for name in zf.namelist():
+                if '.dist-info/' in name:
+                    continue
+                if i > 0 and not name.startswith(NATIVE_PREFIX):
+                    continue
+                zf.extract(name, stage)
+
+
+def set_zip_distribution(dist_py_path):
+    # Bake the distribution switch (see cmu_graphics/dist.py) into the zip's
+    # copy. The source is checked in as False, which the pip distribution uses.
+    old_text = dist_py_path.read_text(encoding='utf-8')
     new_text, n = re.subn(
-        r"^VENDORED = .*$", f"VENDORED = {vendored}", old_text, flags=re.MULTILINE)
+        r'^ZIP_DISTRIBUTION = .*$',
+        'ZIP_DISTRIBUTION = True',
+        old_text,
+        flags=re.MULTILINE,
+    )
     if n != 1:
-        raise Exception(
-            f"Expected exactly one 'VENDORED =' line in {dist_py_path}, found {n}")
-
-    with open(dist_py_path, "w", encoding="utf-8") as f:
-        f.write(new_text)
+        sys.exit(f"Expected one 'ZIP_DISTRIBUTION =' line in {dist_py_path}, found {n}")
+    dist_py_path.write_text(new_text, encoding='utf-8')
 
 
-def build_zip_file(zip_dest, zipfile_name):
-    if os.path.exists(zip_dest):
-        shutil.rmtree(zip_dest)
-    os.makedirs(zip_dest)
+def stage_zip(wheels, stage):
+    if stage.exists():
+        shutil.rmtree(stage)
+    stage.mkdir(parents=True)
 
-    # The zip is a copy of the working tree, so local artifacts have to be
-    # filtered out here. (The wheel doesn't need this -- `python -m build` only
-    # packages what pyproject declares, so it ignores these regardless.)
-    local_artifacts = shutil.ignore_patterns(".DS_Store", "__pycache__", "updates.json")
+    unpack_wheels(wheels, stage)
 
-    copytree_log("cmu_graphics", f"{zip_dest}/cmu_graphics", ignore=local_artifacts)
-    copytree_log("samples", f"{zip_dest}/samples", ignore=local_artifacts)
-    copyfile_log("cmu_cpcs_utils.py", f"{zip_dest}/")
+    # Students find the samples at the top of the zip, next to their own code.
+    shutil.move(stage / 'cmu_graphics' / 'samples', stage / 'samples')
 
-    # The zip loads the binaries vendored under cmu_graphics/libs
-    set_vendored(f"{zip_dest}/cmu_graphics/dist.py", True)
+    set_zip_distribution(stage / 'cmu_graphics' / 'dist.py')
 
-    for path in ["LICENSE", "INSTRUCTIONS.pdf"]:
-        copyfile_log(path, f"{zip_dest}/{os.path.basename(path)}")
+    for name in ['LICENSE', 'INSTRUCTIONS.pdf']:
+        shutil.copy2(REPO_ROOT / name, stage / name)
 
-    print('Creating zip file...')
-    subprocess.run([sys.executable, '-m', 'zipfile', '-c', zipfile_name, zip_dest], check=True)
 
-def build_pypi_package(pypi_dest):
-    if os.path.exists(pypi_dest):
-        shutil.rmtree(pypi_dest)
-    os.makedirs(pypi_dest)
+def make_zip(stage, output):
+    log(f'Creating {output} ...')
+    if output.exists():
+        output.unlink()
+    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(stage.rglob('*')):
+            zf.write(path, Path(ZIP_ROOT) / path.relative_to(stage))
 
-    vendored_packages = shutil.ignore_patterns("*loader")
-
-    copytree_log("cmu_graphics", f"{pypi_dest}/cmu_graphics", ignore=vendored_packages)
-    copytree_log("samples", f"{pypi_dest}/cmu_graphics/samples")
-    copyfile_log("cmu_cpcs_utils.py", f"{pypi_dest}/")
-
-    for path in ["LICENSE", "README.md", "pyproject.toml"]:
-        copyfile_log(path, f"{pypi_dest}/{os.path.basename(path)}")
-
-    # The checked-in value already is False, but set it explicitly, so the
-    # pip build doesn't depend on what happens to be checked in.
-    set_vendored(f"{pypi_dest}/cmu_graphics/dist.py", False)
-
-    print('Running python -m build...')
-    subprocess.run([sys.executable, '-m', 'build'], cwd=pypi_dest, check=True)
-
-def publish(pypi_dest, zip_dest, zipfile_name, is_prod):
-    pypi_repo_args = [] if is_prod else ['--repository', 'testpypi']
-
-    subprocess.run([sys.executable, '-m', 'twine', 'upload',
-        'dist/*', '--verbose', '-u', '__token__', '-p', os.environ['PYPI_TOKEN' if is_prod else 'PYPI_TEST_TOKEN']] + pypi_repo_args,
-        cwd=pypi_dest, check=True)
-
-    s3_dest = ('s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/' if is_prod else 's3://cmu-cs-academy.lib.prod/desktop-cmu-graphics-test/'
-        )
-
-    # Cache-control: no-cache means that the zip file can be cached by the browser,
-    # but the browser has to validate that it has the latest version before giving
-    # it to the user. This should make it so that all users get that latest version ASAP.
-    subprocess.run(['aws', 's3', 'cp', '--cache-control', 'no-cache',
-        zip_dest + '/cmu_graphics/meta/version.txt', s3_dest], check=True)
-    subprocess.run(['aws', 's3', 'cp', '--cache-control', 'no-cache', zipfile_name, s3_dest], check=True)
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--publish", action="store_true")
-    parser.add_argument("--prod", action="store_true")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument('--wheels', type=Path, help='directory of built wheels')
+    parser.add_argument('--all-platforms', action='store_true')
+    parser.add_argument('--sign', action='store_true')
+    parser.add_argument(
+        '--output', type=Path, default=REPO_ROOT / 'cmu_graphics_installer.zip'
+    )
     args = parser.parse_args()
 
-    zip_dest = "cmu_graphics_installer"
-    pypi_dest= "pypi_upload"
-    zipfile_name = "cmu_graphics_installer.zip"
+    if args.wheels is None:
+        args.wheels = REPO_ROOT / 'dist'
+        build_local_wheel(args.wheels)
 
-    build_zip_file(zip_dest, zipfile_name)
-    build_pypi_package(pypi_dest)
+    wheels = find_wheels(args.wheels, args.all_platforms)
 
-    if args.publish:
-        publish(pypi_dest, zip_dest, zipfile_name, args.prod)
+    # Stage next to the zip, so that builds with different outputs (like the
+    # parallel tox environments) don't share a staging directory.
+    output = args.output.resolve()
+    stage = output.parent / ZIP_ROOT
+    stage_zip(wheels, stage)
 
-main()
+    if args.sign:
+        sys.path.insert(0, str(BUILD_DIR))
+        import check_binaries
+        import notarize
+
+        notarize.sign_and_notarize(stage / 'cmu_graphics')
+        check_binaries.verify(stage / 'cmu_graphics')
+
+    make_zip(stage, output)
+    log('Done.')
+
+
+if __name__ == '__main__':
+    main()

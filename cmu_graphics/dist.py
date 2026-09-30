@@ -1,15 +1,11 @@
-# Which distribution of CMU Graphics this source targets.
+# Which distribution of CMU Graphics this source is part of.
 #
-# Checked in as VENDORED = False, which is what local development and the PyPI
-# package use: cmu_graphics_helpers is imported as an installed package. In a
-# checkout of this repository, `uv sync` (or `uv run`) builds it from
-# cmu_graphics_helpers/ into the virtual environment, so changes to the Rust
-# source take effect without vendoring new binaries.
+# Checked in as ZIP_DISTRIBUTION = False, which is what local development and
+# the pip distribution use.
 #
-# build/build.py rewrites this to True in the desktop zip installer's copy,
-# which loads the vendored cmu_graphics_helpers binaries shipped under
-# cmu_graphics/libs, never whatever might be installed on the system (student
-# machines often have broken system installs). This constant is the single,
+# build/build.py rewrites this to True in the zip distribution's copy. The zip
+# distribution only supports Windows and macOS, and tells students to upgrade
+# by downloading it again rather than with pip. This constant is the single,
 # static source of truth for that difference.
 
-VENDORED = False
+ZIP_DISTRIBUTION = False

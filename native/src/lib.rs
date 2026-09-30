@@ -1985,7 +1985,9 @@ fn set_steps_per_second(steps_per_second: f64) {
 /* BYEGAME */
 
 #[pymodule]
-fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+
     let pygeo = PyModule::new(m.py(), "pygeo")?;
     pygeo.add_function(wrap_pyfunction!(union, &pygeo)?)?;
     pygeo.add_function(wrap_pyfunction!(edgesIntersect, &pygeo)?)?;
@@ -1993,7 +1995,7 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.py()
         .import("sys")?
         .getattr("modules")?
-        .set_item("cmu_graphics_helpers.pygeo", pygeo)?;
+        .set_item(format!("{}.pygeo", m.name()?), pygeo)?;
 
     let wyvern = PyModule::new(m.py(), "wyvern")?;
     wyvern.add_class::<ImageSurface>()?;
@@ -2024,6 +2026,6 @@ fn cmu_graphics_helpers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.py()
         .import("sys")?
         .getattr("modules")?
-        .set_item("cmu_graphics_helpers.wyvern", wyvern)?;
+        .set_item(format!("{}.wyvern", m.name()?), wyvern)?;
     Ok(())
 }

@@ -1,6 +1,6 @@
 import math
 
-from cmu_graphics_helpers import wyvern
+from cmu_graphics.deps import wyvern
 import pygame
 from io import BytesIO
 import os

@@ -1,5 +1,5 @@
 import unittest
-from cmu_graphics_helpers import pygeo
+from cmu_graphics.deps import pygeo
 
 # simple: a square with no holes
 square = [[[[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]]]

@@ -1,11 +1,14 @@
 [package]
-name = "cmu-graphics-helpers"
-version = "0.1.8"
+# This version is the version of the cmu-graphics package: maturin publishes
+# it to PyPI, and the native extension reports it at runtime as __version__.
+name = "cmu-graphics"
+version = "3.0.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "cmu_graphics_helpers"
+# Imported as cmu_graphics._native (see [tool.maturin] in pyproject.toml)
+name = "_native"
 crate-type = ["cdylib"]
 
 [dependencies]
@@ -28,7 +31,7 @@ objc2-foundation = { version = "0.2.2", features = ["NSData"] }
 
 [dependencies.pyo3]
 version = "0.29.0"
-features = ["extension-module", "abi3-py38"]
+features = ["extension-module", "abi3-py311"]
 
 [lints.clippy]
 panic = "deny"

@@ -17,7 +17,7 @@ Inside of `desktop-cmu-graphics` you will find the following...
 
 - `build/` Various scripts related to building the downloadable zip file.
 - `documentation/` Some documentation related to development.
-- `samples/` Some sample code that uses `cmu_graphics`.
+- `native/` The Rust code for the native extension, `cmu_graphics._native`, which does the drawing, windowing, and sound.
 - `tests/` Test cases for testing the library and making sure that code changes don't break things.
 - `cmu_graphics` The actual code for the graphics library itself.
 
@@ -26,6 +26,7 @@ Inside of `desktop-cmu-graphics` you will find the following...
     - `utils.py` The various utility functions provided for users
     - `sound.py` The code to handle sound
     - `modal.py` Code for app.getTextInput and app.showMessage
+    - `samples/` Some sample code that uses `cmu_graphics`.
 
 # Preparing the Local Workspace
 
@@ -39,34 +40,34 @@ uv run pre-commit install --install-hooks
 Install Rust via rustup as described [here](https://rust-lang.org/tools/install/). See the section about configuration your `PATH` environment
 variable to ensure `cargo` and `rustc` are both available.
 
-Run code from this repository with `uv run`, for example `uv run samples/highscore.py`. uv builds the Rust helpers library (`cmu_graphics_helpers/`) into its virtual environment, and rebuilds it when its source changes, so changes to the Rust code take effect without any other steps. Only the zip installer uses the binaries vendored under `cmu_graphics/libs` (see `cmu_graphics/dist.py`).
+Run code from this repository with `uv run`, for example `uv run cmu_graphics/samples/highscore.py`. uv builds the native extension from `native/` into the `cmu_graphics` package, and rebuilds it when the Rust source changes, so changes to the Rust code take effect without any other steps.
+
+On Windows, building the native extension compiles Skia from source, which needs LLVM (for `libclang`) installed.
 
 
 # Running a Build
 
-To build the installer zip file, run...
+To build the zip distribution, run...
 
 ```
 uv run build/build.py
 ```
 
+This builds this platform's wheel into `dist/`, and `cmu_graphics_installer.zip` from it. That zip only has this platform's native extension; the one that gets released is built by CI from every platform's wheel (see `build/README.md`).
+
 # Testing
 
 Before creating a new pull request, you should run the test suite to make sure your changes haven't broken anything.
 
-## Setup for Testing
-
-- Build the library as described above in "Running a Build"
-
 ## Running the test cases
 
-Run tox:
+Run tox. It builds the wheel itself, so there's no need to run a build first:
 
 ```
 uv run tox
 ```
 
-This will run the tests using a bunch of different versions of python. The tests will fail for particular "environments" if you don't have the necessary version of python already installed. After running tox once for all environments, you can run it for just a single environment so that it is much faster. Pick an environment that succeeded the first time, e.g. `py314-pip` and pass that to tox:
+This will run the tests using a bunch of different versions of python, against both the pip distribution and a zip distribution made from the same wheel. The zip environments are skipped on Linux, which the zip distribution doesn't support. The tests will fail for particular "environments" if you don't have the necessary version of python already installed. After running tox once for all environments, you can run it for just a single environment so that it is much faster. Pick an environment that succeeded the first time, e.g. `py314-pip` and pass that to tox:
 
 ```
 uv run tox -e py314-pip

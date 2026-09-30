@@ -3,7 +3,7 @@ import os
 import time
 
 from cmu_graphics import shape_logic
-from cmu_graphics.dist import VENDORED
+from cmu_graphics.dist import ZIP_DISTRIBUTION
 from cmu_graphics import mvc_checker
 from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 
@@ -1621,12 +1621,12 @@ from datetime import timedelta
 import json
 import subprocess
 from cmu_graphics.libs import webrequest
+from cmu_graphics.deps import __version__
 import __main__
 
 
 UPDATE_CONFIG_FILE_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
-    'meta',
     'updates.json',
 )
 
@@ -1652,10 +1652,7 @@ def version_key(version):
 def check_for_update():
     try:
         update_info = get_update_info()
-
-        current_directory = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(current_directory, 'meta', 'version.txt')) as f:
-            version = f.read().strip()
+        version = __version__
 
         last_attempt = None
         if 'last_attempt' in update_info:
@@ -1681,7 +1678,7 @@ def check_for_update():
             print(
                 f'\n\nYou are running cmu-graphics version {version}, but a newer version {most_recent_version} is available.'
             )
-            if VENDORED:
+            if ZIP_DISTRIBUTION:
                 print('Visit https://academy.cs.cmu.edu/desktop to upgrade.')
             else:
                 print('Run "pip install --upgrade cmu-graphics" to upgrade.')
@@ -1698,10 +1695,8 @@ def print_debug_info():
     import platform
 
     current_directory = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(current_directory, 'meta', 'version.txt')) as f:
-        version = f.read().strip()
     print('=' * 80)
-    print('CMU Graphics Version:', version)
+    print('CMU Graphics Version:', __version__)
     print('Platform:', sys.platform)
     print('Python Version:', '.'.join(platform.python_version_tuple()))
     print('Executable Path:', sys.executable)

@@ -1,10 +1,24 @@
+"""
+Sign and notarize the macOS binaries in a directory.
+
+    python build/notarize.py [DIR]
+
+DIR defaults to the cmu_graphics package of the zip distribution that
+build/build.py stages. The release workflow runs this through
+`build/build.py --sign` instead.
+
+Needs a Developer ID Application certificate in the keychain, and APPLE_ID and
+APPLE_PASSWORD (an app-specific password) in the environment. Set
+CODESIGN_IDENTITY to pick a certificate; otherwise the first valid one is used.
+"""
+
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import tqdm
 
-ZIPNAME = 'cmu_graphics_notarize.zip'
 TEAM_ID = 'LXH25PRRZ2'
 
 ################################################################################
@@ -12,6 +26,9 @@ TEAM_ID = 'LXH25PRRZ2'
 ################################################################################
 
 def get_signing_identity():
+    if os.environ.get('CODESIGN_IDENTITY'):
+        return os.environ['CODESIGN_IDENTITY']
+
     signing_identities = subprocess.check_output(
         ["security", "find-identity", "-p", "codesigning", "-v"]
     ).strip().decode('utf-8')
@@ -28,10 +45,10 @@ def is_signed(path):
 
     return f'TeamIdentifier={TEAM_ID}' in signing_info
 
-def get_unsigned_binaries():
+def get_unsigned_binaries(directory):
     unsigned_files = []
 
-    for root, _, files in tqdm.tqdm(list(os.walk("../cmu_graphics")), unit='directories'):
+    for root, _, files in tqdm.tqdm(list(os.walk(directory)), unit='directories'):
         for filename in files:
             if filename.endswith('.so') or filename.endswith('.dylib'):
                 path = os.path.join(root, filename)
@@ -40,9 +57,9 @@ def get_unsigned_binaries():
 
     return unsigned_files
 
-def sign_files():
+def sign_files(directory):
     print("Finding unsigned binaries ...")
-    unsigned_binaries = get_unsigned_binaries()
+    unsigned_binaries = get_unsigned_binaries(directory)
     print()
 
     signing_identity = get_signing_identity()
@@ -85,14 +102,12 @@ def fail(reason, zip_path, submission_id=None):
     print()
     sys.exit(1)
 
-def notarize():
-    print("Zipping the cmu_graphics directory ...")
+def notarize(directory):
+    print("Zipping the binaries ...")
     # Apple recommends ditto for notarization submissions
-    zip_path = os.path.join('..', ZIPNAME)
-    if os.path.exists(zip_path):
-        os.remove(zip_path)
+    zip_path = os.path.join(tempfile.mkdtemp(), 'cmu_graphics_notarize.zip')
     subprocess.check_call(
-        ['ditto', '-c', '-k', '--keepParent', 'cmu_graphics', ZIPNAME], cwd='..')
+        ['ditto', '-c', '-k', '--keepParent', os.path.abspath(directory), zip_path])
     print()
 
     print("Notarizing ...")
@@ -138,9 +153,19 @@ def notarize():
 ################################################################################
 
 
+def sign_and_notarize(directory):
+    sign_files(directory)
+    notarize(directory)
+
+
 def main():
-    sign_files()
-    notarize()
+    if len(sys.argv) > 1:
+        directory = sys.argv[1]
+    else:
+        directory = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), '..',
+            'cmu_graphics_installer', 'cmu_graphics')
+    sign_and_notarize(directory)
 
     print()
     print('All done!')

@@ -1,12 +1,13 @@
 # Project-specific
 
-cmu_graphics/meta/updates.json
+cmu_graphics/updates.json
+# The native extension, which editable installs (uv sync) build into the package
+cmu_graphics/_native.*
 tests/image_gen/**/diff*.png
 tests/image_gen/**/output*.png
 tests/report.html
 /image_gen
 report.html
-pypi_upload
 cmu_graphics_installer.zip
 cmu_graphics_notarize.zip
 cmu_graphics_installer/

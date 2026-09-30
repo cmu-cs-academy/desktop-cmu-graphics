@@ -1,24 +1,57 @@
 # Build Scripts
 
-## cmu_graphics_helpers
+## Wheels and the zip distribution
 
-The bundled cmu_graphics_helpers binaries are built by
-  `.github/workflows/buildwheels.yml`.
+`cmu-graphics` is one package: maturin builds the Rust crate in `native/` into
+  the native extension, `cmu_graphics._native`, and packs it into the wheel with
+  the Python code. The version is the one in `native/Cargo.toml`.
 
-On any branch other than `main`, that workflow copies the wheels it built into
-  `cmu_graphics/libs/cmu_graphics_helpers_loader/modules/` and commits them back
-  to the branch, so the branch carries binaries built from its own code.
+`build.py` makes the zip distribution out of wheels: the `cmu_graphics` package
+  from the wheels, with the Windows (`_native.pyd`) and universal2 macOS
+  (`_native.abi3.so`) native extensions side by side, so Python loads the right
+  one by file extension. It sets `ZIP_DISTRIBUTION = True` in the zip's copy of
+  `cmu_graphics/dist.py`.
 
-To vendor by hand instead, run `python3 build/helpers/build_cmuhelp_modules.py`
-  from anywhere, after a local `maturin build`. Pass `--wheels <dir>` to vendor
-  wheels from somewhere else, such as a workflow run or PyPI.
+- `uv run build/build.py` builds this platform's wheel into `dist/` and a zip
+  from it, for trying the zip distribution locally.
+- `.github/workflows/ci.yml` builds the Windows, universal2 macOS, and
+  manylinux wheels, and tests those exact wheels on each platform. tox's zip
+  environments run `build.py` on the wheel under test (see
+  `tests/install_zip.py`).
 
-Only the zip installer loads the vendored binaries: `build.py` sets
-  `VENDORED = True` in its copy of `cmu_graphics/dist.py`. Local development
-  (`uv run`) and the PyPI package use `VENDORED = False` and import the
-  installed `cmu_graphics_helpers` package, which uv builds from source. So you
-  don't need to vendor binaries to try out Rust changes locally; the `zip` tox
-  environments are the ones that test the vendored binaries.
+
+## Releasing
+
+1. Bump the version in `native/Cargo.toml`, and merge that to `main`.
+2. Tag the commit and push the tag, e.g. `git tag v3.0.1 && git push origin v3.0.1`.
+3. Approve the `release` job of the CI run for the tag.
+
+The `release` job checks that the tag matches the wheels' version, then:
+
+- builds the zip distribution from the Windows and macOS wheels, signing and
+  notarizing its macOS native extension (`build.py --sign`, which runs
+  `notarize.py` and then `check_binaries.py`),
+- publishes the wheels to PyPI with trusted publishing, and
+- uploads the zip and `version.txt` to S3, which is what installed copies
+  check for updates. Pre-release versions (`v3.0.1rc1`) skip this step: they go
+  to PyPI, where pip ignores them unless asked, but not to the zip download.
+
+It needs, in the `release` environment:
+
+- secrets `MACOS_CERTIFICATE_P12` (the Developer ID Application certificate
+  and key, base64-encoded), `MACOS_CERTIFICATE_PASSWORD`, `APPLE_ID`, and
+  `APPLE_PASSWORD` (an app-specific password, for notarization)
+- variables `AWS_RELEASE_ROLE_ARN` (a role that trusts this repository's
+  GitHub OIDC tokens for the `release` environment, and can write to
+  `s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/`) and optionally
+  `AWS_REGION` (defaults to `us-east-1`)
+
+and PyPI must list `ci.yml` with the `release` environment as a trusted
+  publisher of `cmu-graphics`.
+
+Only the zip distribution's macOS binary is signed. Files installed by pip
+  aren't quarantined, so the pip distribution ships the binary as the linker
+  signed it.
 
 
 ## Linux image baselines
@@ -30,20 +63,13 @@ Text renders with different fonts on Linux, so text tests can have a
   `output_N.png` to `tests/image_gen/<test>/linux_correct_N.png`.
 
 
-## MacOS code signing
-Sign and notarize binaries with `notarize.py`. **The macOS binaries the
-  workflow commits are not signed or notarized.** `tests/check_binaries.py`
-  checks the code signature of every bundled `.so`/`.dylib` on macOS, so the
-  macOS test job will fail until they are signed. Run `notarize.py` on them
-  before cutting a release, or restore the previously signed macOS binaries if
-  you only meant to update the Windows one.
+## Signing by hand
 
-
-These scripts use a variety of passwords, certificates, and keys. For notarization and deployment, use the following environment variables
+To sign and notarize a zip distribution locally, build it with
+  `uv run build/build.py --wheels <dir with the Windows and macOS wheels> --all-platforms --sign`.
+  That needs a Developer ID Application certificate in your keychain, and:
 
 ```
 export APPLE_ID= # your apple developer id, for notarization
-export APPLE_PASSWORD= # your apple developer id password
+export APPLE_PASSWORD= # an app-specific password for it
 ```
-
-For signing binaries, you'll need an Apple Developer Certificate in your keychain with the appropriate permissions.
