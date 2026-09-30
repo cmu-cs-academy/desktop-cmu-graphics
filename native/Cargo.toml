@@ -2,7 +2,7 @@
 # This version is the version of the cmu-graphics package: maturin publishes
 # it to PyPI, and the native extension reports it at runtime as __version__.
 name = "cmu-graphics"
-version = "3.0.0"
+version = "3.0.1"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
