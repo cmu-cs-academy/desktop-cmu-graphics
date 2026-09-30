@@ -2,9 +2,10 @@ import inspect
 import os
 import time
 
-from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 from cmu_graphics import shape_logic
 from cmu_graphics.dist import VENDORED
+from cmu_graphics import mvc_checker
+from cmu_graphics.shape_logic import TRANSLATED_KEY_NAMES, _ShapeMetaclass
 
 
 class Signal:
@@ -717,9 +718,38 @@ class App(object):
     def redrawAllWrapper(self):
         self.group.clear()
 
+        checkerEnabled = not self.disableMvcChecker
         self.inRedrawAll = True
-        self.callUserFn('redrawAll', ())
-        self.inRedrawAll = False
+        try:
+            checkerSeconds = 0
+            hash1 = None
+            if checkerEnabled:
+                t0 = time.monotonic()
+                hash1 = appHash()
+                checkerSeconds += time.monotonic() - t0
+
+            self.callUserFn('redrawAll', ())
+
+            if checkerEnabled:
+                t0 = time.monotonic()
+                hash2 = appHash()
+                checkerSeconds += time.monotonic() - t0
+                if hash2 != hash1:
+                    raise MvcException(
+                        'You may not change the app state (the model) in redrawAll (the view)'
+                    )
+
+                if checkerSeconds >= 0.1 and self.slowMvcCheckerCount < 5:
+                    self.slowMvcCheckerCount += 1
+                    if self.slowMvcCheckerCount == 5:
+                        print(
+                            'WARNING: The MVC violation checker is taking a long time to run in '
+                            'your program. This can happen when your model is very large.\n\n'
+                            'You can disable the MVC violation checker (and potentially speed up '
+                            'your program) by setting app.disableMvcChecker to True in onAppStart.'
+                        )
+        finally:
+            self.inRedrawAll = False
 
     def drawErrorScreen(self):
         wyvern_surface = wyvern.ImageSurface(self.width, self.height)
@@ -855,6 +885,9 @@ class App(object):
         self._isMvc = False
         self._initialScreen = None
 
+        self._disableMvcChecker = False
+        self.slowMvcCheckerCount = 0
+
         self._lastStepTime = None
         self._sizeChanged = False
         self._takeScreenshotPath = None
@@ -888,6 +921,16 @@ class App(object):
         wyvern.set_steps_per_second(value)
 
     stepsPerSecond = property(getStepsPerSecond, setStepsPerSecond)
+
+    def getDisableMvcChecker(self):
+        return self._disableMvcChecker
+
+    def setDisableMvcChecker(self, value):
+        if not isinstance(value, bool):
+            raise Exception('app.disableMvcChecker must be set to a boolean')
+        self._disableMvcChecker = value
+
+    disableMvcChecker = property(getDisableMvcChecker, setDisableMvcChecker)
 
     def getBackground(self):
         return sli.slGetAppProperty('background')
@@ -1223,10 +1266,12 @@ class AppWrapper(object):
             'maxShapeCount',
             'inspectorEnabled',
             'showFontWarnings',
+            'disableMvcChecker',
             'cursorVisible',
         ]
     )
     allAttrs = readOnlyAttrs | readWriteAttrs
+    stateHashAttrs = readWriteAttrs - {'group', 'disableMvcChecker'}
 
     def __init__(self, app):
         self._app = app
@@ -1248,12 +1293,31 @@ class AppWrapper(object):
     def __setattr__(self, attr, value):
         attr = toEnglish(attr, 'app-attr')
         if (attr != '_app') and (getattr(self._app, 'inRedrawAll', False)):
-            raise MvcException(f'Cannot change app.{attr} in redrawAll')
+            if attr == 'disableMvcChecker':
+                raise MvcException(
+                    'Cannot change app.disableMvcChecker in redrawAll — '
+                    'set it in onAppStart instead'
+                )
+            if not self._app.disableMvcChecker:
+                raise MvcException(f'Cannot change app.{attr} in redrawAll')
         if attr in AppWrapper.readOnlyAttrs:
             raise Exception(f'app.{attr} is read-only')
         if attr in AppWrapper.readWriteAttrs:
             return self._app.__setattr__(attr, value)
         return super().__setattr__(attr, value)
+
+
+def appHash():
+    try:
+        return mvc_checker.appHash(app, AppWrapper.stateHashAttrs)
+    except RecursionError:
+        # Raised from None so students don't see a traceback through
+        # hundreds of deepHash frames
+        raise MvcException(
+            'Your app state (the model) is too deeply nested for the MVC '
+            'violation checker to check. You can disable the MVC violation '
+            'checker by setting app.disableMvcChecker to True in onAppStart.'
+        ) from None
 
 
 def processRunAppArgs(args, kwargs):

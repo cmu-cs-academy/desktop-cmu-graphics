@@ -320,8 +320,8 @@ def run_test(test_name, all_source_code):
 
 
 
-def run_cs3_exception_tests():
-    print('cs3 exception tests')
+def run_cs3_console_output_tests():
+    print('cs3 console output tests')
 
     tests = [
         (
@@ -349,7 +349,83 @@ def redrawAll(app):
 ''',
         'cmu_graphics.run()',
         "You defined the event handler redrawAll which works with CPCS Mode, and then called cmu_graphics.run(), which doesn't work with CPCS Mode. Did you mean to call runApp instead?"
-        )
+        ),
+    ]
+
+    # Changing the model in redrawAll is an MVC violation, whether it's setting
+    # an app attribute (caught as soon as it's set) or changing something deeper
+    # in the model (caught by comparing appHash before and after redrawAll).
+    # app.disableMvcChecker can't be changed in redrawAll either, even though
+    # it would turn the checker off.
+    for modelChange, expected_output in [
+        ('app.v1 += 1', 'Cannot change app.v1 in redrawAll'),
+        ('app.v2[0] += 1', 'You may not change the app state (the model) in redrawAll'),
+        ('app.disableMvcChecker = True', 'set it in onAppStart instead'),
+    ]:
+        tests.append((f'''\
+def onAppStart(app):
+    app.v1 = 0
+    app.v2 = [0]
+
+def redrawAll(app):
+    {modelChange}
+    drawRect(0, 0, 50, 50)
+''',
+            'runApp()',
+            expected_output
+        ))
+
+    tests += [
+        # Recursively hashing a model this deeply nested overflows the stack,
+        # and the error should point students at app.disableMvcChecker.
+        ('''\
+class Node:
+    def __init__(self, next):
+        self.next = next
+
+def onAppStart(app):
+    app.head = None
+    for _ in range(2000):
+        app.head = Node(app.head)
+
+def redrawAll(app):
+    drawRect(0, 0, 50, 50)
+''',
+            'runApp()',
+            'too deeply nested for the MVC violation checker'
+        ),
+        # Building a model big enough to make the MVC violation checker slow
+        # would itself be slow and flaky, so make appHash slow instead.
+        ('''\
+import time
+
+# runApp is defined in cmu_graphics, so its globals are that module's globals.
+cmuGraphicsGlobals = runApp.__globals__
+realAppHash = cmuGraphicsGlobals['appHash']
+
+def slowAppHash():
+    time.sleep(0.15)
+    return realAppHash()
+
+cmuGraphicsGlobals['appHash'] = slowAppHash
+
+def onAppStart(app):
+    app.steps = 0
+
+def onStep(app):
+    # The checker hashes the app twice per redrawAll, so each frame costs
+    # 300ms, and the warning prints on the 5th slow frame. runApp's first
+    # redrawAll plus 5 steps is 6 frames.
+    app.steps += 1
+    if app.steps == 5:
+        app.quit()
+
+def redrawAll(app):
+    drawRect(0, 0, 50, 50)
+''',
+            'runApp()',
+            'WARNING: The MVC violation checker is taking a long time to run'
+        ),
     ]
 
     for test, run_fn, expected_output in tests:
@@ -543,7 +619,7 @@ def main():
         REPORT_FILE = open('report.html', 'w')
         REPORT_FILE.write(REPORT_HEADER)
 
-        if run_cs3_exception_tests():
+        if run_cs3_console_output_tests():
             num_successes += 1
         else:
             num_failures += 1
