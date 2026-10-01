@@ -10,13 +10,9 @@ requires-python = ">=3.11"
 license = "BSD-3-Clause"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-]
-dependencies = [
-    # No Windows ARM64 build exists, so pip would try (and fail) to compile it
-    # from source. Skipping it lets the install finish, and then
-    # loader_util.verify_support explains that ARM64 Python isn't supported.
-    "cmu-graphics-helpers==0.1.8; platform_machine != 'ARM64'",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
 ]
 
 [project.urls]
@@ -24,26 +20,29 @@ Homepage = "https://academy.cs.cmu.edu/"
 Documentation = "https://academy.cs.cmu.edu/docs"
 
 [build-system]
-requires = [
-    "setuptools>=42,<81", # pin <81 so that pkg_resources deprecation isn't an issue
-    "wheel",
+requires = ["maturin>=1.12,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+# The Rust crate in native/ builds the native extension, cmu_graphics._native,
+# which maturin puts inside the cmu_graphics package. Its Cargo.toml holds the
+# version.
+manifest-path = "native/Cargo.toml"
+module-name = "cmu_graphics._native"
+# A top-level module next to the cmu_graphics package
+include = [{ path = "cmu_cpcs_utils.py", format = "wheel" }]
+exclude = [
+    "cmu_graphics/**/__pycache__/**",
+    # Written at runtime by check_for_update
+    "cmu_graphics/updates.json",
 ]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.dynamic]
-version = {file = "cmu_graphics/meta/version.txt"}
-
-[tool.setuptools.packages.find]
-include = ["cmu_graphics", "cmu_graphics.*"]
-
-[tool.setuptools]
-py-modules = ["cmu_cpcs_utils"]
-
-[tool.setuptools.package-data]
-cmu_graphics = ["meta/version.txt", "libs/cacert.pem"]
+# maturin's CLI builds debug unless told otherwise, while its PEP 517 backend
+# (what uv and tox use) always builds release. Set the profile here so that all
+# call sites use release, and share one build cache.
+profile = "release"
 
 [tool.ruff]
-exclude = ["cmu_graphics/libs", "tests", "build", "samples"]
+exclude = ["cmu_graphics/libs", "tests", "build", "cmu_graphics/samples"]
 
 [tool.ruff.format]
 quote-style = "single"
@@ -58,7 +57,6 @@ quote-style = "single"
 
 [dependency-groups]
 dev = [
-    "build",
     "pillow",
     "pre-commit",
     "psutil>=7.1.2",
@@ -68,6 +66,13 @@ dev = [
     "tqdm>=4.70.0",
 ]
 
-[tool.uv.sources]
-# Build from this repo instead of uv fetching the pinned release from PyPI.
-cmu-graphics-helpers = { path = "cmu_graphics_helpers" }
+[tool.uv]
+# uv's default cache invalidation for the project doesn't notice edits to the
+# Rust source, so `uv run` would keep using a stale native extension.
+cache-keys = [
+    { file = "pyproject.toml" },
+    { file = "native/Cargo.toml" },
+    { file = "native/Cargo.lock" },
+    { file = "native/src/**/*.rs" },
+    { file = ".cargo/config.toml" },
+]

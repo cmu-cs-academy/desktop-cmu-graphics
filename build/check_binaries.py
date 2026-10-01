@@ -1,7 +1,21 @@
+"""
+Check the macOS binaries in the zip distribution before it's released.
+
+    python build/check_binaries.py [DIR]
+
+Every .so/.dylib under DIR must be signed with our Developer ID and be a
+universal2 binary (x86_64 and arm64), since the zip distribution has one macOS
+native extension for both kinds of Mac. DIR defaults to the cmu_graphics package
+that build/build.py stages. `build/build.py --sign` runs this after signing.
+"""
+
 import os
 import platform
 import subprocess
 import sys
+
+AUTHORITY = 'Authority=Developer ID Application: Evan Mallory (LXH25PRRZ2)'
+
 
 def is_properly_signed(path):
     try:
@@ -18,30 +32,17 @@ def is_properly_signed(path):
         return False
 
     result_lines = result_bytes.decode('iso-8859-1').splitlines()
-    if 'Authority=Developer ID Application: Evan Mallory (LXH25PRRZ2)' not in result_lines:
-        return False
+    return AUTHORITY in result_lines
 
-    return True
 
-def has_correct_architecture(path):
-    is_arm = 'mac_arm' in path
-    is_x86 = not is_arm
+def is_universal(path):
+    archs = subprocess.check_output(['lipo', '-archs', path]).decode().split()
+    return 'x86_64' in archs and 'arm64' in archs
 
-    result_bytes = subprocess.check_output(['file', path])
-    result = result_bytes.decode('iso-8859-1')
 
-    if is_x86 and not 'x86_64' in result:
-        return False
-
-    if is_arm and not 'arm64' in result:
-        return False
-
-    return True
-
-def verify_codesignatures():
-    # tox only runs this in the zip envs, from {envtmpdir}, where
-    # tests/install.py has unpacked the installer into ./cmu_graphics.
-    base_path = 'cmu_graphics'
+def verify(base_path):
+    if platform.system() != 'Darwin':
+        sys.exit('Checking macOS binaries needs macOS (codesign and lipo).')
 
     success = True
     checked = 0
@@ -55,8 +56,8 @@ def verify_codesignatures():
                     print(f'{filepath} was not appropriately signed')
                     success = False
 
-                if not has_correct_architecture(filepath):
-                    print(f'{filepath} does not have the correct architecture')
+                if not is_universal(filepath):
+                    print(f'{filepath} is not a universal2 (x86_64 and arm64) binary')
                     success = False
 
     # Guard against this check silently passing because it was looking in the
@@ -70,12 +71,16 @@ def verify_codesignatures():
     if not success:
         sys.exit(1)
 
+
 def main():
-    if platform.system() != 'Darwin':
-        print('Not on a mac. Skipping ...')
-        return
-    verify_codesignatures()
+    if len(sys.argv) > 1:
+        base_path = sys.argv[1]
+    else:
+        base_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), '..',
+            'cmu_graphics_installer', 'cmu_graphics')
+    verify(base_path)
+
 
 if __name__ == '__main__':
     main()
-

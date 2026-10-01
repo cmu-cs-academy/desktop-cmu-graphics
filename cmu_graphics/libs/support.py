@@ -1,23 +1,8 @@
 import sys
-import struct
 import platform
 import os
 
 min_minor_version = 11
-
-def get_platform_string():
-    plat = "unsupported"
-    if sys.platform == "darwin":
-        plat = "mac"
-        if platform.machine() == 'arm64':
-            plat += '_arm'
-    elif sys.platform == "win32":
-        plat = "win"
-        n_bits = struct.calcsize("P") * 8
-        plat += "_%d" % n_bits
-    python_major, python_minor, _ = platform.python_version_tuple()
-    plat += "_%s%s" % (python_major, python_minor)
-    return plat
 
 def verify_os():
     if sys.platform not in ["darwin", "win32"]:
@@ -42,10 +27,10 @@ supported.""")
         os._exit(1)
 
 
-def verify_support(vendored):
+def verify_support(zip_distribution):
     python_major, python_minor, _ = platform.python_version_tuple()
-    # The vendored distribution only ships binaries for Windows and MacOS.
-    if vendored:
+    # The zip distribution only ships native extensions for Windows and MacOS.
+    if zip_distribution:
         verify_os()
 
     verify_cpu()

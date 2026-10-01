@@ -481,8 +481,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "cmu-graphics-helpers"
-version = "0.1.8"
+name = "cmu-graphics"
+version = "3.0.1"
 dependencies = [
  "geo",
  "geo-booleanop",
