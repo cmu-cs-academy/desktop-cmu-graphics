@@ -41,7 +41,7 @@ jobs:
             uv-sync-args: --no-install-package cmu-graphics-helpers
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # build/check_helpers_version.py compares against origin/main, so the
           # default shallow single-ref checkout isn't enough. blob:none keeps the
@@ -97,7 +97,7 @@ jobs:
       # one big zip file.
       - name: Upload image comparison failures
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: image-gen-failures-${{ matrix.os }}
           # report.html sits beside image_gen/, not inside it, and refers to

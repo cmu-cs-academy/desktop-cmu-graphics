@@ -11,21 +11,24 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
         with:
-          python-version: '3.12'
+          enable-cache: true
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      # Only the dev group (pre-commit and ruff at their uv.lock versions), not
+      # the project itself, which would compile the Rust helpers.
+      - name: Install pre-commit and ruff
+        run: uv sync --only-dev
 
       - name: Run pre-commit
         id: run
-        run: pre-commit run --all-files
+        run: uv run --no-sync pre-commit run --all-files
         continue-on-error: true
 
       - name: Commit and push changes
@@ -39,4 +42,4 @@ jobs:
           fi
 
       - name: Re-run pre-commit to verify
-        run: pre-commit run --all-files
+        run: uv run --no-sync pre-commit run --all-files
