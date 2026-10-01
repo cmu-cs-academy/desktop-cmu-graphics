@@ -1485,6 +1485,8 @@ impl ApplicationHandler<UserEvent> for WinitApp {
 
                 window.set_outer_position(PhysicalPosition::new(x, y));
             }
+            #[cfg(target_os = "macos")]
+            disable_window_restoration(&window);
             Rc::new(window)
         } else {
             self.error = Some(PyRuntimeError::new_err("Issue with creating window"));
@@ -1807,26 +1809,51 @@ fn set_dock_icon() {
     unsafe { app.setApplicationIconImage(Some(&image)) };
 }
 
-// Turn off macOS window restoration for this process. Otherwise, after a
-// program crashes, the next one run with the same Python asks whether to
-// reopen the crashed program's windows -- and every program run with that
-// Python shares the one saved state, so they try to restore each other's
-// windows. This goes in the registration domain, which only lasts as long as
-// the process and is overridden by any explicit setting. Must be called
-// before the event loop starts, which is when AppKit restores windows.
+// macOS window restoration. Every program run with the same Python shares one
+// saved state, so without these, programs running at once restore each
+// other's windows, and after a program crashes soon after starting, the next
+// one asks whether to reopen windows -- a prompt that a hidden window (as in
+// the tests) never answers.
+//
+// ignore_saved_window_state keeps AppKit from restoring any saved state when
+// the event loop starts. ApplePersistenceIgnoreStateQuietly is the variant of
+// ApplePersistenceIgnoreState that doesn't log a message on every launch. It
+// goes in the registration domain, which only lasts as long as the process and
+// yields to any explicit setting.
 #[cfg(target_os = "macos")]
-fn disable_window_restoration() {
+fn ignore_saved_window_state() {
     use objc2::rc::Retained;
     use objc2::runtime::AnyObject;
     use objc2_foundation::{NSDictionary, NSNumber, NSString, NSUserDefaults};
 
-    let key = NSString::from_str("ApplePersistenceIgnoreState");
+    let key = NSString::from_str("ApplePersistenceIgnoreStateQuietly");
     let value: Retained<AnyObject> = Retained::into_super(Retained::into_super(
         Retained::into_super(NSNumber::new_bool(true)),
     ));
     let defaults = NSDictionary::from_vec(&[&*key], vec![value]);
     // Safety: the dictionary holds only property-list objects
     unsafe { NSUserDefaults::standardUserDefaults().registerDefaults(&defaults) };
+}
+
+// disable_window_restoration keeps this window out of the saved state.
+#[cfg(target_os = "macos")]
+fn disable_window_restoration(window: &Window) {
+    use objc2_app_kit::NSView;
+    use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
+
+    let Ok(handle) = window.window_handle() else {
+        return;
+    };
+    let RawWindowHandle::AppKit(handle) = handle.as_raw() else {
+        return;
+    };
+    // Safety: winit's AppKit handle points at the window's live NSView, and
+    // this runs on the main thread, where winit creates windows
+    let view: &NSView = unsafe { handle.ns_view.cast().as_ref() };
+    if let Some(ns_window) = view.window() {
+        // Safety: called on the main thread, on a valid window
+        unsafe { ns_window.setRestorable(false) };
+    }
 }
 
 #[pyfunction]
@@ -1888,7 +1915,7 @@ fn run(
     };
 
     #[cfg(target_os = "macos")]
-    disable_window_restoration();
+    ignore_saved_window_state();
 
     let mut event_loop_builder = EventLoop::<UserEvent>::with_user_event();
     // Keep a hidden app out of the Dock and from taking focus

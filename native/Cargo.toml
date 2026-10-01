@@ -27,7 +27,7 @@ winit = "0.30.13"
 # they add no new crates.
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.5.2"
-objc2-app-kit = { version = "0.2.2", features = ["NSApplication", "NSImage", "NSResponder"] }
+objc2-app-kit = { version = "0.2.2", features = ["NSApplication", "NSImage", "NSResponder", "NSView", "NSWindow", "NSWindowRestoration"] }
 objc2-foundation = { version = "0.2.2", features = ["NSData", "NSDictionary", "NSObject", "NSString", "NSUserDefaults", "NSValue"] }
 
 [dependencies.pyo3]
