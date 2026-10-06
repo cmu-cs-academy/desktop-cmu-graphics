@@ -1,5 +1,6 @@
 import math
 import copy
+import os
 from cmu_graphics import cmu_graphics
 from cmu_graphics import utils
 
@@ -581,7 +582,12 @@ def loadImageFromStringReference(reference):
             pyThrow(t('Failed to load image data'))
     else:
         # reference is a path
-        image = wyvern.load_image_from_path(reference)
+        try:
+            image = wyvern.load_image_from_path(reference)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"No file '{reference}' found in working directory '{os.getcwd()}'."
+            ) from None
     return image
 
 

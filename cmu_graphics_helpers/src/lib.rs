@@ -732,10 +732,11 @@ impl Canvas {
 
 fn create_image(data: skia_safe::Data) -> PyResult<WyvernImage> {
     let image =
-        Image::from_encoded(&data).ok_or(PyRuntimeError::new_err("Failed to create image"))?;
+        Image::from_encoded(&data).ok_or(PyRuntimeError::new_err("Unsupported image format"))?;
 
-    let bytes = data.as_bytes();
-    let opaque = bytes.iter().skip(3).step_by(4).all(|&a| a == 255);
+    // Whether the pixels are known to be opaque, from the decoded image's
+    // alpha type (e.g. JPEG)
+    let opaque = image.is_opaque();
 
     let bounds = image.bounds();
 
@@ -844,7 +845,8 @@ use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalSize, PhysicalPosition, PhysicalSize};
 use winit::event::{DeviceId, ElementState, Modifiers, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
-use winit::keyboard::{Key, NamedKey};
+use winit::keyboard::{Key, NamedKey, PhysicalKey};
+use std::collections::HashMap;
 use winit::window::{Window, WindowAttributes, WindowId};
 
 fn get_stream() -> PyResult<&'static MixerDeviceSink> {
@@ -894,8 +896,13 @@ impl WyvernSound {
 impl WyvernSound {
     #[new]
     fn create(bytes: &Bound<'_, PyBytes>) -> PyResult<Self> {
+        let data: Arc<[u8]> = Arc::from(bytes.as_bytes());
+        // Decode now, so unsupported data fails when the Sound is created
+        // rather than on the first play()
+        Decoder::try_from(Cursor::new(Arc::clone(&data)))
+            .map_err(|e| PyRuntimeError::new_err(format!("Failed to decode sound data: {e}")))?;
         Ok(WyvernSound {
-            data: Arc::from(bytes.as_bytes()),
+            data,
             sink: None,
             volume: 1.0,
         })
@@ -1003,6 +1010,7 @@ struct WinitApp {
     py_surface: Option<Py<ImageSurface>>,
     on_event: Py<PyAny>,
     modifiers: Modifiers,
+    pressed_keys: HashMap<PhysicalKey, (String, bool)>,
     error: Option<PyErr>,
     fullscreen: bool,
     // False for a hidden window: never shown or focused, as when running
@@ -1016,9 +1024,9 @@ struct WinitApp {
 #[derive(Clone)]
 pub struct MouseEvent {
     #[pyo3(get)]
-    pub x: f64,
+    pub x: i32,
     #[pyo3(get)]
-    pub y: f64,
+    pub y: i32,
     #[pyo3(get)]
     pub button: u8,
     // All buttons currently held down, for drag events
@@ -1026,13 +1034,20 @@ pub struct MouseEvent {
     pub buttons: Vec<u8>,
 }
 
-fn winit_button_to_int(button: winit::event::MouseButton) -> u8 {
+fn winit_button_to_int(button: winit::event::MouseButton) -> Option<u8> {
     match button {
-        winit::event::MouseButton::Left => 0,
-        winit::event::MouseButton::Middle => 1,
-        winit::event::MouseButton::Right => 2,
-        _ => 0,
+        winit::event::MouseButton::Left => Some(0),
+        winit::event::MouseButton::Middle => Some(1),
+        winit::event::MouseButton::Right => Some(2),
+        _ => None,
     }
+}
+
+fn to_logical_pixels(position: PhysicalPosition<f64>, scale: f64) -> (i32, i32) {
+    (
+        (position.x / scale).floor() as i32,
+        (position.y / scale).floor() as i32,
+    )
 }
 
 #[pyclass(from_py_object)]
@@ -1068,6 +1083,16 @@ fn named_key_name(name: &NamedKey) -> Option<String> {
                 None => name,
             })
         }
+    }
+}
+
+// The key name and is_named for a key event, or None for keys the app
+// doesn't see
+fn key_name(key: &Key) -> Option<(String, bool)> {
+    match key {
+        Key::Character(s) => Some((s.to_string(), false)),
+        Key::Named(name) => named_key_name(name).map(|name| (name, true)),
+        _ => None,
     }
 }
 
@@ -1115,7 +1140,7 @@ pub struct PythonEvent {
 }
 
 impl PythonEvent {
-    pub fn mouse_press(x: f64, y: f64, button: u8) -> Self {
+    pub fn mouse_press(x: i32, y: i32, button: u8) -> Self {
         PythonEvent {
             event_type: "mouse_press".to_string(),
             mouse: Some(MouseEvent {
@@ -1131,7 +1156,7 @@ impl PythonEvent {
         }
     }
 
-    pub fn mouse_release(x: f64, y: f64, button: u8) -> Self {
+    pub fn mouse_release(x: i32, y: i32, button: u8) -> Self {
         PythonEvent {
             event_type: "mouse_release".to_string(),
             mouse: Some(MouseEvent {
@@ -1147,7 +1172,7 @@ impl PythonEvent {
         }
     }
 
-    pub fn mouse_move(x: f64, y: f64) -> Self {
+    pub fn mouse_move(x: i32, y: i32) -> Self {
         PythonEvent {
             event_type: "mouse_move".to_string(),
             mouse: Some(MouseEvent {
@@ -1163,7 +1188,7 @@ impl PythonEvent {
         }
     }
 
-    pub fn mouse_drag(x: f64, y: f64, buttons: Vec<u8>) -> Self {
+    pub fn mouse_drag(x: i32, y: i32, buttons: Vec<u8>) -> Self {
         PythonEvent {
             event_type: "mouse_drag".to_string(),
             mouse: Some(MouseEvent {
@@ -1329,9 +1354,8 @@ impl WinitApp {
         let Some(app_internals) = self.internals.as_ref() else {
             return;
         };
-        let scale = app_internals.window.scale_factor();
-        let x = self.cursor_position.x / scale;
-        let y = self.cursor_position.y / scale;
+        let (x, y) =
+            to_logical_pixels(self.cursor_position, app_internals.window.scale_factor());
         let event = if self.pressed_buttons.is_empty() {
             PythonEvent::mouse_move(x, y)
         } else {
@@ -1488,6 +1512,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
             Rc::new(window)
         } else {
             self.error = Some(PyRuntimeError::new_err("Issue with creating window"));
+            event_loop.exit();
             return;
         };
         let softbuffer_surface = {
@@ -1495,12 +1520,14 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 self.error = Some(PyRuntimeError::new_err(
                     "Issue with creating context for softbuffer surface",
                 ));
+                event_loop.exit();
                 return;
             };
             let Ok(surface) = softbuffer::Surface::new(&context, window.clone()) else {
                 self.error = Some(PyRuntimeError::new_err(
                     "Issue with creating softbuffer surface",
                 ));
+                event_loop.exit();
                 return;
             };
             surface
@@ -1520,6 +1547,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
         }) {
             self.error = Some(err);
             event_loop.exit();
+            return;
         };
 
         if self.visible {
@@ -1605,6 +1633,9 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 state,
                 button,
             } => {
+                let Some(button_int) = winit_button_to_int(button) else {
+                    return;
+                };
                 // Deliver any held-back motion first, so handlers see events
                 // in the order they happened.
                 if self.mouse_pending {
@@ -1613,8 +1644,8 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 let Some(app_internals) = self.internals.as_ref() else {
                     return;
                 };
-                let scale = app_internals.window.scale_factor();
-                let button_int = winit_button_to_int(button);
+                let (x, y) =
+                    to_logical_pixels(self.cursor_position, app_internals.window.scale_factor());
                 match state {
                     winit::event::ElementState::Pressed => {
                         if !self.pressed_buttons.contains(&button_int) {
@@ -1623,22 +1654,14 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                         }
                         self.call_event_handler(
                             event_loop,
-                            PythonEvent::mouse_press(
-                                self.cursor_position.x / scale,
-                                self.cursor_position.y / scale,
-                                button_int,
-                            ),
+                            PythonEvent::mouse_press(x, y, button_int),
                         );
                     }
                     winit::event::ElementState::Released => {
                         self.pressed_buttons.retain(|&b| b != button_int);
                         self.call_event_handler(
                             event_loop,
-                            PythonEvent::mouse_release(
-                                self.cursor_position.x / scale,
-                                self.cursor_position.y / scale,
-                                button_int,
-                            ),
+                            PythonEvent::mouse_release(x, y, button_int),
                         );
                     }
                 }
@@ -1652,24 +1675,19 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 is_synthetic,
             } => {
                 // pygame had key repeat off, so a held key sends one press;
-                // apps use onKeyHold for repeated behavior
+                // apps use onKeyHold for repeated behavior. Synthetic events
+                // (Windows and X11 only) are skipped, since held keys are
+                // released on Focused(false) instead, on every platform.
                 if is_synthetic || event.repeat {
                     return;
                 }
-                let mut is_named = false;
-                let key = match &event.logical_key {
-                    Key::Character(s) => s.to_string(),
-                    Key::Named(name) => {
-                        is_named = true;
-                        let Some(name) = named_key_name(name) else {
-                            return;
-                        };
-                        name
-                    }
-                    _ => return,
-                };
                 match event.state {
                     winit::event::ElementState::Pressed => {
+                        let Some((key, is_named)) = key_name(&event.logical_key) else {
+                            return;
+                        };
+                        self.pressed_keys
+                            .insert(event.physical_key, (key.clone(), is_named));
                         self.call_event_handler(
                             event_loop,
                             PythonEvent::key_press(
@@ -1680,6 +1698,17 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                         );
                     }
                     winit::event::ElementState::Released => {
+                        let released = match self.pressed_keys.remove(&event.physical_key) {
+                            Some(pressed) => pressed,
+                            // Pressed before the window had focus
+                            None => {
+                                let Some(released) = key_name(&event.logical_key) else {
+                                    return;
+                                };
+                                released
+                            }
+                        };
+                        let (key, is_named) = released;
                         self.call_event_handler(
                             event_loop,
                             PythonEvent::key_release(
@@ -1689,6 +1718,27 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                             ),
                         );
                     }
+                }
+            }
+            WindowEvent::Focused(false) => {
+                // The window won't see the releases of keys that are down
+                // now, e.g. after alt-tabbing away or when getTextInput's
+                // window opens, so release them now.
+                // Otherwise onKeyHold would keep reporting them.
+                let held: Vec<(String, bool)> =
+                    self.pressed_keys.drain().map(|(_, pressed)| pressed).collect();
+                for (key, is_named) in held {
+                    if event_loop.exiting() {
+                        break;
+                    }
+                    self.call_event_handler(
+                        event_loop,
+                        PythonEvent::key_release(
+                            key,
+                            is_named,
+                            modifiers_to_vec(&self.modifiers),
+                        ),
+                    );
                 }
             }
             WindowEvent::ModifiersChanged(new_modifiers) => {
@@ -1814,6 +1864,36 @@ fn set_dock_icon() {
 // possibly more settings can be added
 #[allow(clippy::too_many_arguments)]
 fn run(
+    py: Python<'_>,
+    on_event: Py<PyAny>,
+    app_width: u32,
+    app_height: u32,
+    resizable: bool,
+    title: String,
+    fullscreen: bool,
+    cursor_visible: bool,
+    visible: bool,
+) -> PyResult<()> {
+    // Release the GIL while the event loop runs, so other Python threads
+    // (like the CS Academy Console) can run while it waits for events. It's
+    // reacquired for each call into Python. The window and event loop aren't
+    // Send, so they're created inside the closure.
+    py.detach(move || {
+        run_event_loop(
+            on_event,
+            app_width,
+            app_height,
+            resizable,
+            title,
+            fullscreen,
+            cursor_visible,
+            visible,
+        )
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_event_loop(
     on_event: Py<PyAny>,
     app_width: u32,
     app_height: u32,
@@ -1859,6 +1939,7 @@ fn run(
         py_surface: None,
         on_event,
         modifiers: Modifiers::default(),
+        pressed_keys: HashMap::new(),
         error: None,
         fullscreen,
         visible,
@@ -1883,7 +1964,10 @@ fn run(
         .map_err(|_| PyRuntimeError::new_err("Issue with starting proxy event loop"))?;
     let _ = event_loop.run_app(&mut app);
 
-    match app.error {
+    let error = app.error.take();
+    // The app holds Python objects, so release them while attached
+    Python::attach(|_| drop(app));
+    match error {
         None => Ok(()),
         Some(err) => Err(err),
     }
