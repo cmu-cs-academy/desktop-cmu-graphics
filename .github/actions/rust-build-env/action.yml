@@ -22,19 +22,27 @@ runs:
           throw "libclang.dll not found under C:\Program Files\LLVM. bindgen needs it to build Skia from source."
         }
 
-    # When the checkout and the cargo registry are on the same drive (C: on
-    # windows-11-arm, unlike windows-latest's D:), gn refers to Skia's sources
-    # with long ../-relative paths that exceed MAX_PATH, and ninja fails with
-    # "GetFullPathNameA(...): The filename or extension is too long". Enabling
-    # long paths covers ninja (which is long-path aware) and git, which checks
-    # out Skia's third-party dependencies.
-    - name: Enable long paths
+    # gn refers to Skia's sources (in the cargo registry) relative to its build
+    # directory (under target/) when both are on the same drive, as they are on
+    # windows-11-arm (windows-latest checks out to D:). Those ../-relative paths
+    # are long enough that ninja fails with "GetFullPathNameA(...): The
+    # filename or extension is too long" -- ninja uses a MAX_PATH buffer there,
+    # so enabling Windows long paths doesn't help. Putting CARGO_HOME on its
+    # own drive letter makes gn use short absolute paths instead. This has to
+    # come before the cache step, which restores into CARGO_HOME.
+    - name: Put CARGO_HOME on its own drive
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
-          -Name LongPathsEnabled -Value 1 -PropertyType DWORD -Force | Out-Null
-        git config --system core.longpaths true
+        $cargoHome = if ($env:CARGO_HOME) { $env:CARGO_HOME } else { Join-Path $env:USERPROFILE '.cargo' }
+        if ((Split-Path -Qualifier $cargoHome) -ne (Split-Path -Qualifier $env:GITHUB_WORKSPACE)) {
+          "CARGO_HOME ($cargoHome) is already on a different drive from the checkout"
+          return
+        }
+        subst R: $cargoHome
+        if ($LASTEXITCODE -ne 0) { throw "subst R: $cargoHome failed" }
+        "CARGO_HOME=R:\" >> $env:GITHUB_ENV
+        "mapped R: to $cargoHome"
 
     - name: Cache cargo registry and build artifacts
       if: runner.os != 'Linux'
