@@ -1674,7 +1674,7 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 event,
                 is_synthetic,
             } => {
-                // A held key sends one press; apps use onKeyHold for repeated behavior. 
+                // A held key sends one press; apps use onKeyHold for repeated behavior.
                 // Synthetic events (Windows and X11 only) are skipped, since held keys are
                 // released on Focused(false) instead, on every platform.
                 if is_synthetic || event.repeat {
