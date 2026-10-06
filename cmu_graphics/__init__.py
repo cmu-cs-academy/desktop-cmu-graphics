@@ -189,6 +189,7 @@ loader_util.verify_support(VENDORED)
 
 from cmu_graphics.cmu_graphics import (
     app,
+    appHash,
     Arc,
     Circle,
     Group,
