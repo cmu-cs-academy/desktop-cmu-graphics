@@ -48,6 +48,8 @@ def module_for_wheel(filename):
         return None
     if 'win_amd64' in name:
         return 'cmu_graphics_helpers_win_64'
+    if 'win_arm64' in name:
+        return 'cmu_graphics_helpers_win_arm'
     if 'macosx' in name:
         if 'arm64' in name:
             return 'cmu_graphics_helpers_mac_arm'
@@ -121,7 +123,7 @@ def main():
     if not vendored:
         raise SystemExit(
             f'no wheels for a platform the zip distribution ships were found in '
-            f'{wheels_dir}. Expected win_amd64 and/or macosx wheels.'
+            f'{wheels_dir}. Expected win_amd64, win_arm64, and/or macosx wheels.'
         )
 
     duplicates = {module for module in vendored if vendored.count(module) > 1}
