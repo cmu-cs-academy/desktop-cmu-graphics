@@ -22,6 +22,20 @@ runs:
           throw "libclang.dll not found under C:\Program Files\LLVM. bindgen needs it to build Skia from source."
         }
 
+    # When the checkout and the cargo registry are on the same drive (C: on
+    # windows-11-arm, unlike windows-latest's D:), gn refers to Skia's sources
+    # with long ../-relative paths that exceed MAX_PATH, and ninja fails with
+    # "GetFullPathNameA(...): The filename or extension is too long". Enabling
+    # long paths covers ninja (which is long-path aware) and git, which checks
+    # out Skia's third-party dependencies.
+    - name: Enable long paths
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+          -Name LongPathsEnabled -Value 1 -PropertyType DWORD -Force | Out-Null
+        git config --system core.longpaths true
+
     - name: Cache cargo registry and build artifacts
       if: runner.os != 'Linux'
       uses: Swatinem/rust-cache@v2
