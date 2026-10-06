@@ -947,8 +947,8 @@ impl WyvernSound {
 
 impl Drop for WyvernSound {
     // Dropping a Player stops its sound, but a sound should keep playing
-    // after its Sound is garbage collected, as with Sound(url).play(), like
-    // it did with pygame. Detaching lets it play to the end (or loop forever).
+    // after its Sound is garbage collected, as with Sound(url).play().
+    // Detaching lets it play to the end (or loop forever).
     fn drop(&mut self) {
         if let Some(player) = self.sink.take() {
             player.detach();
@@ -973,8 +973,8 @@ enum InjectedEvent {
     Resize(u32, u32),
 }
 
-// Mouse motion is throttled to roughly 30 events per second, like the old
-// pygame loop. The latest position is held back and sent once the throttle
+// Mouse motion is throttled to roughly 30 events per second.
+// The latest position is held back and sent once the throttle
 // window passes, so the final position is never dropped.
 const MOUSE_THROTTLE: Duration = Duration::from_nanos(1_000_000_000 / 30);
 
@@ -1105,8 +1105,8 @@ fn modifiers_to_vec(modifiers: &winit::event::Modifiers) -> Vec<String> {
     if state.control_key() {
         result.push("control".to_string());
     }
-    // "meta" is Cmd on macOS and the Windows key on Windows, as it was with
-    // pygame and is in the web version. Alt isn't reported.
+    // "meta" is Cmd on macOS and the Windows key on Windows, as it is
+    // in the web version. Alt isn't reported.
     if state.super_key() {
         result.push("meta".to_string());
     }
@@ -1674,9 +1674,8 @@ impl ApplicationHandler<UserEvent> for WinitApp {
                 event,
                 is_synthetic,
             } => {
-                // pygame had key repeat off, so a held key sends one press;
-                // apps use onKeyHold for repeated behavior. Synthetic events
-                // (Windows and X11 only) are skipped, since held keys are
+                // A held key sends one press; apps use onKeyHold for repeated behavior. 
+                // Synthetic events (Windows and X11 only) are skipped, since held keys are
                 // released on Focused(false) instead, on every platform.
                 if is_synthetic || event.repeat {
                     return;
@@ -1817,21 +1816,23 @@ impl ApplicationHandler<UserEvent> for WinitApp {
     }
 }
 
-// The Scotty icon, shown for the window (Windows, Linux) and in the Dock
-// (macOS), as it was with pygame
+// The Scotty icon, shown for the window (Linux) and in the Dock (macOS)
+#[cfg(not(target_os = "windows"))]
 const ICON_PNG: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/scotty.png"));
+
+// Windows shrinks the icon to fit a small square (16-32px in the title bar and
+// taskbar), and scotty.png's transparent margin made Scotty look tiny there.
+// This copy is cropped so Scotty fills about 85% of its height, and is
+// 256x256, the largest size winit suggests for the taskbar icon.
+#[cfg(target_os = "windows")]
+const ICON_PNG: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/scotty_256.png"));
 
 // On Windows, the window icon only sets the small (title bar) icon. The
 // taskbar uses the big icon, and without one it shows python.exe's icon.
-// winit suggests at most 256x256 for it, so this is a pre-shrunk copy.
-#[cfg(target_os = "windows")]
-const TASKBAR_ICON_PNG: &[u8] =
-    include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/scotty_256.png"));
-
 // None (no taskbar icon, so the app still runs) if the image can't be used
 #[cfg(target_os = "windows")]
 fn taskbar_icon() -> Option<winit::window::Icon> {
-    let image = image::load_from_memory(TASKBAR_ICON_PNG).ok()?.into_rgba8();
+    let image = image::load_from_memory(ICON_PNG).ok()?.into_rgba8();
     let (width, height) = image.dimensions();
     winit::window::Icon::from_rgba(image.into_raw(), width, height).ok()
 }
