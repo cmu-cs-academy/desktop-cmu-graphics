@@ -2,6 +2,7 @@ import sys
 import struct
 import platform
 import os
+import sysconfig
 
 min_minor_version = 11
 
@@ -30,10 +31,11 @@ and higher on Windows and MacOS."""
 
 
 def verify_cpu():
-    # platform.machine() describes the Python interpreter, not the hardware:
-    # x64 Python running under emulation on an ARM computer reports AMD64,
-    # which is supported. Only ARM64 Python reports ARM64.
-    if sys.platform == "win32" and platform.machine() == "ARM64":
+    # sysconfig.get_platform() describes the Python interpreter, so x64 Python
+    # running under emulation on an ARM computer reports win-amd64, which is
+    # supported. (Don't use platform.machine(): on Windows it reports the
+    # hardware, so it says ARM64 even for emulated x64 Python.)
+    if sysconfig.get_platform() == "win-arm64":
         print("""\
 It looks like your computer uses an ARM CPU. Windows ARM is not currently
 supported by CMU Graphics. Please install Python for Windows x64 instead.
