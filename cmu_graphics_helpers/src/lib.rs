@@ -1836,6 +1836,22 @@ fn taskbar_icon() -> Option<winit::window::Icon> {
     winit::window::Icon::from_rgba(image.into_raw(), width, height).ok()
 }
 
+// The taskbar groups windows by app ID, and a process without one is grouped
+// as python.exe, so the taskbar shows Python's icon instead of the window's.
+// Giving the process its own ID fixes that (and keeps cmu_graphics windows out
+// of IDLE's group). It only affects windows created afterward, so call it
+// before creating the window. Keep the ID stable: changing it splits taskbar
+// grouping and pins between versions.
+#[cfg(target_os = "windows")]
+fn set_app_user_model_id() {
+    use windows_sys::Win32::UI::Shell::SetCurrentProcessExplicitAppUserModelID;
+    // Safety: w! makes a static, null-terminated UTF-16 string. Failure only
+    // means the taskbar keeps Python's icon, so the result is ignored.
+    let _ = unsafe {
+        SetCurrentProcessExplicitAppUserModelID(windows_sys::w!("CMU.CSAcademy.CMUGraphics"))
+    };
+}
+
 // macOS has no per-window icons, so winit ignores the window icon there; the
 // Dock shows the application's icon instead, which would otherwise be
 // Python's. Must be called on the main thread, after the event loop exists.
@@ -1924,6 +1940,7 @@ fn run_event_loop(
     #[cfg(target_os = "windows")]
     {
         use winit::platform::windows::WindowAttributesExtWindows;
+        set_app_user_model_id();
         window_attributes = window_attributes.with_taskbar_icon(taskbar_icon());
     }
 
