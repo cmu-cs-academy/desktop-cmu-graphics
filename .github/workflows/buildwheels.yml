@@ -8,12 +8,15 @@ on:
     branches-ignore:
       - main
     # The inputs that change the built wheel -- keep in sync with WATCHED_PATHS
-    # in build/check_helpers_version.py -- plus the script that vendors the
-    # wheels and the workflow machinery that builds them.
+    # in build/check_helpers_version.py -- plus the scripts that vendor and
+    # stamp the wheels and the workflow machinery that builds them. Keep in
+    # sync with STAMPED_PATHS in build/helpers/wheel_stamp.py too: tests fail
+    # on a change to any of these until this workflow commits new wheels.
     paths:
       - cmu_graphics_helpers/**
       - .cargo/config.toml
       - build/helpers/build_cmuhelp_modules.py
+      - build/helpers/wheel_stamp.py
       - .github/workflows/buildwheels.yml
       - .github/actions/linux-helpers-wheel/**
       - .github/actions/rust-build-env/**
@@ -66,7 +69,7 @@ jobs:
           path: cmu_graphics_helpers/target/wheels/*.whl
 
   vendor_binaries:
-    name: Commit built binaries to the branch
+    name: Commit built wheels and binaries to the branch
     needs: build_wheels
     # Don't run on main, where main the wheels are published to PyPI instead.
     if: github.ref != 'refs/heads/main'
@@ -78,12 +81,15 @@ jobs:
 
       - uses: actions/download-artifact@v5
         with:
-          path: wheels
+          pattern: wheels-*
+          path: built-wheels
           merge-multiple: true
 
-      # Wheels for platforms the zip distribution does not ship (Linux) and the
-      # sdist are ignored by the script.
-      - name: Vendor the wheels and commit them
+      # Commits the wheels to wheels/, where tests install the pip
+      # distribution from, and vendors the same wheels into the zip
+      # distribution's module tree (which skips Linux). The stamp records the
+      # source they were built from, so tests can tell whether they're stale.
+      - name: Commit the wheels and vendored binaries
         shell: bash
         run: |
           set -euo pipefail
@@ -94,16 +100,22 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           for attempt in 1 2 3; do
+            rm -rf wheels
+            mkdir wheels
+            cp built-wheels/*.whl wheels/
+            # Stamp the commit the wheels were built from, not the branch tip,
+            # which may have moved on by a retry
+            python build/helpers/wheel_stamp.py write --rev "$GITHUB_SHA"
             python build/helpers/build_cmuhelp_modules.py --wheels wheels
-            git add "$modules"
+            git add --all wheels "$modules"
 
             if git diff --cached --quiet; then
-              echo "Vendored binaries are already up to date; nothing to commit."
+              echo "Wheels and vendored binaries are already up to date; nothing to commit."
               exit 0
             fi
 
             git commit \
-              -m "Update vendored cmu_graphics_helpers binaries" \
+              -m "Update cmu_graphics_helpers wheels and vendored binaries" \
               -m "Built by $GITHUB_WORKFLOW run $GITHUB_RUN_ID from $GITHUB_SHA."
 
             if git push origin "HEAD:$branch"; then
