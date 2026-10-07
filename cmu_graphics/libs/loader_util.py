@@ -1,5 +1,4 @@
 import sys
-import struct
 import platform
 import os
 import sysconfig
@@ -13,19 +12,15 @@ def get_platform_string():
         if platform.machine() == 'arm64':
             plat += '_arm'
     elif sys.platform == "win32":
-        plat = "win"
         # sysconfig.get_platform() describes the Python interpreter, so x64
         # Python running under emulation on an ARM computer reports win-amd64
         # and gets the x64 binaries. (Don't use platform.machine(): on Windows
         # it reports the hardware, so it says ARM64 even for emulated x64
-        # Python.)
-        if sysconfig.get_platform() == "win-arm64":
-            plat += "_arm"
-        else:
-            n_bits = struct.calcsize("P") * 8
-            plat += "_%d" % n_bits
-    python_major, python_minor, _ = platform.python_version_tuple()
-    plat += "_%s%s" % (python_major, python_minor)
+        # Python.) 32-bit Python reports win32, which has no binaries.
+        plat = {
+            "win-amd64": "win_64",
+            "win-arm64": "win_arm",
+        }.get(sysconfig.get_platform(), "unsupported")
     return plat
 
 def verify_os():
