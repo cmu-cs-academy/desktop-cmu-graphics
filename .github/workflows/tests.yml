@@ -24,6 +24,12 @@ jobs:
     name: Tests on ${{ matrix.os }}${{ matrix.python-arch && format(' with {0} Python', matrix.python-arch) || '' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    env:
+      # On windows-11-arm, uv picks an x64 Python for a bare version request,
+      # even though ARM64 builds exist, so those jobs name the architecture
+      # explicitly, both here (for uv sync and build.py) and to tox.
+      UV_PYTHON: ${{ matrix.uv-python || '3.11' }}
+      TOX_PYTHON_ARCH: ${{ matrix.tox-python-arch }}
     defaults:
       run:
         shell: bash
@@ -35,6 +41,8 @@ jobs:
           - os: macos-15-intel
           - os: windows-latest
           - os: windows-11-arm
+            uv-python: cpython-3.11-windows-aarch64-none
+            tox-python-arch: '-64-arm64'
             # The Python the zip env must run, checked after the tests
             zip-python-platform: win-arm64
           # x64 Python running under emulation on an ARM computer, as many
@@ -42,6 +50,8 @@ jobs:
           # there, so the zip distribution's loader must pick the x64 binary.
           - os: windows-11-arm
             python-arch: x64
+            uv-python: cpython-3.11-windows-x86_64-none
+            tox-python-arch: '-64-x86_64'
             zip-python-platform: win-amd64
             # Only the zip distribution has an x64 cmu_graphics_helpers built
             # to test here; the pip env would need one built for x64 on ARM.
@@ -68,15 +78,6 @@ jobs:
         uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
-
-      # On PATH ahead of the runner's ARM64 Python, so tox (whose uv prefers
-      # system Pythons) creates py311-zip with it
-      - name: Install x64 Python
-        if: matrix.python-arch == 'x64'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          architecture: x64
 
       - name: Check the cmu_graphics_helpers version
         # Only needs the standard library, hence --no-project rather than the
@@ -105,6 +106,12 @@ jobs:
       # uv-sync-args, which would shadow the manylinux wheel on Linux.
       - name: Install dev dependencies
         run: uv sync ${{ matrix.uv-sync-args }}
+
+      # tox.ini points UV_FIND_LINKS here, and uv errors if the directory is
+      # missing -- which it is when nothing built the helpers wheel
+      - name: Create the empty helpers wheel directory
+        if: matrix.python-arch == 'x64'
+        run: mkdir -p cmu_graphics_helpers/target/wheels
 
       - name: Build the installer zip and pypi package
         run: uv run --no-sync build/build.py
