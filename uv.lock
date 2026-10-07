@@ -38,7 +38,7 @@ wheels = [
 name = "cmu-graphics"
 source = { editable = "." }
 dependencies = [
-    { name = "cmu-graphics-helpers", marker = "platform_machine != 'ARM64'" },
+    { name = "cmu-graphics-helpers" },
 ]
 
 [package.dev-dependencies]
@@ -54,7 +54,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "cmu-graphics-helpers", marker = "platform_machine != 'ARM64'", directory = "cmu_graphics_helpers" }]
+requires-dist = [{ name = "cmu-graphics-helpers", directory = "cmu_graphics_helpers" }]
 
 [package.metadata.requires-dev]
 dev = [

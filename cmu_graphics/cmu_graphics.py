@@ -412,11 +412,8 @@ class Sound(object):
                 path = os.path.abspath(os.path.join(__main__.__file__, '..', url))
             else:
                 path = os.path.abspath(os.path.join(os.getcwd(), url))
-            try:
-                with open(path, 'rb') as f:
-                    data = f.read()
-            except Exception:
-                raise Exception('Failed to load sound data')
+            with open(path, 'rb') as f:
+                data = f.read()
 
         self._sound = wyvern.WyvernSound(data)
 
@@ -752,9 +749,6 @@ class App(object):
             self.inRedrawAll = False
 
     def drawErrorScreen(self):
-        wyvern_surface = wyvern.ImageSurface(self.width, self.height)
-        ctx = wyvern_surface.canvas
-
         with NoMvc():
             Rect(0, 0, self.width, self.height, fill=None, border='red', borderWidth=2)
             Rect(
@@ -784,8 +778,6 @@ class App(object):
                 font='Arial',
                 fill='red',
             )
-
-        self.redrawAll(ctx)
 
     def handleKeyPress(self, key, modifiers):
         self._modifiers = list(modifiers)
@@ -1125,6 +1117,14 @@ class App(object):
     def handleEvent(self, event, surface):
         self._ctx = surface.canvas
 
+        # The inspector keeps working after the app stops (e.g. on an error),
+        # so track the mouse and control key even then
+        if event.event_type in ('mouse_move', 'mouse_drag'):
+            self.inspector.setMousePosition(event.mouse.x, event.mouse.y)
+        elif event.event_type in ('key_press', 'key_release'):
+            if event.key.key == 'control':
+                self.isCtrlKeyDown = event.event_type == 'key_press'
+
         if self.stopped and event.event_type not in ('redraw', 'step'):
             return
 
@@ -1157,23 +1157,17 @@ class App(object):
             )
 
         elif event.event_type == 'mouse_move':
-            self.inspector.setMousePosition(event.mouse.x, event.mouse.y)
             self.callUserFn('onMouseMove', (event.mouse.x, event.mouse.y))
 
         elif event.event_type == 'mouse_drag':
-            self.inspector.setMousePosition(event.mouse.x, event.mouse.y)
             self.callUserFn(
                 'onMouseDrag', (event.mouse.x, event.mouse.y, list(event.mouse.buttons))
             )
 
         elif event.event_type == 'key_press':
-            if event.key.key == 'control':
-                self.isCtrlKeyDown = True
             self.handleKeyPress(event.key.key, event.key.modifiers)
 
         elif event.event_type == 'key_release':
-            if event.key.key == 'control':
-                self.isCtrlKeyDown = False
             self.handleKeyRelease(event.key.key, event.key.modifiers)
 
         elif event.event_type == 'modifiers_changed':
@@ -1213,19 +1207,23 @@ class App(object):
         self._running = True
         wyvern.set_steps_per_second(self.stepsPerSecond)
 
-        wyvern.run(
-            self.on_event,
-            int(self.width),
-            int(self.height),
-            True,
-            self.title,
-            self._fullscreen,
-            self._cursorVisible,
-            # Set when running tests, so windows don't take focus
-            visible=not os.environ.get('CMU_GRAPHICS_HIDDEN_WINDOW'),
-        )
-
-        self._running = False
+        try:
+            wyvern.run(
+                self.on_event,
+                int(self.width),
+                int(self.height),
+                True,
+                self.title,
+                self._fullscreen,
+                self._cursorVisible,
+                # Set when running tests, so windows don't take focus
+                visible=not os.environ.get('CMU_GRAPHICS_HIDDEN_WINDOW'),
+            )
+        finally:
+            # The window is gone even if the event loop failed, so there's no
+            # error screen to draw. self._running = False causes _safeMethod to exit
+            # instead of drawing
+            self._running = False
         cleanAndClose()
 
 
