@@ -109,82 +109,25 @@ macos-signing → Environment secrets**.
 ## 4. AWS role for the S3 upload
 
 The release job assumes an IAM role with GitHub's OIDC token, so no AWS keys are
-stored anywhere. Run these with credentials for the AWS account that owns
-`cmu-cs-academy.lib.prod`.
+stored anywhere. The role, and the account's GitHub OIDC provider, are in
+Terraform in the `cmu-cs-academy/devops` repository, in
+`desktop_cmu_graphics_release.tf`. Only jobs in this repository's `release`
+environment can assume the role, and it can only write
+`desktop-cmu-graphics/cmu_graphics_installer.zip` and
+`desktop-cmu-graphics/version.txt` in `cmu-cs-academy.lib.prod`. If the workflow
+ever uploads anything else, add it to that policy.
 
-### Allow GitHub's OIDC provider
+1. Apply that Terraform.
+2. Tell the workflow the role's ARN, which Terraform outputs as
+   `desktop_cmu_graphics_release_role_arn`:
 
-Skip this if the account already has an identity provider for
-`token.actions.githubusercontent.com` (check **IAM → Identity providers**).
+   ```bash
+   gh variable set AWS_RELEASE_ROLE_ARN --env release \
+     --body "arn:aws:iam::073306309760:role/desktop-cmu-graphics-release"
+   ```
 
-```bash
-aws iam create-open-id-connect-provider \
-  --url https://token.actions.githubusercontent.com \
-  --client-id-list sts.amazonaws.com
-```
-
-### Create the role
-
-Save this as `trust.json`, with the account ID filled in. It lets only jobs
-in this repository's `release` environment assume the role.
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:cmu-cs-academy/desktop-cmu-graphics:environment:release"
-        }
-      }
-    }
-  ]
-}
-```
-
-Save this as `upload.json`. It allows writing into the zip distribution's
-prefix, and nothing else.
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "s3:PutObject",
-      "Resource": "arn:aws:s3:::cmu-cs-academy.lib.prod/desktop-cmu-graphics/*"
-    }
-  ]
-}
-```
-
-Then:
-
-```bash
-aws iam create-role --role-name desktop-cmu-graphics-release \
-  --assume-role-policy-document file://trust.json
-aws iam put-role-policy --role-name desktop-cmu-graphics-release \
-  --policy-name upload-zip-distribution --policy-document file://upload.json
-```
-
-### Tell the workflow about it
-
-```bash
-gh variable set AWS_RELEASE_ROLE_ARN --env release \
-  --body "arn:aws:iam::<ACCOUNT_ID>:role/desktop-cmu-graphics-release"
-```
-
-The workflow assumes the bucket is in `us-east-1`. Check with
-`aws s3api get-bucket-location --bucket cmu-cs-academy.lib.prod`; a
-`LocationConstraint` of `null` means `us-east-1`. For any other region, also
-run `gh variable set AWS_REGION --env release --body <region>`.
+The bucket is in `us-east-1`, which the workflow uses unless the `release`
+environment sets an `AWS_REGION` variable.
 
 
 ## 5. Rehearse with a pre-release
