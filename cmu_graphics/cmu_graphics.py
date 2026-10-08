@@ -1641,6 +1641,12 @@ def save_update_info(update_info):
         f.write(json.dumps(update_info))
 
 
+def version_key(version):
+    # Compare release numbers numerically, so that 2.0.10 is newer than 2.0.9.
+    # Raises ValueError for anything that isn't a plain X.Y.Z version.
+    return tuple(int(part) for part in version.split('.'))
+
+
 def check_for_update():
     try:
         update_info = get_update_info()
@@ -1669,7 +1675,7 @@ def check_for_update():
         else:
             most_recent_version = update_info.get('most_recent_version', version)
 
-        if most_recent_version > version:
+        if version_key(most_recent_version) > version_key(version):
             print(
                 f'\n\nYou are running cmu-graphics version {version}, but a newer version {most_recent_version} is available.'
             )
