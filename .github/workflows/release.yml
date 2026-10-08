@@ -17,12 +17,13 @@ permissions:
   contents: read
 
 env:
-  # Drive build.py and notarize.py with 3.11
+  # Drive build.py with 3.11
   UV_PYTHON: '3.11'
 
 jobs:
-  # Runs on macOS for codesign and notarytool. The release environment holds
-  # the signing secrets and requires approval; PyPI trusts this workflow and
+  # Runs on macOS for codesign, to check the zip's macOS binaries are signed;
+  # buildwheels.yml signed and notarized them when it vendored them. The
+  # release environment requires approval; PyPI trusts this workflow and
   # environment to publish cmu-graphics, and the AWS role trusts them to write
   # the zip distribution to S3.
   release:
@@ -61,41 +62,10 @@ jobs:
             echo "final=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Import the signing certificate
-        env:
-          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
-          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-        run: |
-          set -euo pipefail
-          keychain="$RUNNER_TEMP/signing.keychain-db"
-          keychain_password="$(uuidgen)"
-          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
-          security create-keychain -p "$keychain_password" "$keychain"
-          security set-keychain-settings -lut 21600 "$keychain"
-          security unlock-keychain -p "$keychain_password" "$keychain"
-          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" \
-            -P "$MACOS_CERTIFICATE_PASSWORD" -f pkcs12 -A -t cert
-          security set-key-partition-list -S apple-tool:,apple: \
-            -k "$keychain_password" "$keychain" > /dev/null
-          # Search the new keychain, so codesign finds the certificate
-          security list-keychains -d user -s "$keychain" \
-            $(security list-keychains -d user | tr -d '"')
-          rm "$RUNNER_TEMP/certificate.p12"
-
-      # build (for build.py) and tqdm (for notarize.py) are in the dev group.
-      # The project itself isn't installed, so nothing here compiles Rust.
+      # build.py needs build, from the dev group. The project itself isn't
+      # installed, so nothing here compiles Rust.
       - name: Install dev dependencies
         run: uv sync --only-dev
-
-      # Signs the vendored macOS cmu_graphics_helpers binaries that aren't
-      # signed yet, in place, so the zip built next ships them signed, then
-      # notarizes them. notarize.py works on ../cmu_graphics.
-      - name: Sign and notarize the macOS binaries
-        working-directory: build
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-        run: uv run --no-sync python notarize.py
 
       - name: Build the zip distribution and the pip package
         run: uv run --no-sync python build/build.py
@@ -137,6 +107,3 @@ jobs:
           aws s3 cp --cache-control no-cache cmu_graphics_installer.zip "$S3_DEST"
           aws s3 cp --cache-control no-cache cmu_graphics/meta/version.txt "$S3_DEST"
 
-      - name: Delete the signing keychain
-        if: always()
-        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true

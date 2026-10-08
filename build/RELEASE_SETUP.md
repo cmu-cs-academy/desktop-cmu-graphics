@@ -1,7 +1,8 @@
 # Release setup
 
 One-time setup for the `release` job in `.github/workflows/release.yml`, which
-replaces the CodeBuild deploy. Do sections 1–4 in any order, then rehearse
+replaces the CodeBuild deploy, and for signing in
+`.github/workflows/buildwheels.yml`. Do sections 1–4 in any order, then rehearse
 with a pre-release (5), release for real (6), and retire CodeBuild (7).
 
 Values used throughout:
@@ -9,8 +10,8 @@ Values used throughout:
 | | |
 |---|---|
 | GitHub repository | `cmu-cs-academy/desktop-cmu-graphics` |
-| Workflow file | `release.yml` |
-| GitHub environment | `release` |
+| Workflow files | `release.yml`, `buildwheels.yml` |
+| GitHub environments | `release`, `macos-signing` |
 | PyPI project | `cmu-graphics` |
 | S3 destination | `s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/` |
 | Apple team ID | `LXH25PRRZ2` (hard-coded in `build/notarize.py`) |
@@ -18,8 +19,8 @@ Values used throughout:
 
 ## 1. GitHub `release` environment
 
-The release job waits for approval here, and only this environment gets the
-signing secrets and AWS access.
+The release job waits for approval here, and only this environment gets AWS
+access.
 
 1. Go to the repository's **Settings → Environments → New environment** and
    name it `release`.
@@ -29,8 +30,8 @@ signing secrets and AWS access.
    tags**, then **Add deployment branch or tag rule**: type **Tag**, pattern
    `v*`. Releases only run from tags, so nothing else needs access.
 
-The secrets (section 3) and variables (section 4) below go in this
-environment, not in the repository-wide settings.
+The variables in section 4 go in this environment, not in the
+repository-wide settings.
 
 
 ## 2. PyPI trusted publisher
@@ -50,9 +51,20 @@ token.
 
 ## 3. Apple signing and notarization secrets
 
-The release job signs the zip distribution's macOS `cmu_graphics_helpers`
-binaries with the Developer ID Application certificate, if they aren't signed
-already, and notarizes them with Apple.
+Whenever `buildwheels.yml` vendors new `cmu_graphics_helpers` binaries into a
+branch, it signs the macOS ones with the Developer ID Application certificate
+and notarizes them with Apple. The release job only checks they're signed.
+
+### Create the `macos-signing` environment
+
+The signing secrets go in their own environment. It has no required reviewers,
+since `buildwheels.yml` runs on pushes to any branch other than `main` and
+shouldn't wait for approval. That means anyone who can push a branch can run a
+workflow that reads these secrets.
+
+1. Go to the repository's **Settings → Environments → New environment** and
+   name it `macos-signing`.
+2. Leave **Deployment branches and tags** at **No restriction**.
 
 ### Export the certificate
 
@@ -78,16 +90,16 @@ From the repository, with the `gh` CLI signed in as a repository admin (each
 command prompts for the value, except the first):
 
 ```bash
-base64 -i developer-id.p12 | gh secret set MACOS_CERTIFICATE_P12 --env release
-gh secret set MACOS_CERTIFICATE_PASSWORD --env release
-gh secret set APPLE_ID --env release
-gh secret set APPLE_PASSWORD --env release
+base64 -i developer-id.p12 | gh secret set MACOS_CERTIFICATE_P12 --env macos-signing
+gh secret set MACOS_CERTIFICATE_PASSWORD --env macos-signing
+gh secret set APPLE_ID --env macos-signing
+gh secret set APPLE_PASSWORD --env macos-signing
 ```
 
 `APPLE_ID` is the Apple ID's email address. Then delete `developer-id.p12`.
 
 The same values can be entered by hand under **Settings → Environments →
-release → Environment secrets**.
+macos-signing → Environment secrets**.
 
 
 ## 4. AWS role for the S3 upload
@@ -173,8 +185,8 @@ run `gh variable set AWS_REGION --env release --body <region>`.
 
 ## 5. Rehearse with a pre-release
 
-A pre-release tag runs the whole release job except the S3 upload: it signs,
-notarizes, and publishes to PyPI, where pip ignores pre-releases unless asked.
+A pre-release tag runs the whole release job except the S3 upload: it checks
+the zip's signatures and publishes to PyPI, where pip ignores pre-releases unless asked.
 
 1. Set `cmu_graphics/meta/version.txt` to `3.0.1rc1`, and merge that to `main`.
 2. Tag it: `git tag v3.0.1rc1 && git push origin v3.0.1rc1`.

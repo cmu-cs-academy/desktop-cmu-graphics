@@ -73,11 +73,21 @@ jobs:
     needs: build_wheels
     # Don't run on main, where main the wheels are published to PyPI instead.
     if: github.ref != 'refs/heads/main'
-    runs-on: ubuntu-latest
+    # macOS for codesign and notarytool. The macos-signing environment holds
+    # the signing secrets.
+    runs-on: macos-latest
+    environment: macos-signing
+    timeout-minutes: 60
     permissions:
       contents: write
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
 
       - uses: actions/download-artifact@v7
         with:
@@ -85,12 +95,48 @@ jobs:
           path: built-wheels
           merge-multiple: true
 
+      - name: Import the signing certificate
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password="$(uuidgen)"
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -f pkcs12 -A -t cert
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$keychain_password" "$keychain" > /dev/null
+          # Search the new keychain, so codesign finds the certificate
+          security list-keychains -d user -s "$keychain" \
+            $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/certificate.p12"
+
+      # Vendors the wheels into the zip distribution's module tree (which
+      # skips Linux), then signs and notarizes the macOS binaries there.
+      # notarize.py works on ../cmu_graphics. This happens once, before the
+      # commit loop below, since notarizing takes minutes; the loop copies the
+      # signed modules back in on each attempt.
+      - name: Vendor, sign, and notarize the binaries
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          modules=cmu_graphics/libs/cmu_graphics_helpers_loader/modules
+          python3 build/helpers/build_cmuhelp_modules.py --wheels built-wheels
+          (cd build && uv run --no-project --with tqdm python notarize.py)
+          cp -R "$modules" "$RUNNER_TEMP/signed-modules"
+
       # Commits the wheels to wheels/, where tests install the pip
-      # distribution from, and vendors the same wheels into the zip
-      # distribution's module tree (which skips Linux). The stamp records the
-      # source they were built from, so tests can tell whether they're stale.
+      # distribution from, and the signed vendored modules. The stamp records
+      # the source they were built from, so tests can tell whether they're
+      # stale.
       - name: Commit the wheels and vendored binaries
-        shell: bash
         run: |
           set -euo pipefail
           branch="$GITHUB_REF_NAME"
@@ -105,8 +151,9 @@ jobs:
             cp built-wheels/*.whl wheels/
             # Stamp the commit the wheels were built from, not the branch tip,
             # which may have moved on by a retry
-            python build/helpers/wheel_stamp.py write --rev "$GITHUB_SHA"
-            python build/helpers/build_cmuhelp_modules.py --wheels wheels
+            python3 build/helpers/wheel_stamp.py write --rev "$GITHUB_SHA"
+            rm -rf "$modules"
+            cp -R "$RUNNER_TEMP/signed-modules" "$modules"
             git add --all wheels "$modules"
 
             if git diff --cached --quiet; then
@@ -130,6 +177,10 @@ jobs:
 
           echo "Gave up after 3 attempts; $branch is moving faster than this job can keep up."
           exit 1
+
+      - name: Delete the signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
 
   make_sdist:
     name: Make SDist
