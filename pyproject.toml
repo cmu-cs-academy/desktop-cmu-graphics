@@ -63,6 +63,7 @@ dev = [
     "tox",
     "tox-uv-bare>=1.36.0",
     "tqdm>=4.70.0",
+    "twine>=6.1",
 ]
 
 [tool.uv.sources]

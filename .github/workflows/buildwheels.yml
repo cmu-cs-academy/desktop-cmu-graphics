@@ -69,9 +69,30 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.target }}
           path: cmu_graphics_helpers/target/wheels/*.whl
 
+  # Committed to wheels/ with the wheels, for release.yml to publish with them
+  make_sdist:
+    name: Build the sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build the sdist with maturin
+        uses: PyO3/maturin-action@v1
+        with:
+          working-directory: cmu_graphics_helpers
+          command: sdist
+
+      - name: Upload the sdist
+        uses: actions/upload-artifact@v6
+        with:
+          name: wheels-sdist
+          path: cmu_graphics_helpers/target/wheels/*.tar.gz
+
   vendor_binaries:
     name: Commit built wheels and binaries to the branch
-    needs: build_wheels
+    needs: [build_wheels, make_sdist]
     # Don't run on main (see the push trigger above)
     if: github.ref != 'refs/heads/main'
     # macOS for codesign and notarytool. The macos-signing environment holds
@@ -133,8 +154,9 @@ jobs:
           (cd build && uv run --no-project --with tqdm python notarize.py)
           cp -R "$modules" "$RUNNER_TEMP/signed-modules"
 
-      # Commits the wheels to wheels/, where tests install the pip
-      # distribution from, and the signed vendored modules. The stamp records
+      # Commits the wheels and sdist to wheels/, where tests install the pip
+      # distribution from and release.yml publishes them from, and the signed
+      # vendored modules. The stamp records
       # the source they were built from, so tests can tell whether they're
       # stale.
       - name: Commit the wheels and vendored binaries
@@ -149,7 +171,7 @@ jobs:
           for attempt in 1 2 3; do
             rm -rf wheels
             mkdir wheels
-            cp built-wheels/*.whl wheels/
+            cp built-wheels/*.whl built-wheels/*.tar.gz wheels/
             # Stamp the commit the wheels were built from, not the branch tip,
             # which may have moved on by a retry
             python3 build/helpers/wheel_stamp.py write --rev "$GITHUB_SHA"

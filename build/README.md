@@ -45,7 +45,7 @@ The `release` job (`.github/workflows/release.yml`) checks that the tag matches
   macOS binaries are signed with `tests/check_binaries.py` (`buildwheels.yml`
   signed and notarized them),
 - publishes to PyPI with trusted publishing: first `cmu-graphics-helpers`,
-  from the wheels `buildwheels.yml` committed to `wheels/` plus an sdist,
+  from the wheels and sdist `buildwheels.yml` committed to `wheels/`,
   unless PyPI already has that version, then `cmu-graphics`, and
 - uploads the zip and `version.txt` to S3, which is what installed copies
   check for updates. Pre-release versions (`v3.0.1rc1`) skip this step: they go

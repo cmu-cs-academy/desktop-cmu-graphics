@@ -22,10 +22,7 @@ env:
 
 jobs:
   # Runs on macOS for codesign, to check the zip's macOS binaries are signed;
-  # buildwheels.yml signed and notarized them when it vendored them. The
-  # release environment requires approval; PyPI trusts this workflow and
-  # environment to publish cmu-graphics and cmu-graphics-helpers, and the AWS
-  # role trusts them to write the zip distribution to S3.
+  # buildwheels.yml signed and notarized them when it vendored them.
   release:
     name: Release ${{ github.ref_name }}
     runs-on: macos-latest
@@ -62,65 +59,32 @@ jobs:
             echo "final=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # build.py needs build, from the dev group. The project itself isn't
-      # installed, so nothing here compiles Rust.
-      - name: Install dev dependencies
-        run: uv sync --only-dev
-
+      # --only-dev, here and below, gives uv run just the dev group, which has
+      # build for build.py. The project itself isn't installed, so nothing here
+      # compiles Rust.
       - name: Build the zip distribution and the pip package
-        run: uv run --no-sync python build/build.py
+        run: uv run --only-dev python build/build.py
 
       # check_binaries.py looks in ./cmu_graphics
       - name: Check the zip's macOS binaries are signed
         working-directory: cmu_graphics_installer
-        run: uv run --no-sync python ../tests/check_binaries.py
+        run: uv run --only-dev python ../tests/check_binaries.py
 
+      # Pre-releases skip the S3 upload, so this is where to get their zip to
+      # try it out.
       - uses: actions/upload-artifact@v7
         with:
           name: zip-distribution
           path: cmu_graphics_installer.zip
           if-no-files-found: error
 
-      # Most releases don't change the helpers version, so skip publishing them
-      # when PyPI already has this version. (A rebuilt wheel of a published
-      # version differs byte for byte from the one there, which PyPI would
-      # reject anyway.)
-      - name: Check whether PyPI has this cmu-graphics-helpers version
-        id: helpers
-        run: |
-          set -euo pipefail
-          uv run --no-project python - <<'PY'
-          import os, tomllib, urllib.error, urllib.request
-          with open('cmu_graphics_helpers/Cargo.toml', 'rb') as f:
-              version = tomllib.load(f)['package']['version']
-          url = f'https://pypi.org/pypi/cmu-graphics-helpers/{version}/json'
-          try:
-              urllib.request.urlopen(url).close()
-              published = True
-          except urllib.error.HTTPError as e:
-              if e.code != 404:
-                  raise
-              published = False
-          if published:
-              print(f'cmu-graphics-helpers {version} is already on PyPI; not publishing it.')
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f'published={str(published).lower()}\n')
-          PY
-
-      # cmu-graphics pins cmu-graphics-helpers, so it goes first. The wheels are
-      # the ones buildwheels.yml committed to wheels/, which the tests ran
-      # against; check they were built from this source.
       - name: Check the committed cmu_graphics_helpers wheels are up to date
-        if: steps.helpers.outputs.published == 'false'
         run: uv run --no-project python build/helpers/wheel_stamp.py check
 
-      - name: Build the cmu_graphics_helpers sdist
-        if: steps.helpers.outputs.published == 'false'
-        run: uvx --from 'maturin>=1.12,<2.0' maturin sdist -m cmu_graphics_helpers/Cargo.toml -o helpers-dist
-
+      # --skip-existing skips any file PyPI already has under that name, so
+      # that we can publish cmu-graphics even if cmu-graphics-helpers hasn't changed.
       - name: Publish cmu-graphics-helpers to PyPI
-        if: steps.helpers.outputs.published == 'false'
-        run: uv publish --trusted-publishing always helpers-dist/*.tar.gz wheels/*.whl
+        run: uv run --only-dev twine upload --skip-existing wheels/*.tar.gz wheels/*.whl
 
       # --check-url skips files PyPI already has, so a re-run after a later
       # step failed doesn't fail here.
