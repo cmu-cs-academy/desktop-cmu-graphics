@@ -81,54 +81,46 @@ jobs:
           path: cmu_graphics_installer.zip
           if-no-files-found: error
 
-      # cmu-graphics pins cmu-graphics-helpers, so it goes first. The wheels are
-      # the ones buildwheels.yml committed to wheels/, which the tests ran
-      # against; check they were built from this source.
-      - name: Check the committed cmu_graphics_helpers wheels are up to date
-        run: uv run --no-project python build/helpers/wheel_stamp.py check
-
-      - name: Build the cmu_graphics_helpers sdist
-        run: uvx --from 'maturin>=1.12,<2.0' maturin sdist -m cmu_graphics_helpers/Cargo.toml -o helpers-dist
-
-      # Most releases don't change the helpers version, and a rebuilt wheel
-      # of an already-published version differs byte for byte from the one on
-      # PyPI, which PyPI rejects. So only upload the files PyPI doesn't have
-      # for this version yet (all of them, for a new version). That also makes
-      # a re-run after a later step failed skip what was already uploaded.
-      - name: Publish cmu-graphics-helpers to PyPI
+      # Most releases don't change the helpers version, so skip publishing them
+      # when PyPI already has this version. (A rebuilt wheel of a published
+      # version differs byte for byte from the one there, which PyPI would
+      # reject anyway.)
+      - name: Check whether PyPI has this cmu-graphics-helpers version
+        id: helpers
         run: |
           set -euo pipefail
-          cp wheels/*.whl helpers-dist/
-          # The filenames PyPI has for this version: none if it's a 404
-          published="$(uv run --no-project python - <<'PY'
-          import json, tomllib, urllib.error, urllib.request
+          uv run --no-project python - <<'PY'
+          import os, tomllib, urllib.error, urllib.request
           with open('cmu_graphics_helpers/Cargo.toml', 'rb') as f:
               version = tomllib.load(f)['package']['version']
           url = f'https://pypi.org/pypi/cmu-graphics-helpers/{version}/json'
           try:
-              with urllib.request.urlopen(url) as response:
-                  files = json.load(response)['urls']
+              urllib.request.urlopen(url).close()
+              published = True
           except urllib.error.HTTPError as e:
               if e.code != 404:
                   raise
-              files = []
-          for f in files:
-              print(f['filename'])
+              published = False
+          if published:
+              print(f'cmu-graphics-helpers {version} is already on PyPI; not publishing it.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f'published={str(published).lower()}\n')
           PY
-          )"
-          to_upload=()
-          for file in helpers-dist/*; do
-            if grep -qxF "$(basename "$file")" <<< "$published"; then
-              echo "PyPI already has $(basename "$file"); skipping it."
-            else
-              to_upload+=("$file")
-            fi
-          done
-          if [ ${#to_upload[@]} -eq 0 ]; then
-            echo "PyPI already has every cmu-graphics-helpers file."
-          else
-            uv publish --trusted-publishing always "${to_upload[@]}"
-          fi
+
+      # cmu-graphics pins cmu-graphics-helpers, so it goes first. The wheels are
+      # the ones buildwheels.yml committed to wheels/, which the tests ran
+      # against; check they were built from this source.
+      - name: Check the committed cmu_graphics_helpers wheels are up to date
+        if: steps.helpers.outputs.published == 'false'
+        run: uv run --no-project python build/helpers/wheel_stamp.py check
+
+      - name: Build the cmu_graphics_helpers sdist
+        if: steps.helpers.outputs.published == 'false'
+        run: uvx --from 'maturin>=1.12,<2.0' maturin sdist -m cmu_graphics_helpers/Cargo.toml -o helpers-dist
+
+      - name: Publish cmu-graphics-helpers to PyPI
+        if: steps.helpers.outputs.published == 'false'
+        run: uv publish --trusted-publishing always helpers-dist/*.tar.gz wheels/*.whl
 
       # --check-url skips files PyPI already has, so a re-run after a later
       # step failed doesn't fail here.

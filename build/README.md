@@ -46,8 +46,7 @@ The `release` job (`.github/workflows/release.yml`) checks that the tag matches
   signed and notarized them),
 - publishes to PyPI with trusted publishing: first `cmu-graphics-helpers`,
   from the wheels `buildwheels.yml` committed to `wheels/` plus an sdist,
-  skipping any file PyPI already has (so nothing, when the helpers version
-  hasn't changed), then `cmu-graphics`, and
+  unless PyPI already has that version, then `cmu-graphics`, and
 - uploads the zip and `version.txt` to S3, which is what installed copies
   check for updates. Pre-release versions (`v3.0.1rc1`) skip this step: they go
   to PyPI, where pip ignores them unless asked, but not to the zip download.
@@ -62,13 +61,3 @@ It needs a `release` environment with an AWS role, and PyPI must trust the
   secrets in the `macos-signing` environment.
   `tests/check_binaries.py` checks the code signature of every bundled
   `.so`/`.dylib` in the zip test environments on macOS.
-
-Binaries vendored by hand with `build_cmuhelp_modules.py` aren't signed. Sign
-  and notarize them with `notarize.py` (run from `build/`), which needs an Apple
-  Developer Certificate in your keychain with the appropriate permissions, and
-  these environment variables:
-
-```
-export APPLE_ID= # your apple developer id, for notarization
-export APPLE_PASSWORD= # an app-specific password for that apple id
-```
