@@ -1,8 +1,8 @@
 name: Release
 
 # On a v* tag, releases cmu-graphics: to PyPI, along with the
-# cmu-graphics-helpers version it pins, and as the zip distribution to S3. See build/README.md for the release steps and build/RELEASE_SETUP.md for
-# the one-time setup this needs.
+# cmu-graphics-helpers version it pins, and as the zip distribution to S3. See
+# build/README.md for the release steps.
 on:
   push:
     tags:

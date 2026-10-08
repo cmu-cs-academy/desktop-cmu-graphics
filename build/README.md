@@ -53,14 +53,13 @@ The `release` job (`.github/workflows/release.yml`) checks that the tag matches
   to PyPI, where pip ignores them unless asked, but not to the zip download.
 
 It needs a `release` environment with an AWS role, and PyPI must trust the
-  workflow for both projects; `RELEASE_SETUP.md` walks through setting these
-  up.
+  workflow for both projects.
 
 
 ## MacOS code signing
 
 `buildwheels.yml` signs and notarizes the macOS binaries it vendors, with the
-  secrets in the `macos-signing` environment (see `RELEASE_SETUP.md`).
+  secrets in the `macos-signing` environment.
   `tests/check_binaries.py` checks the code signature of every bundled
   `.so`/`.dylib` in the zip test environments on macOS.
 
