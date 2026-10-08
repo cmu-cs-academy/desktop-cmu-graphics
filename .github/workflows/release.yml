@@ -1,7 +1,7 @@
 name: Release
 
-# On a v* tag, releases cmu-graphics: to PyPI, and as the zip distribution to
-# S3. See build/README.md for the release steps and build/RELEASE_SETUP.md for
+# On a v* tag, releases cmu-graphics: to PyPI, along with the
+# cmu-graphics-helpers version it pins, and as the zip distribution to S3. See build/README.md for the release steps and build/RELEASE_SETUP.md for
 # the one-time setup this needs.
 on:
   push:
@@ -24,8 +24,8 @@ jobs:
   # Runs on macOS for codesign, to check the zip's macOS binaries are signed;
   # buildwheels.yml signed and notarized them when it vendored them. The
   # release environment requires approval; PyPI trusts this workflow and
-  # environment to publish cmu-graphics, and the AWS role trusts them to write
-  # the zip distribution to S3.
+  # environment to publish cmu-graphics and cmu-graphics-helpers, and the AWS
+  # role trusts them to write the zip distribution to S3.
   release:
     name: Release ${{ github.ref_name }}
     runs-on: macos-latest
@@ -81,9 +81,58 @@ jobs:
           path: cmu_graphics_installer.zip
           if-no-files-found: error
 
+      # cmu-graphics pins cmu-graphics-helpers, so it goes first. The wheels are
+      # the ones buildwheels.yml committed to wheels/, which the tests ran
+      # against; check they were built from this source.
+      - name: Check the committed cmu_graphics_helpers wheels are up to date
+        run: uv run --no-project python build/helpers/wheel_stamp.py check
+
+      - name: Build the cmu_graphics_helpers sdist
+        run: uvx --from 'maturin>=1.12,<2.0' maturin sdist -m cmu_graphics_helpers/Cargo.toml -o helpers-dist
+
+      # Most releases don't change the helpers version, and a rebuilt wheel
+      # of an already-published version differs byte for byte from the one on
+      # PyPI, which PyPI rejects. So only upload the files PyPI doesn't have
+      # for this version yet (all of them, for a new version). That also makes
+      # a re-run after a later step failed skip what was already uploaded.
+      - name: Publish cmu-graphics-helpers to PyPI
+        run: |
+          set -euo pipefail
+          cp wheels/*.whl helpers-dist/
+          # The filenames PyPI has for this version: none if it's a 404
+          published="$(uv run --no-project python - <<'PY'
+          import json, tomllib, urllib.error, urllib.request
+          with open('cmu_graphics_helpers/Cargo.toml', 'rb') as f:
+              version = tomllib.load(f)['package']['version']
+          url = f'https://pypi.org/pypi/cmu-graphics-helpers/{version}/json'
+          try:
+              with urllib.request.urlopen(url) as response:
+                  files = json.load(response)['urls']
+          except urllib.error.HTTPError as e:
+              if e.code != 404:
+                  raise
+              files = []
+          for f in files:
+              print(f['filename'])
+          PY
+          )"
+          to_upload=()
+          for file in helpers-dist/*; do
+            if grep -qxF "$(basename "$file")" <<< "$published"; then
+              echo "PyPI already has $(basename "$file"); skipping it."
+            else
+              to_upload+=("$file")
+            fi
+          done
+          if [ ${#to_upload[@]} -eq 0 ]; then
+            echo "PyPI already has every cmu-graphics-helpers file."
+          else
+            uv publish --trusted-publishing always "${to_upload[@]}"
+          fi
+
       # --check-url skips files PyPI already has, so a re-run after a later
       # step failed doesn't fail here.
-      - name: Publish to PyPI
+      - name: Publish cmu-graphics to PyPI
         run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ pypi_upload/dist/*
 
       - name: Get AWS credentials

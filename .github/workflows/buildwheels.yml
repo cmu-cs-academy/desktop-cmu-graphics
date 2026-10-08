@@ -1,10 +1,11 @@
-name: Build cmu_graphics_helpers (vendor to the branch, or deploy to PyPI on main)
+name: Build cmu_graphics_helpers and commit it to the branch
 
 on:
   workflow_dispatch:
   push:
-    # Not main: there vendor_binaries is skipped and publishing to PyPI is
-    # workflow_dispatch-only, so a run would build wheels nothing consumes.
+    # Not main: there vendor_binaries is skipped, so a run would build wheels
+    # nothing consumes. Changes reach main through PRs, which carry the wheels
+    # built for them, and release.yml publishes those wheels to PyPI.
     branches-ignore:
       - main
     # The inputs that change the built wheel -- keep in sync with WATCHED_PATHS
@@ -71,7 +72,7 @@ jobs:
   vendor_binaries:
     name: Commit built wheels and binaries to the branch
     needs: build_wheels
-    # Don't run on main, where main the wheels are published to PyPI instead.
+    # Don't run on main (see the push trigger above)
     if: github.ref != 'refs/heads/main'
     # macOS for codesign and notarytool. The macos-signing environment holds
     # the signing secrets.
@@ -181,40 +182,3 @@ jobs:
       - name: Delete the signing keychain
         if: always()
         run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
-
-  make_sdist:
-    name: Make SDist
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v7
-      with:
-        persist-credentials: false
-
-    - name: Build SDist
-      uses: PyO3/maturin-action@v1
-      with:
-        working-directory: cmu_graphics_helpers
-        command: sdist
-
-    - uses: actions/upload-artifact@v6
-      with:
-        path: cmu_graphics_helpers/target/wheels/*.tar.gz
-        name: source-distribution
-
-  upload_all:
-    name: Upload to PyPi
-    needs: [build_wheels, make_sdist]
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    environment: pypi
-    permissions:
-      id-token: write
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/download-artifact@v7
-      with:
-        path: dist
-        merge-multiple: true
-
-    - uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://upload.pypi.org/legacy/

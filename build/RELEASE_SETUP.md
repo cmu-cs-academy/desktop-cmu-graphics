@@ -34,19 +34,23 @@ The variables in section 4 go in this environment, not in the
 repository-wide settings.
 
 
-## 2. PyPI trusted publisher
+## 2. PyPI trusted publishers
 
-The release job publishes with a short-lived OIDC token instead of an API
-token.
+The release job publishes `cmu-graphics` and `cmu-graphics-helpers` with a
+short-lived OIDC token instead of an API token. Do this for each of the two
+projects:
 
-1. Sign in to pypi.org as an owner of `cmu-graphics`, and open **Your
-   projects → cmu-graphics → Manage → Publishing**.
+1. Sign in to pypi.org as an owner of the project, and open **Your
+   projects → <project> → Manage → Publishing**.
 2. Under **Add a new publisher**, choose **GitHub** and enter:
    - Owner: `cmu-cs-academy`
    - Repository name: `desktop-cmu-graphics`
    - Workflow name: `release.yml`
    - Environment name: `release`
 3. Click **Add**.
+4. For `cmu-graphics-helpers`, delete its old publisher, the one for
+   `buildwheels.yml` and the `pypi` environment. Nothing publishes from there
+   anymore.
 
 
 ## 3. Apple signing and notarization secrets
@@ -227,3 +231,5 @@ Once 3.0.1 is out:
    variables or Secrets Manager.
 3. Remove the CodeBuild project's IAM role or S3 permissions if nothing else
    uses them.
+4. Delete the repository's `pypi` and `testpypi` environments (**Settings →
+   Environments**). No workflow uses them anymore.

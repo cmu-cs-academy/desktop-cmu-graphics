@@ -34,8 +34,7 @@ Text renders with different fonts on Linux, so text tests can have a
 ## Releasing
 
 1. Bump the version in `cmu_graphics/meta/version.txt`, and merge that to
-   `main`. If `cmu_graphics_helpers` changed, its new version must be on PyPI
-   first: run `buildwheels.yml` on `main` by hand to publish it.
+   `main`.
 2. Tag the commit and push the tag, e.g. `git tag v3.0.1 && git push origin v3.0.1`.
 3. Approve the `release` job of the Release run for the tag.
 
@@ -45,13 +44,16 @@ The `release` job (`.github/workflows/release.yml`) checks that the tag matches
 - builds the zip and pip package with `build.py`, and checks that the zip's
   macOS binaries are signed with `tests/check_binaries.py` (`buildwheels.yml`
   signed and notarized them),
-- publishes the pip package to PyPI with trusted publishing, and
+- publishes to PyPI with trusted publishing: first `cmu-graphics-helpers`,
+  from the wheels `buildwheels.yml` committed to `wheels/` plus an sdist,
+  skipping any file PyPI already has (so nothing, when the helpers version
+  hasn't changed), then `cmu-graphics`, and
 - uploads the zip and `version.txt` to S3, which is what installed copies
   check for updates. Pre-release versions (`v3.0.1rc1`) skip this step: they go
   to PyPI, where pip ignores them unless asked, but not to the zip download.
 
-It needs a `release` environment with signing secrets and an AWS role, and
-  PyPI must trust the workflow; `RELEASE_SETUP.md` walks through setting these
+It needs a `release` environment with an AWS role, and PyPI must trust the
+  workflow for both projects; `RELEASE_SETUP.md` walks through setting these
   up.
 
 
