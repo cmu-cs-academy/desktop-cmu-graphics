@@ -98,7 +98,11 @@ jobs:
     # macOS for codesign and notarytool. The macos-signing environment holds
     # the signing secrets.
     runs-on: macos-latest
-    environment: macos-signing
+    # deployment: false uses the environment's secrets without GitHub
+    # recording a deployment to it, since nothing is deployed
+    environment:
+      name: macos-signing
+      deployment: false
     timeout-minutes: 60
     permissions:
       contents: write
