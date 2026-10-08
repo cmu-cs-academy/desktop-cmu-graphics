@@ -13,7 +13,7 @@ def uv_pip(*args):
     --python pins the operation to
     the interpreter running this script rather than whatever uv would discover
     on its own. UV_FIND_LINKS comes from tox.ini's set_env and is inherited
-    here, so uv resolves cmu-graphics-helpers from the locally built wheel.
+    here, so uv resolves cmu-graphics-helpers from the committed wheels.
     """
     uv = shutil.which('uv')
     if uv is None:
@@ -39,6 +39,7 @@ else:
             # --no-cache because this install is what pulls cmu-graphics-helpers
             # out of UV_FIND_LINKS, and uv caches wheels from there by name and
             # version, ignoring size and mtime -- so a cached wheel from an
-            # earlier build of the same version would win over the one just
-            # built.
-            uv_pip('install', '--no-cache', os.path.join(dist_dir, path))
+            # earlier build of the same version would win over the committed
+            # one. --no-index so that a missing wheel fails the install instead
+            # of uv quietly testing the one published on PyPI.
+            uv_pip('install', '--no-cache', '--no-index', os.path.join(dist_dir, path))

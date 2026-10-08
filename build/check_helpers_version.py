@@ -28,7 +28,9 @@ def pyproject_pin():
         data = tomllib.load(f)
 
     for dep in data['project']['dependencies']:
-        match = re.fullmatch(r'cmu-graphics-helpers==(.+)', dep)
+        # Ignore any environment marker, e.g. "; platform_machine != 'ARM64'"
+        requirement = dep.split(';')[0].strip()
+        match = re.fullmatch(r'cmu-graphics-helpers==(.+)', requirement)
         if match:
             return match.group(1)
 

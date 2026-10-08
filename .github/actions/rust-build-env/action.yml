@@ -1,0 +1,57 @@
+name: Prepare to build cmu_graphics_helpers
+description: >
+  Windows builds Skia from source (see .cargo/config.toml); locate libclang for
+  bindgen there. Also restore the cargo registry/build cache for the
+  cmu_graphics_helpers crate on Windows and macOS -- Linux builds the wheel in
+  a separate Docker container (see linux-helpers-wheel) that this cache can't
+  reach.
+
+runs:
+  using: composite
+  steps:
+    - name: Point bindgen at the runner's LLVM
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $lib = Get-ChildItem -Path "C:\Program Files\LLVM", "C:\Program Files (x86)\LLVM" `
+          -Filter libclang.dll -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($lib) {
+          "found $($lib.FullName)"
+          "LIBCLANG_PATH=$($lib.DirectoryName)" >> $env:GITHUB_ENV
+        } else {
+          throw "libclang.dll not found under C:\Program Files\LLVM. bindgen needs it to build Skia from source."
+        }
+
+    # gn refers to Skia's sources (in the cargo registry) relative to its build
+    # directory (under target/) when both are on the same drive, as they are on
+    # windows-11-arm (windows-latest checks out to D:). Those ../-relative paths
+    # are long enough that ninja fails with "GetFullPathNameA(...): The
+    # filename or extension is too long" -- ninja uses a MAX_PATH buffer there,
+    # so enabling Windows long paths doesn't help. Putting CARGO_HOME on its
+    # own drive letter makes gn use short absolute paths instead. This has to
+    # come before the cache step, which restores into CARGO_HOME.
+    - name: Put CARGO_HOME on its own drive
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $cargoHome = if ($env:CARGO_HOME) { $env:CARGO_HOME } else { Join-Path $env:USERPROFILE '.cargo' }
+        if ((Split-Path -Qualifier $cargoHome) -ne (Split-Path -Qualifier $env:GITHUB_WORKSPACE)) {
+          "CARGO_HOME ($cargoHome) is already on a different drive from the checkout"
+          return
+        }
+        subst R: $cargoHome
+        if ($LASTEXITCODE -ne 0) { throw "subst R: $cargoHome failed" }
+        "CARGO_HOME=R:\" >> $env:GITHUB_ENV
+        "mapped R: to $cargoHome"
+
+    - name: Cache cargo registry and build artifacts
+      if: runner.os != 'Linux'
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: cmu_graphics_helpers
+        # One key for every caller on a given OS/arch, so they share a cache
+        # instead of each storing a copy of the same build. rust-cache keys
+        # by runner.os automatically, but not by arch -- and target/ isn't
+        # arch-namespaced, so macos-latest (arm64) and macos-15-intel (x86_64)
+        # need separate keys or they'd clobber each other's build artifacts.
+        shared-key: skia-${{ runner.arch }}

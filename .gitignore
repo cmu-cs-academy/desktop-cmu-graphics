@@ -39,6 +39,9 @@ parts/
 sdist/
 var/
 wheels/
+# Except the committed cmu_graphics_helpers wheels (see
+# build/helpers/wheel_stamp.py)
+!/wheels/
 *.egg-info/
 .installed.cfg
 *.egg

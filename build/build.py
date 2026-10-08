@@ -17,8 +17,8 @@ def copyfile_log(src, dest, **kwargs):
 
 def set_vendored(dist_py_path, vendored):
     # Bake the distribution switch (see cmu_graphics/dist.py) into a build
-    # copy. The source is checked in as VENDORED = True (used by the zip
-    # installer and local development); this flips it for the pip build.
+    # copy. The source is checked in as VENDORED = False (used by local
+    # development and the pip build); this sets it for the zip installer.
     with open(dist_py_path, "r", encoding="utf-8") as f:
         old_text = f.read()
 
@@ -46,6 +46,9 @@ def build_zip_file(zip_dest, zipfile_name):
     copytree_log("samples", f"{zip_dest}/samples", ignore=local_artifacts)
     copyfile_log("cmu_cpcs_utils.py", f"{zip_dest}/")
 
+    # The zip loads the binaries vendored under cmu_graphics/libs
+    set_vendored(f"{zip_dest}/cmu_graphics/dist.py", True)
+
     for path in ["LICENSE", "INSTRUCTIONS.pdf"]:
         copyfile_log(path, f"{zip_dest}/{os.path.basename(path)}")
 
@@ -66,8 +69,8 @@ def build_pypi_package(pypi_dest):
     for path in ["LICENSE", "README.md", "pyproject.toml"]:
         copyfile_log(path, f"{pypi_dest}/{os.path.basename(path)}")
 
-    # The zip copy keeps the checked-in VENDORED = True; only the pip copy
-    # needs flipping to load dependencies from the system instead of libs.
+    # The checked-in value already is False, but set it explicitly, so the
+    # pip build doesn't depend on what happens to be checked in.
     set_vendored(f"{pypi_dest}/cmu_graphics/dist.py", False)
 
     print('Running python -m build...')

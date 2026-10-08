@@ -16,30 +16,47 @@ permissions:
   contents: read
 
 env:
-  SDL_VIDEODRIVER: dummy
   # Drive build.py and tox with 3.11
   UV_PYTHON: '3.11'
 
 jobs:
   test:
-    name: Tests on ${{ matrix.os }}
+    name: Tests on ${{ matrix.os }}${{ matrix.python-arch && format(' with {0} Python', matrix.python-arch) || '' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    env:
+      # On windows-11-arm, uv picks an x64 Python for a bare version request,
+      # even though ARM64 builds exist, so those jobs name the architecture
+      # explicitly, both here (for the uv run of build.py and tox) and to tox.
+      UV_PYTHON: ${{ matrix.uv-python || '3.11' }}
+      TOX_PYTHON_ARCH: ${{ matrix.tox-python-arch }}
     defaults:
       run:
         shell: bash
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, macos-15-intel, windows-latest, ubuntu-24.04]
         include:
+          - os: macos-latest
+          - os: macos-15-intel
+          - os: windows-latest
+          - os: windows-11-arm
+            uv-python: cpython-3.11-windows-aarch64-none
+            tox-python-arch: '-64-arm64'
+            # The Python the zip env must run, checked after the tests
+            zip-python-platform: win-arm64
+          # x64 Python running under emulation on an ARM computer, as many
+          # students' Windows ARM laptops have. sysconfig reports win-amd64
+          # there, so the zip distribution's loader must pick the x64 binary.
+          - os: windows-11-arm
+            python-arch: x64
+            uv-python: cpython-3.11-windows-x86_64-none
+            tox-python-arch: '-64-x86_64'
+            zip-python-platform: win-amd64
           - os: ubuntu-24.04
             # The zip distribution doesn't support Linux, so only the pip envs
             # run.
             tox-args: -f pip
-            # Don't build cmu-graphics-helpers in the default way; use the wheel
-            # built by actions/linux-helpers-wheel
-            uv-sync-args: --no-install-package cmu-graphics-helpers
 
     steps:
       - uses: actions/checkout@v6
@@ -55,36 +72,53 @@ jobs:
         with:
           enable-cache: true
 
+      # Tests install the helpers from the wheels and vendored binaries
+      # buildwheels.yml commits, so they only test this source once it has
+      # committed ones built from it
+      - name: Check the committed cmu_graphics_helpers wheels are up to date
+        run: uv run --no-project python build/helpers/wheel_stamp.py check
+
       - name: Check the cmu_graphics_helpers version
         # Only needs the standard library, hence --no-project rather than the
-        # synced environment, which doesn't exist yet.
+        # dev environment.
         run: uv run --no-project python build/check_helpers_version.py
 
-      # Before uv sync, which compiles the helpers crate
-      - uses: ./.github/actions/skia-windows-build-env
-
-      # Build the Linux cmu_graphics_helpers wheel for manylinux rather than Ubuntu
-      - uses: ./.github/actions/linux-helpers-wheel
-
-      # Text rendering needs a font that fontconfig maps to Arial
-      - name: Install fonts
+      # Text rendering needs a font that fontconfig maps to Arial. xvfb-run
+      # gives winit's event loop a virtual X display to attach to -- unlike
+      # the old SDL backend, winit has no truly headless/dummy mode.
+      # libxkbcommon-x11-0 is winit's X11 keyboard backend, not installed by
+      # default on the runner image.
+      - name: Install fonts and Xvfb
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y fonts-liberation
+        run: sudo apt-get update && sudo apt-get install -y fonts-liberation xvfb libxkbcommon-x11-0
 
-      # Syncing here builds the cmu-graphics-helpers wheel, which tox
-      # will later access directly via UV_FIND_LINKS in tox.ini.
-      # Sync here so that the "uv run" below doesn't re-sync without
-      # uv-sync-args, which would shadow the manylinux wheel on Linux.
-      - name: Install dev dependencies
-        run: uv sync ${{ matrix.uv-sync-args }}
-
+      # --only-group dev, here and below, gives uv run just the tools this job
+      # needs: tox, tox-uv and build. Leaving out the project and its
+      # dependencies skips compiling the helpers from the path source in
+      # pyproject.toml; tox installs the committed wheels instead.
       - name: Build the installer zip and pypi package
-        run: uv run --no-sync build/build.py
+        run: uv run --only-group dev build/build.py
 
       - name: Run tests
         run: |
           echo "cores: $(nproc 2>/dev/null || sysctl -n hw.ncpu)"
-          uv run --no-sync tox run-parallel -p auto ${{ matrix.tox-args }}
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            xvfb-run -a uv run --only-group dev tox run-parallel -p auto ${{ matrix.tox-args }}
+          else
+            uv run --only-group dev tox run-parallel -p auto ${{ matrix.tox-args }}
+          fi
+
+      # Guard against the Windows ARM jobs passing on a different Python than
+      # the one they're meant to test
+      - name: Check which Python the zip env ran
+        if: matrix.zip-python-platform
+        run: |
+          actual=$(.tox/py311-zip/Scripts/python -c "import sysconfig; print(sysconfig.get_platform())")
+          echo "py311-zip ran $actual Python"
+          if [ "$actual" != "${{ matrix.zip-python-platform }}" ]; then
+            echo "::error::py311-zip ran $actual Python, not ${{ matrix.zip-python-platform }}"
+            exit 1
+          fi
 
       # Save error output generated by test_image_gen.py. This will create
       # one big zip file.
@@ -92,7 +126,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: image-gen-failures-${{ matrix.os }}
+          name: image-gen-failures-${{ matrix.os }}${{ matrix.python-arch && format('-{0}', matrix.python-arch) || '' }}
           # report.html sits beside image_gen/, not inside it, and refers to
           # the images by relative path -- so both are needed, with .tox/ as
           # the archive root, for the report to render once unzipped.
