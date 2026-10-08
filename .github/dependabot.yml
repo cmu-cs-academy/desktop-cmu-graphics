@@ -7,22 +7,3 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
-
-  # Python dev dependencies in uv.lock
-  - package-ecosystem: "uv"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    groups:
-      python:
-        patterns: ["*"]
-
-  # Rust crates for cmu_graphics_helpers. Minor and patch updates are grouped;
-  # major updates each get their own PR, since they tend to need code changes.
-  - package-ecosystem: "cargo"
-    directory: "/cmu_graphics_helpers"
-    schedule:
-      interval: "weekly"
-    groups:
-      rust:
-        update-types: ["minor", "patch"]
