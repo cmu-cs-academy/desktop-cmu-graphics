@@ -15,7 +15,7 @@ geo-types = "0.7.18"
 image = "0.25.10"
 reqwest = {version = "0.13.4", features = ["blocking"]}
 rodio = "0.22.2"
-skia-safe = "0.99.0"
+skia-safe = "0.153.3"
 softbuffer = "0.4.8"
 winit = "0.30.13"
 
