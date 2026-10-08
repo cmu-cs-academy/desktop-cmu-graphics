@@ -30,20 +30,45 @@ Text renders with different fonts on Linux, so text tests can have a
   `output_N.png` to `tests/image_gen/<test>/linux_correct_N.png`.
 
 
+## Releasing
+
+1. Bump the version in `cmu_graphics/meta/version.txt`, and merge that to
+   `main`. If `cmu_graphics_helpers` changed, its new version must be on PyPI
+   first: run `buildwheels.yml` on `main` by hand to publish it.
+2. Tag the commit and push the tag, e.g. `git tag v3.0.1 && git push origin v3.0.1`.
+3. Approve the `release` job of the Release run for the tag.
+
+The `release` job (`.github/workflows/release.yml`) checks that the tag matches
+  `version.txt`, then:
+
+- signs the zip distribution's macOS `cmu_graphics_helpers` binaries, if they
+  aren't signed already, and notarizes them (`notarize.py`), then builds the zip
+  and pip package with `build.py` and checks the zip's signatures with
+  `tests/check_binaries.py`,
+- publishes the pip package to PyPI with trusted publishing, and
+- uploads the zip and `version.txt` to S3, which is what installed copies
+  check for updates. Pre-release versions (`v3.0.1rc1`) skip this step: they go
+  to PyPI, where pip ignores them unless asked, but not to the zip download.
+
+It needs a `release` environment with signing secrets and an AWS role, and
+  PyPI must trust the workflow; `RELEASE_SETUP.md` walks through setting these
+  up.
+
+
 ## MacOS code signing
-Sign and notarize binaries with `notarize.py`. **The macOS binaries the
-  workflow commits are not signed or notarized.** `tests/check_binaries.py`
-  checks the code signature of every bundled `.so`/`.dylib` on macOS, so the
-  macOS test job will fail until they are signed. Run `notarize.py` on them
-  before cutting a release, or restore the previously signed macOS binaries if
-  you only meant to update the Windows one.
 
+**The macOS binaries `buildwheels.yml` commits are not signed or notarized.**
+  The release job signs them, but `tests/check_binaries.py` also checks the
+  code signature of every bundled `.so`/`.dylib` in the zip test environments
+  on macOS, so those tests fail until they are signed. Sign and notarize them
+  locally with `notarize.py` (run from `build/`) and commit the result, or
+  restore the previously signed macOS binaries if you only meant to update the
+  Windows one.
 
-These scripts use a variety of passwords, certificates, and keys. For notarization and deployment, use the following environment variables
+For that, you'll need an Apple Developer Certificate in your keychain with the
+  appropriate permissions, and these environment variables:
 
 ```
 export APPLE_ID= # your apple developer id, for notarization
-export APPLE_PASSWORD= # your apple developer id password
+export APPLE_PASSWORD= # an app-specific password for that apple id
 ```
-
-For signing binaries, you'll need an Apple Developer Certificate in your keychain with the appropriate permissions.

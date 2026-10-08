@@ -1,0 +1,142 @@
+name: Release
+
+# On a v* tag, releases cmu-graphics: to PyPI, and as the zip distribution to
+# S3. See build/README.md for the release steps and build/RELEASE_SETUP.md for
+# the one-time setup this needs.
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Never cancel a release partway through
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Drive build.py and notarize.py with 3.11
+  UV_PYTHON: '3.11'
+
+jobs:
+  # Runs on macOS for codesign and notarytool. The release environment holds
+  # the signing secrets and requires approval; PyPI trusts this workflow and
+  # environment to publish cmu-graphics, and the AWS role trusts them to write
+  # the zip distribution to S3.
+  release:
+    name: Release ${{ github.ref_name }}
+    runs-on: macos-latest
+    environment: release
+    permissions:
+      contents: read
+      # PyPI trusted publishing and the AWS role both authenticate with OIDC
+      id-token: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Check that the tag matches the version
+        id: version
+        run: |
+          set -euo pipefail
+          tag_version="${GITHUB_REF_NAME#v}"
+          version="$(tr -d '[:space:]' < cmu_graphics/meta/version.txt)"
+          if [ "$version" != "$tag_version" ]; then
+            echo "::error::cmu_graphics/meta/version.txt is $version, but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Pre-releases (3.0.1rc1) go to PyPI, where pip ignores them by
+          # default, but not to the zip distribution's download.
+          if [[ "$version" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "final=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "final=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Import the signing certificate
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password="$(uuidgen)"
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -f pkcs12 -A -t cert
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$keychain_password" "$keychain" > /dev/null
+          # Search the new keychain, so codesign finds the certificate
+          security list-keychains -d user -s "$keychain" \
+            $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/certificate.p12"
+
+      # build (for build.py) and tqdm (for notarize.py) are in the dev group.
+      # The project itself isn't installed, so nothing here compiles Rust.
+      - name: Install dev dependencies
+        run: uv sync --only-dev
+
+      # Signs the vendored macOS cmu_graphics_helpers binaries that aren't
+      # signed yet, in place, so the zip built next ships them signed, then
+      # notarizes them. notarize.py works on ../cmu_graphics.
+      - name: Sign and notarize the macOS binaries
+        working-directory: build
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+        run: uv run --no-sync python notarize.py
+
+      - name: Build the zip distribution and the pip package
+        run: uv run --no-sync python build/build.py
+
+      # check_binaries.py looks in ./cmu_graphics
+      - name: Check the zip's macOS binaries are signed
+        working-directory: cmu_graphics_installer
+        run: uv run --no-sync python ../tests/check_binaries.py
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: zip-distribution
+          path: cmu_graphics_installer.zip
+          if-no-files-found: error
+
+      # --check-url skips files PyPI already has, so a re-run after a later
+      # step failed doesn't fail here.
+      - name: Publish to PyPI
+        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ pypi_upload/dist/*
+
+      - name: Get AWS credentials
+        if: steps.version.outputs.final == 'true'
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_RELEASE_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      # Cache-control: no-cache means that the zip file can be cached by the
+      # browser, but the browser has to validate that it has the latest version
+      # before giving it to the user. This should make it so that all users get
+      # that latest version ASAP. version.txt goes last, so installed copies
+      # aren't told to upgrade before the new zip is there.
+      - name: Upload the zip distribution to S3
+        if: steps.version.outputs.final == 'true'
+        env:
+          S3_DEST: s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/
+        run: |
+          set -euo pipefail
+          aws s3 cp --cache-control no-cache cmu_graphics_installer.zip "$S3_DEST"
+          aws s3 cp --cache-control no-cache cmu_graphics/meta/version.txt "$S3_DEST"
+
+      - name: Delete the signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true

@@ -1,6 +1,5 @@
 # Run me from the root of the repo!
 
-import argparse
 import os
 import re
 import sys
@@ -76,37 +75,12 @@ def build_pypi_package(pypi_dest):
     print('Running python -m build...')
     subprocess.run([sys.executable, '-m', 'build'], cwd=pypi_dest, check=True)
 
-def publish(pypi_dest, zip_dest, zipfile_name, is_prod):
-    pypi_repo_args = [] if is_prod else ['--repository', 'testpypi']
-
-    subprocess.run([sys.executable, '-m', 'twine', 'upload',
-        'dist/*', '--verbose', '-u', '__token__', '-p', os.environ['PYPI_TOKEN' if is_prod else 'PYPI_TEST_TOKEN']] + pypi_repo_args,
-        cwd=pypi_dest, check=True)
-
-    s3_dest = ('s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/' if is_prod else 's3://cmu-cs-academy.lib.prod/desktop-cmu-graphics-test/'
-        )
-
-    # Cache-control: no-cache means that the zip file can be cached by the browser,
-    # but the browser has to validate that it has the latest version before giving
-    # it to the user. This should make it so that all users get that latest version ASAP.
-    subprocess.run(['aws', 's3', 'cp', '--cache-control', 'no-cache',
-        zip_dest + '/cmu_graphics/meta/version.txt', s3_dest], check=True)
-    subprocess.run(['aws', 's3', 'cp', '--cache-control', 'no-cache', zipfile_name, s3_dest], check=True)
-
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--publish", action="store_true")
-    parser.add_argument("--prod", action="store_true")
-    args = parser.parse_args()
-
     zip_dest = "cmu_graphics_installer"
     pypi_dest= "pypi_upload"
     zipfile_name = "cmu_graphics_installer.zip"
 
     build_zip_file(zip_dest, zipfile_name)
     build_pypi_package(pypi_dest)
-
-    if args.publish:
-        publish(pypi_dest, zip_dest, zipfile_name, args.prod)
 
 main()
