@@ -13,7 +13,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "cmu-graphics-helpers==0.1.8",
+    "cmu-graphics-helpers==0.1.9",
 ]
 
 [project.urls]
@@ -63,6 +63,7 @@ dev = [
     "tox",
     "tox-uv-bare>=1.36.0",
     "tqdm>=4.70.0",
+    "twine>=6.1",
 ]
 
 [tool.uv.sources]

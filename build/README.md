@@ -6,8 +6,9 @@ The bundled cmu_graphics_helpers binaries are built by
   `.github/workflows/buildwheels.yml`.
 
 On any branch other than `main`, that workflow copies the wheels it built into
-  `cmu_graphics/libs/cmu_graphics_helpers_loader/modules/` and commits them back
-  to the branch, so the branch carries binaries built from its own code.
+  `cmu_graphics/libs/cmu_graphics_helpers_loader/modules/`, signs and notarizes
+  the macOS binaries there, and commits them back to the branch, so the branch
+  carries signed binaries built from its own code.
 
 To vendor by hand instead, run `python3 build/helpers/build_cmuhelp_modules.py`
   from anywhere, after a local `maturin build`. Pass `--wheels <dir>` to vendor
@@ -30,20 +31,33 @@ Text renders with different fonts on Linux, so text tests can have a
   `output_N.png` to `tests/image_gen/<test>/linux_correct_N.png`.
 
 
+## Releasing
+
+1. Bump the version in `cmu_graphics/meta/version.txt`, and merge that to
+   `main`.
+2. Tag the commit and push the tag, e.g. `git tag v3.0.1 && git push origin v3.0.1`.
+3. Approve the `release` job of the Release run for the tag.
+
+The `release` job (`.github/workflows/release.yml`) checks that the tag matches
+  `version.txt`, then:
+
+- builds the zip and pip package with `build.py`, and checks that the zip's
+  macOS binaries are signed with `tests/check_binaries.py` (`buildwheels.yml`
+  signed and notarized them),
+- publishes to PyPI with trusted publishing: first `cmu-graphics-helpers`,
+  from the wheels and sdist `buildwheels.yml` committed to `wheels/`,
+  unless PyPI already has that version, then `cmu-graphics`, and
+- uploads the zip and `version.txt` to S3, which is what installed copies
+  check for updates. Pre-release versions (`v3.0.1rc1`) skip this step: they go
+  to PyPI, where pip ignores them unless asked, but not to the zip download.
+
+It needs a `release` environment with an AWS role, and PyPI must trust the
+  workflow for both projects.
+
+
 ## MacOS code signing
-Sign and notarize binaries with `notarize.py`. **The macOS binaries the
-  workflow commits are not signed or notarized.** `tests/check_binaries.py`
-  checks the code signature of every bundled `.so`/`.dylib` on macOS, so the
-  macOS test job will fail until they are signed. Run `notarize.py` on them
-  before cutting a release, or restore the previously signed macOS binaries if
-  you only meant to update the Windows one.
 
-
-These scripts use a variety of passwords, certificates, and keys. For notarization and deployment, use the following environment variables
-
-```
-export APPLE_ID= # your apple developer id, for notarization
-export APPLE_PASSWORD= # your apple developer id password
-```
-
-For signing binaries, you'll need an Apple Developer Certificate in your keychain with the appropriate permissions.
+`buildwheels.yml` signs and notarizes the macOS binaries it vendors, with the
+  secrets in the `macos-signing` environment.
+  `tests/check_binaries.py` checks the code signature of every bundled
+  `.so`/`.dylib` in the zip test environments on macOS.

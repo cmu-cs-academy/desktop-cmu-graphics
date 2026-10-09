@@ -1,10 +1,11 @@
-name: Build cmu_graphics_helpers (vendor to the branch, or deploy to PyPI on main)
+name: Build cmu_graphics_helpers and commit it to the branch
 
 on:
   workflow_dispatch:
   push:
-    # Not main: there vendor_binaries is skipped and publishing to PyPI is
-    # workflow_dispatch-only, so a run would build wheels nothing consumes.
+    # Not main: there vendor_binaries is skipped, so a run would build wheels
+    # nothing consumes. Changes reach main through PRs, which carry the wheels
+    # built for them, and release.yml publishes those wheels to PyPI.
     branches-ignore:
       - main
     # The inputs that change the built wheel -- keep in sync with WATCHED_PATHS
@@ -68,16 +69,51 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.target }}
           path: cmu_graphics_helpers/target/wheels/*.whl
 
-  vendor_binaries:
-    name: Commit built wheels and binaries to the branch
-    needs: build_wheels
-    # Don't run on main, where main the wheels are published to PyPI instead.
-    if: github.ref != 'refs/heads/main'
+  # Committed to wheels/ with the wheels, for release.yml to publish with them
+  make_sdist:
+    name: Build the sdist
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build the sdist with maturin
+        uses: PyO3/maturin-action@v1
+        with:
+          working-directory: cmu_graphics_helpers
+          command: sdist
+
+      - name: Upload the sdist
+        uses: actions/upload-artifact@v6
+        with:
+          name: wheels-sdist
+          path: cmu_graphics_helpers/target/wheels/*.tar.gz
+
+  vendor_binaries:
+    name: Commit built wheels and binaries to the branch
+    needs: [build_wheels, make_sdist]
+    # Don't run on main (see the push trigger above)
+    if: github.ref != 'refs/heads/main'
+    # macOS for codesign and notarytool. The macos-signing environment holds
+    # the signing secrets.
+    runs-on: macos-latest
+    # deployment: false uses the environment's secrets without GitHub
+    # recording a deployment to it, since nothing is deployed
+    environment:
+      name: macos-signing
+      deployment: false
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
 
       - uses: actions/download-artifact@v7
         with:
@@ -85,12 +121,49 @@ jobs:
           path: built-wheels
           merge-multiple: true
 
-      # Commits the wheels to wheels/, where tests install the pip
-      # distribution from, and vendors the same wheels into the zip
-      # distribution's module tree (which skips Linux). The stamp records the
-      # source they were built from, so tests can tell whether they're stale.
+      - name: Import the signing certificate
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password="$(uuidgen)"
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -f pkcs12 -A -t cert
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$keychain_password" "$keychain" > /dev/null
+          # Search the new keychain, so codesign finds the certificate
+          security list-keychains -d user -s "$keychain" \
+            $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/certificate.p12"
+
+      # Vendors the wheels into the zip distribution's module tree (which
+      # skips Linux), then signs and notarizes the macOS binaries there.
+      # notarize.py works on ../cmu_graphics. This happens once, before the
+      # commit loop below, since notarizing takes minutes; the loop copies the
+      # signed modules back in on each attempt.
+      - name: Vendor, sign, and notarize the binaries
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          modules=cmu_graphics/libs/cmu_graphics_helpers_loader/modules
+          python3 build/helpers/build_cmuhelp_modules.py --wheels built-wheels
+          (cd build && uv run --no-project --with tqdm python notarize.py)
+          cp -R "$modules" "$RUNNER_TEMP/signed-modules"
+
+      # Commits the wheels and sdist to wheels/, where tests install the pip
+      # distribution from and release.yml publishes them from, and the signed
+      # vendored modules. The stamp records
+      # the source they were built from, so tests can tell whether they're
+      # stale.
       - name: Commit the wheels and vendored binaries
-        shell: bash
         run: |
           set -euo pipefail
           branch="$GITHUB_REF_NAME"
@@ -102,11 +175,12 @@ jobs:
           for attempt in 1 2 3; do
             rm -rf wheels
             mkdir wheels
-            cp built-wheels/*.whl wheels/
+            cp built-wheels/*.whl built-wheels/*.tar.gz wheels/
             # Stamp the commit the wheels were built from, not the branch tip,
             # which may have moved on by a retry
-            python build/helpers/wheel_stamp.py write --rev "$GITHUB_SHA"
-            python build/helpers/build_cmuhelp_modules.py --wheels wheels
+            python3 build/helpers/wheel_stamp.py write --rev "$GITHUB_SHA"
+            rm -rf "$modules"
+            cp -R "$RUNNER_TEMP/signed-modules" "$modules"
             git add --all wheels "$modules"
 
             if git diff --cached --quiet; then
@@ -131,39 +205,6 @@ jobs:
           echo "Gave up after 3 attempts; $branch is moving faster than this job can keep up."
           exit 1
 
-  make_sdist:
-    name: Make SDist
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v7
-      with:
-        persist-credentials: false
-
-    - name: Build SDist
-      uses: PyO3/maturin-action@v1
-      with:
-        working-directory: cmu_graphics_helpers
-        command: sdist
-
-    - uses: actions/upload-artifact@v6
-      with:
-        path: cmu_graphics_helpers/target/wheels/*.tar.gz
-        name: source-distribution
-
-  upload_all:
-    name: Upload to PyPi
-    needs: [build_wheels, make_sdist]
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    environment: pypi
-    permissions:
-      id-token: write
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/download-artifact@v7
-      with:
-        path: dist
-        merge-multiple: true
-
-    - uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://upload.pypi.org/legacy/
+      - name: Delete the signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true

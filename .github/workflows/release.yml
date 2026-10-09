@@ -1,0 +1,114 @@
+name: Release
+
+# On a v* tag, releases cmu-graphics: to PyPI, along with the
+# cmu-graphics-helpers version it pins, and as the zip distribution to S3. See
+# build/README.md for the release steps.
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Never cancel a release partway through
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Drive build.py with 3.11
+  UV_PYTHON: '3.11'
+
+jobs:
+  # Runs on macOS for codesign, to check the zip's macOS binaries are signed;
+  # buildwheels.yml signed and notarized them when it vendored them.
+  release:
+    name: Release ${{ github.ref_name }}
+    runs-on: macos-latest
+    environment: release
+    permissions:
+      contents: read
+      # PyPI trusted publishing and the AWS role both authenticate with OIDC
+      id-token: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Check that the tag matches the version
+        id: version
+        run: |
+          set -euo pipefail
+          tag_version="${GITHUB_REF_NAME#v}"
+          version="$(tr -d '[:space:]' < cmu_graphics/meta/version.txt)"
+          if [ "$version" != "$tag_version" ]; then
+            echo "::error::cmu_graphics/meta/version.txt is $version, but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Pre-releases (3.0.1rc1) go to PyPI, where pip ignores them by
+          # default, but not to the zip distribution's download.
+          if [[ "$version" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "final=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "final=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --only-dev, here and below, gives uv run just the dev group, which has
+      # build for build.py. The project itself isn't installed, so nothing here
+      # compiles Rust.
+      - name: Build the zip distribution and the pip package
+        run: uv run --only-dev python build/build.py
+
+      # check_binaries.py looks in ./cmu_graphics
+      - name: Check the zip's macOS binaries are signed
+        working-directory: cmu_graphics_installer
+        run: uv run --only-dev python ../tests/check_binaries.py
+
+      # Pre-releases skip the S3 upload, so this is where to get their zip to
+      # try it out.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: zip-distribution
+          path: cmu_graphics_installer.zip
+          if-no-files-found: error
+
+      - name: Check the committed cmu_graphics_helpers wheels are up to date
+        run: uv run --no-project python build/helpers/wheel_stamp.py check
+
+      # --skip-existing skips any file PyPI already has under that name, so
+      # that we can publish cmu-graphics even if cmu-graphics-helpers hasn't changed.
+      - name: Publish cmu-graphics-helpers to PyPI
+        run: uv run --only-dev twine upload --skip-existing wheels/*.tar.gz wheels/*.whl
+
+      # --check-url skips files PyPI already has, so a re-run after a later
+      # step failed doesn't fail here.
+      - name: Publish cmu-graphics to PyPI
+        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ pypi_upload/dist/*
+
+      - name: Get AWS credentials
+        if: steps.version.outputs.final == 'true'
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_RELEASE_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      # Cache-control: no-cache means that the zip file can be cached by the
+      # browser, but the browser has to validate that it has the latest version
+      # before giving it to the user. This should make it so that all users get
+      # that latest version ASAP. version.txt goes last, so installed copies
+      # aren't told to upgrade before the new zip is there.
+      - name: Upload the zip distribution to S3
+        if: steps.version.outputs.final == 'true'
+        env:
+          S3_DEST: s3://cmu-cs-academy.lib.prod/desktop-cmu-graphics/
+        run: |
+          set -euo pipefail
+          aws s3 cp --cache-control no-cache cmu_graphics_installer.zip "$S3_DEST"
+          aws s3 cp --cache-control no-cache cmu_graphics/meta/version.txt "$S3_DEST"
+

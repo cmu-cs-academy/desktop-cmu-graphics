@@ -17,7 +17,8 @@ Run it from anywhere:
 
 Wheels for platforms the zip distribution doesn't ship (Linux) and any sdists in
 the directory are ignored. Note that the macOS binaries this produces are not
-signed or notarized -- see build/README.md.
+signed or notarized; buildwheels.yml signs them after calling this. See
+build/README.md.
 """
 
 import argparse
