@@ -65,7 +65,7 @@ class TextBox(object):
             ctx.stroke()
         else:
             ctx.round_rectangle(self.left, self.top, self.width, self.height, 3, 3)
-            ctx.set_source_rgba(0.9, 0.6, 0.4, 1.0)
+            ctx.set_source_rgba(0.4, 0.6, 0.9, 1.0)
             ctx.set_line_width(3)
             ctx.stroke()
 
@@ -98,7 +98,7 @@ class TextBox(object):
             )
             left = min(cursorX, anchorX)
             right = max(cursorX, anchorX)
-            ctx.set_source_rgba(1.0, 0.85, 0.7)
+            ctx.set_source_rgba(0.7, 0.85, 1.0)
             ctx.rectangle(left, cursorTop, right - left, cursorBottom - cursorTop)
             ctx.fill()
 
@@ -277,8 +277,8 @@ class Button(object):
         self.width = self.height * 1.2
         self.left = self.centerX - (self.width / 2)
         self.right = self.centerX + (self.width / 2)
-        self.baseColor = (0.7, 0.6, 0.35, 1.0)
-        self.hoverColor = (0.75, 0.7, 0.5, 1.0)
+        self.baseColor = (0.35, 0.6, 0.7, 1.0)
+        self.hoverColor = (0.5, 0.7, 0.75, 1.0)
         self.color = self.baseColor
         self.font = ('Arial', wyvern.FontWeight.NORMAL, wyvern.FontSlant.NORMAL)
         self.textSize = 15
