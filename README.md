@@ -76,3 +76,18 @@ there are plenty of resources to help you get started with
 the framework. Students can reach out to their teachers for questions about
 CMU Graphics, and a full reference documentation for the graphics
 framework is available on our [documentation page](https://academy.cs.cmu.edu/docs).
+
+
+## Features specific to Desktop CMU Graphics
+
+### app.cursorVisible
+
+Setting `app.cursorVisible = False` in your code will cause the computer's mouse pointer to be hidden within your window. You can set `app.cursorVisible = True` to make it visible again.
+
+### Fullscreen mode
+
+Your programs can call `app.enableFullscreen()` to use a fullscreen mode where the window contents fill the entire screen. Call `app.disableFullscreen()` to return to a normal window.
+
+### onResize
+
+The event handler onResize is available in all projects. See the [web CPCS documentation](https://academy.cs.cmu.edu/cpcs-docs/events#onResize) for details. (This event handler is only available in CPCS mode on the web.)
