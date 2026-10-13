@@ -29,8 +29,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # GitHub withholds Actions secrets from runs Dependabot triggers, so
+  # vendor_binaries couldn't sign anything. Fail up front with the fix instead
+  # of building wheels and then failing on an empty certificate. The other
+  # jobs skip for Dependabot; vendor_binaries skips with the jobs it needs.
+  dependabot_guard:
+    name: Dependabot can't run this workflow
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain how to run this workflow manually
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          message="Dependabot runs don't get the macOS signing secrets, so this workflow can't sign and commit the wheels."
+          message+=" Trigger it manually on this branch instead:"
+          message+=" gh workflow run buildwheels.yml --ref $BRANCH"
+          message+=" (or Actions > $GITHUB_WORKFLOW > Run workflow)."
+          echo "::error title=Run this workflow manually::$message"
+          exit 1
+
   build_wheels:
     name: Build wheels on ${{ matrix.os }} (${{ matrix.target }})
+    if: github.actor != 'dependabot[bot]'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -72,6 +93,7 @@ jobs:
   # Committed to wheels/ with the wheels, for release.yml to publish with them
   make_sdist:
     name: Build the sdist
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
