@@ -19,7 +19,6 @@ def webrequestget(path):
         'Connection': 'keep-alive',
     }
     request = urllib.request.Request(path, headers=headers)
-    # This is the October 2025 certifi cacert.pem
     cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
     context = ssl.create_default_context(cafile=cafile_path)
     response = urllib.request.urlopen(request, context=context)
