@@ -1,6 +1,6 @@
 # Written by build/helpers/wheel_stamp.py: the source the wheels in this
 # directory, and the vendored modules, were built from.
-453b2b8606f5921901d638e3e6d81d8ba17d71b2 cmu_graphics_helpers
+0a91777015e46b8192fbd45c29084d4cbce809d1 cmu_graphics_helpers
 11499f115fdb7fd348d3a80e33d15f5223e3cf43 .cargo/config.toml
 27880d5c19986fd2d52a0103bb8497fdc4fae706 build/helpers/build_cmuhelp_modules.py
 cb3411986c88d8b1a79a81762a0dfaf16196b21a build/helpers/wheel_stamp.py
