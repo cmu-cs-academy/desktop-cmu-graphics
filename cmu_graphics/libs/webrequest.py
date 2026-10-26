@@ -2,6 +2,16 @@ import os
 import ssl
 import urllib.request
 
+from cmu_graphics.dist import VENDORED
+
+if VENDORED:
+    # build/build.py copies certifi's cacert.pem in next to this file, since
+    # the zip installer can't install certifi
+    cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
+else:
+    import certifi
+    cafile_path = certifi.where()
+
 def get(path):
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -11,8 +21,6 @@ def get(path):
            'Connection': 'keep-alive'
     }
     request = urllib.request.Request(path, headers=headers)
-    # This is the October 2025 certifi cacert.pem
-    cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
     context = ssl.create_default_context(cafile=cafile_path)
     response = urllib.request.urlopen(request, context=context)
     return response

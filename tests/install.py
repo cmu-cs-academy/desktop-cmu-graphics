@@ -33,6 +33,10 @@ else:
     # Remove any old version installed
     uv_pip('uninstall', 'cmu-graphics')
 
+    # cmu-graphics's other dependency comes from PyPI, since the --no-index
+    # install below can only see the committed wheels
+    uv_pip('install', 'certifi')
+
     dist_dir = os.path.join(base_path, 'pypi_upload', 'dist')
     for path in os.listdir(dist_dir):
         if path.endswith('.whl'):
