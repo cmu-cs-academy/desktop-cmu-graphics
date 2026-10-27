@@ -10,8 +10,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 geo = "0.33.1"
-geo-booleanop = "0.3.2"
-geo-types = "0.7.18"
 image = "0.25.10"
 rodio = "0.22.2"
 skia-safe = "0.99.0"
