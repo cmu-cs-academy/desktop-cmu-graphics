@@ -3,13 +3,13 @@ import math
 import cairo
 import pygame
 from io import BytesIO
-import os
 import ssl
 import urllib.request
+
+import certifi
 import array
 
 
-# need cacert.pem file in path for this to work
 def webrequestget(path):
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
@@ -20,8 +20,7 @@ def webrequestget(path):
         'Connection': 'keep-alive',
     }
     request = urllib.request.Request(path, headers=headers)
-    cafile_path = os.path.join(os.path.dirname(__file__), 'cacert.pem')
-    context = ssl.create_default_context(cafile=cafile_path)
+    context = ssl.create_default_context(cafile=certifi.where())
     response = urllib.request.urlopen(request, context=context)
     return response
 

@@ -13,7 +13,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "cmu-graphics-helpers==0.1.10",
+    "certifi",
+    "cmu-graphics-helpers==0.1.11",
 ]
 
 [project.urls]
@@ -37,7 +38,7 @@ include = ["cmu_graphics", "cmu_graphics.*"]
 py-modules = ["cmu_cpcs_utils"]
 
 [tool.setuptools.package-data]
-cmu_graphics = ["meta/version.txt", "libs/cacert.pem"]
+cmu_graphics = ["meta/version.txt"]
 
 [tool.ruff]
 exclude = ["cmu_graphics/libs", "tests", "build", "samples"]
@@ -56,6 +57,7 @@ quote-style = "single"
 [dependency-groups]
 dev = [
     "build",
+    "certifi",
     "pillow",
     "pre-commit",
     "psutil>=7.1.2",
