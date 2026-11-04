@@ -6,6 +6,8 @@ import sys
 import subprocess
 import shutil
 
+import certifi
+
 def copytree_log(src, dest, **kwargs):
     print(f"Copying {src} to {dest} ...")
     shutil.copytree(src, dest, **kwargs)
@@ -47,6 +49,10 @@ def build_zip_file(zip_dest, zipfile_name):
 
     # The zip loads the binaries vendored under cmu_graphics/libs
     set_vendored(f"{zip_dest}/cmu_graphics/dist.py", True)
+
+    # The zip can't install certifi, so it ships a copy of its CA bundle
+    # (see cmu_graphics/libs/webrequest.py)
+    copyfile_log(certifi.where(), f"{zip_dest}/cmu_graphics/libs/cacert.pem")
 
     for path in ["LICENSE", "INSTRUCTIONS.pdf"]:
         copyfile_log(path, f"{zip_dest}/{os.path.basename(path)}")
