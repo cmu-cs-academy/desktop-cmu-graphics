@@ -1,7 +1,10 @@
+import json
 import re
 import subprocess
 import sys
 import tomllib
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -16,6 +19,8 @@ HELPERS_DIR = 'cmu_graphics_helpers'
 WATCHED_PATHS = [HELPERS_DIR, '.cargo/config.toml']
 
 MAIN_REF = 'origin/main'
+
+PYPI_URL = 'https://pypi.org/pypi/cmu-graphics-helpers/json'
 
 
 def cargo_version():
@@ -68,17 +73,27 @@ def helpers_changes():
     return changed.split()
 
 
-def main_version():
-    """The cmu-graphics-helpers version in Cargo.toml on main."""
-    cargo_toml = git('show', f'{MAIN_REF}:{HELPERS_DIR}/Cargo.toml')
-    if cargo_toml is None:
-        raise SystemExit(f'could not read {HELPERS_DIR}/Cargo.toml at {MAIN_REF}')
+def pypi_version():
+    """The newest plain X.Y.Z cmu-graphics-helpers version published on PyPI."""
     try:
-        return tomllib.loads(cargo_toml)['package']['version']
-    except (tomllib.TOMLDecodeError, KeyError):
+        with urllib.request.urlopen(PYPI_URL, timeout=30) as response:
+            releases = json.load(response)['releases']
+    except (urllib.error.URLError, OSError, ValueError, KeyError) as e:
         raise SystemExit(
-            f'could not parse the version out of {HELPERS_DIR}/Cargo.toml at {MAIN_REF}'
+            f'could not read the published cmu-graphics-helpers versions from '
+            f'{PYPI_URL}: {e}'
         )
+
+    # Skip versions whose files were all deleted, and anything that isn't a
+    # plain release, like a pre-release
+    published = [
+        version
+        for version, files in releases.items()
+        if files and release_sort_key(version) is not None
+    ]
+    if not published:
+        raise SystemExit(f'no published cmu-graphics-helpers versions at {PYPI_URL}')
+    return max(published, key=release_sort_key)
 
 
 def release_sort_key(version):
@@ -105,14 +120,14 @@ def check_versions_in_sync():
 
 def check_version_bumped(version):
     """
-    Fail if the helpers changed relative to main without the version being bumped.
+    Fail if the helpers changed relative to main without a version newer than PyPI's.
 
     Once a version has been published, the installer is free to resolve that wheel
     from PyPI rather than the one built locally -- it will, in fact, even with
     UV_FIND_LINKS pointing at the local build. That's fine as long as they're the
-    same code, so any change that alters the built wheel has to come with a new
-    version number. main's version is the one that gets published, so it's enough
-    to require that we're ahead of main whenever a watched path has changed.
+    same code, so any change that alters the built wheel needs a version that
+    hasn't been published yet. Unpublished versions can be reused, so a branch
+    and main can both be on the same unreleased version.
 
     See WATCHED_PATHS for what counts as altering the wheel.
     """
@@ -126,25 +141,23 @@ def check_version_bumped(version):
     if len(changed) > 4:
         changed_summary += f' (+{len(changed) - 4} more)'
 
-    published = main_version()
+    published = pypi_version()
     current_key = release_sort_key(version)
-    main_key = release_sort_key(published)
 
-    if current_key is not None and main_key is not None and current_key > main_key:
+    if current_key is not None and current_key > release_sort_key(published):
         return
 
     if version == published:
-        problem = f'the version is still {version}'
+        problem = f'the version is still {version}, which is published on PyPI'
         fix = 'Bump it'
-    elif current_key is None or main_key is None:
-        unparsed = version if current_key is None else published
+    elif current_key is None:
         problem = (
-            f"the version went from {published} to {version}, and {unparsed} isn't a "
-            f"plain X.Y.Z release, so this check can't tell whether that's ahead"
+            f"the version is {version}, which isn't a plain X.Y.Z release, so this "
+            f"check can't tell whether it's newer than {published} on PyPI"
         )
         fix = 'Use a plain X.Y.Z version'
     else:
-        problem = f'the version went backwards, from {published} to {version}'
+        problem = f'the version {version} is behind {published} on PyPI'
         fix = 'Bump it'
 
     print(
