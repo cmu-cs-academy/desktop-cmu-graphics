@@ -81,15 +81,22 @@ jobs:
       - name: Check the committed cmu_graphics_helpers wheels are up to date
         run: uv run --no-project python build/helpers/wheel_stamp.py check
 
+      # Sign each file with the job's OIDC identity through Sigstore, writing
+      # a <file>.publish.attestation next to it. The publish steps upload
+      # these to PyPI, which shows them as the files' provenance.
+      - name: Sign the PyPI files
+        run: uv run --only-dev pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
+
       # --skip-existing skips any file PyPI already has under that name, so
       # that we can publish cmu-graphics even if cmu-graphics-helpers hasn't changed.
       - name: Publish cmu-graphics-helpers to PyPI
-        run: uv run --only-dev twine upload --skip-existing wheels/*.tar.gz wheels/*.whl
+        run: uv run --only-dev twine upload --attestations --skip-existing wheels/*.tar.gz wheels/*.whl
 
       # --check-url skips files PyPI already has, so a re-run after a later
-      # step failed doesn't fail here.
+      # step failed doesn't fail here. uv publish uploads the attestations
+      # by default.
       - name: Publish cmu-graphics to PyPI
-        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ pypi_upload/dist/*
+        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
 
       - name: Get AWS credentials
         if: steps.version.outputs.final == 'true'
