@@ -83,9 +83,11 @@ jobs:
 
       # Sign each file with the job's OIDC identity through Sigstore, writing
       # a <file>.publish.attestation next to it. The publish steps upload
-      # these to PyPI, which shows them as the files' provenance.
+      # these to PyPI, which shows them as the files' provenance. It's run with
+      # uvx rather than from the dev group because its cryptography dependency
+      # has no Windows ARM64 wheel, which would break the windows-11-arm tests.
       - name: Sign the PyPI files
-        run: uv run --only-dev pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
+        run: uvx --from pypi-attestations==0.0.31 pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
 
       # --skip-existing skips any file PyPI already has under that name, so
       # that we can publish cmu-graphics even if cmu-graphics-helpers hasn't changed.

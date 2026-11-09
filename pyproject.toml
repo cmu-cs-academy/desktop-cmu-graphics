@@ -59,7 +59,6 @@ dev = [
     "pillow",
     "pre-commit",
     "psutil>=7.1.2",
-    "pypi-attestations>=0.0.31",
     "ruff>=0.14.2",
     "tox",
     "tox-uv-bare>=1.36.0",
