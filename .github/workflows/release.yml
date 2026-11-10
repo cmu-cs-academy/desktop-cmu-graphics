@@ -59,9 +59,9 @@ jobs:
             echo "final=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # --only-dev, here and below, gives uv run just the dev group, which has
-      # build for build.py. The project itself isn't installed, so nothing here
-      # compiles Rust.
+      # --only-dev, here and in the next step, gives uv run just the dev group,
+      # which has build for build.py. The project itself isn't installed, so
+      # nothing here compiles Rust.
       - name: Build the zip distribution and the pip package
         run: uv run --only-dev python build/build.py
 
@@ -83,16 +83,19 @@ jobs:
 
       # Sign each file with the job's OIDC identity through Sigstore, writing
       # a <file>.publish.attestation next to it. The publish steps upload
-      # these to PyPI, which shows them as the files' provenance. It's run with
-      # uvx rather than from the dev group because its cryptography dependency
-      # has no Windows ARM64 wheel, which would break the windows-11-arm tests.
+      # these to PyPI, which shows them as the files' provenance.
+      #
+      # --only-group release, here and below, gives uv run just the release
+      # group, which only this job needs. Keeping it out of dev also keeps its
+      # cryptography dependency, which has no Windows ARM64 wheel, out of the
+      # windows-11-arm tests.
       - name: Sign the PyPI files
-        run: uvx --from pypi-attestations==0.0.31 pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
+        run: uv run --only-group release pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
 
       # --skip-existing skips any file PyPI already has under that name, so
       # that we can publish cmu-graphics even if cmu-graphics-helpers hasn't changed.
       - name: Publish cmu-graphics-helpers to PyPI
-        run: uv run --only-dev twine upload --attestations --skip-existing wheels/*.tar.gz wheels/*.whl
+        run: uv run --only-group release twine upload --attestations --skip-existing wheels/*.tar.gz wheels/*.whl
 
       # --check-url skips files PyPI already has, so a re-run after a later
       # step failed doesn't fail here. uv publish uploads the attestations
