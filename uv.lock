@@ -252,12 +252,14 @@ wheels = [
 name = "cmu-graphics"
 source = { editable = "." }
 dependencies = [
+    { name = "certifi" },
     { name = "cmu-graphics-helpers" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "build" },
+    { name = "certifi" },
     { name = "pillow" },
     { name = "pre-commit" },
     { name = "psutil" },
@@ -269,11 +271,15 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "cmu-graphics-helpers", directory = "cmu_graphics_helpers" }]
+requires-dist = [
+    { name = "certifi" },
+    { name = "cmu-graphics-helpers", directory = "cmu_graphics_helpers" },
+]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "build" },
+    { name = "certifi" },
     { name = "pillow" },
     { name = "pre-commit" },
     { name = "psutil", specifier = ">=7.1.2" },
