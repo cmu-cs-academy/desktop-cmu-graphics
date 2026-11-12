@@ -85,23 +85,23 @@ jobs:
       # a <file>.publish.attestation next to it. The publish steps upload
       # these to PyPI, which shows them as the files' provenance.
       #
-      # --only-group release, here and below, gives uv run just the release
+      # --only-group release gives uv run just the release
       # group, which only this job needs. Keeping it out of dev also keeps its
       # cryptography dependency, which has no Windows ARM64 wheel, out of the
       # windows-11-arm tests.
       - name: Sign the PyPI files
-        run: uv run --only-group release pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
+        run: uv run --only-group release pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl pypi_upload/dist/*.attestation
 
-      # --skip-existing skips any file PyPI already has under that name, so
-      # that we can publish cmu-graphics even if cmu-graphics-helpers hasn't changed.
+      # --check-url skips any file PyPI already has under that name, so that
+      # we can publish cmu-graphics even if cmu-graphics-helpers hasn't
+      # changed, and so a re-run after a later step failed doesn't fail here.
+      # uv publish only attaches the attestations it is passed, so the
+      # .attestation files are listed along with the distributions.
       - name: Publish cmu-graphics-helpers to PyPI
-        run: uv run --only-group release twine upload --attestations --skip-existing wheels/*.tar.gz wheels/*.whl
+        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ wheels/*.tar.gz wheels/*.whl wheels/*.attestation
 
-      # --check-url skips files PyPI already has, so a re-run after a later
-      # step failed doesn't fail here. uv publish uploads the attestations
-      # by default.
       - name: Publish cmu-graphics to PyPI
-        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
+        run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl pypi_upload/dist/*.attestation
 
       - name: Get AWS credentials
         if: steps.version.outputs.final == 'true'
