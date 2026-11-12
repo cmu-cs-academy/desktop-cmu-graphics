@@ -68,7 +68,6 @@ dev = [
 ]
 release = [
     "pypi-attestations>=0.0.31",
-    "twine>=6.1",
 ]
 
 [tool.uv.sources]
