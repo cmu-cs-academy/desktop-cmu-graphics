@@ -90,7 +90,7 @@ jobs:
       # cryptography dependency, which has no Windows ARM64 wheel, out of the
       # windows-11-arm tests.
       - name: Sign the PyPI files
-        run: uv run --only-group release pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl pypi_upload/dist/*.attestation
+        run: uv run --only-group release pypi-attestations sign wheels/*.tar.gz wheels/*.whl pypi_upload/dist/*.tar.gz pypi_upload/dist/*.whl
 
       # --check-url skips any file PyPI already has under that name, so that
       # we can publish cmu-graphics even if cmu-graphics-helpers hasn't
