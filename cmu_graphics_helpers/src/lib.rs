@@ -205,6 +205,44 @@ fn get_arial(font_mgr: &FontMgr, style: FontStyle) -> PyResult<Typeface> {
         })
 }
 
+// Resolving a family through fontconfig runs a full match over every installed
+// font, which takes milliseconds on systems with many fonts (~7ms for Arial on
+// a typical Linux desktop). Labels select their font on every draw and every
+// resize, so look each (family, weight, slant) up once and reuse the result.
+// Canvas is unsendable, so all lookups happen on one thread.
+struct FontCache {
+    font_mgr: FontMgr,
+    typefaces: HashMap<(String, i32, i32), Typeface>,
+}
+
+thread_local! {
+    static FONT_CACHE: std::cell::RefCell<Option<FontCache>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+fn cached_typeface(family_name: &str, style: FontStyle) -> PyResult<Typeface> {
+    FONT_CACHE.with_borrow_mut(|slot| {
+        let cache = slot.get_or_insert_with(|| FontCache {
+            font_mgr: FontMgr::new(),
+            typefaces: HashMap::new(),
+        });
+        let key = (family_name.to_owned(), *style.weight(), style.slant() as i32);
+        if let Some(typeface) = cache.typefaces.get(&key) {
+            return Ok(typeface.clone());
+        }
+        // legacy_make_typeface falls back to the platform's default face for an
+        // unknown family, which is what cairo's select_font_face did (Helvetica on
+        // macOS). Falling back to Arial ourselves would render unavailable fonts
+        // differently than cairo did.
+        let typeface = match cache.font_mgr.legacy_make_typeface(Some(family_name), style) {
+            Some(typeface) => typeface,
+            None => get_arial(&cache.font_mgr, style)?,
+        };
+        cache.typefaces.insert(key, typeface.clone());
+        Ok(typeface)
+    })
+}
+
 #[pyclass(from_py_object)]
 #[derive(Clone)]
 enum Gradient {
@@ -305,7 +343,6 @@ type CanvasSettings = (Font, Vec<Color4f>, Vec<f32>, Paint);
 struct Canvas {
     skia_surface: skia_safe::Surface,
     path: Option<skia_safe::PathBuilder>,
-    font_mgr: FontMgr,
     font: Font,
     gradient_colors: Vec<Color4f>,
     gradient_offsets: Vec<f32>,
@@ -484,18 +521,7 @@ impl Canvas {
             font_style::Width::NORMAL,
             py_to_skia_slant(slant),
         );
-        // legacy_make_typeface falls back to the platform's default face for an
-        // unknown family, which is what cairo's select_font_face did (Helvetica on
-        // macOS). Falling back to Arial ourselves would render unavailable fonts
-        // differently than cairo did.
-        if let Some(typeface) = self
-            .font_mgr
-            .legacy_make_typeface(Some(family_name.as_str()), style)
-        {
-            self.font.set_typeface(typeface);
-        } else {
-            self.font.set_typeface(get_arial(&self.font_mgr, style)?);
-        }
+        self.font.set_typeface(cached_typeface(&family_name, style)?);
         Ok(())
     }
 
@@ -778,19 +804,17 @@ impl ImageSurface {
     fn create(width: i32, height: i32, scale_factor: f64) -> PyResult<Self> {
         Python::attach(|py| {
             let skia_surface = create_skia_surface(width, height, scale_factor)?;
-            let font_mgr = FontMgr::new();
             let style = FontStyle::new(
                 font_style::Weight::NORMAL,
                 font_style::Width::NORMAL,
                 font_style::Slant::Upright,
             );
-            let arial = get_arial(&font_mgr, style)?;
+            let arial = cached_typeface("Arial", style)?;
             let canvas = Py::new(
                 py,
                 Canvas {
                     skia_surface,
                     path: None,
-                    font_mgr,
                     font: Font::from_typeface(arial, 12.0),
                     gradient_colors: Vec::new(),
                     gradient_offsets: Vec::new(),
