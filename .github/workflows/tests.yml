@@ -57,6 +57,8 @@ jobs:
             # The zip distribution doesn't support Linux, so only the pip envs
             # run.
             tox-args: -f pip
+          - os: ubuntu-24.04-arm
+            tox-args: -f pip
 
     steps:
       - uses: actions/checkout@v7
