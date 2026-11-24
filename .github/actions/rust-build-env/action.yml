@@ -1,7 +1,7 @@
 name: Prepare to build cmu_graphics_helpers
 description: >
-  Windows builds Skia from source (see .cargo/config.toml); locate libclang for
-  bindgen there. Also restore the cargo registry/build cache for the
+  Windows builds Skia from source (see .cargo/config.toml); make sure a new
+  enough LLVM is there for Skia and bindgen. Also restore the cargo registry/build cache for the
   cmu_graphics_helpers crate on Windows and macOS -- Linux builds the wheel in
   a separate Docker container (see linux-helpers-wheel) that this cache can't
   reach.
@@ -9,18 +9,58 @@ description: >
 runs:
   using: composite
   steps:
-    - name: Point bindgen at the runner's LLVM
+    # skia-bindings compiles Skia with LLVM_HOME's clang-cl against the MSVC
+    # STL, and bindgen loads libclang from LIBCLANG_PATH. The STL refuses
+    # compilers older than it supports (MSVC 14.52, in the VS 2026 images,
+    # fails with "STL1000: Unexpected compiler version, expected Clang 22 or
+    # newer"), and runner images can ship a newer MSVC than LLVM. So use the
+    # runner's LLVM when it's new enough, and otherwise install a pinned one.
+    - name: Make sure LLVM is new enough to build Skia
       if: runner.os == 'Windows'
       shell: pwsh
+      env:
+        MIN_CLANG_MAJOR: '22'
+        LLVM_VERSION: '22.1.8'
+        LLVM_SHA256_X64: 16e5709785fef73c854646241c4a92c5cd574318d1b33c63330dd7721903e55c
+        LLVM_SHA256_ARM64: 76f44ef1ba6eeb5a65904e9500f042f588fade49952778ce48f0374daa934396
       run: |
-        $lib = Get-ChildItem -Path "C:\Program Files\LLVM", "C:\Program Files (x86)\LLVM" `
-          -Filter libclang.dll -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($lib) {
-          "found $($lib.FullName)"
-          "LIBCLANG_PATH=$($lib.DirectoryName)" >> $env:GITHUB_ENV
+        $llvmHome = "C:\Program Files\LLVM"
+        $clang = Join-Path $llvmHome "bin\clang.exe"
+        $major = 0
+        if (Test-Path $clang) {
+          $versionLine = (& $clang --version | Select-Object -First 1)
+          "runner's clang: $versionLine"
+          if ($versionLine -match 'clang version (\d+)\.') { $major = [int]$Matches[1] }
         } else {
-          throw "libclang.dll not found under C:\Program Files\LLVM. bindgen needs it to build Skia from source."
+          "no clang at $clang"
         }
+
+        if ($major -lt [int]$env:MIN_CLANG_MAJOR) {
+          if ($env:RUNNER_ARCH -eq 'ARM64') {
+            $asset = "LLVM-$env:LLVM_VERSION-woa64.exe"; $sha256 = $env:LLVM_SHA256_ARM64
+          } else {
+            $asset = "LLVM-$env:LLVM_VERSION-win64.exe"; $sha256 = $env:LLVM_SHA256_X64
+          }
+          $installer = Join-Path $env:RUNNER_TEMP $asset
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$env:LLVM_VERSION/$asset"
+          "installing LLVM $env:LLVM_VERSION from $url"
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          $actual = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLower()
+          if ($actual -ne $sha256) { throw "$asset has SHA-256 $actual, expected $sha256" }
+          # NSIS silent install; /D must come last and be unquoted
+          $llvmHome = Join-Path $env:RUNNER_TEMP "llvm-$env:LLVM_VERSION"
+          $proc = Start-Process -FilePath $installer -ArgumentList '/S', "/D=$llvmHome" -Wait -PassThru
+          if ($proc.ExitCode -ne 0) { throw "LLVM installer exited with $($proc.ExitCode)" }
+          Remove-Item $installer
+          & (Join-Path $llvmHome "bin\clang.exe") --version | Select-Object -First 1
+        }
+
+        $lib = Join-Path $llvmHome "bin\libclang.dll"
+        if (-not (Test-Path $lib)) {
+          throw "libclang.dll not found in $llvmHome\bin. bindgen needs it to build Skia from source."
+        }
+        "LLVM_HOME=$llvmHome" >> $env:GITHUB_ENV
+        "LIBCLANG_PATH=$llvmHome\bin" >> $env:GITHUB_ENV
 
     # gn refers to Skia's sources (in the cargo registry) relative to its build
     # directory (under target/) when both are on the same drive, as they are on
