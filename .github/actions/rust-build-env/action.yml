@@ -9,6 +9,20 @@ description: >
 runs:
   using: composite
   steps:
+    # The windows-2025-vs2026 image's MSVC STL requires clang 22, but the image
+    # ships LLVM 20 (STL1000: "Unexpected compiler version, expected Clang 22
+    # or newer"). Remove this once the image has LLVM 22:
+    # https://github.com/actions/runner-images/issues/15368
+    # windows-11-arm already ships clang 22, and choco's llvm is x64-only.
+    - name: Install LLVM 22 on x64 if the runner's is older
+      if: runner.os == 'Windows' && runner.arch == 'X64'
+      shell: pwsh
+      run: |
+        $clang = "C:\Program Files\LLVM\bin\clang.exe"
+        $major = if (Test-Path $clang) { [int]((& $clang --version) -join "`n" -replace '(?s).*?clang version (\d+).*', '$1') } else { 0 }
+        "runner's clang major version: $major"
+        if ($major -lt 22) { choco upgrade llvm --version=22.1.8 -y --no-progress }
+
     - name: Point bindgen at the runner's LLVM
       if: runner.os == 'Windows'
       shell: pwsh
